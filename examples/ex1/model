@@ -1,0 +1,47 @@
+package test
+
+// Final state machine + actions
+
+Actions[S] {
+  type Action = S -> S
+
+  seq(a1: Action, a2: Action): Action =
+    -\ s : S :- a2(a1(s))
+}
+
+ActionMachine[S] extends StateMachine, Actions[S] {
+  actionMap : Map[State,Action]
+  
+  forall (state,action) : actionMap :- state isin states
+}
+
+S { x : Int }
+
+AM extends ActionMachine[S] {
+  ZeroX(s:S) = s @ {x := 0}
+  IncX(s:S) = s @ {x := s.x + 1}
+
+  s1 : State = 1
+  s2 : State = 2
+  s3 : State = 3
+  s4 : State = 4
+
+  actionMap = {s1 -> ZeroX, s2 -> IncX}
+
+  eThink  : Event = "think"
+  eDream  : Event = "dream"
+  eDesign : Event = "design"
+  eCode   : Event = "code"
+
+  states = {s1, s2, s3, s4}
+  events = {eThink, eDream, eDesigm, eCode}
+
+  initial = s1
+
+  transitions = {
+    (s1, eThink, s2),
+    (s2, eDesign, s3),
+    (s2, eDream, s4),
+    (s3, eCode, s1)
+  }
+}
