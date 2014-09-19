@@ -2,10 +2,17 @@
 grammar Model;
 
 model
-  : packageDeclaration? ';'?
-    (importDeclaration  ';'?)* 
-    (classDeclaration   ';'?)* 
+  : packageDeclaration 
+    importDeclaration* 
+    classDeclaration* 
+    topDeclaration*
     EOF
+  ;
+
+topDeclaration
+  : memberDeclaration
+  | classDeclaration
+  | expressionsWithSeparator
   ;
 
 packageDeclaration
@@ -17,7 +24,7 @@ importDeclaration
   ;
 
 classDeclaration
-  : Identifier typeParameters? valueParameters? extending? '{' (memberDeclaration ';'?)* '}'
+  : 'class' Identifier typeParameters? valueParameters? extending? '{' (memberDeclaration ';'?)* '}'
   ;
 
 typeParameters
@@ -50,7 +57,10 @@ type
   | type ('*' type)+                 // cartesian product
   | type '->' type                   // function type
   | '(' type ')'
-  | '{|' typing ':-' expression '|}' // predicate subtype
+  | '{|' typing '.' expression '|}' // predicate subtype
+  | '{' type '}'                    // set {Int} {1,2}
+  | '[' type ']'                    // list [Int] [1,2,2,2,2]
+  | '<' type ',' type '>'           // map from first type to next <Int,String> <1:"one", 2:"two">
   ;
 
 typeArguments
@@ -60,43 +70,99 @@ typeArguments
 memberDeclaration
   : sortDeclaration 
   | typeDeclaration
+  | valueDeclaration
   | variableDeclaration
   | functionDeclaration 
   | constraint
   ;
 
+valueDeclaration
+  : 'val' typing ('=' expression)? ';'
+  ;
+
 sortDeclaration
-  : 'type' Identifier
+  : 'type' Identifier ';'
   ;
 
 typeDeclaration
-  : 'type' Identifier typeParameters? '=' type
+  : 'type' Identifier typeParameters? '=' type ';'
   ;
 
 variableDeclaration
-  : typing ('=' expression)?
+  : 'var' typing ('=' expression)? ';'
   ;
 
 typing
   : Identifier ':' type
   ; 
 
+functionBodyElement
+  : memberDeclaration
+  | expressionsWithSeparator
+  ;
+
 functionDeclaration
-  : Identifier ('(' typingList ')')+ (':' type)? '=' expression 
+  : 'def' Identifier ('(' typingList ')')+ (':' type) '{' functionBodyElement* '}' 
   ;
 
 constraint
-  : expression
-  | Identifier '{' expression '}' 
+  : 'req' Identifier? '{' expression '}' 
   ;
 
 primitiveType
   : 'Bool'
   | 'Char'
-  | 'Int'
-  | 'Float'
+  | 'Int'       // Scala bigint (arbitrary precision)
+  | 'Real'      // double
   | 'String'
+  | 'Void'
+  | 'Nada'
   ;
+
+tokenLessThan
+    : '<' 
+    | 'lt'
+    ;
+tokenGreatherThan
+    : '>'
+    | 'gt'
+    ;
+tokenLessThanEqual
+: '<='
+| 'lte'
+;
+tokenGreaterThanEqual
+    : '>='
+    | 'gte'
+    ;
+tokenAnd
+    : '&&' 
+    | 'and'
+    ;
+tokenOr
+    : '||'
+    | 'or'
+    ;
+tokenNot
+    : '!'
+    | 'not'
+    ;
+tokenImplies
+    : '=>'
+    | 'implies'
+    ;
+tokenIFF
+    : '<=>'
+    | 'iff'
+    ;
+tokenEquals
+    : '='
+    | 'eq'
+    ;
+
+expressionsWithSeparator
+    : expression ';'
+    ;
 
 expression
  // --------
@@ -106,10 +172,18 @@ expression
   | literal
   | Identifier
   | expression '.' Identifier
+  | 'create' expression             // calls to constructor
   | expression expression
-  | 'let' letBindingList 'in' expression 
   | 'if' expression 'then' expression 'else' expression
   | 'case' expression 'of' match
+ // -----------
+ // Assignment
+ // This also does structural assignment
+ // assignment to functions
+ // -----------
+  | expression ':=' expression
+  //| (expression '.')? Identifier ':=' expression
+    
  // -----------
  // Arithmetic:
  // -----------
@@ -118,46 +192,44 @@ expression
  // ---------
  // Booleans:
  // ---------
-  | '!' expression
-  | expression ('<=' | '>=' | '>' | '<') expression
+  | tokenNot expression
+  | expression (tokenLessThanEqual | tokenGreaterThanEqual | tokenLessThan | tokenGreatherThan) expression
   | expression ('isin'|'!isin'|'subset'|'psubset') expression
-  | expression ('=' | '!=') expression
-  | expression '&' expression
-  | expression '|' expression
-  | expression 'and' expression
-  | expression 'or' expression
-  | expression ('=>' | '<=>') expression
+  | expression (tokenEquals | tokenNot tokenEquals) expression
+  | expression tokenAnd expression
+  | expression tokenOr expression
+  | expression (tokenImplies | tokenIFF) expression
   | expression '.#' expression
-  | 'forall' rngBindingList ':-' expression
-  | 'exists' rngBindingList ':-' expression
+  | 'forall' rngBindingList ':' expression
+  | 'exists' rngBindingList ':' expression
  // -------
  // Tuples:
  // -------
-  | '(' expression (',' expression)+ ')' {System.out.println("@@@ TUPLE");}
+  | '(' expression (',' expression)+ ')'
  // -----
  // Sets:
  // -----
   | expression ('union'|'inter'|'\\') expression
   | '{' expressionList? '}'
   | '{' expression '..' expression '}'
-  | '{' expression '|' rngBindingList ':-' expression '}'
+  | '{' expression '|' rngBindingList '.' expression '}'
   // ------
   // Lists:
   // ------
   | expression ('^') expression
   | '[' expressionList? ']'
   | '[' expression '..' expression ']'
-  | '[' expression '|' pattern ':' expression ':-' expression ']'  
+  | '[' expression '|' pattern ':' expression '.' expression ']'  
   // -----
   // Maps:
   // -----
   | /*map*/expression '++' /*map*/expression
   | '{' mapPairList? '}'
-  | '{' mapPair '|' rngBindingList ':-' expression '}'
+  | '{' mapPair '|' rngBindingList '.' expression '}'
   // ----------
   // Functions:
   // ----------
-  | '-\\' pattern (':' type)? ':-' expression
+  | '-\\' pattern (':' type)? '.' expression
   // --------
   // Records:
   // --------  
@@ -513,13 +585,17 @@ JavaLetterOrDigit
     ;
 
 COMMENT
-  : '/*' .*? '*/' -> skip
+  : '---' .*? '---' -> skip
   ;
 
 LINE_COMMENT
-  : '//' ~[\r\n]* -> skip
+  : '--' ~[\r\n]* -> skip
   ;
 
 WS
   : [ \t\r\n\u000C]+ -> skip
+  ;
+
+SEP
+  : ';'
   ;
