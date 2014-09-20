@@ -1,3 +1,3 @@
-alias a='antlr Model.g4;mv *.java ../parser'
-alias clean='rm *.java;rm *.class;rm *.tokens;rm *~'
+alias a='antlr Model.g4;mv *.java ../parser;mv *.tokens ../parser'
+alias clean='rm *.class;rm *~'
 
