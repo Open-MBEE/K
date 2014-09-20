@@ -2,6 +2,18 @@
 Semicolon: 
 - it is not quite clean since it is only at the top level, ... ?
 - semicolon as a terminator, rather than as a separator, is somewhat annoying
+- also, in pure functions it looks strange, like a defintion that could look like 
+  this:
+ 
+    def f(x:Int) = x + 1
+
+  or even:
+
+   def f x = x + 1
+
+  becomes:
+
+    def f(x:Int):Int { x + 1; }
 
 Function return types: it looks wordy in the case of Void. I would aAvoid it.
 

@@ -41,17 +41,6 @@ public interface ModelListener extends ParseTreeListener {
 	void exitSortDeclaration(@NotNull ModelParser.SortDeclarationContext ctx);
 
 	/**
-	 * Enter a parse tree produced by {@link ModelParser#functionBodyElement}.
-	 * @param ctx the parse tree
-	 */
-	void enterFunctionBodyElement(@NotNull ModelParser.FunctionBodyElementContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link ModelParser#functionBodyElement}.
-	 * @param ctx the parse tree
-	 */
-	void exitFunctionBodyElement(@NotNull ModelParser.FunctionBodyElementContext ctx);
-
-	/**
 	 * Enter a parse tree produced by {@link ModelParser#expressionList}.
 	 * @param ctx the parse tree
 	 */
@@ -61,6 +50,17 @@ public interface ModelListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitExpressionList(@NotNull ModelParser.ExpressionListContext ctx);
+
+	/**
+	 * Enter a parse tree produced by {@link ModelParser#tokenGreatherThan}.
+	 * @param ctx the parse tree
+	 */
+	void enterTokenGreatherThan(@NotNull ModelParser.TokenGreatherThanContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ModelParser#tokenGreatherThan}.
+	 * @param ctx the parse tree
+	 */
+	void exitTokenGreatherThan(@NotNull ModelParser.TokenGreatherThanContext ctx);
 
 	/**
 	 * Enter a parse tree produced by {@link ModelParser#typeDeclaration}.
@@ -83,17 +83,6 @@ public interface ModelListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitType(@NotNull ModelParser.TypeContext ctx);
-
-	/**
-	 * Enter a parse tree produced by {@link ModelParser#tokenGreatherThan}.
-	 * @param ctx the parse tree
-	 */
-	void enterTokenGreatherThan(@NotNull ModelParser.TokenGreatherThanContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link ModelParser#tokenGreatherThan}.
-	 * @param ctx the parse tree
-	 */
-	void exitTokenGreatherThan(@NotNull ModelParser.TokenGreatherThanContext ctx);
 
 	/**
 	 * Enter a parse tree produced by {@link ModelParser#variableDeclaration}.
@@ -162,17 +151,6 @@ public interface ModelListener extends ParseTreeListener {
 	void exitPackageDeclaration(@NotNull ModelParser.PackageDeclarationContext ctx);
 
 	/**
-	 * Enter a parse tree produced by {@link ModelParser#letBindingList}.
-	 * @param ctx the parse tree
-	 */
-	void enterLetBindingList(@NotNull ModelParser.LetBindingListContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link ModelParser#letBindingList}.
-	 * @param ctx the parse tree
-	 */
-	void exitLetBindingList(@NotNull ModelParser.LetBindingListContext ctx);
-
-	/**
 	 * Enter a parse tree produced by {@link ModelParser#typeArguments}.
 	 * @param ctx the parse tree
 	 */
@@ -182,6 +160,17 @@ public interface ModelListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitTypeArguments(@NotNull ModelParser.TypeArgumentsContext ctx);
+
+	/**
+	 * Enter a parse tree produced by {@link ModelParser#letBindingList}.
+	 * @param ctx the parse tree
+	 */
+	void enterLetBindingList(@NotNull ModelParser.LetBindingListContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ModelParser#letBindingList}.
+	 * @param ctx the parse tree
+	 */
+	void exitLetBindingList(@NotNull ModelParser.LetBindingListContext ctx);
 
 	/**
 	 * Enter a parse tree produced by {@link ModelParser#patternList}.
