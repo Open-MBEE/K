@@ -15,7 +15,7 @@ model
 topDeclaration
   : memberDeclaration
   | classDeclaration
-  // | expressionsWithSeparator ;; deleted
+  // | expressionsWithSeparator ;; deleted, moved into memberDeclaration
   ;
 
 packageDeclaration
@@ -100,13 +100,15 @@ typing
   : Identifier ':' type
   ; 
 
-functionBodyElement
-  : memberDeclaration
-  //| expressionsWithSeparator ;; deleted, now in memberDeclaration
-  ;
+//functionBodyElement        ;; deleted non-terminal
+//  : memberDeclaration
+//| expressionsWithSeparator ;; deleted, now in memberDeclaration
+//  ;
 
 functionDeclaration
-  : 'def' Identifier ('(' typingList? ')')+ (':' type) '{' functionBodyElement* '}' // ;; added ? to typingList
+  : 'def' Identifier ('(' typingList? ')')+ (':' type) '{' memberDeclaration* '}' 
+      // ;; added ? to typingList
+      // ;; replace functionBodyElement with memberDeclaration
   ;
 
 constraint
@@ -206,8 +208,8 @@ expression
   | expression tokenOr expression
   | expression (tokenImplies | tokenIFF) expression
   | expression '.#' expression
-  | 'forall' rngBindingList ':' expression
-  | 'exists' rngBindingList ':' expression
+  | 'forall' rngBindingList SUCHTHAT expression // ;; introduced SUCHTHAT
+  | 'exists' rngBindingList SUCHTHAT expression // ;; introduced SUCHTHAT
  // -------
  // Tuples:
  // -------
@@ -218,24 +220,24 @@ expression
   | expression ('union'|'inter'|'\\') expression
   | '{' expressionList? '}'
   | '{' expression '..' expression '}'
-  | '{' expression '|' rngBindingList '.' expression '}'
+  | '{' expression '|' rngBindingList SUCHTHAT expression '}' // ;; introduced SUCHTHAT
   // ------
   // Lists:
   // ------
   | expression ('^') expression
   | '[' expressionList? ']'
   | '[' expression '..' expression ']'
-  | '[' expression '|' pattern ':' expression '.' expression ']'  
+  | '[' expression '|' pattern ':' expression SUCHTHAT expression ']'  // ;; introduced SUCHTHAT
   // -----
   // Maps:
   // -----
   | /*map*/expression '++' /*map*/expression
   | '{' mapPairList? '}'
-  | '{' mapPair '|' rngBindingList '.' expression '}'
+  | '{' mapPair '|' rngBindingList SUCHTHAT expression '}' // ;; introduced SUCHTHAT
   // ----------
   // Functions:
   // ----------
-  | '-\\' pattern (':' type)? '.' expression
+  | '-\\' pattern (':' type)? SUCHTHAT expression // ;; introduced SUCHTHAT
   // --------
   // Records:
   // --------  
@@ -329,6 +331,10 @@ literal
   | CharacterLiteral
   | StringLiteral
   | BooleanLiteral
+  ;
+
+SUCHTHAT // ;; added, so we can change it easily
+  : '.' // ;; changed from colon since that conflicts with typings
   ;
 
 IntegerLiteral
@@ -598,8 +604,23 @@ JavaLetterOrDigit
         {Character.isJavaIdentifierPart(Character.toCodePoint((char)_input.LA(-2), (char)_input.LA(-1)))}?
     ;
 
-COMMENT
-  : '---' .*? '---' -> skip
+//COMMENT ;; deleted this
+//  : '---' .*? '---' -> skip
+//  ;
+
+fragment // ;; added this
+CommentBegin
+   : '---' '-'*
+   | '===' '='* // to experiment with different ways of showing start of comment
+   ;
+
+fragment // ;; added this
+CommentEnd
+   : '---' '-'*
+   ;
+
+COMMENT // ;; added this
+  :  CommentBegin .*? CommentEnd -> skip
   ;
 
 LINE_COMMENT
