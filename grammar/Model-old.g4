@@ -1,9 +1,6 @@
 
 grammar Model;
 
-// All changes made to make the spacecraft example parse and higlighted by a one-line comment of the form
-//   ;; this has changed bla bla bla
-
 model
   : packageDeclaration 
     importDeclaration* 
@@ -15,7 +12,7 @@ model
 topDeclaration
   : memberDeclaration
   | classDeclaration
-  // | expressionsWithSeparator ;; deleted
+  | expressionsWithSeparator
   ;
 
 packageDeclaration
@@ -77,7 +74,6 @@ memberDeclaration
   | variableDeclaration
   | functionDeclaration 
   | constraint
-  | expressionsWithSeparator // ;; added (moved to here)
   ;
 
 valueDeclaration
@@ -102,11 +98,11 @@ typing
 
 functionBodyElement
   : memberDeclaration
-  //| expressionsWithSeparator ;; deleted, now in memberDeclaration
+  | expressionsWithSeparator
   ;
 
 functionDeclaration
-  : 'def' Identifier ('(' typingList? ')')+ (':' type) '{' functionBodyElement* '}' // ;; added ? to typingList
+  : 'def' Identifier ('(' typingList ')')+ (':' type) '{' functionBodyElement* '}' 
   ;
 
 constraint
@@ -176,8 +172,7 @@ expression
   | literal
   | Identifier
   | expression '.' Identifier
-  //| 'create' expression  // calls to constructor ;; edited to the line below
-    | 'create' qualifiedName ('(' classArgumentList? ')')? // ;; added, see line above
+  | 'create' expression             // calls to constructor
   | expression expression
   | 'if' expression 'then' expression 'else' expression
   | 'case' expression 'of' match
@@ -192,7 +187,6 @@ expression
  // -----------
  // Arithmetic:
  // -----------
-  | '-' expression // ;; added
   | expression ('*'|'/'|'%') expression
   | expression ('+'|'-') expression
  // ---------
@@ -240,14 +234,6 @@ expression
   // Records:
   // --------  
   | /*class*/expression '@' '{' idValueList '}'  
-  ;
-
-classArgumentList // ;; added this rule
-  : classArgument (',' classArgument)*
-  ;
-
-classArgument // ;; added this rule
-  : Identifier ':' expression
   ;
 
 idValueList
