@@ -27,7 +27,8 @@ importDeclaration
   ;
 
 classDeclaration
-  : 'class' Identifier typeParameters? valueParameters? extending? '{' (memberDeclaration ';'?)* '}'
+  : 'class' Identifier typeParameters? valueParameters? extending? '{' memberDeclaration* '}' 
+     // ;; removed semicolon after each memberDeclaration, since it occurs as part of memberDeclarations
   ;
 
 typeParameters
@@ -56,11 +57,11 @@ extending
 
 type
   : primitiveType
-  | Identifier typeArguments?
-  | type ('*' type)+                 // cartesian product
-  | type '->' type                   // function type
+  | qualifiedName typeArguments?    // ;; changed Identifier to qualifiedName
+  | type ('*' type)+                // cartesian product
+  | type '->' type                  // function type
   | '(' type ')'
-  | '{|' typing '.' expression '|}' // predicate subtype
+  | '{|' typing SUCHTHAT expression '|}' // predicate subtype ;; changed '.' to SUCHTHAT
   | '{' type '}'                    // set {Int} {1,2}
   | '[' type ']'                    // list [Int] [1,2,2,2,2]
   | '<' type ',' type '>'           // map from first type to next <Int,String> <1:"one", 2:"two">
@@ -121,8 +122,7 @@ primitiveType
   | 'Int'       // Scala bigint (arbitrary precision)
   | 'Real'      // double
   | 'String'
-  | 'Void'
-  | 'Nada'
+  | 'Void' | 'Unit' | 'Nada' // ;; played around with other options such as Unit
   ;
 
 tokenLessThan
@@ -170,10 +170,26 @@ expressionsWithSeparator
     : expression ';'
     ;
 
-expression
- // --------
- //  Common:
- // --------
+/* ;; operator precedences from Scala K grammar
+HIGEST
+    "*" | "/" | "%" |
+      "inter" | "++" | "#" | "^"
+
+    "+" | "-" | "union"
+
+    "<=" | ">=" | "<" | ">" |
+      "=" | "!=" |
+      "isin" | "!isin" | "subset" | "psubset"
+
+    "and"
+
+    "or"
+
+    "=>" | "<=>"
+LOWEST
+*/
+
+expression // ;; moved around on bin infix expressions to control precedence, highest first
   : '(' expression ')'
   | literal
   | Identifier
@@ -183,65 +199,37 @@ expression
   | expression expression
   | 'if' expression 'then' expression 'else' expression
   | 'case' expression 'of' match
- // -----------
- // Assignment
- // This also does structural assignment
- // assignment to functions
- // -----------
-  | expression ':=' expression
-  //| (expression '.')? Identifier ':=' expression
-    
- // -----------
- // Arithmetic:
- // -----------
   | '-' expression // ;; added
-  | expression ('*'|'/'|'%') expression
-  | expression ('+'|'-') expression
- // ---------
- // Booleans:
- // ---------
   | tokenNot expression
-  | expression (tokenLessThanEqual | tokenGreaterThanEqual | tokenLessThan | tokenGreatherThan) expression
-  | expression ('isin'|'!isin'|'subset'|'psubset') expression
-  | expression (tokenEquals | tokenNot tokenEquals) expression
-  | expression tokenAnd expression
-  | expression tokenOr expression
-  | expression (tokenImplies | tokenIFF) expression
-  | expression '.#' expression
   | 'forall' rngBindingList SUCHTHAT expression // ;; introduced SUCHTHAT
   | 'exists' rngBindingList SUCHTHAT expression // ;; introduced SUCHTHAT
- // -------
- // Tuples:
- // -------
   | '(' expression (',' expression)+ ')'
- // -----
- // Sets:
- // -----
-  | expression ('union'|'inter'|'\\') expression
   | '{' expressionList? '}'
   | '{' expression '..' expression '}'
   | '{' expression '|' rngBindingList SUCHTHAT expression '}' // ;; introduced SUCHTHAT
-  // ------
-  // Lists:
-  // ------
-  | expression ('^') expression
   | '[' expressionList? ']'
   | '[' expression '..' expression ']'
   | '[' expression '|' pattern ':' expression SUCHTHAT expression ']'  // ;; introduced SUCHTHAT
-  // -----
-  // Maps:
-  // -----
-  | /*map*/expression '++' /*map*/expression
   | '{' mapPairList? '}'
   | '{' mapPair '|' rngBindingList SUCHTHAT expression '}' // ;; introduced SUCHTHAT
-  // ----------
-  // Functions:
-  // ----------
   | '-\\' pattern (':' type)? SUCHTHAT expression // ;; introduced SUCHTHAT
+  | expression ('*'|'/'|'%'|'inter'|'\\'|'++'|'#'|'^') expression
+  | expression ('+'|'-'|'union') expression
+  | expression 
+      (
+         tokenLessThanEqual | tokenGreaterThanEqual | tokenLessThan | tokenGreatherThan 
+       | tokenEquals | tokenNot tokenEquals
+       | 'isin'|'!isin'|'subset'|'psubset' 
+      ) 
+    expression
+  | expression tokenAnd expression
+  | expression tokenOr expression
+  | expression (tokenImplies | tokenIFF) expression
+  | expression ':=' expression
   // --------
   // Records:
   // --------  
-  | /*class*/expression '@' '{' idValueList '}'  
+  //| /*class*/expression '@' '{' idValueList '}' ;; deleted for now.
   ;
 
 classArgumentList // ;; added this rule

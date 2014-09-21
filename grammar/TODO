@@ -1,4 +1,6 @@
 
+  //| (expression '.')? Identifier ':=' expression
+
 Semicolon: 
 - it is not quite clean since it is only at the top level, ... ?
 - semicolon as a terminator, rather than as a separator, is somewhat annoying
