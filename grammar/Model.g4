@@ -268,7 +268,7 @@ mapPairList
   ;
 
 mapPair
-  : expression '->' expression
+  : expression ':' expression // ;; changed from -> to :, as we agreed on I think.
   ;
 
 rngBindingList
@@ -288,13 +288,13 @@ collectionOrType
   | type
   ;
   
-letBindingList
-  : letBinding (',' letBinding)*
-  ;
+// letBindingList ;; deleted, not used
+//  : letBinding (',' letBinding)*
+//  ;
   
-letBinding
-  : pattern (':' type)? '=' expression
-  ;  
+// letBinding ;; deleted, not used
+//  : pattern (':' type)? '=' expression
+//  ;  
 
 pattern
   : Identifier

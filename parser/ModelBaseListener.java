@@ -198,19 +198,6 @@ public class ModelBaseListener implements ModelListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterLetBindingList(@NotNull ModelParser.LetBindingListContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitLetBindingList(@NotNull ModelParser.LetBindingListContext ctx) { }
-
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterPatternList(@NotNull ModelParser.PatternListContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -387,19 +374,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitIdValueList(@NotNull ModelParser.IdValueListContext ctx) { }
-
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterLetBinding(@NotNull ModelParser.LetBindingContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitLetBinding(@NotNull ModelParser.LetBindingContext ctx) { }
 
 	/**
 	 * {@inheritDoc}
@@ -614,19 +588,6 @@ public class ModelBaseListener implements ModelListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterPattern(@NotNull ModelParser.PatternContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitPattern(@NotNull ModelParser.PatternContext ctx) { }
-
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterMatchPattern(@NotNull ModelParser.MatchPatternContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -647,6 +608,19 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitMapPairList(@NotNull ModelParser.MapPairListContext ctx) { }
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterPattern(@NotNull ModelParser.PatternContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitPattern(@NotNull ModelParser.PatternContext ctx) { }
 
 	/**
 	 * {@inheritDoc}
