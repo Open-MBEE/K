@@ -22,7 +22,7 @@ class Instrument {
 }
 
 class SpaceCraft {
-    var instruments : [Instrument];
+    var instruments : [Instrument] = a.p;
 
     def changeInstrument(instrument:Instrument) : Void { 
       instrument.Id := 42;
