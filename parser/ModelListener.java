@@ -162,17 +162,6 @@ public interface ModelListener extends ParseTreeListener {
 	void exitTypeArguments(@NotNull ModelParser.TypeArgumentsContext ctx);
 
 	/**
-	 * Enter a parse tree produced by {@link ModelParser#letBindingList}.
-	 * @param ctx the parse tree
-	 */
-	void enterLetBindingList(@NotNull ModelParser.LetBindingListContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link ModelParser#letBindingList}.
-	 * @param ctx the parse tree
-	 */
-	void exitLetBindingList(@NotNull ModelParser.LetBindingListContext ctx);
-
-	/**
 	 * Enter a parse tree produced by {@link ModelParser#patternList}.
 	 * @param ctx the parse tree
 	 */
@@ -325,17 +314,6 @@ public interface ModelListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitIdValueList(@NotNull ModelParser.IdValueListContext ctx);
-
-	/**
-	 * Enter a parse tree produced by {@link ModelParser#letBinding}.
-	 * @param ctx the parse tree
-	 */
-	void enterLetBinding(@NotNull ModelParser.LetBindingContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link ModelParser#letBinding}.
-	 * @param ctx the parse tree
-	 */
-	void exitLetBinding(@NotNull ModelParser.LetBindingContext ctx);
 
 	/**
 	 * Enter a parse tree produced by {@link ModelParser#typeBound}.
@@ -514,17 +492,6 @@ public interface ModelListener extends ParseTreeListener {
 	void exitClassArgument(@NotNull ModelParser.ClassArgumentContext ctx);
 
 	/**
-	 * Enter a parse tree produced by {@link ModelParser#pattern}.
-	 * @param ctx the parse tree
-	 */
-	void enterPattern(@NotNull ModelParser.PatternContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link ModelParser#pattern}.
-	 * @param ctx the parse tree
-	 */
-	void exitPattern(@NotNull ModelParser.PatternContext ctx);
-
-	/**
 	 * Enter a parse tree produced by {@link ModelParser#matchPattern}.
 	 * @param ctx the parse tree
 	 */
@@ -545,6 +512,17 @@ public interface ModelListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitMapPairList(@NotNull ModelParser.MapPairListContext ctx);
+
+	/**
+	 * Enter a parse tree produced by {@link ModelParser#pattern}.
+	 * @param ctx the parse tree
+	 */
+	void enterPattern(@NotNull ModelParser.PatternContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ModelParser#pattern}.
+	 * @param ctx the parse tree
+	 */
+	void exitPattern(@NotNull ModelParser.PatternContext ctx);
 
 	/**
 	 * Enter a parse tree produced by {@link ModelParser#mapPair}.
