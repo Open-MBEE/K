@@ -1,2 +1,2 @@
-java -jar /usr/local/lib/antlr-4.4-complete.jar ../grammar/Model.g4
-javac Model*.java
+java -jar ./antlr-4.4-complete.jar ../grammar/Model.g4
+javac -cp ./antlr-4.4-complete.jar:. Model*.java
