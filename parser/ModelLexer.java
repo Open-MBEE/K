@@ -1,4 +1,4 @@
-// Generated from Model.g4 by ANTLR 4.2
+// Generated from ../grammar/Model.g4 by ANTLR 4.4
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;
@@ -10,6 +10,8 @@ import org.antlr.v4.runtime.misc.*;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class ModelLexer extends Lexer {
+	static { RuntimeMetaData.checkVersion("4.4", RuntimeMetaData.VERSION); }
+
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
 		new PredictionContextCache();
@@ -32,19 +34,17 @@ public class ModelLexer extends Lexer {
 	};
 
 	public static final String[] tokenNames = {
-		"<INVALID>",
-		"'implies'", "'or'", "'['", "'*'", "'<'", "'!isin'", "'<='", "'Bool'", 
-		"'}'", "'subset'", "'eq'", "'lt'", "'case'", "'->'", "'%'", "'Unit'", 
-		"'union'", "')'", "'_'", "'-\\'", "'iff'", "'gt'", "'='", "'<=>'", "'String'", 
-		"'psubset'", "'Int'", "'\\'", "'gte'", "'Char'", "'val'", "'req'", "'class'", 
-		"'|'", "'!'", "'..'", "']'", "','", "'of'", "'Void'", "'-'", "'not'", 
-		"':'", "'('", "'if'", "'lte'", "'var'", "'package'", "'def'", "'{|'", 
-		"'{'", "'and'", "'extends'", "'isin'", "'else'", "'++'", "'import'", "'^'", 
-		"'inter'", "'=>'", "'+'", "'create'", "'forall'", "'|}'", "'Nada'", "'&&'", 
-		"'||'", "'>'", "'exists'", "'Real'", "'type'", "':='", "'then'", "'/'", 
-		"'>='", "'#'", "'.'", "IntegerLiteral", "FloatingPointLiteral", "BooleanLiteral", 
-		"CharacterLiteral", "StringLiteral", "Identifier", "COMMENT", "LINE_COMMENT", 
-		"WS", "';'"
+		"'\\u0000'", "'\\u0001'", "'\\u0002'", "'\\u0003'", "'\\u0004'", "'\\u0005'", 
+		"'\\u0006'", "'\\u0007'", "'\b'", "'\t'", "'\n'", "'\\u000B'", "'\f'", 
+		"'\r'", "'\\u000E'", "'\\u000F'", "'\\u0010'", "'\\u0011'", "'\\u0012'", 
+		"'\\u0013'", "'\\u0014'", "'\\u0015'", "'\\u0016'", "'\\u0017'", "'\\u0018'", 
+		"'\\u0019'", "'\\u001A'", "'\\u001B'", "'\\u001C'", "'\\u001D'", "'\\u001E'", 
+		"'\\u001F'", "' '", "'!'", "'\"'", "'#'", "'$'", "'%'", "'&'", "'''", 
+		"'('", "')'", "'*'", "'+'", "','", "'-'", "'.'", "'/'", "'0'", "'1'", 
+		"'2'", "'3'", "'4'", "'5'", "'6'", "'7'", "'8'", "'9'", "':'", "';'", 
+		"'<'", "'='", "'>'", "'?'", "'@'", "'A'", "'B'", "'C'", "'D'", "'E'", 
+		"'F'", "'G'", "'H'", "'I'", "'J'", "'K'", "'L'", "'M'", "'N'", "'O'", 
+		"'P'", "'Q'", "'R'", "'S'", "'T'", "'U'", "'V'", "'W'"
 	};
 	public static final String[] ruleNames = {
 		"T__75", "T__74", "T__73", "T__72", "T__71", "T__70", "T__69", "T__68", 
@@ -99,7 +99,6 @@ public class ModelLexer extends Lexer {
 	public boolean sempred(RuleContext _localctx, int ruleIndex, int predIndex) {
 		switch (ruleIndex) {
 		case 123: return JavaLetter_sempred((RuleContext)_localctx, predIndex);
-
 		case 124: return JavaLetterOrDigit_sempred((RuleContext)_localctx, predIndex);
 		}
 		return true;
@@ -107,7 +106,6 @@ public class ModelLexer extends Lexer {
 	private boolean JavaLetterOrDigit_sempred(RuleContext _localctx, int predIndex) {
 		switch (predIndex) {
 		case 2: return Character.isJavaIdentifierPart(_input.LA(-1));
-
 		case 3: return Character.isJavaIdentifierPart(Character.toCodePoint((char)_input.LA(-2), (char)_input.LA(-1)));
 		}
 		return true;
@@ -115,7 +113,6 @@ public class ModelLexer extends Lexer {
 	private boolean JavaLetter_sempred(RuleContext _localctx, int predIndex) {
 		switch (predIndex) {
 		case 0: return Character.isJavaIdentifierStart(_input.LA(-1));
-
 		case 1: return Character.isJavaIdentifierStart(Character.toCodePoint((char)_input.LA(-2), (char)_input.LA(-1)));
 		}
 		return true;
