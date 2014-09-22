@@ -52,7 +52,7 @@ public class ModelBaseListener implements ModelListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterModel(@NotNull ModelParser.ModelContext ctx) { }
+	@Override public void enterModel(@NotNull ModelParser.ModelContext ctx) { System.out.println("lkjlkj"); }
 	/**
 	 * {@inheritDoc}
 	 *
