@@ -34,7 +34,7 @@ public class TestListener extends ModelBaseListener implements ModelListener{
 	//System.out.println("\t^^^" + ctx.children.get(i).getText() + "^^^");
 	//}
 	
-	System.out.println( ctx.extending().getText());
+	//System.out.println( ctx.getText());
 	
     }
 }
