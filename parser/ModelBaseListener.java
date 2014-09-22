@@ -1,4 +1,4 @@
-// Generated from Model.g4 by ANTLR 4.2
+// Generated from ../grammar/Model.g4 by ANTLR 4.4
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.NotNull;
@@ -23,7 +23,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitTokenIFF(@NotNull ModelParser.TokenIFFContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -36,7 +35,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitExpression(@NotNull ModelParser.ExpressionContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -49,21 +47,18 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitSortDeclaration(@NotNull ModelParser.SortDeclarationContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void enterExpressionList(@NotNull ModelParser.ExpressionListContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitExpressionList(@NotNull ModelParser.ExpressionListContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -76,7 +71,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitTokenGreatherThan(@NotNull ModelParser.TokenGreatherThanContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -89,7 +83,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitTypeDeclaration(@NotNull ModelParser.TypeDeclarationContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -102,7 +95,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitType(@NotNull ModelParser.TypeContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -115,7 +107,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitVariableDeclaration(@NotNull ModelParser.VariableDeclarationContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -128,7 +119,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitTokenLessThan(@NotNull ModelParser.TokenLessThanContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -141,7 +131,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitTyping(@NotNull ModelParser.TypingContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -154,7 +143,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitImportDeclaration(@NotNull ModelParser.ImportDeclarationContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -167,7 +155,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitTopDeclaration(@NotNull ModelParser.TopDeclarationContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -180,7 +167,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitPackageDeclaration(@NotNull ModelParser.PackageDeclarationContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -193,7 +179,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitTypeArguments(@NotNull ModelParser.TypeArgumentsContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -206,7 +191,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitPatternList(@NotNull ModelParser.PatternListContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -219,7 +203,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitMatchArgument(@NotNull ModelParser.MatchArgumentContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -232,7 +215,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitTokenImplies(@NotNull ModelParser.TokenImpliesContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -245,7 +227,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitValueParameters(@NotNull ModelParser.ValueParametersContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -258,7 +239,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitRngBinding(@NotNull ModelParser.RngBindingContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -271,7 +251,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitMatch(@NotNull ModelParser.MatchContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -284,7 +263,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitTokenEquals(@NotNull ModelParser.TokenEqualsContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -297,7 +275,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitCollectionOrType(@NotNull ModelParser.CollectionOrTypeContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -310,7 +287,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitExtending(@NotNull ModelParser.ExtendingContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -323,7 +299,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitTypeParameter(@NotNull ModelParser.TypeParameterContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -336,7 +311,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitClassArgumentList(@NotNull ModelParser.ClassArgumentListContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -349,7 +323,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitRngBindingList(@NotNull ModelParser.RngBindingListContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -362,7 +335,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitModel(@NotNull ModelParser.ModelContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -375,7 +347,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitIdValueList(@NotNull ModelParser.IdValueListContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -388,7 +359,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitTypeBound(@NotNull ModelParser.TypeBoundContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -401,7 +371,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitTokenNot(@NotNull ModelParser.TokenNotContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -414,7 +383,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitTokenAnd(@NotNull ModelParser.TokenAndContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -427,7 +395,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitConstraint(@NotNull ModelParser.ConstraintContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -440,7 +407,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitIdentifierList(@NotNull ModelParser.IdentifierListContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -453,7 +419,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitTokenOr(@NotNull ModelParser.TokenOrContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -466,7 +431,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitTokenLessThanEqual(@NotNull ModelParser.TokenLessThanEqualContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -479,7 +443,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitMemberDeclaration(@NotNull ModelParser.MemberDeclarationContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -492,7 +455,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitTokenGreaterThanEqual(@NotNull ModelParser.TokenGreaterThanEqualContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -505,7 +467,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitIdValuePair(@NotNull ModelParser.IdValuePairContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -518,7 +479,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitValueDeclaration(@NotNull ModelParser.ValueDeclarationContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -531,7 +491,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitTypeParameters(@NotNull ModelParser.TypeParametersContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -544,7 +503,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitQualifiedName(@NotNull ModelParser.QualifiedNameContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -557,7 +515,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitExpressionsWithSeparator(@NotNull ModelParser.ExpressionsWithSeparatorContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -570,7 +527,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitClassDeclaration(@NotNull ModelParser.ClassDeclarationContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -583,7 +539,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitClassArgument(@NotNull ModelParser.ClassArgumentContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -596,7 +551,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitMatchPattern(@NotNull ModelParser.MatchPatternContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -609,7 +563,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitMapPairList(@NotNull ModelParser.MapPairListContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -622,7 +575,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitPattern(@NotNull ModelParser.PatternContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -635,7 +587,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitMapPair(@NotNull ModelParser.MapPairContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -648,7 +599,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitPrimitiveType(@NotNull ModelParser.PrimitiveTypeContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -661,7 +611,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitTypingList(@NotNull ModelParser.TypingListContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *
@@ -674,7 +623,6 @@ public class ModelBaseListener implements ModelListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitFunctionDeclaration(@NotNull ModelParser.FunctionDeclarationContext ctx) { }
-
 	/**
 	 * {@inheritDoc}
 	 *

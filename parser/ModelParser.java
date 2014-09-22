@@ -1,4 +1,4 @@
-// Generated from Model.g4 by ANTLR 4.2
+// Generated from ../grammar/Model.g4 by ANTLR 4.4
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.*;
@@ -10,6 +10,8 @@ import java.util.ArrayList;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class ModelParser extends Parser {
+	static { RuntimeMetaData.checkVersion("4.4", RuntimeMetaData.VERSION); }
+
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
 		new PredictionContextCache();
@@ -140,7 +142,7 @@ public class ModelParser extends Parser {
 			setState(108);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==57) {
+			while (_la==T__19) {
 				{
 				{
 				setState(105); importDeclaration();
@@ -153,7 +155,7 @@ public class ModelParser extends Parser {
 			setState(114);
 			_errHandler.sync(this);
 			_alt = getInterpreter().adaptivePredict(_input,1,_ctx);
-			while ( _alt!=2 && _alt!=-1 ) {
+			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
 					{
@@ -168,7 +170,7 @@ public class ModelParser extends Parser {
 			setState(120);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << 3) | (1L << 13) | (1L << 20) | (1L << 31) | (1L << 32) | (1L << 33) | (1L << 35) | (1L << 41) | (1L << 42) | (1L << 44) | (1L << 45) | (1L << 47) | (1L << 49) | (1L << 51) | (1L << 62) | (1L << 63))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (69 - 69)) | (1L << (71 - 69)) | (1L << (IntegerLiteral - 69)) | (1L << (FloatingPointLiteral - 69)) | (1L << (BooleanLiteral - 69)) | (1L << (CharacterLiteral - 69)) | (1L << (StringLiteral - 69)) | (1L << (Identifier - 69)))) != 0)) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__73) | (1L << T__63) | (1L << T__56) | (1L << T__45) | (1L << T__44) | (1L << T__43) | (1L << T__41) | (1L << T__35) | (1L << T__34) | (1L << T__32) | (1L << T__31) | (1L << T__29) | (1L << T__27) | (1L << T__25) | (1L << T__14) | (1L << T__13))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (T__7 - 69)) | (1L << (T__5 - 69)) | (1L << (IntegerLiteral - 69)) | (1L << (FloatingPointLiteral - 69)) | (1L << (BooleanLiteral - 69)) | (1L << (CharacterLiteral - 69)) | (1L << (StringLiteral - 69)) | (1L << (Identifier - 69)))) != 0)) {
 				{
 				{
 				setState(117); topDeclaration();
@@ -219,23 +221,23 @@ public class ModelParser extends Parser {
 		try {
 			setState(127);
 			switch (_input.LA(1)) {
-			case 3:
-			case 13:
-			case 20:
-			case 31:
-			case 32:
-			case 35:
-			case 41:
-			case 42:
-			case 44:
-			case 45:
-			case 47:
-			case 49:
-			case 51:
-			case 62:
-			case 63:
-			case 69:
-			case 71:
+			case T__73:
+			case T__63:
+			case T__56:
+			case T__45:
+			case T__44:
+			case T__41:
+			case T__35:
+			case T__34:
+			case T__32:
+			case T__31:
+			case T__29:
+			case T__27:
+			case T__25:
+			case T__14:
+			case T__13:
+			case T__7:
+			case T__5:
 			case IntegerLiteral:
 			case FloatingPointLiteral:
 			case BooleanLiteral:
@@ -247,7 +249,7 @@ public class ModelParser extends Parser {
 				setState(125); memberDeclaration();
 				}
 				break;
-			case 33:
+			case T__43:
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(126); classDeclaration();
@@ -292,7 +294,7 @@ public class ModelParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(129); match(48);
+			setState(129); match(T__28);
 			setState(130); qualifiedName();
 			}
 		}
@@ -332,14 +334,14 @@ public class ModelParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(132); match(57);
+			setState(132); match(T__19);
 			setState(133); qualifiedName();
 			setState(136);
 			_la = _input.LA(1);
 			if (_la==SUCHTHAT) {
 				{
 				setState(134); match(SUCHTHAT);
-				setState(135); match(4);
+				setState(135); match(T__72);
 				}
 			}
 
@@ -394,11 +396,11 @@ public class ModelParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(138); match(33);
+			setState(138); match(T__43);
 			setState(139); match(Identifier);
 			setState(141);
 			_la = _input.LA(1);
-			if (_la==3) {
+			if (_la==T__73) {
 				{
 				setState(140); typeParameters();
 				}
@@ -406,7 +408,7 @@ public class ModelParser extends Parser {
 
 			setState(144);
 			_la = _input.LA(1);
-			if (_la==44) {
+			if (_la==T__32) {
 				{
 				setState(143); valueParameters();
 				}
@@ -414,17 +416,17 @@ public class ModelParser extends Parser {
 
 			setState(147);
 			_la = _input.LA(1);
-			if (_la==53) {
+			if (_la==T__23) {
 				{
 				setState(146); extending();
 				}
 			}
 
-			setState(149); match(51);
+			setState(149); match(T__25);
 			setState(153);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << 3) | (1L << 13) | (1L << 20) | (1L << 31) | (1L << 32) | (1L << 35) | (1L << 41) | (1L << 42) | (1L << 44) | (1L << 45) | (1L << 47) | (1L << 49) | (1L << 51) | (1L << 62) | (1L << 63))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (69 - 69)) | (1L << (71 - 69)) | (1L << (IntegerLiteral - 69)) | (1L << (FloatingPointLiteral - 69)) | (1L << (BooleanLiteral - 69)) | (1L << (CharacterLiteral - 69)) | (1L << (StringLiteral - 69)) | (1L << (Identifier - 69)))) != 0)) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__73) | (1L << T__63) | (1L << T__56) | (1L << T__45) | (1L << T__44) | (1L << T__41) | (1L << T__35) | (1L << T__34) | (1L << T__32) | (1L << T__31) | (1L << T__29) | (1L << T__27) | (1L << T__25) | (1L << T__14) | (1L << T__13))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (T__7 - 69)) | (1L << (T__5 - 69)) | (1L << (IntegerLiteral - 69)) | (1L << (FloatingPointLiteral - 69)) | (1L << (BooleanLiteral - 69)) | (1L << (CharacterLiteral - 69)) | (1L << (StringLiteral - 69)) | (1L << (Identifier - 69)))) != 0)) {
 				{
 				{
 				setState(150); memberDeclaration();
@@ -434,7 +436,7 @@ public class ModelParser extends Parser {
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
-			setState(156); match(9);
+			setState(156); match(T__67);
 			}
 		}
 		catch (RecognitionException re) {
@@ -476,15 +478,15 @@ public class ModelParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(158); match(3);
+			setState(158); match(T__73);
 			setState(159); typeParameter();
 			setState(164);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==38) {
+			while (_la==T__38) {
 				{
 				{
-				setState(160); match(38);
+				setState(160); match(T__38);
 				setState(161); typeParameter();
 				}
 				}
@@ -492,7 +494,7 @@ public class ModelParser extends Parser {
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
-			setState(167); match(37);
+			setState(167); match(T__39);
 			}
 		}
 		catch (RecognitionException re) {
@@ -535,9 +537,9 @@ public class ModelParser extends Parser {
 			setState(169); match(Identifier);
 			setState(172);
 			_la = _input.LA(1);
-			if (_la==43) {
+			if (_la==T__33) {
 				{
-				setState(170); match(43);
+				setState(170); match(T__33);
 				setState(171); typeBound();
 				}
 			}
@@ -587,10 +589,10 @@ public class ModelParser extends Parser {
 			setState(179);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==61) {
+			while (_la==T__15) {
 				{
 				{
-				setState(175); match(61);
+				setState(175); match(T__15);
 				setState(176); type(0);
 				}
 				}
@@ -635,9 +637,9 @@ public class ModelParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(182); match(44);
+			setState(182); match(T__32);
 			setState(183); typingList();
-			setState(184); match(18);
+			setState(184); match(T__58);
 			}
 		}
 		catch (RecognitionException re) {
@@ -683,10 +685,10 @@ public class ModelParser extends Parser {
 			setState(191);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==38) {
+			while (_la==T__38) {
 				{
 				{
-				setState(187); match(38);
+				setState(187); match(T__38);
 				setState(188); typing();
 				}
 				}
@@ -735,15 +737,15 @@ public class ModelParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(194); match(53);
+			setState(194); match(T__23);
 			setState(195); type(0);
 			setState(200);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==38) {
+			while (_la==T__38) {
 				{
 				{
-				setState(196); match(38);
+				setState(196); match(T__38);
 				setState(197); type(0);
 				}
 				}
@@ -818,14 +820,14 @@ public class ModelParser extends Parser {
 			{
 			setState(233);
 			switch (_input.LA(1)) {
-			case 8:
-			case 16:
-			case 25:
-			case 27:
-			case 30:
-			case 40:
-			case 65:
-			case 70:
+			case T__68:
+			case T__60:
+			case T__51:
+			case T__49:
+			case T__46:
+			case T__36:
+			case T__11:
+			case T__6:
 				{
 				setState(204); primitiveType();
 				}
@@ -843,43 +845,43 @@ public class ModelParser extends Parser {
 				}
 				}
 				break;
-			case 44:
+			case T__32:
 				{
-				setState(209); match(44);
+				setState(209); match(T__32);
 				setState(210); type(0);
-				setState(211); match(18);
+				setState(211); match(T__58);
 				}
 				break;
-			case 50:
+			case T__26:
 				{
-				setState(213); match(50);
+				setState(213); match(T__26);
 				setState(214); typing();
 				setState(215); match(SUCHTHAT);
 				setState(216); expression(0);
-				setState(217); match(64);
+				setState(217); match(T__12);
 				}
 				break;
-			case 51:
+			case T__25:
 				{
-				setState(219); match(51);
+				setState(219); match(T__25);
 				setState(220); type(0);
-				setState(221); match(9);
+				setState(221); match(T__67);
 				}
 				break;
-			case 3:
+			case T__73:
 				{
-				setState(223); match(3);
+				setState(223); match(T__73);
 				setState(224); type(0);
-				setState(225); match(37);
+				setState(225); match(T__39);
 				}
 				break;
-			case 5:
+			case T__71:
 				{
-				setState(227); match(5);
+				setState(227); match(T__71);
 				setState(228); type(0);
-				setState(229); match(38);
+				setState(229); match(T__38);
 				setState(230); type(0);
-				setState(231); match(68);
+				setState(231); match(T__8);
 				}
 				break;
 			default:
@@ -889,7 +891,7 @@ public class ModelParser extends Parser {
 			setState(247);
 			_errHandler.sync(this);
 			_alt = getInterpreter().adaptivePredict(_input,18,_ctx);
-			while ( _alt!=2 && _alt!=-1 ) {
+			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					if ( _parseListeners!=null ) triggerExitRuleEvent();
 					_prevctx = _localctx;
@@ -902,11 +904,10 @@ public class ModelParser extends Parser {
 						pushNewRecursionContext(_localctx, _startState, RULE_type);
 						setState(235);
 						if (!(precpred(_ctx, 6))) throw new FailedPredicateException(this, "precpred(_ctx, 6)");
-						setState(236); match(14);
+						setState(236); match(T__62);
 						setState(237); type(7);
 						}
 						break;
-
 					case 2:
 						{
 						_localctx = new TypeContext(_parentctx, _parentState);
@@ -915,13 +916,13 @@ public class ModelParser extends Parser {
 						if (!(precpred(_ctx, 7))) throw new FailedPredicateException(this, "precpred(_ctx, 7)");
 						setState(241); 
 						_errHandler.sync(this);
-						_alt = getInterpreter().adaptivePredict(_input,16,_ctx);
+						_alt = 1;
 						do {
 							switch (_alt) {
 							case 1:
 								{
 								{
-								setState(239); match(4);
+								setState(239); match(T__72);
 								setState(240); type(0);
 								}
 								}
@@ -932,7 +933,7 @@ public class ModelParser extends Parser {
 							setState(243); 
 							_errHandler.sync(this);
 							_alt = getInterpreter().adaptivePredict(_input,16,_ctx);
-						} while ( _alt!=2 && _alt!=-1 );
+						} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
 						}
 						break;
 					}
@@ -983,15 +984,15 @@ public class ModelParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(250); match(3);
+			setState(250); match(T__73);
 			setState(251); type(0);
 			setState(256);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==38) {
+			while (_la==T__38) {
 				{
 				{
-				setState(252); match(38);
+				setState(252); match(T__38);
 				setState(253); type(0);
 				}
 				}
@@ -999,7 +1000,7 @@ public class ModelParser extends Parser {
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
-			setState(259); match(37);
+			setState(259); match(T__39);
 			}
 		}
 		catch (RecognitionException re) {
@@ -1061,42 +1062,36 @@ public class ModelParser extends Parser {
 				setState(261); sortDeclaration();
 				}
 				break;
-
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(262); typeDeclaration();
 				}
 				break;
-
 			case 3:
 				enterOuterAlt(_localctx, 3);
 				{
 				setState(263); valueDeclaration();
 				}
 				break;
-
 			case 4:
 				enterOuterAlt(_localctx, 4);
 				{
 				setState(264); variableDeclaration();
 				}
 				break;
-
 			case 5:
 				enterOuterAlt(_localctx, 5);
 				{
 				setState(265); functionDeclaration();
 				}
 				break;
-
 			case 6:
 				enterOuterAlt(_localctx, 6);
 				{
 				setState(266); constraint();
 				}
 				break;
-
 			case 7:
 				enterOuterAlt(_localctx, 7);
 				{
@@ -1144,13 +1139,13 @@ public class ModelParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(270); match(31);
+			setState(270); match(T__45);
 			setState(271); typing();
 			setState(274);
 			_la = _input.LA(1);
-			if (_la==23) {
+			if (_la==T__53) {
 				{
-				setState(272); match(23);
+				setState(272); match(T__53);
 				setState(273); expression(0);
 				}
 			}
@@ -1191,7 +1186,7 @@ public class ModelParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(278); match(71);
+			setState(278); match(T__5);
 			setState(279); match(Identifier);
 			setState(280); match(SEP);
 			}
@@ -1236,17 +1231,17 @@ public class ModelParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(282); match(71);
+			setState(282); match(T__5);
 			setState(283); match(Identifier);
 			setState(285);
 			_la = _input.LA(1);
-			if (_la==3) {
+			if (_la==T__73) {
 				{
 				setState(284); typeParameters();
 				}
 			}
 
-			setState(287); match(23);
+			setState(287); match(T__53);
 			setState(288); type(0);
 			setState(289); match(SEP);
 			}
@@ -1290,13 +1285,13 @@ public class ModelParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(291); match(47);
+			setState(291); match(T__29);
 			setState(292); typing();
 			setState(295);
 			_la = _input.LA(1);
-			if (_la==23) {
+			if (_la==T__53) {
 				{
-				setState(293); match(23);
+				setState(293); match(T__53);
 				setState(294); expression(0);
 				}
 			}
@@ -1341,7 +1336,7 @@ public class ModelParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(299); match(Identifier);
-			setState(300); match(43);
+			setState(300); match(T__33);
 			setState(301); type(0);
 			}
 		}
@@ -1394,7 +1389,7 @@ public class ModelParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(303); match(49);
+			setState(303); match(T__27);
 			setState(304); match(Identifier);
 			setState(310); 
 			_errHandler.sync(this);
@@ -1402,7 +1397,7 @@ public class ModelParser extends Parser {
 			do {
 				{
 				{
-				setState(305); match(44);
+				setState(305); match(T__32);
 				setState(307);
 				_la = _input.LA(1);
 				if (_la==Identifier) {
@@ -1411,22 +1406,22 @@ public class ModelParser extends Parser {
 					}
 				}
 
-				setState(309); match(18);
+				setState(309); match(T__58);
 				}
 				}
 				setState(312); 
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-			} while ( _la==44 );
+			} while ( _la==T__32 );
 			{
-			setState(314); match(43);
+			setState(314); match(T__33);
 			setState(315); type(0);
 			}
-			setState(317); match(51);
+			setState(317); match(T__25);
 			setState(321);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << 3) | (1L << 13) | (1L << 20) | (1L << 31) | (1L << 32) | (1L << 35) | (1L << 41) | (1L << 42) | (1L << 44) | (1L << 45) | (1L << 47) | (1L << 49) | (1L << 51) | (1L << 62) | (1L << 63))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (69 - 69)) | (1L << (71 - 69)) | (1L << (IntegerLiteral - 69)) | (1L << (FloatingPointLiteral - 69)) | (1L << (BooleanLiteral - 69)) | (1L << (CharacterLiteral - 69)) | (1L << (StringLiteral - 69)) | (1L << (Identifier - 69)))) != 0)) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__73) | (1L << T__63) | (1L << T__56) | (1L << T__45) | (1L << T__44) | (1L << T__41) | (1L << T__35) | (1L << T__34) | (1L << T__32) | (1L << T__31) | (1L << T__29) | (1L << T__27) | (1L << T__25) | (1L << T__14) | (1L << T__13))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (T__7 - 69)) | (1L << (T__5 - 69)) | (1L << (IntegerLiteral - 69)) | (1L << (FloatingPointLiteral - 69)) | (1L << (BooleanLiteral - 69)) | (1L << (CharacterLiteral - 69)) | (1L << (StringLiteral - 69)) | (1L << (Identifier - 69)))) != 0)) {
 				{
 				{
 				setState(318); memberDeclaration();
@@ -1436,7 +1431,7 @@ public class ModelParser extends Parser {
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
-			setState(324); match(9);
+			setState(324); match(T__67);
 			}
 		}
 		catch (RecognitionException re) {
@@ -1476,7 +1471,7 @@ public class ModelParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(326); match(32);
+			setState(326); match(T__44);
 			setState(328);
 			_la = _input.LA(1);
 			if (_la==Identifier) {
@@ -1485,9 +1480,9 @@ public class ModelParser extends Parser {
 				}
 			}
 
-			setState(330); match(51);
+			setState(330); match(T__25);
 			setState(331); expression(0);
-			setState(332); match(9);
+			setState(332); match(T__67);
 			}
 		}
 		catch (RecognitionException re) {
@@ -1525,7 +1520,7 @@ public class ModelParser extends Parser {
 			{
 			setState(334);
 			_la = _input.LA(1);
-			if ( !(((((_la - 8)) & ~0x3f) == 0 && ((1L << (_la - 8)) & ((1L << (8 - 8)) | (1L << (16 - 8)) | (1L << (25 - 8)) | (1L << (27 - 8)) | (1L << (30 - 8)) | (1L << (40 - 8)) | (1L << (65 - 8)) | (1L << (70 - 8)))) != 0)) ) {
+			if ( !(((((_la - 8)) & ~0x3f) == 0 && ((1L << (_la - 8)) & ((1L << (T__68 - 8)) | (1L << (T__60 - 8)) | (1L << (T__51 - 8)) | (1L << (T__49 - 8)) | (1L << (T__46 - 8)) | (1L << (T__36 - 8)) | (1L << (T__11 - 8)) | (1L << (T__6 - 8)))) != 0)) ) {
 			_errHandler.recoverInline(this);
 			}
 			consume();
@@ -1566,7 +1561,7 @@ public class ModelParser extends Parser {
 			{
 			setState(336);
 			_la = _input.LA(1);
-			if ( !(_la==5 || _la==12) ) {
+			if ( !(_la==T__71 || _la==T__64) ) {
 			_errHandler.recoverInline(this);
 			}
 			consume();
@@ -1607,7 +1602,7 @@ public class ModelParser extends Parser {
 			{
 			setState(338);
 			_la = _input.LA(1);
-			if ( !(_la==22 || _la==68) ) {
+			if ( !(_la==T__54 || _la==T__8) ) {
 			_errHandler.recoverInline(this);
 			}
 			consume();
@@ -1648,7 +1643,7 @@ public class ModelParser extends Parser {
 			{
 			setState(340);
 			_la = _input.LA(1);
-			if ( !(_la==7 || _la==46) ) {
+			if ( !(_la==T__69 || _la==T__30) ) {
 			_errHandler.recoverInline(this);
 			}
 			consume();
@@ -1689,7 +1684,7 @@ public class ModelParser extends Parser {
 			{
 			setState(342);
 			_la = _input.LA(1);
-			if ( !(_la==29 || _la==75) ) {
+			if ( !(_la==T__47 || _la==T__1) ) {
 			_errHandler.recoverInline(this);
 			}
 			consume();
@@ -1730,7 +1725,7 @@ public class ModelParser extends Parser {
 			{
 			setState(344);
 			_la = _input.LA(1);
-			if ( !(_la==52 || _la==66) ) {
+			if ( !(_la==T__24 || _la==T__10) ) {
 			_errHandler.recoverInline(this);
 			}
 			consume();
@@ -1771,7 +1766,7 @@ public class ModelParser extends Parser {
 			{
 			setState(346);
 			_la = _input.LA(1);
-			if ( !(_la==2 || _la==67) ) {
+			if ( !(_la==T__74 || _la==T__9) ) {
 			_errHandler.recoverInline(this);
 			}
 			consume();
@@ -1812,7 +1807,7 @@ public class ModelParser extends Parser {
 			{
 			setState(348);
 			_la = _input.LA(1);
-			if ( !(_la==35 || _la==42) ) {
+			if ( !(_la==T__41 || _la==T__34) ) {
 			_errHandler.recoverInline(this);
 			}
 			consume();
@@ -1853,7 +1848,7 @@ public class ModelParser extends Parser {
 			{
 			setState(350);
 			_la = _input.LA(1);
-			if ( !(_la==1 || _la==60) ) {
+			if ( !(_la==T__75 || _la==T__16) ) {
 			_errHandler.recoverInline(this);
 			}
 			consume();
@@ -1894,7 +1889,7 @@ public class ModelParser extends Parser {
 			{
 			setState(352);
 			_la = _input.LA(1);
-			if ( !(_la==21 || _la==24) ) {
+			if ( !(_la==T__55 || _la==T__52) ) {
 			_errHandler.recoverInline(this);
 			}
 			consume();
@@ -1935,7 +1930,7 @@ public class ModelParser extends Parser {
 			{
 			setState(354);
 			_la = _input.LA(1);
-			if ( !(_la==11 || _la==23) ) {
+			if ( !(_la==T__65 || _la==T__53) ) {
 			_errHandler.recoverInline(this);
 			}
 			consume();
@@ -2094,45 +2089,41 @@ public class ModelParser extends Parser {
 			switch ( getInterpreter().adaptivePredict(_input,35,_ctx) ) {
 			case 1:
 				{
-				setState(360); match(41);
+				setState(360); match(T__35);
 				setState(361); expression(21);
 				}
 				break;
-
 			case 2:
 				{
 				setState(362); tokenNot();
 				setState(363); expression(20);
 				}
 				break;
-
 			case 3:
 				{
-				setState(365); match(63);
+				setState(365); match(T__13);
 				setState(366); rngBindingList();
 				setState(367); match(SUCHTHAT);
 				setState(368); expression(19);
 				}
 				break;
-
 			case 4:
 				{
-				setState(370); match(69);
+				setState(370); match(T__7);
 				setState(371); rngBindingList();
 				setState(372); match(SUCHTHAT);
 				setState(373); expression(18);
 				}
 				break;
-
 			case 5:
 				{
-				setState(375); match(20);
+				setState(375); match(T__56);
 				setState(376); pattern();
 				setState(379);
 				_la = _input.LA(1);
-				if (_la==43) {
+				if (_la==T__33) {
 					{
-					setState(377); match(43);
+					setState(377); match(T__33);
 					setState(378); type(0);
 					}
 				}
@@ -2141,36 +2132,32 @@ public class ModelParser extends Parser {
 				setState(382); expression(8);
 				}
 				break;
-
 			case 6:
 				{
-				setState(384); match(44);
+				setState(384); match(T__32);
 				setState(385); expression(0);
-				setState(386); match(18);
+				setState(386); match(T__58);
 				}
 				break;
-
 			case 7:
 				{
 				setState(388); literal();
 				}
 				break;
-
 			case 8:
 				{
 				setState(389); match(Identifier);
 				}
 				break;
-
 			case 9:
 				{
-				setState(390); match(62);
+				setState(390); match(T__14);
 				setState(391); qualifiedName();
 				setState(397);
 				switch ( getInterpreter().adaptivePredict(_input,30,_ctx) ) {
 				case 1:
 					{
-					setState(392); match(44);
+					setState(392); match(T__32);
 					setState(394);
 					_la = _input.LA(1);
 					if (_la==Identifier) {
@@ -2179,36 +2166,33 @@ public class ModelParser extends Parser {
 						}
 					}
 
-					setState(396); match(18);
+					setState(396); match(T__58);
 					}
 					break;
 				}
 				}
 				break;
-
 			case 10:
 				{
-				setState(399); match(45);
+				setState(399); match(T__31);
 				setState(400); expression(0);
-				setState(401); match(73);
+				setState(401); match(T__3);
 				setState(402); expression(0);
-				setState(403); match(55);
+				setState(403); match(T__21);
 				setState(404); expression(0);
 				}
 				break;
-
 			case 11:
 				{
-				setState(406); match(13);
+				setState(406); match(T__63);
 				setState(407); expression(0);
-				setState(408); match(39);
+				setState(408); match(T__37);
 				setState(409); match();
 				}
 				break;
-
 			case 12:
 				{
-				setState(411); match(44);
+				setState(411); match(T__32);
 				setState(412); expression(0);
 				setState(415); 
 				_errHandler.sync(this);
@@ -2216,118 +2200,110 @@ public class ModelParser extends Parser {
 				do {
 					{
 					{
-					setState(413); match(38);
+					setState(413); match(T__38);
 					setState(414); expression(0);
 					}
 					}
 					setState(417); 
 					_errHandler.sync(this);
 					_la = _input.LA(1);
-				} while ( _la==38 );
-				setState(419); match(18);
+				} while ( _la==T__38 );
+				setState(419); match(T__58);
 				}
 				break;
-
 			case 13:
 				{
-				setState(421); match(51);
+				setState(421); match(T__25);
 				setState(423);
 				_la = _input.LA(1);
-				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << 3) | (1L << 13) | (1L << 20) | (1L << 35) | (1L << 41) | (1L << 42) | (1L << 44) | (1L << 45) | (1L << 51) | (1L << 62) | (1L << 63))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (69 - 69)) | (1L << (IntegerLiteral - 69)) | (1L << (FloatingPointLiteral - 69)) | (1L << (BooleanLiteral - 69)) | (1L << (CharacterLiteral - 69)) | (1L << (StringLiteral - 69)) | (1L << (Identifier - 69)))) != 0)) {
+				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__73) | (1L << T__63) | (1L << T__56) | (1L << T__41) | (1L << T__35) | (1L << T__34) | (1L << T__32) | (1L << T__31) | (1L << T__25) | (1L << T__14) | (1L << T__13))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (T__7 - 69)) | (1L << (IntegerLiteral - 69)) | (1L << (FloatingPointLiteral - 69)) | (1L << (BooleanLiteral - 69)) | (1L << (CharacterLiteral - 69)) | (1L << (StringLiteral - 69)) | (1L << (Identifier - 69)))) != 0)) {
 					{
 					setState(422); expressionList();
 					}
 				}
 
-				setState(425); match(9);
+				setState(425); match(T__67);
 				}
 				break;
-
 			case 14:
 				{
-				setState(426); match(51);
+				setState(426); match(T__25);
 				setState(427); expression(0);
-				setState(428); match(36);
+				setState(428); match(T__40);
 				setState(429); expression(0);
-				setState(430); match(9);
+				setState(430); match(T__67);
 				}
 				break;
-
 			case 15:
 				{
-				setState(432); match(51);
+				setState(432); match(T__25);
 				setState(433); expression(0);
-				setState(434); match(34);
+				setState(434); match(T__42);
 				setState(435); rngBindingList();
 				setState(436); match(SUCHTHAT);
 				setState(437); expression(0);
-				setState(438); match(9);
+				setState(438); match(T__67);
 				}
 				break;
-
 			case 16:
 				{
-				setState(440); match(3);
+				setState(440); match(T__73);
 				setState(442);
 				_la = _input.LA(1);
-				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << 3) | (1L << 13) | (1L << 20) | (1L << 35) | (1L << 41) | (1L << 42) | (1L << 44) | (1L << 45) | (1L << 51) | (1L << 62) | (1L << 63))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (69 - 69)) | (1L << (IntegerLiteral - 69)) | (1L << (FloatingPointLiteral - 69)) | (1L << (BooleanLiteral - 69)) | (1L << (CharacterLiteral - 69)) | (1L << (StringLiteral - 69)) | (1L << (Identifier - 69)))) != 0)) {
+				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__73) | (1L << T__63) | (1L << T__56) | (1L << T__41) | (1L << T__35) | (1L << T__34) | (1L << T__32) | (1L << T__31) | (1L << T__25) | (1L << T__14) | (1L << T__13))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (T__7 - 69)) | (1L << (IntegerLiteral - 69)) | (1L << (FloatingPointLiteral - 69)) | (1L << (BooleanLiteral - 69)) | (1L << (CharacterLiteral - 69)) | (1L << (StringLiteral - 69)) | (1L << (Identifier - 69)))) != 0)) {
 					{
 					setState(441); expressionList();
 					}
 				}
 
-				setState(444); match(37);
+				setState(444); match(T__39);
 				}
 				break;
-
 			case 17:
 				{
-				setState(445); match(3);
+				setState(445); match(T__73);
 				setState(446); expression(0);
-				setState(447); match(36);
+				setState(447); match(T__40);
 				setState(448); expression(0);
-				setState(449); match(37);
+				setState(449); match(T__39);
 				}
 				break;
-
 			case 18:
 				{
-				setState(451); match(3);
+				setState(451); match(T__73);
 				setState(452); expression(0);
-				setState(453); match(34);
+				setState(453); match(T__42);
 				setState(454); pattern();
-				setState(455); match(43);
+				setState(455); match(T__33);
 				setState(456); expression(0);
 				setState(457); match(SUCHTHAT);
 				setState(458); expression(0);
-				setState(459); match(37);
+				setState(459); match(T__39);
 				}
 				break;
-
 			case 19:
 				{
-				setState(461); match(51);
+				setState(461); match(T__25);
 				setState(463);
 				_la = _input.LA(1);
-				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << 3) | (1L << 13) | (1L << 20) | (1L << 35) | (1L << 41) | (1L << 42) | (1L << 44) | (1L << 45) | (1L << 51) | (1L << 62) | (1L << 63))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (69 - 69)) | (1L << (IntegerLiteral - 69)) | (1L << (FloatingPointLiteral - 69)) | (1L << (BooleanLiteral - 69)) | (1L << (CharacterLiteral - 69)) | (1L << (StringLiteral - 69)) | (1L << (Identifier - 69)))) != 0)) {
+				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__73) | (1L << T__63) | (1L << T__56) | (1L << T__41) | (1L << T__35) | (1L << T__34) | (1L << T__32) | (1L << T__31) | (1L << T__25) | (1L << T__14) | (1L << T__13))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (T__7 - 69)) | (1L << (IntegerLiteral - 69)) | (1L << (FloatingPointLiteral - 69)) | (1L << (BooleanLiteral - 69)) | (1L << (CharacterLiteral - 69)) | (1L << (StringLiteral - 69)) | (1L << (Identifier - 69)))) != 0)) {
 					{
 					setState(462); mapPairList();
 					}
 				}
 
-				setState(465); match(9);
+				setState(465); match(T__67);
 				}
 				break;
-
 			case 20:
 				{
-				setState(466); match(51);
+				setState(466); match(T__25);
 				setState(467); mapPair();
-				setState(468); match(34);
+				setState(468); match(T__42);
 				setState(469); rngBindingList();
 				setState(470); match(SUCHTHAT);
 				setState(471); expression(0);
-				setState(472); match(9);
+				setState(472); match(T__67);
 				}
 				break;
 			}
@@ -2335,7 +2311,7 @@ public class ModelParser extends Parser {
 			setState(523);
 			_errHandler.sync(this);
 			_alt = getInterpreter().adaptivePredict(_input,39,_ctx);
-			while ( _alt!=2 && _alt!=-1 ) {
+			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					if ( _parseListeners!=null ) triggerExitRuleEvent();
 					_prevctx = _localctx;
@@ -2350,14 +2326,13 @@ public class ModelParser extends Parser {
 						if (!(precpred(_ctx, 7))) throw new FailedPredicateException(this, "precpred(_ctx, 7)");
 						setState(477);
 						_la = _input.LA(1);
-						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << 4) | (1L << 15) | (1L << 28) | (1L << 56) | (1L << 58) | (1L << 59))) != 0) || _la==74 || _la==76) ) {
+						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__72) | (1L << T__61) | (1L << T__48) | (1L << T__20) | (1L << T__18) | (1L << T__17))) != 0) || _la==T__2 || _la==T__0) ) {
 						_errHandler.recoverInline(this);
 						}
 						consume();
 						setState(478); expression(8);
 						}
 						break;
-
 					case 2:
 						{
 						_localctx = new ExpressionContext(_parentctx, _parentState);
@@ -2366,14 +2341,13 @@ public class ModelParser extends Parser {
 						if (!(precpred(_ctx, 6))) throw new FailedPredicateException(this, "precpred(_ctx, 6)");
 						setState(480);
 						_la = _input.LA(1);
-						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << 17) | (1L << 41) | (1L << 61))) != 0)) ) {
+						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__59) | (1L << T__35) | (1L << T__15))) != 0)) ) {
 						_errHandler.recoverInline(this);
 						}
 						consume();
 						setState(481); expression(7);
 						}
 						break;
-
 					case 3:
 						{
 						_localctx = new ExpressionContext(_parentctx, _parentState);
@@ -2382,61 +2356,61 @@ public class ModelParser extends Parser {
 						if (!(precpred(_ctx, 5))) throw new FailedPredicateException(this, "precpred(_ctx, 5)");
 						setState(495);
 						switch (_input.LA(1)) {
-						case 7:
-						case 46:
+						case T__69:
+						case T__30:
 							{
 							setState(483); tokenLessThanEqual();
 							}
 							break;
-						case 29:
-						case 75:
+						case T__47:
+						case T__1:
 							{
 							setState(484); tokenGreaterThanEqual();
 							}
 							break;
-						case 5:
-						case 12:
+						case T__71:
+						case T__64:
 							{
 							setState(485); tokenLessThan();
 							}
 							break;
-						case 22:
-						case 68:
+						case T__54:
+						case T__8:
 							{
 							setState(486); tokenGreatherThan();
 							}
 							break;
-						case 11:
-						case 23:
+						case T__65:
+						case T__53:
 							{
 							setState(487); tokenEquals();
 							}
 							break;
-						case 35:
-						case 42:
+						case T__41:
+						case T__34:
 							{
 							setState(488); tokenNot();
 							setState(489); tokenEquals();
 							}
 							break;
-						case 54:
+						case T__22:
 							{
-							setState(491); match(54);
+							setState(491); match(T__22);
 							}
 							break;
-						case 6:
+						case T__70:
 							{
-							setState(492); match(6);
+							setState(492); match(T__70);
 							}
 							break;
-						case 10:
+						case T__66:
 							{
-							setState(493); match(10);
+							setState(493); match(T__66);
 							}
 							break;
-						case 26:
+						case T__50:
 							{
-							setState(494); match(26);
+							setState(494); match(T__50);
 							}
 							break;
 						default:
@@ -2445,7 +2419,6 @@ public class ModelParser extends Parser {
 						setState(497); expression(6);
 						}
 						break;
-
 					case 4:
 						{
 						_localctx = new ExpressionContext(_parentctx, _parentState);
@@ -2456,7 +2429,6 @@ public class ModelParser extends Parser {
 						setState(500); expression(5);
 						}
 						break;
-
 					case 5:
 						{
 						_localctx = new ExpressionContext(_parentctx, _parentState);
@@ -2467,7 +2439,6 @@ public class ModelParser extends Parser {
 						setState(504); expression(4);
 						}
 						break;
-
 					case 6:
 						{
 						_localctx = new ExpressionContext(_parentctx, _parentState);
@@ -2476,14 +2447,14 @@ public class ModelParser extends Parser {
 						if (!(precpred(_ctx, 2))) throw new FailedPredicateException(this, "precpred(_ctx, 2)");
 						setState(509);
 						switch (_input.LA(1)) {
-						case 1:
-						case 60:
+						case T__75:
+						case T__16:
 							{
 							setState(507); tokenImplies();
 							}
 							break;
-						case 21:
-						case 24:
+						case T__55:
+						case T__52:
 							{
 							setState(508); tokenIFF();
 							}
@@ -2494,18 +2465,16 @@ public class ModelParser extends Parser {
 						setState(511); expression(3);
 						}
 						break;
-
 					case 7:
 						{
 						_localctx = new ExpressionContext(_parentctx, _parentState);
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(513);
 						if (!(precpred(_ctx, 1))) throw new FailedPredicateException(this, "precpred(_ctx, 1)");
-						setState(514); match(72);
+						setState(514); match(T__4);
 						setState(515); expression(2);
 						}
 						break;
-
 					case 8:
 						{
 						_localctx = new ExpressionContext(_parentctx, _parentState);
@@ -2516,7 +2485,6 @@ public class ModelParser extends Parser {
 						setState(518); match(Identifier);
 						}
 						break;
-
 					case 9:
 						{
 						_localctx = new ExpressionContext(_parentctx, _parentState);
@@ -2578,10 +2546,10 @@ public class ModelParser extends Parser {
 			setState(531);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==38) {
+			while (_la==T__38) {
 				{
 				{
-				setState(527); match(38);
+				setState(527); match(T__38);
 				setState(528); classArgument();
 				}
 				}
@@ -2628,7 +2596,7 @@ public class ModelParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(534); match(Identifier);
-			setState(535); match(43);
+			setState(535); match(T__33);
 			setState(536); expression(0);
 			}
 		}
@@ -2675,10 +2643,10 @@ public class ModelParser extends Parser {
 			setState(543);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==38) {
+			while (_la==T__38) {
 				{
 				{
-				setState(539); match(38);
+				setState(539); match(T__38);
 				setState(540); idValuePair();
 				}
 				}
@@ -2725,7 +2693,7 @@ public class ModelParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(546); match(Identifier);
-			setState(547); match(72);
+			setState(547); match(T__4);
 			setState(548); expression(0);
 			}
 		}
@@ -2771,13 +2739,13 @@ public class ModelParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(550); matchPattern();
-			setState(551); match(60);
+			setState(551); match(T__16);
 			setState(552); expression(0);
 			setState(555);
 			switch ( getInterpreter().adaptivePredict(_input,42,_ctx) ) {
 			case 1:
 				{
-				setState(553); match(34);
+				setState(553); match(T__42);
 				setState(554); match();
 				}
 				break;
@@ -2843,10 +2811,10 @@ public class ModelParser extends Parser {
 				setState(557); literal();
 				}
 				break;
-			case 19:
+			case T__57:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(558); match(19);
+				setState(558); match(T__57);
 				}
 				break;
 			case Identifier:
@@ -2855,17 +2823,17 @@ public class ModelParser extends Parser {
 				setState(559); match(Identifier);
 				setState(571);
 				_la = _input.LA(1);
-				if (_la==44) {
+				if (_la==T__32) {
 					{
-					setState(560); match(44);
+					setState(560); match(T__32);
 					setState(561); matchArgument();
 					setState(566);
 					_errHandler.sync(this);
 					_la = _input.LA(1);
-					while (_la==38) {
+					while (_la==T__38) {
 						{
 						{
-						setState(562); match(38);
+						setState(562); match(T__38);
 						setState(563); matchArgument();
 						}
 						}
@@ -2873,16 +2841,16 @@ public class ModelParser extends Parser {
 						_errHandler.sync(this);
 						_la = _input.LA(1);
 					}
-					setState(569); match(18);
+					setState(569); match(T__58);
 					}
 				}
 
 				}
 				break;
-			case 44:
+			case T__32:
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(573); match(44);
+				setState(573); match(T__32);
 				setState(574); matchPattern();
 				setState(577); 
 				_errHandler.sync(this);
@@ -2890,15 +2858,15 @@ public class ModelParser extends Parser {
 				do {
 					{
 					{
-					setState(575); match(38);
+					setState(575); match(T__38);
 					setState(576); matchPattern();
 					}
 					}
 					setState(579); 
 					_errHandler.sync(this);
 					_la = _input.LA(1);
-				} while ( _la==38 );
-				setState(581); match(18);
+				} while ( _la==T__38 );
+				setState(581); match(T__58);
 				}
 				break;
 			default:
@@ -2942,7 +2910,7 @@ public class ModelParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(585); match(Identifier);
-			setState(586); match(23);
+			setState(586); match(T__53);
 			setState(587); matchPattern();
 			}
 		}
@@ -2989,10 +2957,10 @@ public class ModelParser extends Parser {
 			setState(594);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==38) {
+			while (_la==T__38) {
 				{
 				{
-				setState(590); match(38);
+				setState(590); match(T__38);
 				setState(591); mapPair();
 				}
 				}
@@ -3041,7 +3009,7 @@ public class ModelParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(597); expression(0);
-			setState(598); match(43);
+			setState(598); match(T__33);
 			setState(599); expression(0);
 			}
 		}
@@ -3088,10 +3056,10 @@ public class ModelParser extends Parser {
 			setState(606);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==38) {
+			while (_la==T__38) {
 				{
 				{
-				setState(602); match(38);
+				setState(602); match(T__38);
 				setState(603); rngBinding();
 				}
 				}
@@ -3140,7 +3108,7 @@ public class ModelParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(609); patternList();
-			setState(610); match(43);
+			setState(610); match(T__33);
 			setState(611); collectionOrType();
 			}
 		}
@@ -3187,10 +3155,10 @@ public class ModelParser extends Parser {
 			setState(618);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==38) {
+			while (_la==T__38) {
 				{
 				{
-				setState(614); match(38);
+				setState(614); match(T__38);
 				setState(615); pattern();
 				}
 				}
@@ -3244,7 +3212,6 @@ public class ModelParser extends Parser {
 				setState(621); expression(0);
 				}
 				break;
-
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
@@ -3299,10 +3266,10 @@ public class ModelParser extends Parser {
 				setState(625); match(Identifier);
 				}
 				break;
-			case 44:
+			case T__32:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(626); match(44);
+				setState(626); match(T__32);
 				setState(627); pattern();
 				setState(630); 
 				_errHandler.sync(this);
@@ -3310,15 +3277,15 @@ public class ModelParser extends Parser {
 				do {
 					{
 					{
-					setState(628); match(38);
+					setState(628); match(T__38);
 					setState(629); pattern();
 					}
 					}
 					setState(632); 
 					_errHandler.sync(this);
 					_la = _input.LA(1);
-				} while ( _la==38 );
-				setState(634); match(18);
+				} while ( _la==T__38 );
+				setState(634); match(T__58);
 				}
 				break;
 			default:
@@ -3366,10 +3333,10 @@ public class ModelParser extends Parser {
 			setState(643);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==38) {
+			while (_la==T__38) {
 				{
 				{
-				setState(639); match(38);
+				setState(639); match(T__38);
 				setState(640); match(Identifier);
 				}
 				}
@@ -3422,10 +3389,10 @@ public class ModelParser extends Parser {
 			setState(651);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while (_la==38) {
+			while (_la==T__38) {
 				{
 				{
-				setState(647); match(38);
+				setState(647); match(T__38);
 				setState(648); expression(0);
 				}
 				}
@@ -3476,7 +3443,7 @@ public class ModelParser extends Parser {
 			setState(659);
 			_errHandler.sync(this);
 			_alt = getInterpreter().adaptivePredict(_input,55,_ctx);
-			while ( _alt!=2 && _alt!=-1 ) {
+			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
 					{
@@ -3551,7 +3518,6 @@ public class ModelParser extends Parser {
 	public boolean sempred(RuleContext _localctx, int ruleIndex, int predIndex) {
 		switch (ruleIndex) {
 		case 11: return type_sempred((TypeContext)_localctx, predIndex);
-
 		case 33: return expression_sempred((ExpressionContext)_localctx, predIndex);
 		}
 		return true;
@@ -3559,21 +3525,13 @@ public class ModelParser extends Parser {
 	private boolean expression_sempred(ExpressionContext _localctx, int predIndex) {
 		switch (predIndex) {
 		case 2: return precpred(_ctx, 7);
-
 		case 3: return precpred(_ctx, 6);
-
 		case 4: return precpred(_ctx, 5);
-
 		case 5: return precpred(_ctx, 4);
-
 		case 6: return precpred(_ctx, 3);
-
 		case 7: return precpred(_ctx, 2);
-
 		case 8: return precpred(_ctx, 1);
-
 		case 9: return precpred(_ctx, 26);
-
 		case 10: return precpred(_ctx, 24);
 		}
 		return true;
@@ -3581,7 +3539,6 @@ public class ModelParser extends Parser {
 	private boolean type_sempred(TypeContext _localctx, int predIndex) {
 		switch (predIndex) {
 		case 0: return precpred(_ctx, 6);
-
 		case 1: return precpred(_ctx, 7);
 		}
 		return true;
