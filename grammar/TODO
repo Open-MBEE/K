@@ -1,4 +1,58 @@
 
+  //| (expression '.')? Identifier ':=' expression
+
+Semicolon: 
+- it is not quite clean since it is only at the top level, ... ?
+- semicolon as a terminator, rather than as a separator, is somewhat annoying
+- also, in pure functions it looks strange, like a defintion that could look like 
+  this:
+ 
+    def f(x:Int) = x + 1
+
+  or even:
+
+   def f x = x + 1
+
+  becomes:
+
+    def f(x:Int):Int { x + 1; }
+
+Function return types: it looks wordy in the case of Void. I would aAvoid it.
+
+Comments: well, --- is interesting since it can be used to frame a text (if done right) 
+as in:
+
+  -----------------------
+  This code is brilliant.
+  and I stick to it.
+  Period.
+  -----------------------
+
+  def f(x:Int):Int {x+1}
+
+The problem is if a comment stretches over many many lines, then it becomes
+non-obvious what is a comment and what is not. Could be like this:
+
+  =======================
+  This code is brilliant.
+  and I stick to it.
+  Period.
+  -----------------------
+
+  def f(x:Int):Int {x+1}
+
+and as in:
+
+=== 
+This is a comment stretching
+several lines.
+---
+
+create is a long word. new is standard after all.
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+------------
+
 Simpler rules for bindings and patterns
 
 real, int, nat, nat1 (see PVS)

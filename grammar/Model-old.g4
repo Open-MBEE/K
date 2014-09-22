@@ -1,9 +1,6 @@
 
 grammar Model;
 
-// All changes made to make the spacecraft example parse and higlighted by a one-line comment of the form
-//   ;; this has changed bla bla bla
-
 model
   : packageDeclaration 
     importDeclaration* 
@@ -15,7 +12,7 @@ model
 topDeclaration
   : memberDeclaration
   | classDeclaration
-  // | expressionsWithSeparator ;; deleted, moved into memberDeclaration
+  | expressionsWithSeparator
   ;
 
 packageDeclaration
@@ -27,8 +24,7 @@ importDeclaration
   ;
 
 classDeclaration
-  : 'class' Identifier typeParameters? valueParameters? extending? '{' memberDeclaration* '}' 
-     // ;; removed semicolon after each memberDeclaration, since it occurs as part of memberDeclarations
+  : 'class' Identifier typeParameters? valueParameters? extending? '{' (memberDeclaration ';'?)* '}'
   ;
 
 typeParameters
@@ -57,11 +53,11 @@ extending
 
 type
   : primitiveType
-  | qualifiedName typeArguments?    // ;; changed Identifier to qualifiedName
-  | type ('*' type)+                // cartesian product
-  | type '->' type                  // function type
+  | Identifier typeArguments?
+  | type ('*' type)+                 // cartesian product
+  | type '->' type                   // function type
   | '(' type ')'
-  | '{|' typing SUCHTHAT expression '|}' // predicate subtype ;; changed '.' to SUCHTHAT
+  | '{|' typing '.' expression '|}' // predicate subtype
   | '{' type '}'                    // set {Int} {1,2}
   | '[' type ']'                    // list [Int] [1,2,2,2,2]
   | '<' type ',' type '>'           // map from first type to next <Int,String> <1:"one", 2:"two">
@@ -78,7 +74,6 @@ memberDeclaration
   | variableDeclaration
   | functionDeclaration 
   | constraint
-  | expressionsWithSeparator // ;; added (moved to here)
   ;
 
 valueDeclaration
@@ -101,15 +96,13 @@ typing
   : Identifier ':' type
   ; 
 
-//functionBodyElement        ;; deleted non-terminal
-//  : memberDeclaration
-//| expressionsWithSeparator ;; deleted, now in memberDeclaration
-//  ;
+functionBodyElement
+  : memberDeclaration
+  | expressionsWithSeparator
+  ;
 
 functionDeclaration
-  : 'def' Identifier ('(' typingList? ')')+ (':' type) '{' memberDeclaration* '}' 
-      // ;; added ? to typingList
-      // ;; replace functionBodyElement with memberDeclaration
+  : 'def' Identifier ('(' typingList ')')+ (':' type) '{' functionBodyElement* '}' 
   ;
 
 constraint
@@ -122,7 +115,8 @@ primitiveType
   | 'Int'       // Scala bigint (arbitrary precision)
   | 'Real'      // double
   | 'String'
-  | 'Void' | 'Unit' | 'Nada' // ;; played around with other options such as Unit
+  | 'Void'
+  | 'Nada'
   ;
 
 tokenLessThan
@@ -170,74 +164,76 @@ expressionsWithSeparator
     : expression ';'
     ;
 
-/* ;; operator precedences from Scala K grammar
-HIGEST
-    "*" | "/" | "%" |
-      "inter" | "++" | "#" | "^"
-
-    "+" | "-" | "union"
-
-    "<=" | ">=" | "<" | ">" |
-      "=" | "!=" |
-      "isin" | "!isin" | "subset" | "psubset"
-
-    "and"
-
-    "or"
-
-    "=>" | "<=>"
-LOWEST
-*/
-
-expression // ;; moved around on bin infix expressions to control precedence, highest first
+expression
+ // --------
+ //  Common:
+ // --------
   : '(' expression ')'
   | literal
   | Identifier
   | expression '.' Identifier
-  //| 'create' expression  // calls to constructor ;; edited to the line below
-    | 'create' qualifiedName ('(' classArgumentList? ')')? // ;; added, see line above
+  | 'create' expression             // calls to constructor
   | expression expression
   | 'if' expression 'then' expression 'else' expression
   | 'case' expression 'of' match
-  | '-' expression // ;; added
+ // -----------
+ // Assignment
+ // This also does structural assignment
+ // assignment to functions
+ // -----------
+  | expression ':=' expression
+  //| (expression '.')? Identifier ':=' expression
+    
+ // -----------
+ // Arithmetic:
+ // -----------
+  | expression ('*'|'/'|'%') expression
+  | expression ('+'|'-') expression
+ // ---------
+ // Booleans:
+ // ---------
   | tokenNot expression
-  | 'forall' rngBindingList SUCHTHAT expression // ;; introduced SUCHTHAT
-  | 'exists' rngBindingList SUCHTHAT expression // ;; introduced SUCHTHAT
-  | '(' expression (',' expression)+ ')'
-  | '{' expressionList? '}'
-  | '{' expression '..' expression '}'
-  | '{' expression '|' rngBindingList SUCHTHAT expression '}' // ;; introduced SUCHTHAT
-  | '[' expressionList? ']'
-  | '[' expression '..' expression ']'
-  | '[' expression '|' pattern ':' expression SUCHTHAT expression ']'  // ;; introduced SUCHTHAT
-  | '{' mapPairList? '}'
-  | '{' mapPair '|' rngBindingList SUCHTHAT expression '}' // ;; introduced SUCHTHAT
-  | '-\\' pattern (':' type)? SUCHTHAT expression // ;; introduced SUCHTHAT
-  | expression ('*'|'/'|'%'|'inter'|'\\'|'++'|'#'|'^') expression
-  | expression ('+'|'-'|'union') expression
-  | expression 
-      (
-         tokenLessThanEqual | tokenGreaterThanEqual | tokenLessThan | tokenGreatherThan 
-       | tokenEquals | tokenNot tokenEquals
-       | 'isin'|'!isin'|'subset'|'psubset' 
-      ) 
-    expression
+  | expression (tokenLessThanEqual | tokenGreaterThanEqual | tokenLessThan | tokenGreatherThan) expression
+  | expression ('isin'|'!isin'|'subset'|'psubset') expression
+  | expression (tokenEquals | tokenNot tokenEquals) expression
   | expression tokenAnd expression
   | expression tokenOr expression
   | expression (tokenImplies | tokenIFF) expression
-  | expression ':=' expression
+  | expression '.#' expression
+  | 'forall' rngBindingList ':' expression
+  | 'exists' rngBindingList ':' expression
+ // -------
+ // Tuples:
+ // -------
+  | '(' expression (',' expression)+ ')'
+ // -----
+ // Sets:
+ // -----
+  | expression ('union'|'inter'|'\\') expression
+  | '{' expressionList? '}'
+  | '{' expression '..' expression '}'
+  | '{' expression '|' rngBindingList '.' expression '}'
+  // ------
+  // Lists:
+  // ------
+  | expression ('^') expression
+  | '[' expressionList? ']'
+  | '[' expression '..' expression ']'
+  | '[' expression '|' pattern ':' expression '.' expression ']'  
+  // -----
+  // Maps:
+  // -----
+  | /*map*/expression '++' /*map*/expression
+  | '{' mapPairList? '}'
+  | '{' mapPair '|' rngBindingList '.' expression '}'
+  // ----------
+  // Functions:
+  // ----------
+  | '-\\' pattern (':' type)? '.' expression
   // --------
   // Records:
   // --------  
-  //| /*class*/expression '@' '{' idValueList '}' ;; deleted for now.
-  ;
-
-classArgumentList // ;; added this rule
-  : classArgument (',' classArgument)*
-  ;
-
-classArgument // ;; added this rule
-  : Identifier ':' expression
+  | /*class*/expression '@' '{' idValueList '}'  
   ;
 
 idValueList
@@ -268,7 +264,7 @@ mapPairList
   ;
 
 mapPair
-  : expression ':' expression // ;; changed from -> to :, as we agreed on I think.
+  : expression '->' expression
   ;
 
 rngBindingList
@@ -288,13 +284,13 @@ collectionOrType
   | type
   ;
   
-// letBindingList ;; deleted, not used
-//  : letBinding (',' letBinding)*
-//  ;
+letBindingList
+  : letBinding (',' letBinding)*
+  ;
   
-// letBinding ;; deleted, not used
-//  : pattern (':' type)? '=' expression
-//  ;  
+letBinding
+  : pattern (':' type)? '=' expression
+  ;  
 
 pattern
   : Identifier
@@ -319,10 +315,6 @@ literal
   | CharacterLiteral
   | StringLiteral
   | BooleanLiteral
-  ;
-
-SUCHTHAT // ;; added, so we can change it easily
-  : '.' // ;; changed from colon since that conflicts with typings
   ;
 
 IntegerLiteral
@@ -592,23 +584,8 @@ JavaLetterOrDigit
         {Character.isJavaIdentifierPart(Character.toCodePoint((char)_input.LA(-2), (char)_input.LA(-1)))}?
     ;
 
-//COMMENT ;; deleted this
-//  : '---' .*? '---' -> skip
-//  ;
-
-fragment // ;; added this
-CommentBegin
-   : '---' '-'*
-   | '===' '='* // to experiment with different ways of showing start of comment
-   ;
-
-fragment // ;; added this
-CommentEnd
-   : '---' '-'*
-   ;
-
-COMMENT // ;; added this
-  :  CommentBegin .*? CommentEnd -> skip
+COMMENT
+  : '---' .*? '---' -> skip
   ;
 
 LINE_COMMENT

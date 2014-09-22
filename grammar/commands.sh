@@ -1,4 +1,3 @@
-alias a='antlr Model.g4;javac *.java'
-alias g='grun Model model ../examples/ex1/model'
+alias a='antlr Model.g4;mv *.java ../parser;mv *.tokens ../parser'
+alias clean='rm *.class;rm *~'
 
-alias ge='grun Model expression ../examples/ex1/expression -gui&'
