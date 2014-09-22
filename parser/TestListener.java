@@ -4,37 +4,37 @@ import org.antlr.v4.runtime.misc.NotNull;
 
 public class TestListener extends ModelBaseListener implements ModelListener{
 
-	@Override 
+    @Override 
 	public void enterEveryRule(@NotNull ParserRuleContext ctx) { 
-		System.out.println("EnterRule: " + ctx.getText());
-		System.out.println("*************************");
-		
-	}
+	System.out.println("EnterRule: " + ctx.getText());
+	System.out.println("*************************");
 	
-	@Override 
+    }
+    
+    @Override 
 	public void enterModel(@NotNull ModelParser.ModelContext ctx) { 
-	}
+    }
 
-	@Override
+    @Override
 	public void enterTypeDeclaration(@NotNull ModelParser.TypeDeclarationContext ctx){
 	
-		// simple example of printing out a type 
-		System.out.println("Type: " + ctx.getText());
-		for(int i = 0; i < ctx.type().children.size(); i++){
-			System.out.println("\t" + ctx.type().children.get(i).getText());
-		}
+	// simple example of printing out a type 
+	System.out.println("Type: " + ctx.getText());
+	for(int i = 0; i < ctx.type().children.size(); i++){
+	    System.out.println("\t" + ctx.type().children.get(i).getText());
 	}
-	@Override
+    }
+    @Override
 	public void enterClassDeclaration(@NotNull ModelParser.ClassDeclarationContext ctx) { 
 	
-		// simple example of printing out a type 
-		//System.out.println("Class: " + ctx.getText());
-		
-		//for(int i = 0; i < ctx.children.size(); i++){
-		//	System.out.println("\t^^^" + ctx.children.get(i).getText() + "^^^");
-		//}
-		
-		System.out.println( ctx.extending().getText());
+	// simple example of printing out a type 
+	//System.out.println("Class: " + ctx.getText());
 	
-	}
+	//for(int i = 0; i < ctx.children.size(); i++){
+	//System.out.println("\t^^^" + ctx.children.get(i).getText() + "^^^");
+	//}
+	
+	System.out.println( ctx.extending().getText());
+	
+    }
 }
