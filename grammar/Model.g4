@@ -7,7 +7,6 @@ grammar Model;
 model
   : packageDeclaration 
     importDeclaration* 
-    classDeclaration* 
     topDeclaration*
     EOF
   ;
