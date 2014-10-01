@@ -26,9 +26,14 @@ importDeclaration
   ;
 
 classDeclaration
-  : 'class' Identifier typeParameters? valueParameters? extending? '{' memberDeclaration* '}' 
+  : classToken Identifier typeParameters? valueParameters? extending? '{' memberDeclaration* '}' 
      // ;; removed semicolon after each memberDeclaration, since it occurs as part of memberDeclarations
   ;
+
+classToken
+    : 'class'
+    | 'assoc'
+    ;
 
 typeParameters
     :   '[' typeParameter (',' typeParameter)* ']'
@@ -64,7 +69,15 @@ type
   | '{' type '}'                    // set {Int} {1,2}
   | '[' type ']'                    // list [Int] [1,2,2,2,2]
   | '<' type ',' type '>'           // map from first type to next <Int,String> <1:"one", 2:"two">
+  | type expressionOrStar ('..' expressionOrStar)? // type with size specified type People = {Person} 0..100 OR 
+                                                   // type People = {Person}, var x : People 0 .. 10 OR
+                                                   // var city : [Person] 0 .. 1000
   ;
+
+expressionOrStar
+    : expression
+    | '*'
+    ;
 
 typeArguments
   : '[' type (',' type)* ']'
@@ -115,13 +128,14 @@ constraint
   : 'req' Identifier? '{' expression '}' 
   ;
 
+
 primitiveType
   : 'Bool'
   | 'Char'
   | 'Int'       // Scala bigint (arbitrary precision)
   | 'Real'      // double
   | 'String'
-  | 'Void' | 'Unit' | 'Nada' // ;; played around with other options such as Unit
+  | 'Unit'  // ;; played around with other options such as Unit
   ;
 
 tokenLessThan
