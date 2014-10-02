@@ -1,9 +1,6 @@
 
 grammar Model;
 
-// All changes made to make the spacecraft example parse and higlighted by a one-line comment of the form
-//   ;; this has changed bla bla bla
-
 model
   : packageDeclaration 
     importDeclaration* 
@@ -14,7 +11,6 @@ model
 topDeclaration
   : memberDeclaration
   | classDeclaration
-  // | expressionsWithSeparator ;; deleted, moved into memberDeclaration
   ;
 
 packageDeclaration
@@ -27,7 +23,6 @@ importDeclaration
 
 classDeclaration
   : classToken Identifier typeParameters? valueParameters? extending? '{' memberDeclaration* '}' 
-     // ;; removed semicolon after each memberDeclaration, since it occurs as part of memberDeclarations
   ;
 
 classToken
@@ -113,15 +108,8 @@ typing
   : Identifier ':' type
   ; 
 
-//functionBodyElement        ;; deleted non-terminal
-//  : memberDeclaration
-//| expressionsWithSeparator ;; deleted, now in memberDeclaration
-//  ;
-
 functionDeclaration
-  : 'def' Identifier ('(' typingList? ')')+ (':' type) '{' memberDeclaration* '}' 
-      // ;; added ? to typingList
-      // ;; replace functionBodyElement with memberDeclaration
+  : 'fun' Identifier ('(' typingList? ')')+ (':' type) '{' memberDeclaration* '}' 
   ;
 
 constraint
@@ -135,7 +123,7 @@ primitiveType
   | 'Int'       // Scala bigint (arbitrary precision)
   | 'Real'      // double
   | 'String'
-  | 'Unit'  // ;; played around with other options such as Unit
+  | 'Unit'  
   ;
 
 tokenLessThan
@@ -183,49 +171,29 @@ expressionsWithSeparator
     : expression ';'
     ;
 
-/* ;; operator precedences from Scala K grammar
-HIGEST
-    "*" | "/" | "%" |
-      "inter" | "++" | "#" | "^"
-
-    "+" | "-" | "union"
-
-    "<=" | ">=" | "<" | ">" |
-      "=" | "!=" |
-      "isin" | "!isin" | "subset" | "psubset"
-
-    "and"
-
-    "or"
-
-    "=>" | "<=>"
-LOWEST
-*/
-
 expression // ;; moved around on bin infix expressions to control precedence, highest first
   : '(' expression ')'
   | literal
   | Identifier
   | expression '.' Identifier
-  //| 'create' expression  // calls to constructor ;; edited to the line below
-    | 'create' qualifiedName ('(' classArgumentList? ')')? // ;; added, see line above
+  | 'create' qualifiedName ('(' classArgumentList? ')')? 
   | expression expression
   | 'if' expression 'then' expression 'else' expression
   | 'case' expression 'of' match
-  | '-' expression // ;; added
+  | '-' expression 
   | tokenNot expression
-  | 'forall' rngBindingList SUCHTHAT expression // ;; introduced SUCHTHAT
-  | 'exists' rngBindingList SUCHTHAT expression // ;; introduced SUCHTHAT
+  | 'forall' rngBindingList SUCHTHAT expression 
+  | 'exists' rngBindingList SUCHTHAT expression 
   | '(' expression (',' expression)+ ')'
   | '{' expressionList? '}'
   | '{' expression '..' expression '}'
-  | '{' expression '|' rngBindingList SUCHTHAT expression '}' // ;; introduced SUCHTHAT
+  | '{' expression '|' rngBindingList SUCHTHAT expression '}' 
   | '[' expressionList? ']'
   | '[' expression '..' expression ']'
-  | '[' expression '|' pattern ':' expression SUCHTHAT expression ']'  // ;; introduced SUCHTHAT
-  | '{' mapPairList? '}'
-  | '{' mapPair '|' rngBindingList SUCHTHAT expression '}' // ;; introduced SUCHTHAT
-  | '-\\' pattern (':' type)? SUCHTHAT expression // ;; introduced SUCHTHAT
+  | '[' expression '|' pattern ':' expression SUCHTHAT expression ']' 
+  | '<' mapPairList? '>'
+  | '<' mapPair '|' rngBindingList SUCHTHAT expression '>' 
+  | '-\\' pattern (':' type)? SUCHTHAT expression 
   | expression ('*'|'/'|'%'|'inter'|'\\'|'++'|'#'|'^') expression
   | expression ('+'|'-'|'union') expression
   | expression 
@@ -239,17 +207,18 @@ expression // ;; moved around on bin infix expressions to control precedence, hi
   | expression tokenOr expression
   | expression (tokenImplies | tokenIFF) expression
   | expression ':=' expression
+  | 'assert' '(' expression ')' 
   // --------
   // Records:
   // --------  
   //| /*class*/expression '@' '{' idValueList '}' ;; deleted for now.
   ;
 
-classArgumentList // ;; added this rule
+classArgumentList 
   : classArgument (',' classArgument)*
   ;
 
-classArgument // ;; added this rule
+classArgument 
   : Identifier ':' expression
   ;
 
@@ -281,7 +250,7 @@ mapPairList
   ;
 
 mapPair
-  : expression ':' expression // ;; changed from -> to :, as we agreed on I think.
+  : expression ':' expression 
   ;
 
 rngBindingList
@@ -334,8 +303,8 @@ literal
   | BooleanLiteral
   ;
 
-SUCHTHAT // ;; added, so we can change it easily
-  : '.' // ;; changed from colon since that conflicts with typings
+SUCHTHAT 
+  : '.' 
   ;
 
 IntegerLiteral
@@ -605,22 +574,18 @@ JavaLetterOrDigit
         {Character.isJavaIdentifierPart(Character.toCodePoint((char)_input.LA(-2), (char)_input.LA(-1)))}?
     ;
 
-//COMMENT ;; deleted this
-//  : '---' .*? '---' -> skip
-//  ;
-
 fragment // ;; added this
 CommentBegin
    : '---' '-'*
    | '===' '='* // to experiment with different ways of showing start of comment
    ;
 
-fragment // ;; added this
+fragment 
 CommentEnd
    : '---' '-'*
    ;
 
-COMMENT // ;; added this
+COMMENT 
   :  CommentBegin .*? CommentEnd -> skip
   ;
 
