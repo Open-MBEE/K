@@ -67,6 +67,7 @@ type
   | type expressionOrStar ('..' expressionOrStar)? // type with size specified type People = {Person} 0..100 OR 
                                                    // type People = {Person}, var x : People 0 .. 10 OR
                                                    // var city : [Person] 0 .. 1000
+  | type '?' 
   ;
 
 expressionOrStar
