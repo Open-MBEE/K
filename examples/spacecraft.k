@@ -24,19 +24,19 @@ class Instrument {
 class SpaceCraft {
     var instruments : [Instrument] = a.p;
 
-    def changeInstrument(instrument:Instrument) : Void { 
+    fun changeInstrument(instrument:Instrument) : Void { 
       instrument.Id := 42;
     }
     
-    def rotateCamera(instrument:Instrument, angle:Int) : Int { 
+    fun rotateCamera(instrument:Instrument, angle:Int) : Int { 
       instrument.rotate(angle);
     }
 
-    def compare(id1:Int, id2:Int) : Bool {
+    fun compare(id1:Int, id2:Int) : Bool {
         id1 = id2 or id1 eq id2;
     }
 
-    def ProcessAction1() : Void {
+    fun ProcessAction1() : Void {
         var steps : Integer = 0;
         -- do something
         steps := steps + 1;
