@@ -15,6 +15,8 @@
 (defvar k-font-lock-defaults
   `((
      ;; stuff between "
+     ("\\(--.*\\)" 1 'font-lock-comment-face)
+     ("\\(==.*\\)" 1 'font-lock-comment-face)
      ("\"\\.\\*\\?" . font-lock-string-face)
      ;; ; : , ; { } =>  @ $ = are all special elements
      ;;(":\\|,\\|;\\|{\\|}\\|=>\\|@\\|$\\|=" . font-lock-keyword-face)
@@ -31,10 +33,7 @@
   
   (when k-tab-width
     (setq tab-width k-tab-width))
-  
-  (setq comment-start "--")
-  (setq comment-end "")
-  
+
 ;;  (modify-syntax-entry ?# "< b" k-mode-syntax-table)
 ;;  (modify-syntax-entry ?\n "> b" k-mode-syntax-table)
   )
