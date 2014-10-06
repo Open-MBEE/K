@@ -58,3 +58,5 @@
 /ModelParser$TokenOrContext.class
 /ModelParser$TopDeclarationContext.class
 /ModelParser$ValueDeclarationContext.class
+/ModelParser$ClassTokenContext.class
+/ModelParser$ExpressionOrStarContext.class
