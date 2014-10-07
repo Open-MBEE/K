@@ -17,7 +17,7 @@ class Instrument {
     --  + 1
  
     req {
-	Id > 1
+    	Id > 1
     }
 }
 
@@ -40,19 +40,26 @@ class SpaceCraft {
         var steps : Integer = 0;
         -- do something
         steps := steps + 1;
-	steps := steps + 1;
+		steps := steps + 1;
         steps := steps + 1;
     }
 
     req {
         instruments.count > 0 && 
         (forall i,j:instruments . i.Id != j.Id) &&
-        (forall i,j:instruments . i.Id not eq j.Id) &&
+        (forall i,j:instruments . i.Id not eq j.Id) and
         (forall i:instruments,j:instruments . !compare(i.Id, j.Id)) &&
         (forall i:instruments,j:instruments . not compare(i.Id, j.Id))
     }
 }
 
+-- an association between a spacecraft and some instruments.
+-- only a maximum of 10 instruments are allowed. 
+-- each instrument has to be unique. 
+assoc SpacecraftInstrumentsAssociation {
+    var Spacecraft : SpaceCraft;
+    var instruments: {Instrument} 1..10;
+}
 
 -- setup some instruments
 var Camera : Instrument = create Instrument(name:"Camera");
