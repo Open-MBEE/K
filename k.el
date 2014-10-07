@@ -5,7 +5,7 @@
   '("var" "val" "ef"))
 
 (defvar k-keywords
-  '("req" "type" "package" "import"))
+  '("req" "type" "package" "import" "forall" "create"))
 
 (defvar k-types
   '("Int" "Char" "Real" "String" "Unit" "Bool"))
