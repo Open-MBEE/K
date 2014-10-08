@@ -117,12 +117,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_model; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterModel(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitModel(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitModel(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -186,12 +183,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_topDeclaration; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterTopDeclaration(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitTopDeclaration(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitTopDeclaration(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -262,12 +256,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_packageDeclaration; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterPackageDeclaration(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitPackageDeclaration(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitPackageDeclaration(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -301,12 +292,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_importDeclaration; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterImportDeclaration(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitImportDeclaration(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitImportDeclaration(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -366,12 +354,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_classDeclaration; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterClassDeclaration(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitClassDeclaration(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitClassDeclaration(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -442,12 +427,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_classToken; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterClassToken(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitClassToken(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitClassToken(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -489,12 +471,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_typeParameters; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterTypeParameters(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitTypeParameters(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitTypeParameters(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -545,12 +524,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_typeParameter; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterTypeParameter(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitTypeParameter(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitTypeParameter(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -596,12 +572,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_typeBound; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterTypeBound(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitTypeBound(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitTypeBound(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -649,12 +622,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_valueParameters; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterValueParameters(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitValueParameters(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitValueParameters(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -692,12 +662,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_typingList; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterTypingList(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitTypingList(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitTypingList(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -748,12 +715,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_extending; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterExtending(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitExtending(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitExtending(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -827,12 +791,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_type; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterType(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitType(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitType(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -1023,12 +984,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_expressionOrStar; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterExpressionOrStar(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitExpressionOrStar(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitExpressionOrStar(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -1096,12 +1054,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_typeArguments; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterTypeArguments(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitTypeArguments(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitTypeArguments(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -1169,12 +1124,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_memberDeclaration; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterMemberDeclaration(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitMemberDeclaration(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitMemberDeclaration(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -1251,12 +1203,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_valueDeclaration; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterValueDeclaration(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitValueDeclaration(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitValueDeclaration(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -1299,12 +1248,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_sortDeclaration; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterSortDeclaration(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitSortDeclaration(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitSortDeclaration(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -1343,12 +1289,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_typeDeclaration; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterTypeDeclaration(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitTypeDeclaration(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitTypeDeclaration(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -1397,12 +1340,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_variableDeclaration; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterVariableDeclaration(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitVariableDeclaration(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitVariableDeclaration(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -1448,12 +1388,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_typing; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterTyping(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitTyping(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitTyping(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -1501,12 +1438,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_functionDeclaration; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterFunctionDeclaration(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitFunctionDeclaration(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitFunctionDeclaration(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -1583,12 +1517,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_constraint; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterConstraint(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitConstraint(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitConstraint(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -1630,12 +1561,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_primitiveType; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterPrimitiveType(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitPrimitiveType(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitPrimitiveType(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -1671,12 +1599,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_tokenLessThan; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterTokenLessThan(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitTokenLessThan(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitTokenLessThan(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -1712,12 +1637,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_tokenGreatherThan; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterTokenGreatherThan(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitTokenGreatherThan(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitTokenGreatherThan(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -1753,12 +1675,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_tokenLessThanEqual; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterTokenLessThanEqual(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitTokenLessThanEqual(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitTokenLessThanEqual(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -1794,12 +1713,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_tokenGreaterThanEqual; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterTokenGreaterThanEqual(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitTokenGreaterThanEqual(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitTokenGreaterThanEqual(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -1835,12 +1751,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_tokenAnd; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterTokenAnd(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitTokenAnd(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitTokenAnd(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -1876,12 +1789,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_tokenOr; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterTokenOr(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitTokenOr(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitTokenOr(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -1917,12 +1827,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_tokenNot; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterTokenNot(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitTokenNot(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitTokenNot(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -1958,12 +1865,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_tokenImplies; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterTokenImplies(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitTokenImplies(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitTokenImplies(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -1999,12 +1903,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_tokenIFF; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterTokenIFF(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitTokenIFF(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitTokenIFF(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -2040,12 +1941,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_tokenEquals; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterTokenEquals(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitTokenEquals(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitTokenEquals(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -2084,12 +1982,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_expressionsWithSeparator; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterExpressionsWithSeparator(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitExpressionsWithSeparator(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitExpressionsWithSeparator(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -2188,12 +2083,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_expression; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterExpression(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitExpression(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitExpression(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -2662,12 +2554,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_classArgumentList; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterClassArgumentList(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitClassArgumentList(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitClassArgumentList(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -2716,12 +2605,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_classArgument; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterClassArgument(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitClassArgument(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitClassArgument(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -2759,12 +2645,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_idValueList; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterIdValueList(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitIdValueList(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitIdValueList(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -2813,12 +2696,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_idValuePair; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterIdValuePair(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitIdValuePair(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitIdValuePair(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -2859,12 +2739,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_match; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterMatch(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitMatch(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitMatch(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -2921,12 +2798,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_matchPattern; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterMatchPattern(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitMatchPattern(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitMatchPattern(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -3030,12 +2904,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_matchArgument; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterMatchArgument(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitMatchArgument(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitMatchArgument(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -3073,12 +2944,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_mapPairList; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterMapPairList(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitMapPairList(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitMapPairList(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -3129,12 +2997,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_mapPair; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterMapPair(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitMapPair(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitMapPair(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -3172,12 +3037,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_rngBindingList; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterRngBindingList(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitRngBindingList(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitRngBindingList(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -3228,12 +3090,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_rngBinding; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterRngBinding(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitRngBinding(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitRngBinding(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -3271,12 +3130,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_patternList; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterPatternList(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitPatternList(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitPatternList(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -3327,12 +3183,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_collectionOrType; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterCollectionOrType(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitCollectionOrType(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitCollectionOrType(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -3380,12 +3233,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_pattern; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterPattern(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitPattern(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitPattern(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -3449,12 +3299,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_identifierList; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterIdentifierList(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitIdentifierList(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitIdentifierList(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -3505,12 +3352,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_expressionList; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterExpressionList(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitExpressionList(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitExpressionList(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -3559,12 +3403,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_qualifiedName; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterQualifiedName(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitQualifiedName(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitQualifiedName(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -3616,12 +3457,9 @@ public class ModelParser extends Parser {
 		}
 		@Override public int getRuleIndex() { return RULE_literal; }
 		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).enterLiteral(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof ModelListener ) ((ModelListener)listener).exitLiteral(this);
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof ModelVisitor ) return ((ModelVisitor<? extends T>)visitor).visitLiteral(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 

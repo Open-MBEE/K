@@ -29,10 +29,16 @@ public class ParserConsumer {
 	ParseTree tree = parser.model(); // begin parsing at init rule
 	
 	// Create a generic parse tree walker that can trigger callbacks
-	ParseTreeWalker walker = new ParseTreeWalker();
+	//ParseTreeWalker walker = new ParseTreeWalker();
 	
 	// Walk the tree created during the parse, trigger callbacks
-	walker.walk(new TestListener(), tree);
+	//walker.walk(new TestListener(), tree);
+	
+	KVisitor kvisitor = new KVisitor();
+	kvisitor.visit(tree);
+	
+	// print associations map
+	kvisitor.printAssociationsMap();
 	
 	// print a \n after translation
 	System.out.println(); 
