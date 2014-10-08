@@ -26,7 +26,12 @@ public class TestListener extends ModelBaseListener implements ModelListener{
     
     @Override
 	public void enterClassDeclaration(@NotNull ModelParser.ClassDeclarationContext ctx) { 
-	
+
+
+
+            for(int i = 0; i < ctx.children.size(); i++){
+
+            }
 	// simple example of printing out a type 
 	//System.out.println("Class: " + ctx.getText());
 	
