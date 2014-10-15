@@ -1,13 +1,10 @@
+package k.frontend;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-
-import org.antlr.v4.runtime.misc.NotNull;
-
-// currently we will not return anything but just write some stuff to disk
-
 
 public class KVisitor extends ModelBaseVisitor<Void>{
 	

@@ -60,3 +60,7 @@
 /ModelParser$ValueDeclarationContext.class
 /ModelParser$ClassTokenContext.class
 /ModelParser$ExpressionOrStarContext.class
+/K
+/bin/
+.DS_Store
+.cache
