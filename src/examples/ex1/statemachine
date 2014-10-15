@@ -1,0 +1,80 @@
+
+package test
+
+--------------------
+State machines in K:
+--------------------
+
+class StateMachine {      
+  type State = Integer;
+  type Event = String;
+  type Trans = State * Event * State;
+
+  var states : {State};
+  var events : {Event};
+  var transitions : {Transition};
+  var initial : State;
+
+  -- Reachability judgment:
+
+  def Reach(s:State):Bool {
+    s = initial or 
+    exists s_ : State, e : Event . Reach(s_) and (s_,e,s) isin transitions;
+  }
+
+  -- Dead states:
+
+  def DeadState(s:State):Boolean {
+    not exists s2 : State, e : Event . (s,e,s2) isin transitions;
+  }
+
+  -- Initial states must be "defined":
+ 
+  req {initial isin states}
+
+  -- Transitions must be over "defined" states / events:
+  
+  req {
+    forall (src,e,dst) : transitions .
+      src isin states && e isin events && dst isin states
+  } 
+ 
+  -- The state machine must be deterministic:
+
+  req {
+    forall src : states, e : events, dst1,dst2 : states .
+    (src,e,dst1) isin states and (src,e,dst2) isin states => dst1 = dst2  
+  }
+    
+  -- All states should be reachable:
+
+  req { forall s : states . Reach(s) }
+}
+
+---------------------
+A state machine in K:
+---------------------
+
+class Machine extends StateMachine {
+  val s1 : State = 1;
+  val s2 : State = 2;
+  val s3 : State = 3;
+  val s4 : State = 4;
+  val s5 : State = 5;
+
+  val eThink : Event = "think";
+  val eDesign : Event = "design";
+  val eCode : Event = "code";
+
+  states := {s1, s2, s3, s4, s5};
+  events := {eThink, eDesign, eCode};
+
+  initial = s1;
+
+  transitions = {
+    (s1, eThink, s2),
+    (s2, eDesign, s3),
+    (s3, eCode, s1),
+    (s4, eCode, s5)
+  };
+} 
