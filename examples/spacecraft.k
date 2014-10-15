@@ -22,7 +22,7 @@ class Instrument {
 }
 
 class SpaceCraft {
-    var instruments : [Instrument] = a.p;
+    var instruments : [Instrument];
 
     fun changeInstrument(instrument:Instrument) : Void { 
       instrument.Id := 42;
@@ -59,6 +59,12 @@ class SpaceCraft {
 assoc SpacecraftInstrumentsAssociation {
     var Spacecraft : SpaceCraft;
     var instruments: {Instrument} 1..10;
+}
+
+assoc TestAssociation{
+    var Spacecraft : SpaceCraft;
+    var instruments: {Instrument} 1..10;
+    var ints : {Int};
 }
 
 -- setup some instruments
