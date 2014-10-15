@@ -1,1 +1,0 @@
-forall (state,action) : actionMap :- state isin states

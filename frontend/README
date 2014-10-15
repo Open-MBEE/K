@@ -1,8 +1,0 @@
-- The classes need to be built using the ./build.sh command. This
-  issues a single javac command to compile all Model*.java classes.  
-
-- After compiling, you can run the parser by issuing the ./prase.sh
-  command as follows: 
-  ./parse.sh <path to model file> <extra arguments to ANTLR4 grun system>
-  Example: ./parse.sh ../examples/ex1/statemachine -gui
-
