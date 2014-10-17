@@ -1,111 +1,433 @@
 package k.frontend
 
+import scala.collection.JavaConverters._
 import k.frontend.ModelBaseVisitor
 import k.frontend.ModelParser
+import java.lang.Float
 
-class Member (i:String, t:String){
-  var _identifier : String = i
-  var _type : String = t
-}
+class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
 
-class ClassAssociation (n:String, a:Boolean){
-  var _name : String = n
-  var _association : Boolean = a
-}
-
-// the type parameter for the ModelBaseVisitork.parser.what we need to return
-class KScalaVisitor extends ModelBaseVisitor[Unit] {
-
-  var classesAndAssociations = Set[ClassAssociation]();
-  var classAssociationMembers = Map[ClassAssociation, Set[(String,String)]]()
-  var currentClassAssociation : ClassAssociation = null
   
-  def getMainType (t:ModelParser.TypeContext) : ModelParser.TypeContext = {
-    if(t.`type`().size() > 0){
-      getMainType ((t.`type`()).get(0))
+  var stack : List[AnyRef] = Nil
+
+  override def visitModel(ctx : ModelParser.ModelContext) : AnyRef =  {
+    var model : Model = new Model();
+    model
+  }
+
+  override def visitQualifiedName(ctx : ModelParser.QualifiedNameContext) : AnyRef = {
+    var identifiers = ctx.Identifier().asScala
+    QualifiedName(identifiers.map(_.toString()).toList)
+  }
+
+  override def visitPackageDeclaration(ctx : ModelParser.PackageDeclarationContext) : AnyRef = {
+    var qn : QualifiedName = visit(ctx.qualifiedName()).asInstanceOf[QualifiedName]
+    PackageDecl(qn)
+  }
+
+  override def visitImportDeclaration(ctx : ModelParser.ImportDeclarationContext) : AnyRef = {
+    var identifiers = ctx.qualifiedName().Identifier().asScala
+    var children = ctx.children.asScala
+    var star : Boolean = children.last.toString() == "*"
+    new ImportDecl(new QualifiedName(identifiers.map(_.toString()).toList), star)
+  }
+
+  override def visitTypeDeclaration (ctx : ModelParser.TypeDeclarationContext) : AnyRef = {
+	 println("visitType:" + ctx.getText())
+	 var ident : String = ctx.Identifier().toString()
+	 var typeParams : List[TypeParam] = visit(ctx.typeParameters()).asInstanceOf[List[TypeParam]]
+	 var t : Type = visit(ctx.`type`()).asInstanceOf[Type]
+	 TypeDecl(ident, typeParams, t)
+  }
+
+  override def visitTypeParameter(ctx : ModelParser.TypeParameterContext) : AnyRef = {
+    var ident : String = ctx.Identifier().toString()
+    var typeBound : Option[TypeBound] = visit(ctx.typeBound()).asInstanceOf[Option[TypeBound]]
+    TypeParam(ident, typeBound)
+  }
+
+  override def visitTypeBound(ctx : ModelParser.TypeBoundContext) : AnyRef = {
+    var typeContexts : List[ModelParser.TypeContext] = (ctx.`type`().asScala).toList
+    TypeBound(typeContexts.map(visit(_)).asInstanceOf[List[Type]])
+  }
+
+  override def visitPrimType(ctx : ModelParser.PrimTypeContext) : AnyRef = {
+    visitPrimitiveType(ctx.primitiveType())
+  }
+  
+  override def visitPrimitiveType(ctx : ModelParser.PrimitiveTypeContext) : AnyRef = {
+    ctx.getText() match {
+      case "Bool" => BoolType
+      case "Char" => CharType
+      case "Int" => IntType
+      case "Real" => RealType
+      case "String" => StringType
+      case "Unit" => UnitType
+    }
+  }
+  
+  override def visitIdentType (ctx : ModelParser.IdentTypeContext) : AnyRef = {
+      // identifier type
+      var qn : QualifiedName = visit(ctx.qualifiedName()).asInstanceOf[QualifiedName]
+      var typeArguments : List[Type] = visit(ctx.typeArguments()).asInstanceOf[List[Type]]
+      IdentType(qn, typeArguments)
+  }
+
+  override def visitCartesianType (ctx : ModelParser.CartesianTypeContext) : AnyRef = {
+      var types : List[ModelParser.TypeContext] = ctx.`type`().asScala.toList
+      CartesianType(types.map(visit(_).asInstanceOf[Type]))
+  }
+  
+  override def visitFuncType (ctx : ModelParser.FuncTypeContext) : AnyRef = {
+    var from : Type = visit(ctx.`type`(0)).asInstanceOf[Type]
+    var to : Type = visit(ctx.`type`(1)).asInstanceOf[Type]
+    FunctionType(from, to)
+  }
+  
+  override def visitParenType (ctx : ModelParser.ParenTypeContext) : AnyRef = {
+    var t : Type = visit(ctx.`type`()).asInstanceOf[Type]
+    ParenType(t)
+  }
+
+  override def visitSubType (ctx : ModelParser.SubTypeContext) : AnyRef = {
+    var t : Typing = visit(ctx.typing()).asInstanceOf[Typing]
+    var e : Exp = visit(ctx.expression()).asInstanceOf[Exp]
+    SubType(t, e)
+  }
+  
+  override def visitSetType (ctx : ModelParser.SetTypeContext) : AnyRef = {
+    var ident : QualifiedName = QualifiedName(List("Set"))
+    var t : List[Type] = List(visit(ctx.`type`()).asInstanceOf[Type])
+    IdentType(ident, t)
+  }
+
+  override def visitListType (ctx : ModelParser.ListTypeContext) : AnyRef = {
+    var ident : QualifiedName = QualifiedName(List("List"))
+    var t : List[Type] = List(visit(ctx.`type`()).asInstanceOf[Type])
+    IdentType(ident, t)
+  }
+
+  override def visitMapType (ctx : ModelParser.MapTypeContext) : AnyRef = {
+    var ident : QualifiedName = QualifiedName(List("Set"))
+    var from : Type = visit(ctx.`type`(0)).asInstanceOf[Type]
+    var to : Type = visit(ctx.`type`(1)).asInstanceOf[Type]
+    IdentType(ident, List(from,to))
+  }
+  
+  override def visitRangeType(ctx : ModelParser.RangeTypeContext) : AnyRef = {
+    var t : Type = visit(ctx.`type`()).asInstanceOf[Type]
+    var e1 : Exp = visit(ctx.expressionOrStar(0)).asInstanceOf[Exp]
+    var e2 : Option[Exp] = 
+      if(ctx.expressionOrStar(1) != null) Some(visit(ctx.expressionOrStar(1)).asInstanceOf[Exp])
+      else None
+    MultType(t, e1, e2)
+  }
+
+  override def visitOptionalType(ctx : ModelParser.OptionalTypeContext) : AnyRef = {
+    var t : Type = visit(ctx.`type`()).asInstanceOf[Type]
+    NullableType(t)		
+  }
+  
+  override def visitTypeArguments(ctx : ModelParser.TypeArgumentsContext) : AnyRef = {
+    var types : List[ModelParser.TypeContext] = ctx.`type`().asScala.toList
+    types.map(visit(_).asInstanceOf[Type])
+  }
+  
+  override def visitTyping(ctx : ModelParser.TypingContext) : AnyRef = {
+    var ident : String = ctx.Identifier().getText()
+    var t : Type = visit(ctx.`type`()).asInstanceOf[Type]
+    Typing(ident, t)
+  }
+
+  override def visitIdentifierList(ctx : ModelParser.IdentifierListContext) : AnyRef =  {
+    ctx.Identifier().asScala.map(_.toString())
+  }
+
+  override def visitConstraint(ctx : ModelParser.ConstraintContext) : AnyRef = {
+	val ident :  Option[String] = 
+	  if(ctx.Identifier() != null) Some(ctx.Identifier().getText())
+	  else None
+	val exp : Exp = visit(ctx.expression()).asInstanceOf[Exp]
+	ConstraintDecl(ident, exp)
+  }
+  
+  override def visitParenExp(ctx : ModelParser.ParenExpContext) : AnyRef = {
+    visit(ctx.expression()).asInstanceOf[Exp]
+  }
+  
+  override def visitLiteralExp(ctx: ModelParser.LiteralExpContext) : AnyRef = {
+    visit(ctx.literal()).asInstanceOf[Literal]
+  }
+
+  override def visitIdentExp(ctx : ModelParser.IdentExpContext) : AnyRef = {
+    IdentExp(ctx.Identifier().getText())
+  }
+  
+  override def visitDotExp (ctx : ModelParser.DotExpContext) : AnyRef = {
+    var e : Exp = visit(ctx.expression()).asInstanceOf[Exp]
+    var ident : String = ctx.Identifier().getText()
+    DotExp(e, ident)
+  }
+  
+  override def visitCreateExp (ctx : ModelParser.CreateExpContext) : AnyRef = {
+    var qn : QualifiedName = visit(ctx.qualifiedName()).asInstanceOf[QualifiedName]
+    var args : List[ClassArgument] = visit(ctx.classArgumentList()).asInstanceOf[List[ClassArgument]]
+    CreateExp(qn, args)
+  }
+
+  override def visitAppExp(ctx : ModelParser.AppExpContext) : AnyRef = {
+    var e0 : Exp = visit(ctx.expression(0)).asInstanceOf[Exp]
+    var e1 : Exp = visit(ctx.expression(1)).asInstanceOf[Exp]
+    FunApplExp(e0, e1)
+  }
+
+  override def visitIfExp(ctx : ModelParser.IfExpContext) : AnyRef = {
+    var e0 : Exp = visit(ctx.expression(0)).asInstanceOf[Exp]
+    var e1 : Exp = visit(ctx.expression(1)).asInstanceOf[Exp]
+    var e2 : Exp = visit(ctx.expression(1)).asInstanceOf[Exp]
+    IfExp(e0, e1, e2)
+  }
+  
+  override def visitMatchExp(ctx : ModelParser.MatchExpContext ) : AnyRef = {
+    //TODO: unimplemented for now
+    null
+  }
+  
+  override def visitNegExp(ctx : ModelParser.NegExpContext) : AnyRef = {
+    UnaryExp(NEG, visit(ctx.expression()).asInstanceOf[Exp])
+  }
+  
+  override def visitNotExp(ctx : ModelParser.NotExpContext) : AnyRef = {
+    UnaryExp(NOT, visit(ctx.expression()).asInstanceOf[Exp])
+  }
+  
+  override def visitForallExp(ctx : ModelParser.ForallExpContext) : AnyRef = {
+    var rng : List[RngBinding] = visit(ctx.rngBindingList()).asInstanceOf[List[RngBinding]]
+    var exp : Exp = visit(ctx.expression()).asInstanceOf[Exp]
+    QuantifiedExp(Forall, rng, exp)
+  }
+
+  override def visitExistsExp(ctx : ModelParser.ExistsExpContext) : AnyRef = {
+    var rng : List[RngBinding] = visit(ctx.rngBindingList()).asInstanceOf[List[RngBinding]]
+    var exp : Exp = visit(ctx.expression()).asInstanceOf[Exp]
+    QuantifiedExp(Exists, rng, exp)
+  }
+
+  override def visitTupleExp(ctx : ModelParser.TupleExpContext) : AnyRef = {
+	TupleExp(ctx.expression().asScala.toList.map(visit(_).asInstanceOf[Exp]))
+  }
+  
+  override def visitSetEnumExp(ctx : ModelParser.SetEnumExpContext) : AnyRef = {
+    SetEnumExp(visit(ctx.expressionList()).asInstanceOf[List[Exp]])
+  }
+  
+  override def visitExpressionList(ctx: ModelParser.ExpressionListContext) : AnyRef = {
+    ctx.expression().asScala.toList.map(visit(_).asInstanceOf[Exp])
+  }
+  
+  override def visitSetRngExp(ctx : ModelParser.SetRngExpContext) : AnyRef = {
+    var e0 : Exp = visit(ctx.expression(0)).asInstanceOf[Exp]
+    var e1 : Exp = visit(ctx.expression(1)).asInstanceOf[Exp]
+    SetRangeExp(e0, e1)
+  }
+
+  override def visitListRngExp(ctx : ModelParser.ListRngExpContext) : AnyRef = {
+    var e0 : Exp = visit(ctx.expression(0)).asInstanceOf[Exp]
+    var e1 : Exp = visit(ctx.expression(1)).asInstanceOf[Exp]
+    ListRangeExp(e0, e1)
+  }
+
+  override def visitSetCompExp (ctx : ModelParser.SetCompExpContext) : AnyRef = {
+    var rng : List[RngBinding] = visit(ctx.rngBindingList()).asInstanceOf[List[RngBinding]]
+    var exp0 : Exp = visit(ctx.expression(0)).asInstanceOf[Exp]
+    var exp1 : Exp = visit(ctx.expression(1)).asInstanceOf[Exp]
+    SetComprExp(exp0, rng, exp1)
+  }
+
+  override def visitListCompExp (ctx : ModelParser.ListCompExpContext) : AnyRef = {
+    var exp0 : Exp = visit(ctx.expression(0)).asInstanceOf[Exp]
+    var exp1 : Exp = visit(ctx.expression(1)).asInstanceOf[Exp]
+    var exp2 : Exp = visit(ctx.expression(2)).asInstanceOf[Exp]
+    var pattern : Pattern = visit(ctx.pattern()).asInstanceOf[Pattern]
+    ListComprExp(exp0, pattern, exp1, exp2)
+  }
+  
+  override def visitMapEnumExp(ctx : ModelParser.MapEnumExpContext) : AnyRef = {
+    
+  }
+
+  override def visitListEnumExp(ctx : ModelParser.ListEnumExpContext) : AnyRef = {
+    ListEnumExp(visit(ctx.expressionList()).asInstanceOf[List[Exp]])
+  }
+  
+  
+  override def visitRngBinding(ctx : ModelParser.RngBindingContext) : AnyRef = {
+    var p : List[Pattern] = visit(ctx.patternList()).asInstanceOf[List[Pattern]]
+    var c : Collection = visit(ctx.collectionOrType()).asInstanceOf[Collection]
+    RngBinding(p,c)
+  }
+  
+  override def visitRngBindingList(ctx : ModelParser.RngBindingListContext) : AnyRef =  {
+    ctx.rngBinding().asScala.map(visit(_).asInstanceOf[RngBinding])
+  }
+  
+  override def visitPatternList(ctx : ModelParser.PatternListContext) : AnyRef = {
+    ctx.pattern().asScala.toList.map(visit(_).asInstanceOf[Pattern])
+  }
+
+  override def visitIdentPattern (ctx : ModelParser.IdentPatternContext) : AnyRef = {
+    IdentPattern(ctx.Identifier().getText())
+  }
+
+  override def visitCartesianPattern (ctx : ModelParser.CartesianPatternContext) : AnyRef = {
+	ProductPattern(ctx.pattern().asScala.toList.map(visit(_).asInstanceOf[Pattern]))
+  }
+  
+  override def visitClassArgumentList(ctx : ModelParser.ClassArgumentListContext) : AnyRef = {
+    ctx.classArgument().asScala.map(visit(_).asInstanceOf[ClassArgument]).toList
+  }
+
+  override def visitClassArgument(ctx : ModelParser.ClassArgumentContext) : AnyRef =  {
+    var ident : String = ctx.Identifier().getText()
+    var exp : Exp = visit(ctx.expression()).asInstanceOf[Exp]
+    ClassArgument(ident, exp)
+  }
+
+  override def visitLiteral(ctx : ModelParser.LiteralContext) : AnyRef = {
+    if(ctx.IntegerLiteral() != null){
+      IntegerLiteral(Integer.parseInt(ctx.IntegerLiteral().getSymbol().getText()))
+    }
+    else if(ctx.FloatingPointLiteral() != null){
+      RealLiteral(java.lang.Float.parseFloat(ctx.FloatingPointLiteral().getSymbol().getText()))
+    }
+    else if(ctx.CharacterLiteral() != null){
+      CharacterLiteral(ctx.CharacterLiteral().getSymbol().getText().charAt(0))
+    }
+    else if(ctx.StringLiteral() != null){
+      StringLiteral(ctx.StringLiteral().getSymbol().getText())
     }
     else{
-      t
+      BooleanLiteral(java.lang.Boolean.parseBoolean(ctx.BooleanLiteral().getSymbol().getText()))
     }
-  } 
-  
-  def getMultiplicityString (t:ModelParser.TypeContext) : String = {
-    if(t.expressionOrStar() != null){
-      var e =  t.expressionOrStar();
-      var res = "";
-      for (i <- 0 to e.size() - 1){
-    	  res += e.get(i).getText();
-      }
-      res
-    }
-    else ""
   }
 
-  def printAssociations : Unit = {
-    println("graph Structure {");
-    
-    println(classesAndAssociations.foldLeft("")((acc,v) =>
-      if(v._association){
-        acc + v._name + " [shape=diamond];\n"
-      }
-      else{
-        acc + v._name + " [shape=box];\n"
-      }));
-    
-    println(classAssociationMembers.foldLeft 
-        ("") ((acc,kv) => acc + 
-            (kv._2.foldLeft ("") ((acc1, v) => acc1 + kv._1._name + " -- " + v._1 + " [label = \"" + v._2 + "\"]\n")) + "\n"));
-    
-    println("}");
-  }
-  
-  override def visitClassDeclaration (ctx : ModelParser.ClassDeclarationContext) : Unit = {
-    var classAssociationName = ctx.Identifier().getText();
-    
-    val newClassAssociation = 
-		if(ctx.classToken().getText().equals("assoc")){
-			currentClassAssociation = new ClassAssociation(classAssociationName, true);
-			var memberDeclarations = ctx.memberDeclaration().toArray;
-			for(i <- 0 to memberDeclarations.size - 1){ 
-			  this.visit(ctx.memberDeclaration().get(i))
-			}
-			currentClassAssociation
-		}
-		else{
-		  new ClassAssociation(classAssociationName, false)
-		}
-	currentClassAssociation = null;
-	classesAndAssociations += newClassAssociation;
+    /*
+  override def visitClassDeclaration (ctx : ModelParser.ClassDeclarationContext) : AnyRef =  {
+    println("Class: " + ctx.Identifier())
   }
 
-  override def visitMemberDeclaration (ctx : ModelParser.MemberDeclarationContext) : Unit = {
-    var variables = ctx.variableDeclaration();
-    if(variables != null){
-      var mainType = getMainType (variables.typing().`type`());
-	  var multiplicityString = getMultiplicityString (variables.typing().`type`());  
-      if(currentClassAssociation != null){
-	      if(classAssociationMembers.contains(currentClassAssociation)){
-	        var associationMembers = classAssociationMembers(currentClassAssociation);	        
-	        associationMembers += ((mainType.getText(), multiplicityString));
-	        classAssociationMembers += (currentClassAssociation -> associationMembers);
-	      }
-	      else{
-	        classAssociationMembers += (currentClassAssociation -> Set[(String,String)]((mainType.getText(), multiplicityString)));
-	      }
-      }
-    }
+  override def visitMemberDeclaration (ctx : ModelParser.MemberDeclarationContext) : AnyRef =  {
+    if(ctx.typeDeclaration() != null) visit(ctx.typeDeclaration())
+    if(ctx.constraint() != null) visit(ctx.constraint());
+    /*visit(ctx.typeDeclaration())
+    visit(ctx.valueDeclaration())
+    visit(ctx.variableDeclaration())
+    visit(ctx.functionDeclaration())
+    visit(ctx.constraint())
+    visit(ctx.expressionsWithSeparator())*/
   }
+
+  override def visitFunctionDeclaration(ctx : ModelParser.FunctionDeclarationContext)  {
+  }
+
+  override def visitTokenIFF(ctx : ModelParser.TokenIFFContext)  {
+  }
+  
+  override def visitExpression(ctx : ModelParser.ExpressionContext)  {
+  }
+
+  override def visitSortDeclaration(ctx : ModelParser.SortDeclarationContext)  {
+  }
+
+  override def visitExpressionList(ctx : ModelParser.ExpressionListContext)  {
+  }
+
+  override def visitTokenGreatherThan(ctx : ModelParser.TokenGreatherThanContext)  {
+  }
+
+  override def visitVariableDeclaration(ctx : ModelParser.VariableDeclarationContext)  {
+  }v
+
+  override def visitTokenLessThan(ctx : ModelParser.TokenLessThanContext)  {
+  }
+
+
+  override def visitTopDeclaration(ctx : ModelParser.TopDeclarationContext)  {
+  }
+
+
+
+
+  override def visitMatchArgument(ctx : ModelParser.MatchArgumentContext)  {
+  }
+
+  override def visitTokenImplies(ctx : ModelParser.TokenImpliesContext)  {
+  }
+
+  override def visitValueParameters(ctx : ModelParser.ValueParametersContext)  {
+  }
+
+
+  override def visitMatch(ctx : ModelParser.MatchContext)  {
+  }
+
+  override def visitTokenEquals(ctx : ModelParser.TokenEqualsContext)  {
+  }
+
+  override def visitCollectionOrType(ctx : ModelParser.CollectionOrTypeContext)  {
+  }
+
+  override def visitExtending(ctx : ModelParser.ExtendingContext)  {
+  }
+
+  override def visitIdValueList(ctx : ModelParser.IdValueListContext)  {
+  }
+
+  override def visitTokenNot(ctx : ModelParser.TokenNotContext)  {
+  }
+
+  override def visitTokenAnd(ctx : ModelParser.TokenAndContext)  {
+  }
+
+  override def visitTokenOr(ctx : ModelParser.TokenOrContext)  {
+  }
+
+  override def visitTokenLessThanEqual(ctx : ModelParser.TokenLessThanEqualContext)  {
+  }
+
+  override def visitClassToken(ctx : ModelParser.ClassTokenContext)  {
+  }
+
+  override def visitExpressionOrStar(ctx : ModelParser.ExpressionOrStarContext)  {
+  }
+
+  override def visitTokenGreaterThanEqual(ctx : ModelParser.TokenGreaterThanEqualContext)  {
+  }
+
+  override def visitIdValuePair(ctx : ModelParser.IdValuePairContext)  {
+  }
+
+  override def visitValueDeclaration(ctx : ModelParser.ValueDeclarationContext)  {
+  }
+
+  override def visitTypeParameters(ctx : ModelParser.TypeParametersContext)  {
+  }
+
+  override def visitExpressionsWithSeparator(ctx : ModelParser.ExpressionsWithSeparatorContext)  {
+  }
+
+  override def visitMatchPattern(ctx : ModelParser.MatchPatternContext)  {
+  }
+
+  override def visitMapPairList(ctx : ModelParser.MapPairListContext)  {
+  }
+
+  override def visitMapPair(ctx : ModelParser.MapPairContext)  {
+  }
+
+  override def visitTypingList(ctx : ModelParser.TypingListContext)  {
+  }
+
+  */
+
 }
-
-//class KScalaBaseListener extends ModelBaseListener{
-//  override def enterEveryRule (ctx : ParserRuleContext) : Unit = {
-//	println("hello rule!");
-//	println(ctx.getText());
-//  }
-//}
-
-//object ScalaParserConsumer {
-//def main (args : Array[String]){
-//println("Starting main...");
-//}
-//}

@@ -32,23 +32,10 @@ public class Main {
 		// create the parse tree from the model parser
 		ParseTree tree = parser.model(); // begin parsing at init rule
 		
-		// Create a generic parse tree walker that can trigger callbacks
-		//ParseTreeWalker walker = new ParseTreeWalker();
-		
-		// Walk the tree created during the parse, trigger callbacks
-		//walker.walk(new TestListener(), tree);
-		//walker.walk(new KScalaBaseListener(), tree);
-		
-		// Java visitor
-		//KVisitor kvisitor = new KVisitor();
-		//kvisitor.visit(tree);
-		//KVisitor.printAssociationsMap();
-		
 		// Scala visitor
 		KScalaVisitor ksv = new KScalaVisitor();
 		ksv.visit(tree);
-		ksv.printAssociations();
-
+		
     }
 
 }
