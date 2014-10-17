@@ -209,6 +209,9 @@ case object IFF extends BinaryOp {
 case object EQ extends BinaryOp {
   
 }
+case object NEQ extends BinaryOp {
+  
+}
 case object MUL extends BinaryOp {
   
 }
