@@ -1,15 +1,10 @@
 package k.frontend
 
-class Ast {
-  var model : Model
-  var types : Map[String,ClassDecl]
-}
 
-case class Model(
-  packageName: PackageDecl,
-  imports: List[ImportDecl],
-  decls: List[TopDecl]) {
-  
+class Model {
+  var packageName: PackageDecl = null
+  var imports: List[ImportDecl] = Nil
+  var decls: List[TopDecl] = Nil
 }
 
 trait TopDecl {
@@ -108,7 +103,7 @@ trait Exp
 case class ParenExp(exp: Exp) extends Exp {
   override def toString = s"($exp)"  
 }
-case class Identifier(ident: String) extends Exp {
+case class IdentExp(ident: String) extends Exp {
   override def toString = ident  
 }
 case class DotExp(exp: Exp, ident: String) extends Exp {
@@ -117,7 +112,7 @@ case class DotExp(exp: Exp, ident: String) extends Exp {
 case class CreateExp(name: QualifiedName, args: List[ClassArgument]) extends Exp {
   
 }
-case class FunAppl(exp1: Exp, exp2: Exp) extends Exp {
+case class FunApplExp(exp1: Exp, exp2: Exp) extends Exp {
   override def toString =
     if (exp2.isInstanceOf[TupleExp] || exp2.isInstanceOf[ParenExp])
       s"$exp1$exp2"

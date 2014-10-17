@@ -103,8 +103,8 @@ BooleanLiteral=81
 'create'=64
 '+'=63
 '.'=78
-'=>'=62
-'assoc'=61
+'assoc'=62
+'=>'=61
 'inter'=60
 '^'=59
 'import'=58

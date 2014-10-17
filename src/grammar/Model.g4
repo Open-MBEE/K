@@ -55,19 +55,17 @@ extending
   ;
 
 type
-  : primitiveType
-  | qualifiedName typeArguments?    // ;; changed Identifier to qualifiedName
-  | type ('*' type)+                // cartesian product
-  | type '->' type                  // function type
-  | '(' type ')'
-  | '{|' typing SUCHTHAT expression '|}' // predicate subtype ;; changed '.' to SUCHTHAT
-  | '{' type '}'                    // set {Int} {1,2}
-  | '[' type ']'                    // list [Int] [1,2,2,2,2]
-  | '<' type ',' type '>'           // map from first type to next <Int,String> <1:"one", 2:"two">
-  | type expressionOrStar ('..' expressionOrStar)? // type with size specified type People = {Person} 0..100 OR 
-                                                   // type People = {Person}, var x : People 0 .. 10 OR
-                                                   // var city : [Person] 0 .. 1000
-  | type '?' 
+  : primitiveType                   # PrimType
+  | qualifiedName typeArguments?    # IdentType
+  | type (tokenStar type)+          # CartesianType
+  | type tokenArrow type            # FuncType
+  | '(' type ')'					# ParenType
+  | '{|' typing SUCHTHAT expression '|}' # SubType 
+  | '{' type '}'                    # SetType
+  | '[' type ']'                    # ListType
+  | '<' type ',' type '>'           # MapType
+  | type expressionOrStar ('..' expressionOrStar)? # RangeType                                              
+  | type '?' # OptionalType
   ;
 
 expressionOrStar
@@ -167,48 +165,54 @@ tokenEquals
     : '='
     | 'eq'
     ;
+tokenStar
+    : '*'
+    ;
+tokenArrow
+    : '->'
+    ;
 
 expressionsWithSeparator
     : expression ';'
     ;
 
 expression // ;; moved around on bin infix expressions to control precedence, highest first
-  : '(' expression ')'
-  | literal
-  | Identifier
-  | expression '.' Identifier
-  | 'create' qualifiedName ('(' classArgumentList? ')')? 
-  | expression expression
-  | 'if' expression 'then' expression 'else' expression
-  | 'case' expression 'of' match
-  | '-' expression 
-  | tokenNot expression
-  | 'forall' rngBindingList SUCHTHAT expression 
-  | 'exists' rngBindingList SUCHTHAT expression 
-  | '(' expression (',' expression)+ ')'
-  | '{' expressionList? '}'
-  | '{' expression '..' expression '}'
-  | '{' expression '|' rngBindingList SUCHTHAT expression '}' 
-  | '[' expressionList? ']'
-  | '[' expression '..' expression ']'
-  | '[' expression '|' pattern ':' expression SUCHTHAT expression ']' 
-  | '<' mapPairList? '>'
-  | '<' mapPair '|' rngBindingList SUCHTHAT expression '>' 
-  | '-\\' pattern (':' type)? SUCHTHAT expression 
-  | expression ('*'|'/'|'%'|'inter'|'\\'|'++'|'#'|'^') expression
-  | expression ('+'|'-'|'union') expression
+  : '(' expression ')' #ParenExp
+  | literal #LiteralExp
+  | Identifier #IdentExp
+  | expression '.' Identifier #DotExp
+  | 'create' qualifiedName ('(' classArgumentList? ')')? #CreateExp 
+  | expression expression #AppExp
+  | 'if' expression 'then' expression 'else' expression #IfExp
+  | 'case' expression 'of' match #MatchExp
+  | '-' expression #NegExp
+  | tokenNot expression #NotExp
+  | 'forall' rngBindingList SUCHTHAT expression #ForallExp 
+  | 'exists' rngBindingList SUCHTHAT expression #ExistsExp 
+  | '(' expression (',' expression)+ ')' #TupleExp
+  | '{' expressionList? '}' #SetEnumExp
+  | '{' expression '..' expression '}' #SetRngExp
+  | '{' expression '|' rngBindingList SUCHTHAT expression '}' #SetCompExp 
+  | '[' expressionList? ']' #ListEnumExp
+  | '[' expression '..' expression ']' #ListRngExp
+  | '[' expression '|' pattern ':' expression SUCHTHAT expression ']' #ListCompExp 
+  | '<' mapPairList? '>' #MapEnumExp
+  | '<' mapPair '|' rngBindingList SUCHTHAT expression '>' #MapCompExp 
+  | '-\\' pattern (':' type)? SUCHTHAT expression #LambdaExp
+  | expression ('*'|'/'|'%'|'inter'|'\\'|'++'|'#'|'^') expression #BinOp1Exp
+  | expression ('+'|'-'|'union') expression #BinOp2Exp
   | expression 
       (
          tokenLessThanEqual | tokenGreaterThanEqual | tokenLessThan | tokenGreatherThan 
        | tokenEquals | tokenNot tokenEquals
        | 'isin'|'!isin'|'subset'|'psubset' 
-      ) 
-    expression
-  | expression tokenAnd expression
-  | expression tokenOr expression
-  | expression (tokenImplies | tokenIFF) expression
-  | expression ':=' expression
-  | 'assert' '(' expression ')' 
+      )  
+    expression #BinOp3Exp
+  | expression tokenAnd expression #AndExp
+  | expression tokenOr expression #OrExp
+  | expression (tokenImplies | tokenIFF) expression #IFFExp
+  | expression ':=' expression #AssignExp
+  | 'assert' '(' expression ')' #AssertExp 
   // --------
   // Records:
   // --------  
@@ -280,8 +284,8 @@ collectionOrType
 //  ;  
 
 pattern
-  : Identifier
-  | '(' pattern (',' pattern)+ ')'  
+  : Identifier #IdentPattern
+  | '(' pattern (',' pattern)+ ')' #CartesianPattern  
   ;
   
 identifierList

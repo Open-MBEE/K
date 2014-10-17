@@ -1,5 +1,8 @@
 package nasa.jpl.spacecraft
 
+import nasa.jpl.instruments.*
+import nasa.jpl.power
+
 type goodCamera = {|x:Int . x > 30 && x < 120|};
 
 =================
@@ -7,13 +10,13 @@ Space Craft Model
 -----------------
 
 class Instrument {
-    var name : String; 
+    var name : String = "hello"; 
     var Id : Int;
     var angle : goodCamera;
     var powerLevel : Real;
-
+    var b : Boolean = false; 
     angle := 0;
-    powerLevel := 100;
+    powerLevel := 1000;
     --  + 1
  
     req {
@@ -68,10 +71,10 @@ assoc TestAssociation{
 }
 
 -- setup some instruments
-var Camera : Instrument = create Instrument(name:"Camera");
+var Camera : Instrument = create Instrument(name:"Camera1");
 var Camera2 : Instrument = create Instrument(Id:3);
-var SolarPanel : Instrument = create Instrument(name:"SolarPanel", Id:2, powerLevel: -100);
-var BackupSolarPanel : Instrument = create Instrument(name:"SolarPanel", Id:3);
+var SolarPanel : Instrument = create Instrument(name:"SolarPanel1", Id:2, powerLevel: -100);
+var BackupSolarPanel : Instrument = create Instrument(name:"SolarPanel12", Id:3);
 
 -- create clipper spacecraft object
 var Clipper: SpaceCraft;
@@ -86,7 +89,7 @@ Clipper.rotateCamera(Camera, 45);
 
 -- ensure angle of the camera stays within field of view
 req{
-  Camera.angle > 30 && Camera.angle < 120
+  Camera.angle > 300 && Camera.angle < 120
 }
 
 -- ensure that solar panels are different
