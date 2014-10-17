@@ -87,6 +87,8 @@ Clipper.changeInstrument(SolarPanel)
 
 Clipper.rotateCamera(Camera, 45);
 
+100*45;
+
 -- ensure angle of the camera stays within field of view
 req{
   Camera.angle > 300 && Camera.angle < 120
