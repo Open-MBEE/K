@@ -37,8 +37,9 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   override def visitTypeDeclaration (ctx : ModelParser.TypeDeclarationContext) : AnyRef = {
 	 var ident : String = ctx.Identifier().toString()
 	 var typeParams : List[TypeParam] = 
-	   if(ctx.typeParameters() != null) visit(ctx.typeParameters()).asInstanceOf[List[TypeParam]]
-	   else null
+	   if(ctx.typeParameters() != null) 
+	     visit(ctx.typeParameters()).asInstanceOf[List[TypeParam]]
+	   else Nil
 	 var t : Type = visit(ctx.`type`()).asInstanceOf[Type]
 	 TypeDecl(ident, typeParams, t)
   }
@@ -76,7 +77,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
       var qn : QualifiedName = visit(ctx.qualifiedName()).asInstanceOf[QualifiedName]
       var typeArguments : List[Type] = 
         if(ctx.typeArguments() != null) visit(ctx.typeArguments()).asInstanceOf[List[Type]]
-        else null
+        else Nil
       IdentType(qn, typeArguments)
   }
 
@@ -425,7 +426,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   }
 
   override def visitExpressionsWithSeparator(ctx : ModelParser.ExpressionsWithSeparatorContext) : AnyRef = {
-	visit(ctx.expression()).asInstanceOf[Exp]
+	ExpressionDecl(visit(ctx.expression()).asInstanceOf[Exp])
   }
   
   override def visitTypingList(ctx : ModelParser.TypingListContext) : AnyRef = {
@@ -434,18 +435,22 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
 
   override def visitMemberDeclaration (ctx : ModelParser.MemberDeclarationContext) : AnyRef =  {
 	if(ctx.sortDeclaration() != null) visit(ctx.sortDeclaration())
-	if(ctx.typeDeclaration() != null) visit(ctx.typeDeclaration())
-	if(ctx.sortDeclaration() != null) visit(ctx.sortDeclaration())
-	if(ctx.valueDeclaration() != null) visit(ctx.valueDeclaration())
-	if(ctx.variableDeclaration() != null) visit(ctx.variableDeclaration())
-	if(ctx.functionDeclaration() != null) visit(ctx.functionDeclaration())
-	if(ctx.constraint() != null) visit(ctx.constraint())
-	if(ctx.expressionsWithSeparator() != null) visit(ctx.expressionsWithSeparator())
-	null
+	else if(ctx.typeDeclaration() != null) visit(ctx.typeDeclaration())
+	else if(ctx.sortDeclaration() != null) visit(ctx.sortDeclaration())
+	else if(ctx.valueDeclaration() != null) visit(ctx.valueDeclaration())
+	else if(ctx.variableDeclaration() != null) visit(ctx.variableDeclaration())
+	else if(ctx.functionDeclaration() != null) visit(ctx.functionDeclaration())
+	else if(ctx.constraint() != null) visit(ctx.constraint())
+	else if(ctx.expressionsWithSeparator() != null) visit(ctx.expressionsWithSeparator())
+	else null
   }
 
   override def visitTopDeclaration(ctx : ModelParser.TopDeclarationContext) : AnyRef = {
-    ctx.children.asScala.toList.map(visit(_))
+    if(ctx.classDeclaration() != null) visit(ctx.classDeclaration())
+    else if (ctx.memberDeclaration() != null){ 
+      visit(ctx.memberDeclaration())
+    }
+    else null
   }
 
   override def visitClassDeclaration (ctx : ModelParser.ClassDeclarationContext) : AnyRef =  {
