@@ -11,7 +11,9 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   var stack : List[AnyRef] = Nil
 
   override def visitModel(ctx : ModelParser.ModelContext) : AnyRef =  {
-	var packageDecl : PackageDecl = visit(ctx.packageDeclaration()).asInstanceOf[PackageDecl]
+	var packageDecl : Option[PackageDecl] = 
+	  if(ctx.packageDeclaration() != null) Some(visit(ctx.packageDeclaration()).asInstanceOf[PackageDecl])
+	  else None
 	var importDecls : List[ImportDecl] = ctx.importDeclaration().asScala.toList.map(visit(_).asInstanceOf[ImportDecl])
 	var topDecls : List[TopDecl] = ctx.topDeclaration().asScala.toList.map(visit(_).asInstanceOf[TopDecl])
 	Model(packageDecl, importDecls, topDecls)

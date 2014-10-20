@@ -5,11 +5,15 @@ import org.json.JSONArray
 
 // TODO: get rid of PackageDecl
 
-case class Model(packageName: PackageDecl, imports: List[ImportDecl],
+case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
   decls: List[TopDecl]) {
 
   override def toString = {
-    var result = packageName + "\n\n"
+    var result = 
+      packageName match {
+      case Some(p) => p + "\n\n"
+      case None => ""
+    }
     if (!imports.isEmpty) {
       for (imp <- imports) {
         result += imp + "\n"
