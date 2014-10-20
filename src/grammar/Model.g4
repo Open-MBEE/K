@@ -2,7 +2,7 @@
 grammar Model;
 
 model
-  : packageDeclaration 
+  : packageDeclaration
     importDeclaration* 
     topDeclaration*
     EOF
