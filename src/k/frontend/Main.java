@@ -34,7 +34,8 @@ public class Main {
 		
 		// Scala visitor
 		KScalaVisitor ksv = new KScalaVisitor();
-		ksv.visit(tree);
+		Model m = (Model) ksv.visit(tree);
+		
 		
     }
 

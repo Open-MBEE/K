@@ -1,10 +1,9 @@
 package k.frontend
 
 
-class Model {
-  var packageName: PackageDecl = null
-  var imports: List[ImportDecl] = Nil
-  var decls: List[TopDecl] = Nil
+case class Model(packageName : PackageDecl, imports : List[ImportDecl], 
+    decls : List[TopDecl]) {
+  
 }
 
 trait TopDecl {
@@ -307,7 +306,7 @@ case class ParenType(t: Type) extends Type {
 case class SubType(typing: Typing, exp: Exp) extends Type {
   
 }
-case class MultType(t: Type, min: Exp, max: Option[Exp]) {
+case class MultType(t: Type, min: Exp, max: Option[Exp]) extends Type {
   
 }
 case class NullableType(t: Type) extends Type {
