@@ -535,7 +535,7 @@ case object NOT extends UnaryOp {
   override def toJsonName = "Not"
 }
 case object NEG extends UnaryOp {
-  override def toString = "-"
+  override def toString = "~"
 
   override def toJsonName = "Neg"
 }
