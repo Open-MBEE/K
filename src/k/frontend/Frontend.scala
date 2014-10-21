@@ -68,45 +68,137 @@ object Frontend {
     }
   }
 
-  def visitJsonObject(obj: JSONObject) : Exp = {
+  def visitJsonObject(o: Any) : AnyRef = {
+    val obj = o.asInstanceOf[JSONObject]
     obj.get("type") match {
-      case "Expression" =>
-        val operand: JSONArray = obj.get("operand").asInstanceOf[JSONArray]
-        if (operand.get(0).asInstanceOf[JSONObject].keySet().contains("element")) {
-          val operator: BinaryOp =
-            operand.get(0).asInstanceOf[JSONObject].get("element") match {
-              case "Plus" => ADD
-              case "Minus" => SUB
-              case "Times" => MUL
-              case "Divide" => DIV
-              case "Modulo" => REM
-              case "LTE" => LTE
-              case "GTE" => GTE
-              case "LT" => LT
-              case "GT" => GT
-              case "EQ" => EQ
-              case "NotEQ" => NEQ
-              case "IsIn" => ISIN
-              case "NotIn" => NOTISIN
-              case "Subset" => SUBSET
-              case "Psubset" => PSUBSET
-              case "Union" => SETUNION
-              case "Inter" => SETINTER
-              case "And" => AND
-              case "Or" => OR
-              case "Tuples" => TUPLEINDEX
-              case "Concat" => LISTCONCAT
-              case _ =>
-                println(operand.get(0).asInstanceOf[JSONObject].get("element"))
-                null
-            }
-          BinExp(visitJsonObject(operand.get(1).asInstanceOf[JSONObject]),
-            operator,
-            visitJsonObject(operand.get(2).asInstanceOf[JSONObject]))
-        } 
-        else {
-          ParenExp(visitJsonObject(operand.get(0).asInstanceOf[JSONObject]))
-        }
+      case "ParenExp" =>
+        ParenExp(visitJsonObject(obj.get("exp")).asInstanceOf[Exp])
+      case "IdentExp" =>
+        IdentExp(obj.get("ident").asInstanceOf[String])
+      case "DotExp" =>
+        val exp: Exp = visitJsonObject(obj.get("exp")).asInstanceOf[Exp]
+        val ident: String = obj.get("ident").asInstanceOf[String]
+        DotExp(exp, ident)
+      case "CreateExp" =>
+        val name = visitJsonObject(obj.get("name")).asInstanceOf[QualifiedName]
+        val args = visitJsonArray(obj.get("args").asInstanceOf[JSONArray], (a => visitJsonObject(a))).asInstanceOf[List[ClassArgument]]
+        CreateExp(name, args)
+      case "IfExp" =>
+        val cond: Exp = visitJsonObject(obj.get("cond")).asInstanceOf[Exp]
+        val exp1: Exp = visitJsonObject(obj.get("exp1")).asInstanceOf[Exp]
+        val exp2: Exp = visitJsonObject(obj.get("exp2")).asInstanceOf[Exp]
+        IfExp(cond, exp1, exp2)
+      case "FunApplExp" =>
+        val exp1: Exp = visitJsonObject(obj.get("exp1")).asInstanceOf[Exp]
+        val exp2: Exp = visitJsonObject(obj.get("exp2")).asInstanceOf[Exp]
+        FunApplExp(exp1, exp2)
+      case "BinExp" =>
+        val operator: BinaryOp =
+          obj.get("op") match {
+            case "Plus" => ADD
+            case "Minus" => SUB
+            case "Times" => MUL
+            case "Divide" => DIV
+            case "Modulo" => REM
+            case "LTE" => LTE
+            case "GTE" => GTE
+            case "LT" => LT
+            case "GT" => GT
+            case "EQ" => EQ
+            case "NotEQ" => NEQ
+            case "IsIn" => ISIN
+            case "NotIn" => NOTISIN
+            case "Subset" => SUBSET
+            case "Psubset" => PSUBSET
+            case "Union" => SETUNION
+            case "Inter" => SETINTER
+            case "And" => AND
+            case "Or" => OR
+            case "Tuples" => TUPLEINDEX
+            case "Concat" => LISTCONCAT
+            case x =>
+              println(x + " not recognized as a BinOp.")
+              null
+          }
+        BinExp(visitJsonObject(obj.get("exp1")).asInstanceOf[Exp], 
+            operator, 
+            visitJsonObject(obj.get("exp2")).asInstanceOf[Exp])
+      case "UnaryExp" =>
+        val operator: UnaryOp =
+          obj.get("op") match {
+            case "Neg" => NEG
+            case "Not" => NOT
+          }
+        UnaryExp(operator, visitJsonObject(obj.get("exp")).asInstanceOf[Exp])
+      case "QuantifiedExp" =>
+        val quant = visitJsonObject(obj.get("quant")).asInstanceOf[Quantifier]
+        val bindings = visitJsonArray(obj.get("bindings"), visitJsonObject).asInstanceOf[List[RngBinding]]
+        val exp = visitJsonObject(obj.get("exp")).asInstanceOf[Exp]
+        QuantifiedExp(quant, bindings, exp)
+      case "TupleExp" =>
+        TupleExp(visitJsonArray(obj.get("exps"), visitJsonObject).asInstanceOf[List[Exp]])
+      case "SetEnumExp" =>
+        SetEnumExp(visitJsonArray(obj.get("exps"), visitJsonObject).asInstanceOf[List[Exp]])
+      case "SetRangeExp" =>
+        SetRangeExp(visitJsonObject(obj.get("exp1")).asInstanceOf[Exp], 
+            visitJsonObject(obj.get("exp2")).asInstanceOf[Exp])
+      case "SetComprExp" =>
+        var exp1 = visitJsonObject(obj.get("exp1")).asInstanceOf[Exp]
+        var bindings = visitJsonArray(obj.get("bindings"), visitJsonObject).asInstanceOf[List[RngBinding]]
+        var exp2 = visitJsonObject(obj.get("exp2")).asInstanceOf[Exp]
+        SetComprExp(exp1, bindings, exp2)
+      case "ListEnumExp" =>
+        ListEnumExp(visitJsonArray(obj.get("exps"), visitJsonObject).asInstanceOf[List[Exp]])
+      case "ListRangeExp" =>
+        ListRangeExp(visitJsonObject(obj.get("exp1")).asInstanceOf[Exp], 
+            visitJsonObject(obj.get("exp2")).asInstanceOf[Exp])
+      case "ListComprExp" => 
+        var exp1 = visitJsonObject(obj.get("exp1")).asInstanceOf[Exp]
+        var exp2 = visitJsonObject(obj.get("exp2")).asInstanceOf[Exp]
+        var exp3 = visitJsonObject(obj.get("exp3")).asInstanceOf[Exp]
+        var pat = visitJsonObject(obj.get("pat")).asInstanceOf[Pattern]
+        ListComprExp(exp1, pat, exp2, exp3)
+      case "MapEnumExp" =>
+        MapEnumExp(visitJsonArray(obj.get("maps"), visitJsonObject).asInstanceOf[List[MapPair]])
+      case "MapComprExp" =>
+        var map = visitJsonObject(obj.get("map")).asInstanceOf[MapPair]
+        var bindings = visitJsonArray(obj.get("bindings"), visitJsonObject).asInstanceOf[List[RngBinding]]
+        var exp = visitJsonObject(obj.get("exp")).asInstanceOf[Exp]
+        MapComprExp(map, bindings, exp)
+      case "LambdaExp" =>
+        var pat = visitJsonObject(obj.get("pat")).asInstanceOf[Pattern]
+        var t = if(obj.keySet().contains("t")) Some(visitJsonObject(obj.get("t")).asInstanceOf[Type])
+        		else None
+        var exp = visitJsonObject(obj.get("exp")).asInstanceOf[Exp]
+        LambdaExp(pat, t, exp)
+      case "AssertExp" =>
+        AssertExp(visitJsonObject(obj.get("exp")).asInstanceOf[Exp])
+      case "StarExp" => 
+        StarExp
+      case "QualifiedName" =>
+        QualifiedName(visitJsonArray(obj.get("names").asInstanceOf[JSONArray], (x=>x.asInstanceOf[String])).asInstanceOf[List[String]])
+      case "IdentType" => 
+        val ident = visitJsonObject(obj.get("ident")).asInstanceOf[QualifiedName]
+        val args = visitJsonArray(obj.get("args").asInstanceOf[JSONArray], visitJsonObject).asInstanceOf[List[Type]]
+        IdentType(ident, args)
+      case "MultType" =>
+        var t = visitJsonObject(obj.get("t")).asInstanceOf[Type]
+        var min = visitJsonObject(obj.get("min")).asInstanceOf[Exp]
+        var max = if(obj.keySet().contains("max")) Some(visitJsonObject(obj.get("max")).asInstanceOf[Exp])
+        		else None
+        MultType(t, min, max)
+      case "IdentPattern" => 
+        IdentPattern(obj.get("ident").asInstanceOf[String])
+      case "ProductPattern" =>
+        ProductPattern(visitJsonArray(obj.get("patterns"), visitJsonObject).asInstanceOf[List[Pattern]])
+      case "RngBinding" => 
+        val patterns = visitJsonArray(obj.get("patterns"), visitJsonObject).asInstanceOf[List[Pattern]]
+        val collection = visitJsonObject(obj.get("collection")).asInstanceOf[Collection]
+        RngBinding(patterns, collection)
+      case "ExpCollection" =>
+        ExpCollection(visitJsonObject(obj.get("exp")).asInstanceOf[Exp])
+      case "TypeCollection" =>
+        TypeCollection(visitJsonObject(obj.get("ty")).asInstanceOf[Type])
       case "LiteralInteger" =>
         IntegerLiteral(obj.get("integer").asInstanceOf[Integer])
       case "LiteralFloatingPoint" =>
@@ -123,6 +215,16 @@ object Frontend {
         println("Unknown keys encountered in JSON string!")
         System.exit(-1).asInstanceOf[Nothing]
     }
+  }
+
+  def visitJsonArray(o: Any, f: Any => AnyRef): List[AnyRef] = {
+    val obj = o.asInstanceOf[JSONArray]
+    var res: List[AnyRef] = Nil
+    for (i <- Range(0, obj.length())) {
+      val element = obj.get(i)
+      res = res ++ List(f(element))
+    }
+    res
   }
 
   // Assuming that the input to this is an expression in JSON string format

@@ -194,7 +194,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   override def visitIfExp(ctx : ModelParser.IfExpContext) : AnyRef = {
     var e0 : Exp = visit(ctx.expression(0)).asInstanceOf[Exp]
     var e1 : Exp = visit(ctx.expression(1)).asInstanceOf[Exp]
-    var e2 : Exp = visit(ctx.expression(1)).asInstanceOf[Exp]
+    var e2 : Exp = visit(ctx.expression(2)).asInstanceOf[Exp]
     IfExp(e0, e1, e2)
   }
     
