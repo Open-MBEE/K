@@ -73,7 +73,7 @@ assoc TestAssociation{
 -- setup some instruments
 var Camera : Instrument = create Instrument(name:"Camera1");
 var Camera2 : Instrument = create Instrument(Id:3);
-var SolarPanel : Instrument = create Instrument(name:"SolarPanel1", Id:2, powerLevel: -100);
+var SolarPanel : Instrument = create Instrument(name:"SolarPanel1", Id:2, powerLevel: ~100);
 var BackupSolarPanel : Instrument = create Instrument(name:"SolarPanel12", Id:3);
 
 -- create clipper spacecraft object

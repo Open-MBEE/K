@@ -11,6 +11,7 @@ import org.antlr.v4.runtime.CommonTokenStream
 import org.json.JSONArray
 import org.json.JSONObject
 import k.frontend.ModelParser.ModelContext
+import org.json.JSONTokener
 
 object Frontend {
   type OptionMap = Map[Symbol, Any]
@@ -24,8 +25,9 @@ object Frontend {
       case "-v" :: tail => parseArgs(map ++ Map('verbose -> true), tail)
       case "-stats" :: tail => parseArgs(map ++ Map('stats -> true), tail)
       case "-expressionToJson" :: value :: tail =>
-        parseArgs(map ++ Map('expression -> (value + ";"))
-          ++ Map('expressionToJson -> true), tail)
+        parseArgs(map ++ Map('expression -> (value + ";")), tail)
+      case "-jsonToExpression" :: value :: tail =>
+        parseArgs(map ++ Map('json -> value), tail)
       case option :: tail =>
         println("Unknown option " + option)
         System.exit(1).asInstanceOf[Nothing]
@@ -38,15 +40,8 @@ object Frontend {
     val model: Model =
       options.get('modelFile) match {
         case Some(f: String) => getModelFromFile(f)
-        case None =>
-          println("Model file not provided.")
-          System.exit(-1).asInstanceOf[Nothing]
+        case None => null
       }
-
-    if (model == null) {
-      println("Model could not be created from input file!")
-      System.exit(-1)
-    }
 
     options.get('stats) match {
       case Some(_) => printStats(model)
@@ -65,6 +60,80 @@ object Frontend {
       case None => ()
     }
 
+    options.get('json) match {
+      case Some(jsonString: String) => {
+        json2exp(jsonString)
+      }
+      case None => ()
+    }
+  }
+
+  def visitJsonObject(obj: JSONObject): Exp = {
+    obj.get("type") match {
+      case "Expression" =>
+        val operand: JSONArray = obj.get("operand").asInstanceOf[JSONArray]
+        if (operand.get(0).asInstanceOf[JSONObject].keySet().contains("element")) {
+          val operator: BinaryOp =
+            operand.get(0).asInstanceOf[JSONObject].get("element") match {
+              case "Plus" => ADD
+              case "Minus" => SUB
+              case "Times" => MUL
+              case "Divide" => DIV
+              case "Modulo" => REM
+              case "LTE" => LTE
+              case "GTE" => GTE
+              case "LT" => LT
+              case "GT" => GT
+              case "EQ" => EQ
+              case "NotEQ" => NEQ
+              case "IsIn" => ISIN
+              case "NotIn" => NOTISIN
+              case "Subset" => SUBSET
+              case "Psubset" => PSUBSET
+              case "Union" => SETUNION
+              case "Inter" => SETINTER
+              case "And" => AND
+              case "Or" => OR
+              case "Tuples" => TUPLEINDEX
+              case "Concat" => LISTCONCAT
+              case _ =>
+                println(operand.get(0).asInstanceOf[JSONObject].get("element"))
+                null
+            }
+          BinExp(visitJsonObject(operand.get(1).asInstanceOf[JSONObject]),
+            operator,
+            visitJsonObject(operand.get(2).asInstanceOf[JSONObject]))
+        } 
+        else {
+          ParenExp(visitJsonObject(operand.get(0).asInstanceOf[JSONObject]))
+        }
+      case "LiteralInteger" =>
+        IntegerLiteral(obj.get("integer").asInstanceOf[Integer])
+      case "LiteralFloatingPoint" =>
+        RealLiteral(java.lang.Float.parseFloat(obj.get("floatingpoint").asInstanceOf[String]))
+      case "LiteralCharacter" =>
+        CharacterLiteral(obj.get("character").asInstanceOf[Char])
+      case "LiteralBoolean" =>
+        BooleanLiteral(java.lang.Boolean.parseBoolean(obj.get("boolean").asInstanceOf[String]))
+      case "StringLiteral" =>
+        StringLiteral(obj.get("string").asInstanceOf[String])
+      case "ElementValue" =>
+        IdentExp(obj.get("element").asInstanceOf[String])
+      case _ =>
+        println("Unknown keys encountered in JSON string!")
+        System.exit(-1).asInstanceOf[Nothing]
+    }
+  }
+
+  // Assuming that the input to this is an expression in JSON string format
+  def json2exp(expressionString: String): AnyRef = {
+    var tokener: JSONTokener = new JSONTokener(expressionString)
+    var jsonObject: JSONObject = new JSONObject(tokener)
+    var element: JSONArray = jsonObject.get("elements").asInstanceOf[JSONArray]
+    var specialization: JSONObject = element.get(0).asInstanceOf[JSONObject]
+    var exp: Exp = visitJsonObject(specialization.get("specialization").asInstanceOf[JSONObject]).asInstanceOf[Exp]
+    println(exp.toString())
+    exp
   }
 
   def getVisitor(contents: String): (KScalaVisitor, ModelContext) = {
