@@ -33,6 +33,14 @@ case class PackageDecl(name: QualifiedName) {
 
 case class QualifiedName(names: List[String]) {
   override def toString = names.mkString(".")
+
+  def toJson = {
+    val qualifiedName = new JSONObject()
+    val theNames = new JSONArray()
+    for (name <- names)theNames.put(name)
+    qualifiedName.put("names",theNames)
+    qualifiedName.put("type","QualifiedName")
+  }
 }
 
 case class ImportDecl(name: QualifiedName, star: Boolean) {
@@ -160,30 +168,32 @@ case class ParenExp(exp: Exp) extends Exp {
   override def toString = s"($exp)"
 
   override def toJson = {
-    val json = exp.toJson
     val expression = new JSONObject()
-    val operand = new JSONArray()
 
-    operand.put(json)
-    expression.put("operand", operand)
-    expression.put("type", "Expression")
+    expression.put("exp", exp.toJson)
+    expression.put("type", "ParenExp")
   }
 }
 case class IdentExp(ident: String) extends Exp {
   override def toString = ident
 
   override def toJson = {
-    val expObj = new JSONObject()
+    val expression = new JSONObject()
 
-    expObj.put("element", ident)
-    expObj.put("type", "ElementValue")
+    expression.put("ident", ident)
+    expression.put("type", "IdentExp")
   }
 }
 case class DotExp(exp: Exp, ident: String) extends Exp {
-  override def toString = s"exp.$ident"
+  override def toString = s"$exp.$ident"
 
   override def toJson = {
-    null //TODO
+    val expression = new JSONObject()
+        
+    expression.put("ident", ident)
+    expression.put("exp", exp.toJson)
+    expression.put("type", "DotExp")
+
   }
 }
 case class CreateExp(name: QualifiedName, args: List[ClassArgument]) extends Exp {
@@ -194,7 +204,12 @@ case class CreateExp(name: QualifiedName, args: List[ClassArgument]) extends Exp
   }
 
   override def toJson = {
-    null //TODO
+    val expression = new JSONObject()
+    val arguments = new JSONArray()
+    for(arg <- args) arguments.put(arg.toJson)
+    expression.put("type", "CreateExp")
+    expression.put("name", name.toJson)
+    expression.put("args", arguments)
   }
 }
 case class FunApplExp(exp1: Exp, exp2: Exp) extends Exp {
@@ -205,159 +220,195 @@ case class FunApplExp(exp1: Exp, exp2: Exp) extends Exp {
       s"$exp1 $exp2"
 
   override def toJson = {
-    val json = exp1.toJson
-    val json2 = exp2.toJson
     val expression = new JSONObject()
-    val operand = new JSONArray()
 
-    operand.put(json)
-    operand.put(json2)
-    expression.put("operand", operand)
-    expression.put("type", "Expression")
+    expression.put("type", "FunApplExp")
+    expression.put("exp1", exp1.toJson)
+    expression.put("exp2", exp2.toJson)
   }
 }
 case class IfExp(cond: Exp, exp1: Exp, exp2: Exp) extends Exp {
   override def toString = s"if $cond then $exp1 else $exp2"
 
   override def toJson = {
-    val json1 = exp1.toJson
-    val json2 = exp2.toJson
-    val json3 = cond.toJson
     val expression = new JSONObject()
-    val operand = new JSONArray()
 
-    operand.put(json3)
-    operand.put(json1)
-    operand.put(json2)
-    expression.put("operand", operand)
-    expression.put("type", "Expression")
+    expression.put("type", "IfExp")
+    expression.put("cond", cond.toJson)
+    expression.put("exp1", exp1.toJson)
+    expression.put("exp2", exp2.toJson)
   }
 }
 case class BinExp(exp1: Exp, op: BinaryOp, exp2: Exp) extends Exp {
   override def toString = s"$exp1 $op $exp2"
 
   override def toJson = {
-    val json1 = exp1.toJson
-    val json2 = exp2.toJson
-    val opName = op.toJsonName
     val expression = new JSONObject()
     val operation = new JSONObject()
     val operand = new JSONArray()
 
-    operation.put("type", "ElementValue")
-    operation.put("element", opName)
-    operand.put(operation)
-    operand.put(json1)
-    operand.put(json2)
-    expression.put("operand", operand)
-    expression.put("type", "Expression")
+    expression.put("type", "BinExp")
+    expression.put("op", op.toJsonName)
+    expression.put("exp1", exp1.toJson)
+    expression.put("exp2", exp2.toJson)
+
   }
 }
 case class UnaryExp(op: UnaryOp, exp: Exp) extends Exp {
   override def toString = s"$op$exp"
 
   override def toJson = {
-    val json = exp.toJson
-    val opName = op.toJsonName
     val expression = new JSONObject()
-    val operation = new JSONObject()
-    val operand = new JSONArray()
 
-    operation.put("type", "ElementValue")
-    operation.put("element", opName)
-    operand.put(operation)
-    operand.put(json)
-    expression.put("operand", operand)
-    expression.put("type", "Expression")
+    expression.put("exp", exp.toJson)
+    expression.put("type", "UnaryExp")
+    expression.put("op", op.toJsonName)
   }
 }
 case class QuantifiedExp(quant: Quantifier, bindings: List[RngBinding], exp: Exp) extends Exp {
   override def toString = s"$quant ${bindings.mkString(",")} . $exp"
 
   override def toJson = {
-    null //TODO
+    val expression = new JSONObject()
+    val quantifier = new JSONObject()
+    val operand = new JSONArray()
+    val binding = new JSONArray()
+
+    quantifier.put("type", "Quantifier")
+    quantifier.put("element", quant.toJson)
+    
+    operand.put(quantifier)
+    for (bind <- bindings) binding.put(bind.toJson)
+    operand.put(exp.toJson)
+
+    expression.put("quantifier",quantifier)
+    expression.put("bindings",binding)
+    expression.put("operand", operand)
+    expression.put("type", "QuantifiedExp")
   }
 }
 case class TupleExp(exps: List[Exp]) extends Exp {
   override def toString = "(" + exps.mkString(",") + ")"
 
   override def toJson = {
-    null //TODO
+	val tupleExp = new JSONObject()
+	val expressions = new JSONArray()
+	for(exp <- exps) expressions.put(exp.toJson)
+	tupleExp.put("type", "TupleExp")
+	tupleExp.put("exps", expressions)
   }
 }
 case class SetEnumExp(exps: List[Exp]) extends Exp {
   override def toString = "{" + exps.mkString(",") + "}"
 
   override def toJson = {
-    null //TODO
+	val setEnumExp = new JSONObject()
+	val expressions = new JSONArray()
+	for(exp <- exps) expressions.put(exp.toJson)
+	setEnumExp.put("type", "SetEnumExp")
+	setEnumExp.put("exps", expressions)
   }
 }
 case class SetRangeExp(exp1: Exp, exp2: Exp) extends Exp {
   override def toString = s"{$exp1 .. $exp2}"
 
   override def toJson = {
-    null //TODO
+    val setRangeExp = new JSONObject()
+    setRangeExp.put("type", "SetRangeExp")
+    setRangeExp.put("exp1", exp1.toJson)
+    setRangeExp.put("exp2", exp2.toJson)
   }
 }
 case class SetComprExp(exp1: Exp, bindings: List[RngBinding], exp2: Exp) extends Exp {
-  override def toString = s"{$exp1 | ${bindings.mkString(",")} :- $exp2}"
+  override def toString = s"{$exp1 | ${bindings.mkString(",")} . $exp2}"
 
   override def toJson = {
-    null //TODO
+    val setComprExp = new JSONObject()
+    val bndgs = new JSONArray()
+    for(binding <- bindings) bndgs.put(binding.toJson)
+    setComprExp.put("type", "SetComprExp")
+    setComprExp.put("exp1", exp1.toJson)
+    setComprExp.put("bindings", bndgs)
+    setComprExp.put("exp2", exp2.toJson)
   }
 }
 case class ListEnumExp(exps: List[Exp]) extends Exp {
   override def toString = "[" + exps.mkString(",") + "]"
 
   override def toJson = {
-    null //TODO
+    val listEnumExp = new JSONObject()
+	val expressions = new JSONArray()
+	for(exp <- exps) expressions.put(exp.toJson)
+	listEnumExp.put("type", "ListEnumExp")
+	listEnumExp.put("exps", expressions)
   }
 }
 case class ListRangeExp(exp1: Exp, exp2: Exp) extends Exp {
   override def toString = s"[$exp1 .. $exp2]"
 
   override def toJson = {
-    null //TODO
+    val listRangeExp = new JSONObject()
+    listRangeExp.put("type", "ListRangeExp")
+    listRangeExp.put("exp1", exp1.toJson)
+    listRangeExp.put("exp2", exp2.toJson)
   }
 }
 case class ListComprExp(exp1: Exp, pat: Pattern, exp2: Exp, exp3: Exp) extends Exp {
-  override def toString = s"[$exp1 | $pat : $exp2 :- $exp3]"
+  override def toString = s"[$exp1 | $pat : $exp2 . $exp3]"
 
   override def toJson = {
-    null //TODO
+    val listComprExp = new JSONObject()
+    listComprExp.put("type", "ListComprExp")
+    listComprExp.put("exp1", exp1.toJson)
+    listComprExp.put("pattern", pat.toJson)
+    listComprExp.put("exp2", exp2.toJson)
+    listComprExp.put("exp3", exp3.toJson)
   }
 }
 case class MapEnumExp(maps: List[MapPair]) extends Exp {
   override def toString = "{" + maps.mkString(",") + "}"
 
   override def toJson = {
-    null //TODO
+    val mapEnumExp = new JSONObject()
+    val mps = new JSONArray()
+    for(map <- maps) mps.put(map.toJson)
+    mapEnumExp.put("type", "MapEnumExp")
+    mapEnumExp.put("maps", mps)
   }
 }
 case class MapComprExp(map: MapPair, bindings: List[RngBinding], exp: Exp) extends Exp {
-  override def toString = s"{$map | ${bindings.mkString(",")} :- $exp}"
+  override def toString = s"{$map | ${bindings.mkString(",")} . $exp}"
 
   override def toJson = {
-    null //TODO
+    val mapComprExp = new JSONObject()
+    val bndgs = new JSONArray()
+    for(binding <- bindings) bndgs.put(binding.toJson)
+    mapComprExp.put("type", "MapComprExp")
+    mapComprExp.put("exp", exp.toJson)
+    mapComprExp.put("bindings", bndgs)
   }
 }
 case class LambdaExp(pat: Pattern, t: Option[Type], exp: Exp) extends Exp {
   override def toString = {
     t match {
-      case None => s"-\\ $pat . $exp"
-      case Some(t) => s"-\\ $pat : $t . $exp"
+      case None => s"fun $pat . $exp"
+      case Some(t) => s"fun $pat : $t . $exp"
     }
   }
 
   override def toJson = {
-    null //TODO
+    val lambdaExp = new JSONObject()
+    lambdaExp.put("type", "LambdaExp")
+    lambdaExp.put("pat", pat.toJson)
+    t match {case Some(ty) => lambdaExp.put("t", ty.toJson) case None => ()}
+    lambdaExp.put("exp", exp.toJson)
   }
 }
 case class AssertExp(exp: Exp) extends Exp {
   override def toString = s"assert($exp)"
 
   override def toJson = {
-    null //TODO
+    new JSONObject().put("type", "AssertExp").put("exp", exp.toJson)
   }
 }
 case class BlockExp(body: List[MemberDecl]) extends Exp {
@@ -369,7 +420,15 @@ case class BlockExp(body: List[MemberDecl]) extends Exp {
   }
 
   override def toJson = {
-    null //TODO
+    /*
+    var blockExp = new JSONObject()
+    var bdy = new JSONArray()
+    for(b <- body) bdy.put(b.toJson)
+    blockExp.put("type", "BlockExp")
+    blockExp.put("body", bdy)
+    */
+    //TODO
+    null
   }
 }
 
@@ -377,12 +436,19 @@ case object StarExp extends Exp {
   override def toString = "*"
 
   override def toJson = {
-    null //TODO
+    new JSONObject().put("type", "StarExp")
   }
 }
 
 case class ClassArgument(ident: String, exp: Exp) {
   override def toString = s"$ident : $exp"
+  
+  def toJson = {
+    val classArgument = new JSONObject()
+    classArgument.put("type", "ClassArgument")
+    classArgument.put("ident", ident)
+    classArgument.put("exp", exp.toJson)
+  }
 }
 
 trait BinaryOp {
@@ -588,30 +654,83 @@ case class BooleanLiteral(b: Boolean) extends Literal {
   }
 }
 
-trait Quantifier
+trait Quantifier {
+  def toJson: JSONObject
+}
 case object Forall extends Quantifier {
   override def toString = "forall"
+
+  override def toJson = {
+    val o = new JSONObject()
+    o.put("element","Forall")
+    o.put("type","Quantifier")
+  }
 }
 case object Exists extends Quantifier {
   override def toString = "exists"
+
+  override def toJson = {
+    val o = new JSONObject()
+    o.put("element","Exists")
+    o.put("type","Quantifier")
+  }
 }
 
-trait Type
+trait Type {
+  def toJson: JSONObject
+}
 case class IdentType(ident: QualifiedName, args: List[Type]) extends Type {
   override def toString =
     if (args.isEmpty) ident.toString else s"$ident[${args.mkString(",")}]"
+
+  override def toJson = {
+    val identType = new JSONObject()
+    val arguments = new JSONArray()
+    for (arg <- args) arguments.put(arg.toJson)
+    identType.put("args",arguments)
+    identType.put("ident",ident.toJson)
+    identType.put("type","IdentType")
+  }
 }
 case class CartesianType(types: List[Type]) extends Type {
   override def toString = types.mkString(" * ")
+  
+  override def toJson = {
+    val cartesianType = new JSONObject()
+    val theTypes = new JSONArray()
+    for (ty <- types) theTypes.put(ty.toJson)
+    cartesianType.put("types",theTypes)
+    cartesianType.put("type","CartesianType")
+  }
 }
 case class FunctionType(from: Type, to: Type) extends Type {
   override def toString = s"$from -> $to"
+
+  override def toJson = {
+    val functionType = new JSONObject()
+    functionType.put("to",to.toJson)
+    functionType.put("from",from.toJson)
+    functionType.put("type","FunctionType")
+  }
 }
 case class ParenType(t: Type) extends Type {
   override def toString = s"($t)"
+
+  override def toJson = {
+    val parenType = new JSONObject()
+    parenType.put("type","ParenType")
+    parenType.put("t",t.toJson)
+  }
 }
 case class SubType(typing: Typing, exp: Exp) extends Type {
   override def toString = s"{| $typing . $exp |}"
+
+  override def toJson = {
+    val subType = new JSONObject()
+    subType.put("typing",typing.toJson)
+    subType.put("exp",exp.toJson)
+    subType.put("type","SubType")
+  }
 }
 case class MultType(t: Type, min: Exp, max: Option[Exp]) extends Type {
   override def toString = {
@@ -622,56 +741,150 @@ case class MultType(t: Type, min: Exp, max: Option[Exp]) extends Type {
     }
     result
   }
+
+  override def toJson = {
+    val multType = new JSONObject()
+    multType.put("min",min.toJson)
+    max match {
+      case None =>
+      case Some(exp) => multType.put("max",exp.toJson)
+    }
+    multType.put("t",t.toJson)
+    multType.put("type","MultType")
+  }
 }
 
 case class NullableType(t: Type) extends Type {
   override def toString = s"$t?"
+
+  override def toJson = {
+    val nullableType = new JSONObject()
+
+    nullableType.put("t",t.toJson)
+    nullableType.put("type","NullableType")
+  }
 }
 
 trait PrimitiveType extends Type
 case object BoolType extends PrimitiveType {
   override def toString = "Bool"
+
+  override def toJson = {
+    new JSONObject().put("type","BoolType")
+  }
 }
 case object CharType extends PrimitiveType {
   override def toString = "Char"
+
+  override def toJson = {
+    new JSONObject().put("type","CharType")
+  }
 }
 case object IntType extends PrimitiveType {
   override def toString = "Int"
+
+  override def toJson = {
+    new JSONObject().put("type","IntType")
+  }
 }
 case object RealType extends PrimitiveType {
   override def toString = "Real"
+
+  override def toJson = {
+    new JSONObject().put("type","RealType")
+  }
 }
 case object StringType extends PrimitiveType {
   override def toString = "String"
+
+  override def toJson = {
+    new JSONObject().put("type","StringType")
+  }
 }
 case object UnitType extends PrimitiveType {
   override def toString = "Unit"
+
+  override def toJson = {
+    new JSONObject().put("type","UnitType")
+  }
 }
 
 case class Typing(ident: String, ty: Type) {
   override def toString = s"$ident : $ty"
+
+  def toJson = {
+    val typing = new JSONObject()
+    typing.put("ty",ty.toJson)
+    typing.put("ident",ident)
+    typing.put("type","Typing")
+  }
 }
 
-trait Pattern
+trait Pattern {
+  def toJson: JSONObject
+}
 case class IdentPattern(ident: String) extends Pattern {
   override def toString = ident
+
+  override def toJson = {
+    val identPattern = new JSONObject()
+    identPattern.put("ident",ident)
+    identPattern.put("type","IdentPattern")
+  }
 }
 case class ProductPattern(patterns: List[Pattern]) extends Pattern {
   override def toString = "(" + patterns.mkString(",") + ")"
+
+  override def toJson = {
+    val productPattern = new JSONObject()
+    val thepatterns = new JSONArray()
+    for (pattern <- patterns) thepatterns.put(pattern.toJson)
+    productPattern.put("type","ProductPattern")
+  }
 }
 
 case class RngBinding(patterns: List[Pattern], collection: Collection) {
   override def toString = patterns.mkString(",") + " : " + collection
+
+  def toJson = {
+    val binding = new JSONObject()
+    val thePatterns = new JSONArray()
+    for (pattern <- patterns) thePatterns.put(pattern.toJson) 
+    binding.put("patterns",thePatterns)
+    binding.put("collection",collection.toJson)
+    binding.put("type","RngBinding")
+  }
 }
 
 case class MapPair(exp1: Exp, exp2: Exp) {
   override def toString = s"$exp1 -> $exp2"
+  
+  def toJson = {
+    val mapPair = new JSONObject()
+    mapPair.put("type", "MapPair")
+    mapPair.put("exp1", exp1.toJson)
+    mapPair.put("exp2", exp2.toJson)
+  }
 }
 
-trait Collection
+trait Collection {
+  def toJson : JSONObject
+}
 case class ExpCollection(exp: Exp) extends Collection {
   override def toString = exp.toString()
+  
+  override def toJson = {
+    val collection = new JSONObject()
+    collection.put("type", "ExpCollection")
+    collection.put("exp", exp.toJson)
+  } 
 }
 case class TypeCollection(ty: Type) extends Collection {
   override def toString = ty.toString()
+  
+  override def toJson =  {
+    val collection = new JSONObject()
+    collection.put("type", "TypeCollection")
+    collection.put("ty", ty.toJson)
+  }
 }
