@@ -25,7 +25,7 @@ object Frontend {
       case "-v" :: tail => parseArgs(map ++ Map('verbose -> true), tail)
       case "-stats" :: tail => parseArgs(map ++ Map('stats -> true), tail)
       case "-expressionToJson" :: value :: tail =>
-        parseArgs(map ++ Map('expression -> (value + ";")), tail)
+        parseArgs(map ++ Map('expression -> value), tail)
       case "-jsonToExpression" :: value :: tail =>
         parseArgs(map ++ Map('json -> value), tail)
       case option :: tail =>
@@ -34,7 +34,7 @@ object Frontend {
     }
   }
 
-  def main(args: Array[String]) {
+  def scala_main(args: Array[String]) {
     val options = parseArgs(Map(), args.toList)
 
     val model: Model =
@@ -68,7 +68,7 @@ object Frontend {
     }
   }
 
-  def visitJsonObject(obj: JSONObject): Exp = {
+  def visitJsonObject(obj: JSONObject) : Exp = {
     obj.get("type") match {
       case "Expression" =>
         val operand: JSONArray = obj.get("operand").asInstanceOf[JSONArray]
@@ -126,14 +126,13 @@ object Frontend {
   }
 
   // Assuming that the input to this is an expression in JSON string format
-  def json2exp(expressionString: String): AnyRef = {
+  def json2exp(expressionString: String): String = {
     var tokener: JSONTokener = new JSONTokener(expressionString)
     var jsonObject: JSONObject = new JSONObject(tokener)
     var element: JSONArray = jsonObject.get("elements").asInstanceOf[JSONArray]
     var specialization: JSONObject = element.get(0).asInstanceOf[JSONObject]
     var exp: Exp = visitJsonObject(specialization.get("specialization").asInstanceOf[JSONObject]).asInstanceOf[Exp]
-    println(exp.toString())
-    exp
+    exp.toString()
   }
 
   def getVisitor(contents: String): (KScalaVisitor, ModelContext) = {
@@ -161,7 +160,7 @@ object Frontend {
   }
 
   def exp2Json(expressionString: String): String = {
-    val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(expressionString)
+    val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(expressionString + ";")
     var m: Model = ksv.visit(tree).asInstanceOf[Model];
 
     require(m.decls.count(_ => true) == 1)
