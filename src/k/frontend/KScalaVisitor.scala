@@ -162,11 +162,11 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   }
   
   override def visitParenExp(ctx : ModelParser.ParenExpContext) : AnyRef = {
-    visit(ctx.expression()).asInstanceOf[Exp]
+    ParenExp(visit(ctx.expression()).asInstanceOf[Exp])
   }
   
   override def visitLiteralExp(ctx: ModelParser.LiteralExpContext) : AnyRef = {
-    visit(ctx.literal()).asInstanceOf[Literal]
+   visit(ctx.literal()).asInstanceOf[Literal]
   }
 
   override def visitIdentExp(ctx : ModelParser.IdentExpContext) : AnyRef = {

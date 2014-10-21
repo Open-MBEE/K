@@ -185,7 +185,6 @@ expression // ;; moved around on bin infix expressions to control precedence, hi
   | expression expression #AppExp
   | 'if' expression 'then' expression 'else' expression #IfExp
   | 'case' expression 'of' match #MatchExp
-  | '-' expression #NegExp
   | tokenNot expression #NotExp
   | 'forall' rngBindingList SUCHTHAT expression #ForallExp 
   | 'exists' rngBindingList SUCHTHAT expression #ExistsExp 
@@ -198,7 +197,7 @@ expression // ;; moved around on bin infix expressions to control precedence, hi
   | '[' expression '|' pattern ':' expression SUCHTHAT expression ']' #ListCompExp 
   | '<' mapPairList? '>' #MapEnumExp
   | '<' mapPair '|' rngBindingList SUCHTHAT expression '>' #MapCompExp 
-  | '-\\' pattern (':' type)? SUCHTHAT expression #LambdaExp
+  | 'fun' pattern (':' type)? SUCHTHAT expression #LambdaExp
   | expression ('*'|'/'|'%'|'inter'|'\\'|'++'|'#'|'^') expression #BinOp1Exp
   | expression ('+'|'-'|'union') expression #BinOp2Exp
   | expression 
@@ -213,6 +212,7 @@ expression // ;; moved around on bin infix expressions to control precedence, hi
   | expression (tokenImplies | tokenIFF) expression #IFFExp
   | expression ':=' expression #AssignExp
   | 'assert' '(' expression ')' #AssertExp 
+  | '~' expression #NegExp
   // --------
   // Records:
   // --------  

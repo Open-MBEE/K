@@ -475,7 +475,7 @@ case object SETDIFF extends BinaryOp {
 case object LISTCONCAT extends BinaryOp {
   override def toString = "^"
 
-  override def toJsonName = "ListConcat"
+  override def toJsonName = "Concat"
 }
 case object TUPLEINDEX extends BinaryOp {
   override def toString = "#"
