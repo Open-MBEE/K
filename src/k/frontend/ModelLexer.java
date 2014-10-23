@@ -1,4 +1,5 @@
-// Generated from Model.g4 by ANTLR 4.4
+// Generated from ../grammar/Model.g4 by ANTLR 4.4
+package k.frontend;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;
