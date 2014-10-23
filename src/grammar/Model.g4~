@@ -177,17 +177,18 @@ expressionsWithSeparator
     ;
 
 expression // ;; moved around on bin infix expressions to control precedence, highest first
-  : bracketedexpression # BracketedExp
+  : '(' expression ')' #ParenExp
   | literal #LiteralExp
   | Identifier #IdentExp
   | expression '.' Identifier #DotExp
   | 'create' qualifiedName ('(' classArgumentList? ')')? #CreateExp 
-  | expression '(' bracketedexpression ')' #AppExp
+  | expression '(' expression ')' #AppExp
   | 'if' expression 'then' expression 'else' expression #IfExp
   | 'case' expression 'of' match #MatchExp
   | tokenNot expression #NotExp
   | 'forall' rngBindingList SUCHTHAT expression #ForallExp 
   | 'exists' rngBindingList SUCHTHAT expression #ExistsExp 
+  | '(' expression (',' expression)+ ')' #TupleExp
   | '{' expressionList? '}' #SetEnumExp
   | '{' expression '..' expression '}' #SetRngExp
   | '{' expression '|' rngBindingList SUCHTHAT expression '}' #SetCompExp 
@@ -216,11 +217,6 @@ expression // ;; moved around on bin infix expressions to control precedence, hi
   // Records:
   // --------  
   //| /*class*/expression '@' '{' idValueList '}' ;; deleted for now.
-  ;
-
-bracketedexpression
-  : '(' expression ')' #ParenExp
-  | '(' expression (',' expression)+ ')' #TupleExp
   ;
 
 classArgumentList 
