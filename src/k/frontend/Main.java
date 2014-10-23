@@ -7,6 +7,7 @@ public class Main {
 	
 		// TEST Expressions
         String[] exps = {
+        		"a.b.c.f",
         		"x < y + z",
         		"1 + c + d * (~1)",
         		"q isin {f(x) | x : S . p(x)}",
@@ -14,7 +15,7 @@ public class Main {
         };
         
         // Expression to JSON
-		json = Frontend.exp2Json(exps[0]);
+		json = Frontend.exp2Json(exps[4]);
 		System.out.println(json);
 
 		System.out.println();
