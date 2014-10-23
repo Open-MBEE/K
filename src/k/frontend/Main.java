@@ -11,7 +11,7 @@ public class Main {
         		"x < y + z",
         		"1 + c + d * (~1)",
         		"q isin {f(x) | x : S . p(x)}",
-        		"x isin S.collect(fun x . x + 1).select(fun x . x > 4)"
+        		"x isin S.collect(x -> x + 1).select(x -> x > 4)"
         };
         
         // Expression to JSON

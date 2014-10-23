@@ -176,13 +176,13 @@ expressionsWithSeparator:
     expression ';'
     ;
 
-expression // ;; moved around on bin infix expressions to control precedence, highest first:
+expression: // ;; moved around on bin infix expressions to control precedence, highest first
     bracketedexpression # BracketedExp
   | literal #LiteralExp
   | Identifier #IdentExp
   | expression '.' Identifier #DotExp
   | 'create' qualifiedName ('(' classArgumentList? ')')? #CreateExp 
-  | expression '(' bracketedexpression ')' #AppExp
+  | expression bracketedexpression #AppExp
   | 'if' expression 'then' expression 'else' expression #IfExp
   | 'case' expression 'of' match #MatchExp
   | tokenNot expression #NotExp
