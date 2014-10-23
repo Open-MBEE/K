@@ -1,61 +1,61 @@
 
 grammar Model;
 
-model
-  : packageDeclaration?
+model:
+    packageDeclaration?
     importDeclaration* 
     topDeclaration*
     EOF
   ;
 
-topDeclaration
-  : memberDeclaration
+topDeclaration:
+    memberDeclaration
   | classDeclaration
   ;
 
-packageDeclaration
-  : 'package' qualifiedName
+packageDeclaration:
+    'package' qualifiedName
   ;
 
-importDeclaration
-  : 'import' qualifiedName ('.' '*')?
+importDeclaration:
+    'import' qualifiedName ('.' '*')?
   ;
 
-classDeclaration
-  : classToken Identifier typeParameters? valueParameters? extending? '{' memberDeclaration* '}' 
+classDeclaration:
+    classToken Identifier typeParameters? valueParameters? extending? '{' memberDeclaration* '}' 
   ;
 
-classToken
-    : 'class'
+classToken:
+    'class'
     | 'assoc'
     ;
 
-typeParameters
-    :   '[' typeParameter (',' typeParameter)* ']'
+typeParameters:
+      '[' typeParameter (',' typeParameter)* ']'
     ;
 
-typeParameter
-    :   Identifier (':' typeBound)?
+typeParameter:
+      Identifier (':' typeBound)?
     ;
 
-typeBound
-    :   type ('+' type)*
+typeBound:
+      type ('+' type)*
     ;
 
-valueParameters
-  : '(' typingList ')'
+valueParameters:
+    '(' typingList ')'
   ;
     
-typingList
-  : typing (',' typing)*    
+typingList:
+    typing (',' typing)*    
   ;
   
-extending
-  : 'extends' type (',' type)*
+extending:
+    'extends' type (',' type)*
   ;
 
-type
-  : primitiveType                   # PrimType
+type:
+    primitiveType                   # PrimType
   | qualifiedName typeArguments?    # IdentType
   | type (tokenStar type)+          # CartesianType
   | type tokenArrow type            # FuncType
@@ -68,17 +68,17 @@ type
   | type '?' # OptionalType
   ;
 
-expressionOrStar
-    : expression
+expressionOrStar:
+    expression
     | '*'
     ;
 
-typeArguments
-  : '[' type (',' type)* ']'
+typeArguments:
+    '[' type (',' type)* ']'
   ;
 
-memberDeclaration
-  : sortDeclaration 
+memberDeclaration:
+    sortDeclaration 
   | typeDeclaration
   | valueDeclaration
   | variableDeclaration
@@ -87,37 +87,37 @@ memberDeclaration
   | expressionsWithSeparator // ;; added (moved to here)
   ;
 
-valueDeclaration
-  : 'val' typing ('=' expression)? ';'
+valueDeclaration:
+    'val' typing ('=' expression)? ';'
   ;
 
-sortDeclaration
-  : 'type' Identifier ';'
+sortDeclaration:
+    'type' Identifier ';'
   ;
 
-typeDeclaration
-  : 'type' Identifier typeParameters? '=' type ';'
+typeDeclaration:
+    'type' Identifier typeParameters? '=' type ';'
   ;
 
-variableDeclaration
-  : 'var' typing ('=' expression)? ';'
+variableDeclaration:
+    'var' typing ('=' expression)? ';'
   ;
 
-typing
-  : Identifier ':' type
+typing:
+    Identifier ':' type
   ; 
 
-functionDeclaration
-  : 'fun' Identifier ('(' typingList? ')')+ (':' type) '{' memberDeclaration* '}' 
+functionDeclaration:
+    'fun' Identifier ('(' typingList? ')')+ (':' type) '{' memberDeclaration* '}' 
   ;
 
-constraint
-  : 'req' Identifier? '{' expression '}' 
+constraint:
+    'req' Identifier? '{' expression '}' 
   ;
 
 
-primitiveType
-  : 'Bool'
+primitiveType:
+    'Bool'
   | 'Char'
   | 'Int'       // Scala bigint (arbitrary precision)
   | 'Real'      // double
@@ -125,59 +125,59 @@ primitiveType
   | 'Unit'  
   ;
 
-tokenLessThan
-    : '<' 
+tokenLessThan:
+    '<' 
     | 'lt'
     ;
-tokenGreatherThan
-    : '>'
+tokenGreatherThan:
+    '>'
     | 'gt'
     ;
-tokenLessThanEqual
-: '<='
+tokenLessThanEqual:
+    '<='
 | 'lte'
 ;
-tokenGreaterThanEqual
-    : '>='
+tokenGreaterThanEqual:
+    '>='
     | 'gte'
     ;
-tokenAnd
-    : '&&' 
+tokenAnd:
+    '&&' 
     | 'and'
     ;
-tokenOr
-    : '||'
+tokenOr:
+    '||'
     | 'or'
     ;
-tokenNot
-    : '!'
+tokenNot:
+    '!'
     | 'not'
     ;
-tokenImplies
-    : '=>'
+tokenImplies:
+    '=>'
     | 'implies'
     ;
-tokenIFF
-    : '<=>'
+tokenIFF:
+    '<=>'
     | 'iff'
     ;
-tokenEquals
-    : '='
+tokenEquals:
+    '='
     | 'eq'
     ;
-tokenStar
-    : '*'
+tokenStar:
+    '*'
     ;
-tokenArrow
-    : '->'
-    ;
-
-expressionsWithSeparator
-    : expression ';'
+tokenArrow:
+    '->'
     ;
 
-expression // ;; moved around on bin infix expressions to control precedence, highest first
-  : bracketedexpression # BracketedExp
+expressionsWithSeparator:
+    expression ';'
+    ;
+
+expression // ;; moved around on bin infix expressions to control precedence, highest first:
+    bracketedexpression # BracketedExp
   | literal #LiteralExp
   | Identifier #IdentExp
   | expression '.' Identifier #DotExp
@@ -218,64 +218,64 @@ expression // ;; moved around on bin infix expressions to control precedence, hi
   //| /*class*/expression '@' '{' idValueList '}' ;; deleted for now.
   ;
 
-bracketedexpression
-  : '(' expression ')' #ParenExp
+bracketedexpression:
+    '(' expression ')' #ParenExp
   | '(' expression (',' expression)+ ')' #TupleExp
   ;
 
-classArgumentList 
-  : classArgument (',' classArgument)*
+classArgumentList :
+    classArgument (',' classArgument)*
   ;
 
-classArgument 
-  : Identifier ':' expression
+classArgument :
+    Identifier ':' expression
   ;
 
-idValueList
-  : idValuePair (',' idValuePair)*
+idValueList:
+    idValuePair (',' idValuePair)*
   ;
 
-idValuePair
-  : Identifier ':=' expression
+idValuePair:
+    Identifier ':=' expression
   ;
 
-match
-  : matchPattern '=>' expression ('|' match)?
+match:
+    matchPattern '=>' expression ('|' match)?
   ;
 
-matchPattern
-  : literal
+matchPattern:
+    literal
   | '_'
   | Identifier ('(' matchArgument (',' matchArgument)*  ')')?
   | '(' matchPattern (',' matchPattern)+ ')'
   ;
 
-matchArgument
-  : Identifier '=' matchPattern
+matchArgument:
+    Identifier '=' matchPattern
   ;
 
-mapPairList
-  : mapPair (',' mapPair)*
+mapPairList:
+    mapPair (',' mapPair)*
   ;
 
-mapPair
-  : expression ':' expression 
+mapPair:
+    expression ':' expression 
   ;
 
-rngBindingList
-  : rngBinding (',' rngBinding)*
+rngBindingList:
+    rngBinding (',' rngBinding)*
   ;
 
-rngBinding
-  : patternList ':' collectionOrType
+rngBinding:
+    patternList ':' collectionOrType
   ;
 
-patternList
-  : pattern (',' pattern)*
+patternList:
+    pattern (',' pattern)*
   ;
 
-collectionOrType
-  : expression
+collectionOrType:
+    expression
   | type
   ;
   
@@ -287,283 +287,283 @@ collectionOrType
 //  : pattern (':' type)? '=' expression
 //  ;  
 
-pattern
-  : Identifier #IdentPattern
+pattern:
+    Identifier #IdentPattern
   | '(' pattern (',' pattern)+ ')' #CartesianPattern  
   ;
   
-identifierList
-  : Identifier (',' Identifier)*
+identifierList:
+    Identifier (',' Identifier)*
   ;
 
-expressionList
-  : expression (',' expression)*
+expressionList:
+    expression (',' expression)*
   ;
     
-qualifiedName
-  : Identifier ('.' Identifier)*
+qualifiedName:
+    Identifier ('.' Identifier)*
   ;
 
-literal
-  : IntegerLiteral
+literal:
+    IntegerLiteral
   | FloatingPointLiteral
   | CharacterLiteral
   | StringLiteral
   | BooleanLiteral
   ;
 
-SUCHTHAT 
-  : '.' 
+SUCHTHAT :
+    '.' 
   ;
 
-IntegerLiteral
-    :   DecimalIntegerLiteral
+IntegerLiteral:
+      DecimalIntegerLiteral
     |   HexIntegerLiteral
     |   OctalIntegerLiteral
     |   BinaryIntegerLiteral
     ;
 
 fragment
-DecimalIntegerLiteral
-    :   DecimalNumeral IntegerTypeSuffix?
+DecimalIntegerLiteral:
+      DecimalNumeral IntegerTypeSuffix?
     ;
 
 fragment
-HexIntegerLiteral
-    :   HexNumeral IntegerTypeSuffix?
+HexIntegerLiteral:
+      HexNumeral IntegerTypeSuffix?
     ;
 
 fragment
-OctalIntegerLiteral
-    :   OctalNumeral IntegerTypeSuffix?
+OctalIntegerLiteral:
+      OctalNumeral IntegerTypeSuffix?
     ;
 
 fragment
-BinaryIntegerLiteral
-    :   BinaryNumeral IntegerTypeSuffix?
+BinaryIntegerLiteral:
+      BinaryNumeral IntegerTypeSuffix?
     ;
 
 fragment
-IntegerTypeSuffix
-    :   [lL]
+IntegerTypeSuffix:
+      [lL]
     ;
 
 fragment
-DecimalNumeral
-    :   '0'
+DecimalNumeral:
+      '0'
     |   NonZeroDigit (Digits? | Underscores Digits)
     ;
 
 fragment
-Digits
-    :   Digit (DigitOrUnderscore* Digit)?
+Digits:
+      Digit (DigitOrUnderscore* Digit)?
     ;
 
 fragment
-Digit
-    :   '0'
+Digit:
+      '0'
     |   NonZeroDigit
     ;
 
 fragment
-NonZeroDigit
-    :   [1-9]
+NonZeroDigit:
+      [1-9]
     ;
 
 fragment
-DigitOrUnderscore
-    :   Digit
+DigitOrUnderscore:
+      Digit
     |   '_'
     ;
 
 fragment
-Underscores
-    :   '_'+
+Underscores:
+      '_'+
     ;
 
 fragment
-HexNumeral
-    :   '0' [xX] HexDigits
+HexNumeral:
+      '0' [xX] HexDigits
     ;
 
 fragment
-HexDigits
-    :   HexDigit (HexDigitOrUnderscore* HexDigit)?
+HexDigits:
+      HexDigit (HexDigitOrUnderscore* HexDigit)?
     ;
 
 fragment
-HexDigit
-    :   [0-9a-fA-F]
+HexDigit:
+      [0-9a-fA-F]
     ;
 
 fragment
-HexDigitOrUnderscore
-    :   HexDigit
+HexDigitOrUnderscore:
+      HexDigit
     |   '_'
     ;
 
 fragment
-OctalNumeral
-    :   '0' Underscores? OctalDigits
+OctalNumeral:
+      '0' Underscores? OctalDigits
     ;
 
 fragment
-OctalDigits
-    :   OctalDigit (OctalDigitOrUnderscore* OctalDigit)?
+OctalDigits:
+      OctalDigit (OctalDigitOrUnderscore* OctalDigit)?
     ;
 
 fragment
-OctalDigit
-    :   [0-7]
+OctalDigit:
+      [0-7]
     ;
 
 fragment
-OctalDigitOrUnderscore
-    :   OctalDigit
+OctalDigitOrUnderscore:
+      OctalDigit
     |   '_'
     ;
 
 fragment
-BinaryNumeral
-    :   '0' [bB] BinaryDigits
+BinaryNumeral:
+      '0' [bB] BinaryDigits
     ;
 
 fragment
-BinaryDigits
-    :   BinaryDigit (BinaryDigitOrUnderscore* BinaryDigit)?
+BinaryDigits:
+      BinaryDigit (BinaryDigitOrUnderscore* BinaryDigit)?
     ;
 
 fragment
-BinaryDigit
-    :   [01]
+BinaryDigit:
+      [01]
     ;
 
 fragment
-BinaryDigitOrUnderscore
-    :   BinaryDigit
+BinaryDigitOrUnderscore:
+      BinaryDigit
     |   '_'
     ;
 
-FloatingPointLiteral
-    :   DecimalFloatingPointLiteral
+FloatingPointLiteral:
+      DecimalFloatingPointLiteral
     |   HexadecimalFloatingPointLiteral
     ;
 
 fragment
-DecimalFloatingPointLiteral
-    :   Digits '.' Digits? ExponentPart? FloatTypeSuffix?
+DecimalFloatingPointLiteral:
+      Digits '.' Digits? ExponentPart? FloatTypeSuffix?
     |   '.' Digits ExponentPart? FloatTypeSuffix?
     |   Digits ExponentPart FloatTypeSuffix?
     |   Digits FloatTypeSuffix
     ;
 
 fragment
-ExponentPart
-    :   ExponentIndicator SignedInteger
+ExponentPart:
+      ExponentIndicator SignedInteger
     ;
 
 fragment
-ExponentIndicator
-    :   [eE]
+ExponentIndicator:
+      [eE]
     ;
 
 fragment
-SignedInteger
-    :   Sign? Digits
+SignedInteger:
+      Sign? Digits
     ;
 
 fragment
-Sign
-    :   [+-]
+Sign:
+      [+-]
     ;
 
 fragment
-FloatTypeSuffix
-    :   [fFdD]
+FloatTypeSuffix:
+      [fFdD]
     ;
 
 fragment
-HexadecimalFloatingPointLiteral
-    :   HexSignificand BinaryExponent FloatTypeSuffix?
+HexadecimalFloatingPointLiteral:
+      HexSignificand BinaryExponent FloatTypeSuffix?
     ;
 
 fragment
-HexSignificand
-    :   HexNumeral '.'?
+HexSignificand:
+      HexNumeral '.'?
     |   '0' [xX] HexDigits? '.' HexDigits
     ;
 
 fragment
-BinaryExponent
-    :   BinaryExponentIndicator SignedInteger
+BinaryExponent:
+      BinaryExponentIndicator SignedInteger
     ;
 
 fragment
-BinaryExponentIndicator
-    :   [pP]
+BinaryExponentIndicator:
+      [pP]
     ;
 
-BooleanLiteral
-    :   'true'
+BooleanLiteral:
+      'true'
     |   'false'
     ;
 
-CharacterLiteral
-    :   '\'' SingleCharacter '\''
+CharacterLiteral:
+      '\'' SingleCharacter '\''
     |   '\'' EscapeSequence '\''
     ;
 
 fragment
-SingleCharacter
-    :   ~['\\]
+SingleCharacter:
+      ~['\\]
     ;
     
-StringLiteral
-    :   '"' StringCharacters? '"'
+StringLiteral:
+      '"' StringCharacters? '"'
     ;
 
 fragment
-StringCharacters
-    :   StringCharacter+
+StringCharacters:
+      StringCharacter+
     ;
 
 fragment
-StringCharacter
-    :   ~["\\]
+StringCharacter:
+      ~["\\]
     |   EscapeSequence
     ;
 
 fragment
-EscapeSequence
-    :   '\\' [btnfr"'\\]
+EscapeSequence:
+      '\\' [btnfr"'\\]
     |   OctalEscape
     |   UnicodeEscape
     ;
 
 fragment
-OctalEscape
-    :   '\\' OctalDigit
+OctalEscape:
+      '\\' OctalDigit
     |   '\\' OctalDigit OctalDigit
     |   '\\' ZeroToThree OctalDigit OctalDigit
     ;
 
 fragment
-UnicodeEscape
-    :   '\\' 'u' HexDigit HexDigit HexDigit HexDigit
+UnicodeEscape:
+      '\\' 'u' HexDigit HexDigit HexDigit HexDigit
     ;
 
 fragment
-ZeroToThree
-    :   [0-3]
+ZeroToThree:
+      [0-3]
     ;
 
-Identifier
-    :   JavaLetter JavaLetterOrDigit*
+Identifier:
+      JavaLetter JavaLetterOrDigit*
     ;
 
 fragment
-JavaLetter
-    :   [a-zA-Z$_] // these are the "java letters" below 0xFF
+JavaLetter:
+      [a-zA-Z$_] // these are the "java letters" below 0xFF
     |   // covers all characters above 0xFF which are not a surrogate
         ~[\u0000-\u00FF\uD800-\uDBFF]
         {Character.isJavaIdentifierStart(_input.LA(-1))}?
@@ -573,8 +573,8 @@ JavaLetter
     ;
 
 fragment
-JavaLetterOrDigit
-    :   [a-zA-Z0-9$_] // these are the "java letters or digits" below 0xFF
+JavaLetterOrDigit:
+      [a-zA-Z0-9$_] // these are the "java letters or digits" below 0xFF
     |   // covers all characters above 0xFF which are not a surrogate
         ~[\u0000-\u00FF\uD800-\uDBFF]
         {Character.isJavaIdentifierPart(_input.LA(-1))}?
@@ -584,28 +584,28 @@ JavaLetterOrDigit
     ;
 
 fragment // ;; added this
-CommentBegin
-   : '---' '-'*
+CommentBegin:
+    '---' '-'*
    | '===' '='* // to experiment with different ways of showing start of comment
    ;
 
 fragment 
-CommentEnd
-   : '---' '-'*
+CommentEnd:
+    '---' '-'*
    ;
 
-COMMENT 
-  :  CommentBegin .*? CommentEnd -> skip
+COMMENT :
+     CommentBegin .*? CommentEnd -> skip
   ;
 
-LINE_COMMENT
-  : '--' ~[\r\n]* -> skip
+LINE_COMMENT:
+    '--' ~[\r\n]* -> skip
   ;
 
-WS
-  : [ \t\r\n\u000C]+ -> skip
+WS:
+    [ \t\r\n\u000C]+ -> skip
   ;
 
-SEP
-  : ';'
+SEP:
+    ';'
   ;
