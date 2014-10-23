@@ -68,7 +68,7 @@ object Frontend {
     }
   }
 
-  def visitJsonObject(o: Any) : AnyRef = {
+  def visitJsonObject(o: Any): AnyRef = {
     val obj = o.asInstanceOf[JSONObject]
     obj.get("type") match {
       case "ParenExp" =>
@@ -120,9 +120,9 @@ object Frontend {
               println(x + " not recognized as a BinOp.")
               null
           }
-        BinExp(visitJsonObject(obj.get("exp1")).asInstanceOf[Exp], 
-            operator, 
-            visitJsonObject(obj.get("exp2")).asInstanceOf[Exp])
+        BinExp(visitJsonObject(obj.get("exp1")).asInstanceOf[Exp],
+          operator,
+          visitJsonObject(obj.get("exp2")).asInstanceOf[Exp])
       case "UnaryExp" =>
         val operator: UnaryOp =
           obj.get("op") match {
@@ -140,8 +140,8 @@ object Frontend {
       case "SetEnumExp" =>
         SetEnumExp(visitJsonArray(obj.get("exps"), visitJsonObject).asInstanceOf[List[Exp]])
       case "SetRangeExp" =>
-        SetRangeExp(visitJsonObject(obj.get("exp1")).asInstanceOf[Exp], 
-            visitJsonObject(obj.get("exp2")).asInstanceOf[Exp])
+        SetRangeExp(visitJsonObject(obj.get("exp1")).asInstanceOf[Exp],
+          visitJsonObject(obj.get("exp2")).asInstanceOf[Exp])
       case "SetComprExp" =>
         var exp1 = visitJsonObject(obj.get("exp1")).asInstanceOf[Exp]
         var bindings = visitJsonArray(obj.get("bindings"), visitJsonObject).asInstanceOf[List[RngBinding]]
@@ -150,9 +150,9 @@ object Frontend {
       case "ListEnumExp" =>
         ListEnumExp(visitJsonArray(obj.get("exps"), visitJsonObject).asInstanceOf[List[Exp]])
       case "ListRangeExp" =>
-        ListRangeExp(visitJsonObject(obj.get("exp1")).asInstanceOf[Exp], 
-            visitJsonObject(obj.get("exp2")).asInstanceOf[Exp])
-      case "ListComprExp" => 
+        ListRangeExp(visitJsonObject(obj.get("exp1")).asInstanceOf[Exp],
+          visitJsonObject(obj.get("exp2")).asInstanceOf[Exp])
+      case "ListComprExp" =>
         var exp1 = visitJsonObject(obj.get("exp1")).asInstanceOf[Exp]
         var exp2 = visitJsonObject(obj.get("exp2")).asInstanceOf[Exp]
         var exp3 = visitJsonObject(obj.get("exp3")).asInstanceOf[Exp]
@@ -167,31 +167,31 @@ object Frontend {
         MapComprExp(map, bindings, exp)
       case "LambdaExp" =>
         var pat = visitJsonObject(obj.get("pat")).asInstanceOf[Pattern]
-        var t = if(obj.keySet().contains("t")) Some(visitJsonObject(obj.get("t")).asInstanceOf[Type])
-        		else None
+        var t = if (obj.keySet().contains("t")) Some(visitJsonObject(obj.get("t")).asInstanceOf[Type])
+        else None
         var exp = visitJsonObject(obj.get("exp")).asInstanceOf[Exp]
         LambdaExp(pat, t, exp)
       case "AssertExp" =>
         AssertExp(visitJsonObject(obj.get("exp")).asInstanceOf[Exp])
-      case "StarExp" => 
+      case "StarExp" =>
         StarExp
       case "QualifiedName" =>
-        QualifiedName(visitJsonArray(obj.get("names").asInstanceOf[JSONArray], (x=>x.asInstanceOf[String])).asInstanceOf[List[String]])
-      case "IdentType" => 
+        QualifiedName(visitJsonArray(obj.get("names").asInstanceOf[JSONArray], (x => x.asInstanceOf[String])).asInstanceOf[List[String]])
+      case "IdentType" =>
         val ident = visitJsonObject(obj.get("ident")).asInstanceOf[QualifiedName]
         val args = visitJsonArray(obj.get("args").asInstanceOf[JSONArray], visitJsonObject).asInstanceOf[List[Type]]
         IdentType(ident, args)
       case "MultType" =>
         var t = visitJsonObject(obj.get("t")).asInstanceOf[Type]
         var min = visitJsonObject(obj.get("min")).asInstanceOf[Exp]
-        var max = if(obj.keySet().contains("max")) Some(visitJsonObject(obj.get("max")).asInstanceOf[Exp])
-        		else None
+        var max = if (obj.keySet().contains("max")) Some(visitJsonObject(obj.get("max")).asInstanceOf[Exp])
+        else None
         MultType(t, min, max)
-      case "IdentPattern" => 
+      case "IdentPattern" =>
         IdentPattern(obj.get("ident").asInstanceOf[String])
       case "ProductPattern" =>
         ProductPattern(visitJsonArray(obj.get("patterns"), visitJsonObject).asInstanceOf[List[Pattern]])
-      case "RngBinding" => 
+      case "RngBinding" =>
         val patterns = visitJsonArray(obj.get("patterns"), visitJsonObject).asInstanceOf[List[Pattern]]
         val collection = visitJsonObject(obj.get("collection")).asInstanceOf[Collection]
         RngBinding(patterns, collection)
@@ -237,6 +237,144 @@ object Frontend {
     exp.toString()
   }
 
+  def getRngBindingList(o: JSONObject): List[RngBinding] = {
+    visitJsonArray(o.get("bindings").asInstanceOf[JSONArray], getRngBinding).asInstanceOf[List[RngBinding]]
+  }
+
+  def getPattern(po: Any): AnyRef = {
+    val p = po.asInstanceOf[JSONObject]
+    val operand = p.get("operand").asInstanceOf[JSONArray]
+    operand.get(0).asInstanceOf[JSONObject].get("element") match {
+      case "IdentPattern" => IdentPattern(operand.get(1).asInstanceOf[JSONObject].get("element").asInstanceOf[String])
+      case "ProductPattern" => ProductPattern(getPatternList(p.get("operand").asInstanceOf[JSONArray].get(1).asInstanceOf[JSONArray]))
+    }
+  }
+  def getPatternList(pl: JSONArray): List[Pattern] = {
+    visitJsonArray(pl, getPattern).asInstanceOf[List[Pattern]]
+  }
+  def getCollection(o: JSONObject): Collection = {
+    o.get("element") match {
+      case "ExpCollection" => ExpCollection(visitJsonObject2(o.get("operand").asInstanceOf[JSONObject]).asInstanceOf[Exp])
+      case "TypeCollection" => TypeCollection(visitJsonObject2(o.get("operand").asInstanceOf[JSONObject]).asInstanceOf[Type])
+    }
+  }
+  def getRngBinding(o: Any): AnyRef = {
+    val obj = o.asInstanceOf[JSONArray]
+    val bindings = getPatternList(obj.getInt(2).asInstanceOf[JSONArray])
+    val collection = getCollection(obj.get(1).asInstanceOf[JSONObject])
+    RngBinding(bindings, collection)
+  }
+
+  def visitJsonObject2(obj: JSONObject): AnyRef = {
+    obj.get("type") match {
+      case "Expression" =>
+        val operand: JSONArray = obj.get("operand").asInstanceOf[JSONArray]
+        val kind = operand.get(0).asInstanceOf[JSONObject].get("element").asInstanceOf[String]
+        kind match {
+          case "ParenExp" =>
+            ParenExp(visitJsonObject2(operand.get(1).asInstanceOf[JSONObject]).asInstanceOf[Exp])
+          case "DotExp" =>
+            val exp = visitJsonObject2(operand.get(1).asInstanceOf[JSONObject]).asInstanceOf[Exp]
+            val ident = operand.get(2).asInstanceOf[JSONObject].get("element").asInstanceOf[String]
+            DotExp(exp, ident)
+          case "FunApplExp" =>
+            val exp1 = visitJsonObject2(operand.get(1).asInstanceOf[JSONObject]).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.get(2).asInstanceOf[JSONObject]).asInstanceOf[Exp]
+            FunApplExp(exp1, exp2)
+          case "IfExp" =>
+            val cond = visitJsonObject2(operand.get(1).asInstanceOf[JSONObject]).asInstanceOf[Exp]
+            val exp1 = visitJsonObject2(operand.get(2).asInstanceOf[JSONObject]).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.get(3).asInstanceOf[JSONObject]).asInstanceOf[Exp]
+            IfExp(cond, exp1, exp2)
+          case "QuantifiedExp" =>
+            val quantifier = visitJsonObject2(operand.get(1).asInstanceOf[JSONObject]).asInstanceOf[Quantifier]
+            val bindings = getRngBindingList(operand.get(2).asInstanceOf[JSONObject]).asInstanceOf[List[RngBinding]]
+            val exp = visitJsonObject2(operand.get(3).asInstanceOf[JSONObject]).asInstanceOf[Exp]
+
+            QuantifiedExp(quantifier, bindings, exp)
+          case "LambdaExp" =>
+            val pat = getPattern(operand.get(1).asInstanceOf[JSONObject]).asInstanceOf[Pattern]
+            val exp = visitJsonObject2(operand.get(2).asInstanceOf[JSONObject]).asInstanceOf[Exp]
+            val ty = 
+              if(operand.get(3) != null){
+                None // currently unsupported
+              }
+            else None
+            LambdaExp(pat, ty, exp)
+          case _ =>
+            val operator: BinaryOp =
+              operand.get(0).asInstanceOf[JSONObject].get("element") match {
+                case "Plus" => ADD
+                case "Minus" => SUB
+                case "Times" => MUL
+                case "Divide" => DIV
+                case "Modulo" => REM
+                case "LTE" => LTE
+                case "GTE" => GTE
+                case "LT" => LT
+                case "GT" => GT
+                case "EQ" => EQ
+                case "NotEQ" => NEQ
+                case "IsIn" => ISIN
+                case "NotIn" => NOTISIN
+                case "Subset" => SUBSET
+                case "Psubset" => PSUBSET
+                case "Union" => SETUNION
+                case "Inter" => SETINTER
+                case "And" => AND
+                case "Or" => OR
+                case "Tuples" => TUPLEINDEX
+                case "Concat" => LISTCONCAT
+                case _ =>
+                  println(operand.get(0).asInstanceOf[JSONObject].get("element"))
+                  null
+              }
+            if (operator != null) {
+              val exp1 = visitJsonObject2(operand.get(1).asInstanceOf[JSONObject]).asInstanceOf[Exp]
+              val exp2 = visitJsonObject2(operand.get(2).asInstanceOf[JSONObject]).asInstanceOf[Exp]
+              BinExp(exp1, operator, exp2)
+            } else {
+              val operator: UnaryOp =
+                operand.get(0).asInstanceOf[JSONObject].get("element") match {
+                  case "Neg" => NEG
+                  case "Not" => NOT
+                  case _ =>
+                    println("unknown operator " + operand.get(0).asInstanceOf[JSONObject].get("element"))
+                    System.exit(-1).asInstanceOf[Nothing]
+                }
+              UnaryExp(operator, visitJsonObject2(operand.get(1).asInstanceOf[JSONObject]).asInstanceOf[Exp])
+            }
+        }
+      case "ElementValue" =>
+        IdentExp(obj.get("element").asInstanceOf[String])
+      case "LiteralInteger" =>
+        IntegerLiteral(obj.get("integer").asInstanceOf[Integer])
+      case "LiteralFloatingPoint" =>
+        RealLiteral(java.lang.Float.parseFloat(obj.get("floatingpoint").asInstanceOf[String]))
+      case "LiteralCharacter" =>
+        CharacterLiteral(obj.get("character").asInstanceOf[Char])
+      case "LiteralBoolean" =>
+        BooleanLiteral(java.lang.Boolean.parseBoolean(obj.get("boolean").asInstanceOf[String]))
+      case "StringLiteral" =>
+        StringLiteral(obj.get("string").asInstanceOf[String])
+      case "ElementValue" =>
+        IdentExp(obj.get("element").asInstanceOf[String])
+      case _ =>
+        println("Unknown keys encountered in JSON string!")
+        System.exit(-1).asInstanceOf[Nothing]
+    }
+  }
+
+  // Assuming that the input to this is an expression in JSON string format
+  def json2exp2(expressionString: String): String = {
+    var tokener: JSONTokener = new JSONTokener(expressionString)
+    var jsonObject: JSONObject = new JSONObject(tokener)
+    var element: JSONArray = jsonObject.get("elements").asInstanceOf[JSONArray]
+    var specialization: JSONObject = element.get(0).asInstanceOf[JSONObject]
+    var exp: Exp = visitJsonObject2(specialization.get("specialization").asInstanceOf[JSONObject]).asInstanceOf[Exp]
+    exp.toString();
+  }
+
   def getVisitor(contents: String): (KScalaVisitor, ModelContext) = {
 
     var input: ANTLRInputStream = new ANTLRInputStream(contents);
@@ -278,6 +416,31 @@ object Frontend {
     val operand = new JSONArray()
     val root = new JSONObject()
     var elements = exp.toJson
+    var specialization = new JSONObject()
+    specialization = new JSONObject()
+    specialization.put("specialization", elements)
+    array.put(specialization)
+    var res: JSONObject = root.put("elements", array)
+    res.toString(4)
+  }
+
+  def exp2Json2(expressionString: String): String = {
+    val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(expressionString + ";")
+    var m: Model = ksv.visit(tree).asInstanceOf[Model];
+
+    require(m.decls.count(_ => true) == 1)
+    require(
+      m.decls.count(
+        _ match {
+          case ExpressionDecl(_) => true
+          case _ => false
+        }) == 1)
+
+    var exp: Exp = m.decls(0).asInstanceOf[ExpressionDecl].exp
+    val array = new JSONArray()
+    val operand = new JSONArray()
+    val root = new JSONObject()
+    var elements = exp.toJson2
     var specialization = new JSONObject()
     specialization = new JSONObject()
     specialization.put("specialization", elements)
