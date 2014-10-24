@@ -108,19 +108,13 @@ typing:
   ; 
 
 functionDeclaration:
-    'fun' Identifier ('(' typingList? ')')+ (':' type)? 
-    functionSpecification*
-    '{' memberDeclaration* '}' 
-  ;
-
-functionSpecification:
-    'pre' '(' expression ')'
-  | 'post' '(' expression ')'
+    'fun' Identifier ('(' typingList? ')')+ (':' type) '{' memberDeclaration* '}' 
   ;
 
 constraint:
     'req' Identifier? '{' expression '}' 
   ;
+
 
 primitiveType:
     'Bool'
@@ -182,17 +176,17 @@ expressionsWithSeparator:
     expression ';'
     ;
 
-expression: 
+expression: // ;; moved around on bin infix expressions to control precedence, highest first
     bracketedexpression # BracketedExp
   | literal #LiteralExp
   | Identifier #IdentExp
   | expression '.' Identifier #DotExp
   | 'create' qualifiedName ('(' classArgumentList? ')')? #CreateExp 
   | expression bracketedexpression #AppExp
-  | 'if' '(' expression ')' 'then' expression 'else' expression #IfExp
-  | 'do' '{' memberDeclaration* '}' # DoExp
-  | 'while'  '(' expression ')' 'do' '{' memberDeclaration* '}' #WhileExp
-  | 'for' '(' pattern (':' type)? 'in' expression ')' 'do' '{' memberDeclaration* '}' # ForExp 
+  | 'if' expression 'then' expression 'else' expression #IfExp
+
+  | 'while' expression '{' body '}' #WhileExp
+
   | 'case' expression 'of' match #MatchExp
   | tokenNot expression #NotExp
   | 'forall' rngBindingList SUCHTHAT expression #ForallExp 
@@ -319,7 +313,6 @@ literal:
   | CharacterLiteral
   | StringLiteral
   | BooleanLiteral
-  | NullLiteral
   ;
 
 SUCHTHAT :
@@ -517,10 +510,6 @@ BooleanLiteral:
       'true'
     |   'false'
     ;
-
-NullLiteral:
-  'null'
-  ;
 
 CharacterLiteral:
       '\'' SingleCharacter '\''
