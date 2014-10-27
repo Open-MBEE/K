@@ -98,7 +98,7 @@ object Frontend {
         WhileExp(cond, body)
       case "ForExp" =>
         val pattern: Pattern = visitJsonObject(obj.get("pattern")).asInstanceOf[Pattern]
-        var t : Option[Type] = if (obj.keySet().contains("t")) Some(visitJsonObject(obj.get("t")).asInstanceOf[Type])
+        var t: Option[Type] = if (obj.keySet().contains("t")) Some(visitJsonObject(obj.get("t")).asInstanceOf[Type])
         else None
         val exp: Exp = visitJsonObject(obj.get("exp")).asInstanceOf[Exp]
         val body = visitJsonArray(obj.get("body"), visitJsonObject).asInstanceOf[List[MemberDecl]]
@@ -227,8 +227,90 @@ object Frontend {
       case "ElementValue" =>
         IdentExp(obj.get("element").asInstanceOf[String])
       // Top level:
-      case ""
-      // Otherwise:
+      case "Model" =>
+        var packageName: Option[PackageDecl] =
+          if (obj.keySet().contains("packageName")) Some(visitJsonObject(obj.get("packageName"))).asInstanceOf[Option[PackageDecl]]
+          else None
+        var imports = visitJsonArray(obj.get("imports"), visitJsonObject).asInstanceOf[List[ImportDecl]]
+        var decls = visitJsonArray(obj.get("decls"), visitJsonObject).asInstanceOf[List[TopDecl]]
+        Model(packageName, imports, decls)
+      case "PackageDecl" =>
+        var name : QualifiedName = visitJsonObject(obj.get("name")).asInstanceOf[QualifiedName]
+        PackageDecl(name)
+      case "ImportDecl" =>
+        var name : QualifiedName = visitJsonObject(obj.get("name")).asInstanceOf[QualifiedName]
+        var star : Boolean = 
+          if(obj.get("star").equals("true")) true
+          else false
+        ImportDecl(name, star)
+      case "ClassDecl" => 
+        var classToken: ClassToken = if(obj.get("classToken").equals("class")) Class else Assoc
+        var ident: String = obj.get("ident").toString()
+        var typeParams: List[TypeParam] = visitJsonArray(obj.get("typeParams"), visitJsonObject).asInstanceOf[List[TypeParam]]
+        var valueParams: List[Typing] = visitJsonArray(obj.get("valueParams"), visitJsonObject).asInstanceOf[List[Typing]]
+        var extending: List[Type] = visitJsonArray(obj.get("Type"), visitJsonObject).asInstanceOf[List[Type]]
+        var members: List[MemberDecl] = visitJsonArray(obj.get("MemberDecl"), visitJsonObject).asInstanceOf[List[MemberDecl]]
+        ClassDecl(classToken, ident, typeParams, valueParams, extending, members)
+      case "TypeParam" =>
+        var ident : String = obj.get("ident").toString()
+        var bound : Option[TypeBound] = 
+          if(obj.keySet().contains("bound")) Some(visitJsonObject(obj.get("bound")).asInstanceOf[TypeBound])
+          else None
+        TypeParam(ident, bound)
+      case "TypeBound" => 
+        visitJsonArray(obj.get("types"), visitJsonObject).asInstanceOf[List[Type]]
+      case "SortDecl" => 
+        SortDecl(obj.get("ident").toString())
+      case "TypeDecl" =>
+        var ident : String = obj.get("ident").toString()
+        var typeParams : List[TypeParam] = visitJsonArray(obj.get("typeParam"), visitJsonObject).asInstanceOf[List[TypeParam]]
+        var t : Type = visitJsonObject(obj.get("t")).asInstanceOf[Type]
+        TypeDecl(ident, typeParams, t)
+      case "ValDecl" => 
+        var expr : Option[Exp] = 
+          if(obj.keySet().contains("expr")) Some(visitJsonObject(obj.get("expr")).asInstanceOf[Exp])
+          else None
+        var typing : Typing = visitJsonObject(obj.get("typing")).asInstanceOf[Typing]
+        ValDecl(typing, expr)
+      case "VarDecl" => 
+        var expr : Option[Exp] = 
+          if(obj.keySet().contains("expr")) Some(visitJsonObject(obj.get("expr")).asInstanceOf[Exp])
+          else None
+        var typing : Typing = visitJsonObject(obj.get("typing")).asInstanceOf[Typing]
+        VarDecl(typing, expr)
+      case "FunDecl" => 
+        var ident : String = obj.get("ident").toString()
+        var args : List[List[Typing]] = {
+          var args = obj.get("args").asInstanceOf[JSONArray]
+          var res : List[List[Typing]] = Nil
+          for(i <- Range(0, args.length())){
+            var element = obj.get("args").asInstanceOf[JSONObject]
+            res = res ++ List(visitJsonArray(element.get("args"), visitJsonObject).asInstanceOf[List[Typing]])
+          }
+          res
+        }
+        var t : Type = visitJsonObject(obj.get("t")).asInstanceOf[Type]
+        var body : List[MemberDecl] = visitJsonArray(obj.get("body"), visitJsonObject).asInstanceOf[List[MemberDecl]]
+        FunDecl(ident, args, t, body)
+      case "ConstraintDecl" => 
+        var name : Option[String] = 
+          if(obj.keySet().contains("name")) Some(obj.get("name").toString())
+          else None
+        var exp = visitJsonObject(obj.get("exp")).asInstanceOf[Exp]
+        ConstraintDecl(name, exp)
+      case "ExpressionDecl" =>
+        var exp = visitJsonObject(obj.get("exp")).asInstanceOf[Exp]
+        ExpressionDecl(exp)
+      case "Typing" => 
+        var ident : String = obj.get("ident").toString()
+        var ty : Type = visitJsonObject(obj.get("ty")).asInstanceOf[Type]
+        Typing(ident, ty)
+      case "BoolType" => BoolType
+      case "IntType" => IntType
+      case "RealType" => RealType
+      case "StringType" => StringType
+      case "UnitType" => UnitType
+      case "CharType" => CharType
       case key @ _ =>
         println("Unknown keys encountered in JSON string!: " + key)
         System.exit(-1).asInstanceOf[Nothing]
