@@ -127,7 +127,7 @@ case class ClassDecl(
     val theMembers = new JSONArray()
 
     classdecl.put("type", "ClassDecl")
-    classdecl.put("token", classToken.toJson)
+    classdecl.put("classToken", classToken.toJson)
     classdecl.put("ident", ident)
     for (typeParam <- typeParams) theTypeParams.put(typeParam.toJson)
     classdecl.put("typeparams", theTypeParams)
@@ -488,9 +488,11 @@ case class IfExp(cond: Exp, exp1: Exp, exp2: Exp) extends Exp {
 }
 
 case class DoExp(body: List[MemberDecl]) extends Exp {
-  override def toString = 
-    s"do {\n  ${body.foldLeft("")((res, m) => res + "  $m\n")} }"
-
+  override def toString = {
+    s"do {\n  " + 
+    {body.foldLeft("")((res, m) => res + s"  $m\n")} + 
+    "}"
+  }
   override def toJson = {
     val expression = new JSONObject()
 
