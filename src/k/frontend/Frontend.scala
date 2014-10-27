@@ -71,6 +71,7 @@ object Frontend {
   def visitJsonObject(o: Any): AnyRef = {
     val obj = o.asInstanceOf[JSONObject]
     obj.get("type") match {
+      // Expressions:
       case "ParenExp" =>
         ParenExp(visitJsonObject(obj.get("exp")).asInstanceOf[Exp])
       case "IdentExp" =>
@@ -88,6 +89,20 @@ object Frontend {
         val exp1: Exp = visitJsonObject(obj.get("exp1")).asInstanceOf[Exp]
         val exp2: Exp = visitJsonObject(obj.get("exp2")).asInstanceOf[Exp]
         IfExp(cond, exp1, exp2)
+      case "DoExp" =>
+        val body = visitJsonArray(obj.get("body"), visitJsonObject).asInstanceOf[List[MemberDecl]]
+        DoExp(body)
+      case "WhileExp" =>
+        val cond: Exp = visitJsonObject(obj.get("condition")).asInstanceOf[Exp]
+        val body = visitJsonArray(obj.get("body"), visitJsonObject).asInstanceOf[List[MemberDecl]]
+        WhileExp(cond, body)
+      case "ForExp" =>
+        val pattern: Pattern = visitJsonObject(obj.get("pattern")).asInstanceOf[Pattern]
+        var t : Option[Type] = if (obj.keySet().contains("t")) Some(visitJsonObject(obj.get("t")).asInstanceOf[Type])
+        else None
+        val exp: Exp = visitJsonObject(obj.get("exp")).asInstanceOf[Exp]
+        val body = visitJsonArray(obj.get("body"), visitJsonObject).asInstanceOf[List[MemberDecl]]
+        ForExp(pattern, t, exp, body)
       case "FunApplExp" =>
         val exp1: Exp = visitJsonObject(obj.get("exp1")).asInstanceOf[Exp]
         val exp2: Exp = visitJsonObject(obj.get("exp2")).asInstanceOf[Exp]
@@ -211,8 +226,11 @@ object Frontend {
         StringLiteral(obj.get("string").asInstanceOf[String])
       case "ElementValue" =>
         IdentExp(obj.get("element").asInstanceOf[String])
-      case _ =>
-        println("Unknown keys encountered in JSON string!")
+      // Top level:
+      case ""
+      // Otherwise:
+      case key @ _ =>
+        println("Unknown keys encountered in JSON string!: " + key)
         System.exit(-1).asInstanceOf[Nothing]
     }
   }
@@ -295,11 +313,10 @@ object Frontend {
           case "LambdaExp" =>
             val pat = getPattern(operand.get(1).asInstanceOf[JSONObject]).asInstanceOf[Pattern]
             val exp = visitJsonObject2(operand.get(2).asInstanceOf[JSONObject]).asInstanceOf[Exp]
-            val ty = 
-              if(operand.get(3) != null){
+            val ty =
+              if (operand.get(3) != null) {
                 None // currently unsupported
-              }
-            else None
+              } else None
             LambdaExp(pat, ty, exp)
           case _ =>
             val operator: BinaryOp =

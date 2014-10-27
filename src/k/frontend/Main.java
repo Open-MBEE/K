@@ -7,15 +7,17 @@ public class Main {
 	
 		// TEST Expressions
         String[] exps = {
-        		"a.b.c.f",
-        		"x < y + z",
-        		"1 + c + d * (~1)",
-        		"q isin {f(x) | x : S . p(x)}",
-        		"x isin S.collect(x -> x + 1).select(x -> x > 4)"
+        		"a.b.c.f", // 0
+        		"x < y + z", // 1
+        		"1 + c + d * (~1)", // 2
+        		"q isin {f(x) | x : S . p(x)}", // 3
+        		"x isin S.collect(x -> x + 1).select(x -> x > 4)", // 4
+            "do {val x : Int = 1; x + 1;}", // 5
+            "while (x > 0) do {x := x - 1;}" // 6
         };
         
         // Expression to JSON
-		json = Frontend.exp2Json(exps[4]);
+		json = Frontend.exp2Json(exps[5]);
 		System.out.println(json);
 
 		System.out.println();
