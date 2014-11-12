@@ -547,6 +547,22 @@ object Frontend {
     var res: JSONObject = root.put("elements", array)
     res.toString(4)
   }
+  
+  def exp2KExp(expressionString : String) : Exp = {
+    val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(expressionString + ";")
+    var m: Model = ksv.visit(tree).asInstanceOf[Model];
+
+    require(m.decls.count(_ => true) == 1)
+    require(
+      m.decls.count(
+        _ match {
+          case ExpressionDecl(_) => true
+          case _ => false
+        }) == 1)
+
+    var exp: Exp = m.decls(0).asInstanceOf[ExpressionDecl].exp
+    exp
+  }
 
   def printStats(m: Model) {
     println("Imports: " + m.imports.size)
