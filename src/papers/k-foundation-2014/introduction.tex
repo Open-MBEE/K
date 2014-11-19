@@ -1,0 +1,158 @@
+
+\section{Introduction}
+\label{sec:introduction}
+
+% motivate problem first
+% - complex missions with limited visibility
+% - increasing data volumes downlinked
+% - tight deadlines on operational turnaround
+
+% current approach
+% - ad-hoc scripts written in scripting languages
+% - summaries presented through interactive, visual interfaces
+% - for approach to be useful, must capture understanding of system design
+% - must be able to represent hierarchical relationships between system elements
+
+% previous work
+% - focused on runtime checking of properties
+% - too limiting for our purposes
+% - no support for hierarchical, sequential relationships among behaviors
+
+% contributions
+% - provide a declarative language for capturing system design understanding
+% - extensible (using internal DSL)
+% - bridge gap between fully formal specs and ad-hoc scripts
+
+One of the key challenges in operating remote spacecraft is that
+ground operators must rely on limited telemetry visible on the ground
+in order to assess the health and operational status of the
+spacecraft.  Such telemetry typically consists of a log of system
+events and sensor measurements (such as battery voltage or probe
+temperature) which, for the purposes of this paper, may be viewed as a
+sequence of timestamped records with named fields.  Because this
+telemetry comprises essentially {\em all} the knowledge that ground
+operators have about a given spacecraft, processing this telemetry in
+a timely manner is of utmost importance to any mission.  However, as
+spacecraft have become more autonomous and capable, and improvements
+in radio performance have resulted in greater downlink bandwidth, the
+resulting volume and complexity of the telemetry requires more
+automated processing tools so that any potential problems are
+diagnosed quickly and accurately.  Unfortunately, currently such tools
+are developed by ground operators in an ad-hoc manner, typically using
+libraries developed by various subsystem teams that mine the telemetry
+to infer summaries that are of interest to that subsystem.  These
+summaries are typically presented to ground operators using various
+visualization interfaces.  While these tools have been overall quite
+effective, and the domain knowledge encoded in these libraries
+has led to many problems being identified
+early, the current approach of relying on ad-hoc scripts
+also makes the resulting tools fragile, hard for new team members to
+understand, and difficult to maintain.  The maintainability issue is
+especially important for long-running missions that are expected to
+last many years.
+
+To address this problem, this paper presents a declarative notation
+for expressing domain-specific knowledge about telemetry structure.
+In our formalism, the behavior of spacecraft subsystems may be
+expressed in terms of {\em behaviors}, in a language that resembles
+regular expressions, but with support for conjunction and data
+arguments to nonterminals.  A key feature of our notation is that
+behaviors may be nested, since in our experience, most subsystems are
+usually viewed as a set of (possibly interrelated) hierarchical
+behaviors, and often viewed using visualization interfaces that allow
+behaviors of interest to be explored interactively.  We demonstrate
+our approach in practice by showing how it is being applied to
+telemetry received from the Curiosity rover~\cite{msl} currently on
+Mars.  However, although applied to spacecraft operation, the
+techniques are fully general, and can be used for analysis of any form
+of event logs produced by a software system.
+
+There has been much previous work in processing telemetry event logs
+in the field of {\em runtime verification} (RV), typically checking logs
+against user provided specifications, often expressed in some form of
+temporal logic.  Such analysis may take place pre-deployment, as the
+system is being developed, or post-deployment, during operation.
+Orthogonally, the monitoring may be done online, processing telemetry
+on-board during execution, or offline by analyzing logs.  We
+are concerned with post-deployment offline trace analysis.  Most
+previous work, however, focuses on checking if a given event log
+satisfies a given specification or not (sometimes extending the
+Boolean domain with extra values to $3$ or $4$-valued logics,
+indicating grade of satisfaction).  In our experience, coming up with
+formally verifiable properties is difficult in practice, especially
+for complex missions where design requirements were not in a formal
+notation to begin with.  Thus our focus is more on providing a
+framework for performing {\em log comprehension}.  This form of log
+comprehension can often be useful in identifying problems not easily
+formalized, but can also serve as a stepping stone to eventually
+writing (traditional) formal properties that may be checked for
+satisfaction.
+
+To provide flexibility in expressing varied subsystem models, we have
+implemented our notation as an internal DSL (Domain-Specific
+Language), essentially an API, in the \scala{}
+programming language. \scala{} offers language constructs that makes
+definition of such APIs have the appearance of DSLs.  Specifically we
+use \scala's implicit functions to define concrete syntax, and case
+classes to define abstract syntax. The resulting DSL is largely a
+so-called {\em deep embedding}, in contrast to a {\em shallow}
+embedding. In a deep embedding a particular program in the DSL is
+completely defined by an abstract syntax tree, which can be processed
+as an internal data structure. In contrast, in a shallow embedding
+host language constructs are made part of the DSL.  
+A deep embedding makes it easier to analyze DSL programs.
+As we shall see,
+however, we do allow the DSL to contain arbitrary \scala{} code in
+limited positions, hence our approach is a mix of deep and shallow
+embedding.
+
+We implement our DSL using the rule-based \logfire{}
+system~\cite{havelund-logfire-sttt14}, which is itself an internal
+\scala{} DSL.  Rule-based systems, which have been extensively studied
+within the artificial intelligence (AI) community, allow formulation of
+rules of the form:
+
+\[
+  condition_1, \ldots, condition_n \Rightarrow action
+\]
+
+\noindent
+The state of a rule-system can abstractly be considered as consisting
+of a set of {\em facts}, referred to as the {\em fact memory}, where a
+fact is a mapping from field names to values.  A condition in a rule's
+left-hand side can check for the presence or absence of a particular
+fact. A left-hand side matching against the fact memory usually
+requires unification of variables occurring in conditions. In case all
+conditions on a rule's left-hand side match (become true), the
+right-hand side action is executed, which can be any \scala{} code,
+including adding and deleting facts, or generating error
+messages. \logfire{} is an implementation of the \rete{} algorithm
+\cite{forgy-rete-82} used in many AI rule systems.
+
+The rule formalism, although very natural and expressive, turns out to
+be slightly verbose for writing log properties. The core problem
+can be illustrated by an example. Assume that one wants to monitor
+that the events $E_1$ and $E_2$ occur in that order. A rule system
+would have to explicitly create an intermediate fact $E_{1}Seen$
+representing the fact that $E_1$ has occurred. The issue is similar to
+that of state machines where all states must be explicitly
+defined. Regular expressions and temporal logics provide a solution to
+this problem. We here show a regular expression-like formalism which
+(i) makes this more convenient, and (ii) which allows for abstraction
+as discussed above.  The DSL we present is defined as patterns that
+are translated to rules, in a similar manner as discussed in
+\cite{havelund-logfire-sttt14}.
+
+The paper is organized as follows.
+%
+Section \ref{sec:related-work} outlines related work.
+%
+Section \ref{sec:logfire} introduces briefly the rule-based system \logfire{},
+and outlines the inconveniences in using this solution for this problem.
+%
+Section \ref{sec:translation} introduces the new DSL and its translation to rules.
+%
+Section \ref{sec:application} presents the application to a spacecraft scenario,
+illustrating visualization of event abstractions.
+%
+Finally, Section \ref{sec:conclusion} concludes the paper.
