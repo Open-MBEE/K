@@ -1,0 +1,433 @@
+\documentclass{llncs}
+
+% ------------------
+% --- listings: ---
+% ------------------
+
+\usepackage{listings}
+\usepackage{color}
+%\usepackage{amssymb}
+
+%\usepackage{float}
+%\floatstyle{boxed}
+%\restylefloat{figure}
+
+\definecolor{light-gray}{gray}{0.95}
+
+% http://en.wikibooks.org/wiki/LaTeX/Colors
+
+\title{On the Foundation of K:\\Data types versus Relations}
+\author{Klaus Havelund}
+\institute{
+  Jet Propulsion Laboratory\\
+  California Institute of Technology\\
+  California, USA
+}
+
+\newcommand{\comment}[1]{}
+
+\input{macros}
+
+\def\changemargin#1#2{\list{}{\rightmargin#2\leftmargin#1}\item[]}
+\let\endchangemargin=\endlist
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+This document discusses a conflict in the K language that I believe we are
+confronted with. In short: we are trying to make two views co-exist, what I 
+will call:
+
+\begin{enumerate}
+ \item the {\em data type} view
+ \item the {\em relational} view
+\end{enumerate}
+
+\noindent
+The document first in Section \ref{sec:theviews} 
+attempts to explain the two views. Then in Section 
+\ref{sec:associations} addresses a problem in how we approach associations using the data type view, and fixing it by making it ``more relational". In Section \ref{sec:classes} we show how 
+this fix causes yet a problem in definition of classes, 
+where we so far also have adopted the data type view. This leads to
+the main question: {\em do we also need to shift to the relational 
+view in classes?} How relational should we be?
+Section \ref{sec:proposal} offers a proposal/solution.
+Finally, Section \ref{sec:conclusion} concludes the paper.
+
+\section{The two views}
+\label{sec:theviews}
+
+\subsection{The data type view}
+
+
+Formal specification languages such as VDM, Z, and most/all 
+programming languages, such as \java{} and \scala{}, are based on the data type view. These languages have composite data types 
+such as records, sets, lists, maps, etc. \klang{} is based on this view as well.
+In these languages objects have structure. For example, in \scala{} we can write:
+
+\sscala
+\begin{lstlisting}
+  class Person {
+    var cars : Set[Car]
+  }
+\end{lstlisting}
+
+\noindent
+This means that a $Person$ object $p$ is a composite structure, which includes 
+a reference to a set of cars. $p.cars$ denotes that set by returning a direct reference\footnote{Whether it is a reference or the set itself is not important.} to it, namely the reference (pointer) contained in $p$. 
+We have adopted this view in K since this is what we are most comfortable with in our daily  programming activities, and since it is the most common
+view adopted in formal specification languages, except one: \alloy{}, 
+which is discussed below. In \klang{} the above class becomes (we can discuss whether it is better with a Set name or {\bf set} keyword, but that is another discussion):
+
+\sk
+\begin{lstlisting}
+  class Person {
+    var cars : {Car}
+  }
+\end{lstlisting}
+
+\noindent
+This is meant to have the same semantics as in \scala: a $Person$ object $p$ contains an internal reference to a set of cars obtained by $p.cars$. 
+
+Mathematically, we can say that an object is a finite mapping from names (the property names) to values, and values include for example sets, that is: structured objects:
+
+\begin{eqnarray}
+  Object &=& PropertyName \stackrel{m}{\rightarrow} Value\\
+  Value &=& Integer \cup Boolean \cup \ldots \cup Set[Value] \cup List[Value]
+\end{eqnarray}
+  
+\noindent  
+As an example, consider an object $p$ where $p.cars = \{c_1,c_2\}$. This object 
+will have the form:
+
+\[
+p = [cars \mapsto \{c_1,c_2\}]
+\]
+
+In \klang{} we can in addition constrain a set with multiplicities.
+That is, `{\ik {Car} 0..10}' is a type expression representing
+the type of sets of cars that have a size no bigger than $10$. With this type expression we can hence constrain our \klang{} specification 
+further as follows:
+
+\sk
+\begin{lstlisting}
+  class Person {
+    var cars : {Car} 0..10
+  }
+\end{lstlisting}
+
+\noindent This really is a shorthand for using a predicate 
+subtype expression, as in:
+
+\sk
+\begin{lstlisting}
+  class Person {
+    var cars : {|carset : {Car} | carset.size() <= 10|}
+  }
+\end{lstlisting}
+
+\noindent At this point you may be lost, but that is not crucial
+for understanding the remainder of the document. You probably got the gist of it.
+
+\subsection{The relational view}
+
+In the relational view, on the other hand, there are only atoms, which 
+has {\bf no structure}, and relations (sets of tuples) between 
+atoms. This can indeed be considered as the foundation of \uml/\sysml{} block diagrams, although it is not quite clear since no formal semantics of \uml/\sysml{} seems to have been agreed upon. However, it is fair to say that \uml/\sysml{} block diagrams strongly
+emphasize a relational view. 
+
+This relational view is also adopted in the \alloy{} specification language, which was designed inspired by \uml{} and \zlang{}. \alloy{} was designed for
+specification and analysis, but in contrast to languages such as \vdm{} and \zlang{}, automated analysis was prioritized. In \alloy{} we can write 
+the following specification:
+
+\salloy
+\begin{lstlisting}
+  sig Person {
+    cars : set Car
+  }
+\end{lstlisting}
+
+\noindent Here {\bf sig} stands for {\em signature} but may be read as 
+{\bf class} at an informal level. However, this means something quite 
+different than in the \scala{} and \klang{} (unless we change that) 
+case above. The above specification states that there are two sets 
+$Person$ and $Car$, containing atoms which have {\bf no} structure. Furthermore, there is a relation between $Person$ and $Car$
+that associates any person $p$ in $Person$ with zero or more cars.
+
+Mathematically this means that we are defining two sets of unstructured 
+atoms:
+
+\[
+Person, Car
+\]
+
+\noindent
+and then a relation between them:
+
+\[
+cars \subseteq Person \times Car
+\]
+
+\noindent  
+That is, $cars$ is a set of tuples of the form $(p,c)$ indicating that
+person $p$ is related to car $c$.
+As an example, consider an object $p$ related to the cars 
+$c_1$ and $c_2$. 
+This means that we have the sets and the relation:
+
+\begin{eqnarray}
+Person &=& \{p\}\\
+Car &=& \{c_1,c_2\}\\
+cars &=& \{(p,c_1),(p,c_2)\}
+\end{eqnarray}
+
+\noindent
+Note that we can still write $p.cars$ (as in \ocl), and this expression will return the set:
+
+\[
+p.cars = \{c : Car\ |\ (p,c) \in cars \}
+\]
+
+\section{Associations in \klang}
+\label{sec:associations}
+
+In this section we will have a look at how we sofar have planned to 
+handle associations in \klang{} as separate classes, so-called association
+classes. I will point out a problem with this approach, and will suggest an
+alternative, which however then leads to yet another problem to be tackled in the following section.
+
+\subsection{The problem with the current K associations}
+
+Note that in all programs/specifications above,  
+the relation between persons and cars have 
+been expressed as belonging to $Person$. It is 
+defined as a property in class $Person$. Here we instead try to extract such relations in association classes. The above example could 
+in \klang{} instead be written as follows (ignoring the multiplicity $0..10$):
+
+\sk
+\begin{lstlisting}
+  class Person {}
+  class Car {}
+
+  assoc cars {
+    var person : Person;
+    var car : {Car}
+  }
+\end{lstlisting}
+
+\noindent
+Note that the property name $cars$ denotes a {\bf set of cars}. This is
+the \underline{data type view}. An instance of the $cars$ class 
+(relation) is a structure of the following form for our example above:
+
+\[
+[person \mapsto p, car \mapsto \{c_1,c_2\}]
+\]
+
+\noindent
+That is, it maps a single person $p$ to all the cars it is related to.
+This view, however, leads to a problem in my opinion. Assume that we start with an empty relation and that we now execute a statement to connect $p$
+with $c_1$" (syntax not quite settled on):
+
+\sk
+\begin{lstlisting}
+  cars.connect(p,c1);
+\end{lstlisting}
+
+\noindent
+After this statement we will have the structure:
+
+\[
+[person \mapsto p, car \mapsto \{c_1\}]
+\]
+
+\noindent
+Assume now that we connect $p$ with $c_2$:
+
+\sk
+\begin{lstlisting}
+  cars.connect(p,c2);
+\end{lstlisting}
+
+\noindent
+After this statement we will have the structure:
+
+\[
+[person \mapsto p, car \mapsto \{c_1,c_2\}]
+\]
+
+\noindent
+However, adding the connection is complicated. We have to find the $R$ instance
+it belongs to, namely the one identified by $p$. I find this to be
+an undesirable complication.
+
+\subsection{Fixing our associations}
+
+A simpler approach would be to follow the \underline{relational view} 
+in this case, and to define our association as follows:
+
+\sk
+\begin{lstlisting}
+assoc cars {
+  var person : Person;
+  var car : Car
+}
+\end{lstlisting}
+
+\noindent
+That is: the $car$ property name denotes {\em a single car}.
+We will here have an instance of the $cars$ class for each relationship,
+as we would have in the relational approach (a tuple for each). 
+The representation of our example becomes:
+
+\[
+cars = \{[p \mapsto c_1],[p \mapsto c_2]\}
+\]
+
+\noindent
+For example, starting with an empty relation, and connecting $p$ with
+$c_1$:
+
+\begin{lstlisting}
+  cars.connect(p,c1);
+\end{lstlisting}
+
+\noindent
+leaves us with:
+
+\[
+cars = \{[p \mapsto c_1]\}
+\]
+
+\noindent
+Adding a new relationship is now easy: just add an entry to the
+set $cars$ representing the relation.
+
+\section{Back to classes}
+\label{sec:classes}
+
+Now, if we change associations this way, then what about classes? Remember that we liked to write the example as follows when embedding the 
+relation as a property in class $Person$:
+
+\sk
+\begin{lstlisting}
+  class Person {
+    var cars : {Car}
+  }
+\end{lstlisting}
+
+\noindent
+We can keep this style, but now we have two different ways semantically
+to represent relations: the relational approach as just argued in the 
+previous section, and then the data type view in the specification 
+above. Do we want to support both views, and be able to write 
+the above -- as well as this (relational view):
+
+\sk
+\begin{lstlisting}
+  class Person {
+    var cars : Car 0..*
+  }
+\end{lstlisting}
+
+\noindent
+and should they mean the same thing: be given a relational interpretation?
+
+\section{Proposal}
+\label{sec:proposal}
+
+Based on the observations above, I suggest the following.
+
+\subsection{Introducing roles}
+
+I suggest that we keep the data type concept completely separate from the relation concept. I suggest that we introduce a new keyword for roles ({\bf rol} or {\bf role}) to represent relations: 
+
+\sk
+\begin{lstlisting}
+  'rol' roleName ':' className multiplicity?
+\end{lstlisting}
+
+\noindent
+The type of a role identifier (the className) can only be a name (an identifier identifying a class) and the (optional) multiplicity characterizes the relation (and not the type as it has been up till now). 
+
+\subsection{Associations}
+
+We can now write the relations as follows (here shown with a multiplicity):
+
+\sk
+\begin{lstlisting}
+assoc cars {
+  rol person : Person;
+  rol car : Car 0..*;
+}
+\end{lstlisting}
+
+\noindent
+An instance of this class represents a single tuple in a relation: a relationship between (in this case) one person and one car. The above notation allows for $n$-ary relations (just more {\bf rol} declarations).
+
+\subsection{Classes}
+
+When it comes to classes, I suggest that the example
+should be written as follows:
+
+\sk
+\begin{lstlisting}
+  class Person {
+    rol cars : Car 0..*
+  }
+\end{lstlisting}
+
+\noindent The meaning is that a relation is introduced between the set $Person$ and the set $Car$. That is, it is
+the same as writing an anonymous relation (no relation name):
+
+\sk
+\begin{lstlisting}
+  class Person {}
+  
+  assoc {
+    rol person : Person;
+    rol car : Car 0..*;
+  }
+\end{lstlisting}
+
+\noindent
+Furthermore, this is {\bf not} the same as writing:
+
+\sk
+\begin{lstlisting}
+  class Person {
+    var cars : {Car} 
+  }
+\end{lstlisting}
+
+\noindent which in turn means that a $Person$ object {\bf contains} a (reference to a) set of cars. The effect is
+the same, however, which unfortunately gives us more than one way to model a concept such as a relationship.
+We can the discuss whether we need data types such as $\{Car\}$. However, I believe they are useful. The point perhaps is that if one uses the last class definition above, then it would not be visualized as a relation when
+thrown to MagicDraw. The property $cars$ would just be perceived at the same level as a value attribute.
+
+\subsection{A bit on notation}
+
+I suggest that instead of the collection type construtors
+$\{T\}$, $[T]$ and $<T_1,T_2>$, we write $Set[T]$, $List[T]$, and $Map[T_1,T_2]$ as in \scala{}. It is just easier to read and one does not have to explain it to new-comers (to the same extent). So we would write the last class above as:
+
+\sk
+\begin{lstlisting}
+  class Person {
+    var cars : Set[Car] 
+  }
+\end{lstlisting}
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+We would like to keep the data type view since we are used to be able to
+talk about sets, lists and maps as data types. However, we are confronting a small dilemma. We also need to host the relational view within the same language, leading to some potential inconsistencies
+or multiple ways of writing the same thing. There is possibly a
+very quick fix to this problem. This is really the collision of formal
+specification and programing languages on the one hand and then the 
+relational modeling world on the other.
+
+\end{document}

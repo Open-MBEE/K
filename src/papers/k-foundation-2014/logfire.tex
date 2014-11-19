@@ -1,0 +1,209 @@
+
+\section{The \logfire{} Rule Engine}
+\label{sec:logfire}
+
+As already mentioned, \logfire{} is a \scala{} API for writing
+rule-based programs in a manner that has the appearance of a DSL.  It
+was originally created as a study of how the
+\rete{} algorithm could be used for runtime verification purposes,
+where the main goal is to check event traces against formalized
+specifications, and emit verdicts in a Boolean domain, stating whether
+the event stream satisfies the specification or not. In the following,
+we shall first illustrate the originally intended application, and in
+the subsequent sub-section we shall illustrate its use for abstraction,
+which is the topic of this paper. We then suggest that a more
+convenient solution is desirable for this objective.
+
+\subsection{\logfire{} used for Verification}
+
+Consider a system that emits two kinds of events: $E_1(clk \rightarrow
+t_1)$ and $E_2(clk \rightarrow t_2)$, each being a named record (names are
+$E_1$ and $E_2$) with a field $clk$ that is mapped to a time stamp $t_i$
+indicating the time when these events were generated. Suppose we want
+to enforce that $E_2$ can only occur after $E_1$, and furthermore, if
+$E_2$ occurs, it has to occur within 5 seconds of the occurrence of
+$E_1$.  This property is shown in Figure
+\ref{fig:logfire-verifier}. The main component of \logfire{} is the
+{\bf trait}\footnote{A {\bf trait} in \scala{} is a module concept
+closely related to the notion of an {\em abstract class}, as for
+example found in \java.} \name{Monitor}, which any user-defined
+monitor must extend to get access to the constants and methods
+provided by the rule DSL. The {\em events} $E_1$ and $E_2$ are
+short-lived instantaneous observations about the system being
+monitored, those submitted to the monitor.  In contrast, {\em facts},
+in this case $E_1Seen$, are long-lived pieces of information stored in
+the fact memory of the rule system, generated and deleted explicitly
+by the rules.  In the monitor above the fact $E_1Seen(t_1)$ is used to
+represent the fact that the event $E_1(clk \rightarrow t_1)$ has been
+seen.  The monitor contains three rules, named $v_1$, $v_2$ and
+$v_3$. Each rule has the form:
+
+\[
+  \textit{name}\ \verb+--+\ \textit{condition}_1\ \& \ldots \&\ \textit{condition}_n\ \longmapsto\  \textit{action}
+\]
+
+\begin{figure}[t]
+\begin{small}
+\begin{framed}
+\sscala
+\begin{lstlisting}
+class Verifier extends Monitor {
+  "v1" -- 'E1('clk -> 't1) |-> insert('E1Seen('t1))
+
+  "v2" -- 'E2('clk -> 't2) & not('E1Seen('t1)) |-> fail()
+  
+  "v3" -- 'E2('clk -> 't2) & 'E1Seen('t1) |-> {
+    if('t2-'t1 > 5000) fail()
+  }
+}
+\end{lstlisting}
+\end{framed}
+\end{small}
+\caption{A \logfire{} verifier}
+\label{fig:logfire-verifier}
+\end{figure}
+
+Event and fact names, as well as parameter names are values of the
+\scala{} type \name{Symbol}, which contains quoted identifiers.  The
+need for representing user-defined names as symbols is a consequence
+of the fact that \logfire{} is a deep embedding (we don't use
+\scala{}'s names). 
+%and that names are not first-class citizens in
+%\scala{} as they are for example in \lisp.
+%
+Events and facts can have arguments specified in one of two ways:
+using {\em positional notation} or {\em using map notation}\label{page:mapnotation}. 
+Positional notation means
+just listing arguments as a list of patterns (identifiers or literals). In our
+example facts are represented using positional notation. 
+The positional notation is convenient if events/facts carry few arguments. 
+%
+Map notation means considering the events/facts as being maps from field names to values. 
+In our example event patterns are shown using map notation, assuming each event has a time stamp named \name{'clk}. When using map notation only fields relevant for the rule need be mentioned. An action is any \scala{} statement, that specifically for example can add or delete facts, or call failure methods.
+
+The rules are to be read as follows. Rule $v_1$ states that when an $E_1$ event
+is observed, a fact, $E_1Seen$ is created to record this. Rule $v_2$ states that an error is generated if an $E_2$ event is observed, but no $E_1$ event has been observed before that. Finally, rule $v_3$ states that in the case an $E_1$ event and subsequently an $E_2$ event is observed, the time difference must be within $5$
+seconds. 
+%
+A monitor can be applied as shown in Figure
+\ref{fig:logfire-verifier-application}, which also shows an example of
+an error trace produced.  Each entry in the error trace shows the
+number of the event, the event, the fact that it causes to be
+generated, and the rule that triggers. In this case the $5$ second requirement
+is violated.
+
+\begin{figure}[htb]
+\begin{small}
+\begin{framed}
+\sscala
+\begin{lstlisting}
+object ApplyMonitor {
+  def main(args: Array[String]) {
+    val m = new Verifier
+    m.addMapEvent('E1)('clk -> 1023)
+    m.addMapEvent('E3)('clk -> 3239)
+    m.addMapEvent('E2)('clk -> 7008)
+  }
+}
+...
+
+*** error:
+
+[1] 'E1('clk->1023) --> 'E1Seen(1023)
+        rule: "v1" -- 'E1('clk->'t1) |-> {...}
+
+[3] 'E2('clk->7008) --> 'Fail("ERROR")
+        rule: "v3" -- 'E2('clk->'t2) & 'E1Seen('t1) |-> {...}
+\end{lstlisting}
+\end{framed}
+\end{small}
+\caption{Applying a \logfire{} verifier}
+\label{fig:logfire-verifier-application}
+\end{figure}
+
+
+\subsection{\logfire{} used for Abstraction}
+
+In this sub-section we shall illustrate how \logfire{} may be used to
+model the hierarchical behaviors of interest in our application.  We
+consider a scenario with a top-level behavior (denoted $alpha$) that
+consists of an inner behavior (denoted $beta$) in parallel with a single
+event $E_3$.  The behavior $beta$ in turn consists of two events
+$E_1$ and $E_2$ that must occur in that order.  Denoting the three
+atomic events as $E_1(clk \rightarrow t_1)$, $E_2(clk \rightarrow
+t_2)$, and $E_3(clk \rightarrow t_3)$, we want to record two facts:
+that $E_2$ occurs after $E_1$ is to be recorded as an occurrence of
+$beta(t_1,t_2)$, and that $E_3$ occurs either before or after (that is: in parallel with) $beta(t_1,t_2)$ is to be recorded as an occurrence of
+$alpha(t_1,t_2,t_3)$.  The resulting monitor is shown in
+Figure~\ref{fig:logfire-abstracter}.
+
+\begin{figure}
+\begin{small}
+\begin{framed}
+\sscala
+\begin{lstlisting}
+class Abstracter extends Monitor {
+  "a1" -- 'E1('clk -> 't1) |-> insert('E1Seen('t1))
+
+  "a2" -- 'E1Seen('t1) & 'E2('clk -> 't2) |-> { 
+    remove('E1Seen); 
+    insert('beta('t1, 't2)) 
+  }
+  
+  "a3" -- 'E3('clk -> 't3) |-> insert('E3Seen('t3))
+  
+  "a4" -- 'beta('t1, 't2) & 'E3Seen('t3) |-> { 
+    remove('E3Seen); 
+    insert('alpha('t1, 't2, 't3)) 
+  }
+}
+\end{lstlisting}\end{framed}
+\end{small}
+\caption{A \logfire{} abstracter}
+\label{fig:logfire-abstracter}
+\end{figure}
+
+The monitor contains four rules. The first rule, $a_1$, records when an $E_1(clk \rightarrow t_1)$
+event is seen. Rule $r_2$ records a $beta(t_1,t_2)$ fact when an 
+$E_2(clk \rightarrow t_2)$ event is seen after an $E_1(clk \rightarrow t_1)$ event. It also removes the intermediate
+event recording that $E_1$ was seen, in order to not clutter the set of facts generated. Rule $a_3$ records when an $E_3(clk \rightarrow t_3)$ 
+event is seen, and finally rule $a_4$ creates the $alpha(t_1,t_2,t_3)$ fact.
+When applying the abstracter to the same event sequence as shown in 
+Figure \ref{fig:logfire-verifier-application}, instead of an error trace, we obtain
+a set of generated facts, as shown in Figure \ref{fig:logfire-abstracter-application}.
+
+\begin{figure}[htb]
+\begin{small}
+\begin{framed}
+\sscala
+\begin{lstlisting}
+object ApplyMonitor {
+  def main(args: Array[String]) {
+    val m = new Abstracter
+    m.addMapEvent('E1)('clk -> 1023)
+    m.addMapEvent('E3)('clk -> 3239)
+    m.addMapEvent('E2)('clk -> 7008)
+  }
+}
+...
+
+--- facts: -------
+'beta(1023,7008)
+'alpha(1023,7008,3239)
+--------------
+\end{lstlisting}
+\end{framed}
+\end{small}
+\caption{Applying a \logfire{} abstracter}
+\label{fig:logfire-abstracter-application}
+\end{figure}
+
+The main observation to be made, about this specification, as well as
+the verifier in Figure \ref{fig:logfire-verifier}, is that it is
+inconvenient that we have to add (and delete) intermediate facts such as
+$E_1Seen$ and $E_3Seen$ explicitly, which makes these rules cumbersome
+to write and maintain.  To avoid this problem, in the next section, we
+introduce notation that allows hierarchical events to be described
+more directly, in a form similar to the way one writes regular
+expressions, but with support for conjunctive composition and event parameters.
+
