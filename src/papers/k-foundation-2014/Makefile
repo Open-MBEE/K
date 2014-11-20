@@ -10,15 +10,11 @@ MAKEIDX = "^[^%]*\\makeindex"
 MPRINT = "^[^%]*print"
 USETHUMBS = "^[^%]*thumbpdf"
 
-DATE=$(shell date +%Y-%m-%d)
-
 COPY = if test -r $(<:%.tex=%.toc); then cp $(<:%.tex=%.toc) $(<:%.tex=%.toc.bak); fi 
 RM = rm -f
-OUTDATED = echo "EPS-file is out-of-date!" && false
 
 # These are OK
 
-#SRC	:= $(shell egrep -l '^[^%]*\\begin\{document\}' *.tex)
 SRC	:= main.tex
 TRG	= $(SRC:%.tex=%.dvi)
 PSF	= $(SRC:%.tex=%.ps)
@@ -106,25 +102,4 @@ pdf	: $(PDF)
 #	  @$(L2H) $(SRC)
 
 
-
-######################################################################
-# Define rules for EPS source files.
-
-# These rules probably just cause unnecessary confusion, so commenting
-# them away for the time being. -- mairas 2005-01-12
-
-#%.eps: %.sxd
-#	$(OUTDATED)
-#%.eps: %.sda
-#	$(OUTDATED)
-#%.eps: %.png
-#	$(OUTDATED)
-#%.eps: %.sxc
-#	$(OUTDATED)
-#%.eps: %.xcf
-#	$(OUTDATED)
-#%.eps: %.zargo
-#	$(OUTDATED)
-#%.eps: %.m
-#	@egrep -q $(MPRINT) $< && ($(OUTDATED))
 
