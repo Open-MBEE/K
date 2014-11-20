@@ -28,7 +28,6 @@ classDeclaration:
 
 assocDeclaration:
     'assoc' Identifier  '{' assocMemberDeclaration* '}'
-  ;
 
 typeParameters:
       '[' typeParameter (',' typeParameter)* ']'
@@ -208,6 +207,7 @@ expression:
   | literal #LiteralExp
   | Identifier #IdentExp
   | expression '.' Identifier #DotExp
+  | 'create' qualifiedName ('(' classArgumentList? ')')? #CreateExp 
   | expression '(' argumentList? ')' #AppExp
   | 'if' '(' expression ')' 'then' expression ('else' expression)? #IfExp
   | 'do' '{' memberDeclaration* '}' # DoExp

@@ -11,6 +11,7 @@ model:
 topDeclaration:
     memberDeclaration
   | classDeclaration
+  | assocDeclaration
   ;
 
 packageDeclaration:
@@ -22,13 +23,12 @@ importDeclaration:
   ;
 
 classDeclaration:
-    classToken Identifier typeParameters? valueParameters? extending? '{' memberDeclaration* '}' 
+    'class' Identifier typeParameters? valueParameters? extending? '{' memberDeclaration* '}' 
   ;
 
-classToken:
-    'class'
-    | 'assoc'
-    ;
+assocDeclaration:
+    'assoc' Identifier  '{' assocMemberDeclaration* '}'
+  ;
 
 typeParameters:
       '[' typeParameter (',' typeParameter)* ']'
@@ -59,12 +59,11 @@ type:
   | qualifiedName typeArguments?    # IdentType
   | type (tokenStar type)+          # CartesianType
   | type tokenArrow type            # FuncType
-  | '(' type ')'					# ParenType
-  | '{|' typing SUCHTHAT expression '|}' # SubType 
   | '{' type '}'                    # SetType
   | '[' type ']'                    # ListType
   | '<' type ',' type '>'           # MapType
-  | type expressionOrStar ('..' expressionOrStar)? # RangeType                                              
+  | '(' type ')'					# ParenType
+  | '{|' typing SUCHTHAT expression '|}' # SubType 
   | type '?' # OptionalType
   ;
 
@@ -87,6 +86,11 @@ memberDeclaration:
   | expressionsWithSeparator // ;; added (moved to here)
   ;
 
+assocMemberDeclaration:
+    roleDeclaration
+  | memberDeclaration
+  ;
+
 valueDeclaration:
     'val' typing ('=' expression)? ';'
   ;
@@ -107,6 +111,23 @@ typing:
     Identifier ':' type
   ; 
 
+roleDeclaration:
+    partDeclaration
+  | refDeclaration
+  ;
+
+partDeclaration:
+    'part' Identifier ':' Identifier multiplicity?
+    ;
+
+refDeclaration:
+    'ref' Identifier ':' Identifier multiplicity?
+    ;
+
+multiplicity:
+    expressionOrStar ('..' expressionOrStar)?
+    ;
+
 functionDeclaration:
     'fun' Identifier ('(' typingList? ')')+ (':' type)? 
     functionSpecification*
@@ -114,12 +135,12 @@ functionDeclaration:
   ;
 
 functionSpecification:
-    'pre' '(' expression ')'
-  | 'post' '(' expression ')'
+    'pre'  expression 
+  | 'post' expression   
   ;
 
 constraint:
-    'req' Identifier? '{' expression '}' 
+    'req' (Identifier ':')?  expression  
   ;
 
 primitiveType:
@@ -183,13 +204,12 @@ expressionsWithSeparator:
     ;
 
 expression: 
-    bracketedexpression # BracketedExp
+    bracketedExpression # BracketedExp
   | literal #LiteralExp
   | Identifier #IdentExp
   | expression '.' Identifier #DotExp
-  | 'create' qualifiedName ('(' classArgumentList? ')')? #CreateExp 
-  | expression bracketedexpression #AppExp
-  | 'if' '(' expression ')' 'then' expression 'else' expression #IfExp
+  | expression '(' argumentList? ')' #AppExp
+  | 'if' '(' expression ')' 'then' expression ('else' expression)? #IfExp
   | 'do' '{' memberDeclaration* '}' # DoExp
   | 'while'  '(' expression ')' 'do' '{' memberDeclaration* '}' #WhileExp
   | 'for' '(' pattern (':' type)? 'in' expression ')' 'do' '{' memberDeclaration* '}' # ForExp 
@@ -218,6 +238,8 @@ expression:
   | expression tokenOr expression #OrExp
   | expression (tokenImplies | tokenIFF) expression #IFFExp
   | expression ':=' expression #AssignExp
+  | expression 'is' type # TypeCheck
+  | expression 'as' type # TypeCast
   | 'assert' '(' expression ')' #AssertExp 
   | '~' expression #NegExp
   | pattern (':' type)? '->' expression #LambdaExp
@@ -225,19 +247,28 @@ expression:
   // Records:
   // --------  
   //| /*class*/expression '@' '{' idValueList '}' ;; deleted for now.
+    ;
+
+argumentList: 
+    positionalArgumentList #PosArgList
+  | namedArgumentList # NamedArgList
   ;
 
-bracketedexpression:
+positionalArgumentList:
+    expression (',' expression)* 
+    ;
+
+namedArgumentList:
+   namedArgument (',' namedArgument)* 
+  ;
+
+namedArgument :
+    Identifier '=' expression
+  ;
+
+bracketedExpression:
     '(' expression ')' #ParenExp
   | '(' expression (',' expression)+ ')' #TupleExp
-  ;
-
-classArgumentList :
-    classArgument (',' classArgument)*
-  ;
-
-classArgument :
-    Identifier ':' expression
   ;
 
 idValueList:
@@ -320,6 +351,7 @@ literal:
   | StringLiteral
   | BooleanLiteral
   | NullLiteral
+  | ThisLiteral
   ;
 
 SUCHTHAT :
@@ -520,6 +552,10 @@ BooleanLiteral:
 
 NullLiteral:
   'null'
+  ;
+
+ThisLiteral:
+  'this'
   ;
 
 CharacterLiteral:
