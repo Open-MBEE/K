@@ -23,7 +23,7 @@ importDeclaration:
   ;
 
 classDeclaration:
-    'class' Identifier typeParameters? valueParameters? extending? '{' memberDeclaration* '}' 
+    'class' Identifier typeParameters? extending? '{' memberDeclaration* '}' 
   ;
 
 assocDeclaration:
@@ -41,15 +41,7 @@ typeParameter:
 typeBound:
       type ('+' type)*
     ;
-
-valueParameters:
-    '(' typingList ')'
-  ;
-    
-typingList:
-    typing (',' typing)*    
-  ;
-  
+      
 extending:
     'extends' type (',' type)*
   ;
@@ -63,7 +55,7 @@ type:
   | '[' type ']'                    # ListType
   | '<' type ',' type '>'           # MapType
   | '(' type ')'					# ParenType
-  | '{|' typing SUCHTHAT expression '|}' # SubType 
+  | '{|' Identifier ':' type  SUCHTHAT expression '|}' # SubType 
   | type '?' # OptionalType
   ;
 
@@ -83,7 +75,7 @@ memberDeclaration:
   | variableDeclaration
   | functionDeclaration 
   | constraint
-  | expressionsWithSeparator // ;; added (moved to here)
+  | expression
   ;
 
 assocMemberDeclaration:
@@ -92,24 +84,20 @@ assocMemberDeclaration:
   ;
 
 valueDeclaration:
-    'val' typing ('=' expression)? ';'
+    'val' pattern ('=' expression)? 
   ;
 
 sortDeclaration:
-    'type' Identifier ';'
+    'type' Identifier 
   ;
 
 typeDeclaration:
-    'type' Identifier typeParameters? '=' type ';'
+    'type' Identifier typeParameters? '=' type 
   ;
 
 variableDeclaration:
-    'var' typing ('=' expression)? ';'
+    'var' pattern ('=' expression)? 
   ;
-
-typing:
-    Identifier ':' type
-  ; 
 
 roleDeclaration:
     partDeclaration
@@ -129,7 +117,7 @@ multiplicity:
     ;
 
 functionDeclaration:
-    'fun' Identifier ('(' typingList? ')')+ (':' type)? 
+    'fun' Identifier ('(' patternList? ')')+ (':' type)? 
     functionSpecification*
     '{' memberDeclaration* '}' 
   ;
@@ -212,8 +200,8 @@ expression:
   | 'if' '(' expression ')' 'then' expression ('else' expression)? #IfExp
   | 'do' '{' memberDeclaration* '}' # DoExp
   | 'while'  '(' expression ')' 'do' '{' memberDeclaration* '}' #WhileExp
-  | 'for' '(' pattern (':' type)? 'in' expression ')' 'do' '{' memberDeclaration* '}' # ForExp 
-  | 'case' expression 'of' match #MatchExp
+  | 'for' '(' pattern 'in' expression ')' 'do' '{' memberDeclaration* '}' # ForExp 
+  | 'match' expression 'with' match+ #MatchExp
   | tokenNot expression #NotExp
   | 'forall' rngBindingList SUCHTHAT expression #ForallExp 
   | 'exists' rngBindingList SUCHTHAT expression #ExistsExp 
@@ -222,7 +210,7 @@ expression:
   | '{' expression '|' rngBindingList SUCHTHAT expression '}' #SetCompExp 
   | '[' expressionList? ']' #ListEnumExp
   | '[' expression '..' expression ']' #ListRngExp
-  | '[' expression '|' pattern ':' expression SUCHTHAT expression ']' #ListCompExp 
+  | '[' expression '|' pattern 'in' expression SUCHTHAT expression ']' #ListCompExp 
   | '<' mapPairList? '>' #MapEnumExp
   | '<' mapPair '|' rngBindingList SUCHTHAT expression '>' #MapCompExp 
   | expression ('*'|'/'|'%'|'inter'|'\\'|'++'|'#'|'^') expression #BinOp1Exp
@@ -238,16 +226,16 @@ expression:
   | expression tokenOr expression #OrExp
   | expression (tokenImplies | tokenIFF) expression #IFFExp
   | expression ':=' expression #AssignExp
-  | expression 'is' type # TypeCheck
-  | expression 'as' type # TypeCast
+  | expression 'is' type # TypeCheckExp
+  | expression 'as' type # TypeCastExp
+  | expression ';' expression # SeqCompExp
   | 'assert' '(' expression ')' #AssertExp 
   | '~' expression #NegExp
-  | pattern (':' type)? '->' expression #LambdaExp
-  // --------
-  // Records:
-  // --------  
-  //| /*class*/expression '@' '{' idValueList '}' ;; deleted for now.
-    ;
+  | pattern '->' expression #LambdaExp
+  | 'continue' #ContinueExp
+  | 'break' #BreakExp
+  | 'return' expression? #ReturnExp
+  ;
 
 argumentList: 
     positionalArgumentList #PosArgList
@@ -280,18 +268,7 @@ idValuePair:
   ;
 
 match:
-    matchPattern '=>' expression ('|' match)?
-  ;
-
-matchPattern:
-    literal
-  | '_'
-  | Identifier ('(' matchArgument (',' matchArgument)*  ')')?
-  | '(' matchPattern (',' matchPattern)+ ')'
-  ;
-
-matchArgument:
-    Identifier '=' matchPattern
+  'case' pattern ('|' pattern)* '=>' expression 
   ;
 
 mapPairList:
@@ -307,7 +284,7 @@ rngBindingList:
   ;
 
 rngBinding:
-    patternList ':' collectionOrType
+    patternList 'in' collectionOrType
   ;
 
 patternList:
@@ -319,17 +296,12 @@ collectionOrType:
   | type
   ;
   
-// letBindingList ;; deleted, not used
-//  : letBinding (',' letBinding)*
-//  ;
-  
-// letBinding ;; deleted, not used
-//  : pattern (':' type)? '=' expression
-//  ;  
-
 pattern:
-    Identifier #IdentPattern
+    literal # LiteralPattern
+  | '_' #DontCarePattern   
+  | Identifier #IdentPattern
   | '(' pattern (',' pattern)+ ')' #CartesianPattern  
+  | pattern ':' type # TypedPattern
   ;
   
 identifierList:
