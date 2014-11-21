@@ -9,7 +9,7 @@ model:
   ;
 
 topDeclaration:
-    memberDeclaration
+    memberDeclaration SEP
   | classDeclaration
   | assocDeclaration
   ;
@@ -22,12 +22,20 @@ importDeclaration:
     'import' qualifiedName ('.' '*')?
   ;
 
+memberDeclarationList:
+    memberDeclaration (SEP memberDeclaration)*
+  ;
+
+assocMemberDeclarationList:
+    assocMemberDeclaration (SEP assocMemberDeclaration)*
+  ;
+
 classDeclaration:
-    'class' Identifier typeParameters? extending? '{' memberDeclaration* '}' 
+    'class' Identifier typeParameters? extending? '{' memberDeclarationList? '}' 
   ;
 
 assocDeclaration:
-    'assoc' Identifier  '{' assocMemberDeclaration* '}'
+    'assoc' Identifier  '{' assocMemberDeclarationList? '}'
   ;
 
 typeParameters:
@@ -70,11 +78,11 @@ typeArguments:
 
 memberDeclaration:
     sortDeclaration 
-  | typeDeclaration
-  | valueDeclaration
+  | typeDeclaration 
+  | valueDeclaration 
   | variableDeclaration
-  | functionDeclaration 
-  | constraint
+  | functionDeclaration
+  | constraint 
   | expression
   ;
 
@@ -117,9 +125,22 @@ multiplicity:
     ;
 
 functionDeclaration:
+    shortFunctionDeclaration
+  | longFunctionDeclaration
+  ;
+
+shortFunctionDeclaration:
+    'fun' Identifier ('(' patternList? ')')+ (':' type)? 
+    '='
+    expression
+  ;
+
+longFunctionDeclaration:
     'fun' Identifier ('(' patternList? ')')+ (':' type)? 
     functionSpecification*
-    '{' memberDeclaration* '}' 
+    '{'
+    memberDeclarationList?
+    '}'
   ;
 
 functionSpecification:
@@ -128,7 +149,7 @@ functionSpecification:
   ;
 
 constraint:
-    'req' (Identifier ':')?  expression  
+    'req' (Identifier ':')?  expression
   ;
 
 primitiveType:
@@ -187,21 +208,23 @@ tokenArrow:
     '->'
     ;
 
-expressionsWithSeparator:
-    expression ';'
+tokenEnd: 
+    'end' 
     ;
-
+    
+effect:
+    expression (SEP expression)*
+  ;
 expression: 
     bracketedExpression # BracketedExp
   | literal #LiteralExp
   | Identifier #IdentExp
   | expression '.' Identifier #DotExp
   | expression '(' argumentList? ')' #AppExp
-  | 'if' '(' expression ')' 'then' expression ('else' expression)? #IfExp
-  | 'do' '{' memberDeclaration* '}' # DoExp
-  | 'while'  '(' expression ')' 'do' '{' memberDeclaration* '}' #WhileExp
-  | 'for' '(' pattern 'in' expression ')' 'do' '{' memberDeclaration* '}' # ForExp 
-  | 'match' expression 'with' match+ #MatchExp
+  | 'if' expression 'then' memberDeclarationList? ('else' memberDeclarationList?)? tokenEnd #IfExp
+  | 'while' expression 'do' memberDeclarationList? tokenEnd #WhileExp
+  | 'for' '(' pattern 'in' expression ')' 'do' memberDeclarationList? tokenEnd # ForExp 
+  | 'match' expression 'with' match+ 'end' #MatchExp
   | tokenNot expression #NotExp
   | 'forall' rngBindingList SUCHTHAT expression #ForallExp 
   | 'exists' rngBindingList SUCHTHAT expression #ExistsExp 
@@ -228,13 +251,13 @@ expression:
   | expression ':=' expression #AssignExp
   | expression 'is' type # TypeCheckExp
   | expression 'as' type # TypeCastExp
-  | expression ';' expression # SeqCompExp
   | 'assert' '(' expression ')' #AssertExp 
   | '~' expression #NegExp
   | pattern '->' expression #LambdaExp
   | 'continue' #ContinueExp
   | 'break' #BreakExp
   | 'return' expression? #ReturnExp
+  | '$' #ResultExp
   ;
 
 argumentList: 
@@ -284,7 +307,7 @@ rngBindingList:
   ;
 
 rngBinding:
-    patternList 'in' collectionOrType
+    patternList ':' collectionOrType
   ;
 
 patternList:
@@ -630,4 +653,8 @@ WS:
 
 SEP:
     ';'
+  ;
+
+SEPSEP:
+    ';;'
   ;
