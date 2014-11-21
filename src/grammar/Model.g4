@@ -4,14 +4,17 @@ grammar Model;
 model:
     packageDeclaration?
     importDeclaration* 
-    topDeclaration*
+    topDeclarationList? 
     EOF
   ;
 
+topDeclarationList: topDeclaration (SEP topDeclaration)* SEP?
+  ;
+
 topDeclaration:
-    memberDeclaration SEP
-  | classDeclaration
-  | assocDeclaration
+    memberDeclaration 
+  | classDeclaration 
+  | assocDeclaration 
   ;
 
 packageDeclaration:
@@ -23,11 +26,11 @@ importDeclaration:
   ;
 
 memberDeclarationList:
-    memberDeclaration (SEP memberDeclaration)*
+    memberDeclaration (SEP memberDeclaration)* SEP?
   ;
 
 assocMemberDeclarationList:
-    assocMemberDeclaration (SEP assocMemberDeclaration)*
+    assocMemberDeclaration (SEP assocMemberDeclaration)* SEP?
   ;
 
 classDeclaration:
