@@ -1,33 +1,55 @@
 (defvar k-classes
-  '("class" "assoc"))
+  '("class" "assoc"
+    ))
 
-(defvar k-varvaldef
-  '("var" "val" "ef"))
+(defvar k-variables
+  '("var" "val" "ref" "part"
+    ))
 
 (defvar k-keywords
-  '("req" "type" "package" "import" "forall" "create"))
+  '("req" "type" "package" "import" "forall" "extends" "fun" "pre" "post"
+    "lt" "lte" "gt" "gte" "implies" "and" "or" "not" "eq" "end" "while"
+    "if" "for" "match" "forall" "with" "do" "then" "else" "in" "exists"
+    "isin" "!isin" "subset" "psubset" "union" "inter" "assert" "continue"
+    "break" "return" "$" "case" "this"
+    ))
+
+(defvar k-constants 
+  '("true" "false"
+    ))
 
 (defvar k-types
-  '("Int" "Char" "Real" "String" "Unit" "Bool"))
+  '("Int" "Char" "Real" "String" "Unit" "Bool"
+    ))
 
 (defvar k-tab-width 4 "Width of a tab for K mode")
+
+;; syntax table
+(defvar k-syntax-table nil "Syntax table for `k-mode'.")
+(setq k-syntax-table 
+      (let ((synTable (make-syntax-table)))
+	(modify-syntax-entry ?= ". 12" synTable)
+	(modify-syntax-entry ?- ". 34" synTable)
+	;;(modify-syntax-entry ?\n "> b" synTable)
+	synTable))
 
 (defvar k-font-lock-defaults
   `((
      ;; stuff between "
      ("\\(--.*\\)" 1 'font-lock-comment-face)
-     ("\\(==.*\\)" 1 'font-lock-comment-face)
+     ;;("\\(==.*\\)" 1 'font-lock-comment-face)
      ("\"\\.\\*\\?" . font-lock-string-face)
      ;; ; : , ; { } =>  @ $ = are all special elements
      ;;(":\\|,\\|;\\|{\\|}\\|=>\\|@\\|$\\|=" . font-lock-keyword-face)
      ( ,(regexp-opt k-keywords 'words) . font-lock-builtin-face)
      ( ,(regexp-opt k-classes 'words) . font-lock-function-name-face)
-     ( ,(regexp-opt k-varvaldef 'words) . font-lock-variable-name-face)
+     ( ,(regexp-opt k-variables 'words) . font-lock-variable-name-face)
      ( ,(regexp-opt k-types 'words) . font-lock-type-face)
+     ( ,(regexp-opt k-constants 'words) . font-lock-constant-face)
      )))
 
 (define-derived-mode k-mode fundamental-mode "K script"
-  "K mode is a major mode for editing K  files"
+  "K mode is a major mode for editing K  files" :syntax-table k-syntax-table
   
   (setq font-lock-defaults k-font-lock-defaults)
   
