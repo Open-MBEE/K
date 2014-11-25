@@ -80,15 +80,11 @@ object Frontend {
         val exp: Exp = visitJsonObject(obj.get("exp")).asInstanceOf[Exp]
         val ident: String = obj.get("ident").asInstanceOf[String]
         DotExp(exp, ident)
-      case "CreateExp" =>
-        val name = visitJsonObject(obj.get("name")).asInstanceOf[QualifiedName]
-        val args = visitJsonArray(obj.get("args").asInstanceOf[JSONArray], (a => visitJsonObject(a))).asInstanceOf[List[ClassArgument]]
-        CreateExp(name, args)
       case "IfExp" =>
         val cond: Exp = visitJsonObject(obj.get("cond")).asInstanceOf[Exp]
-        val exp1: Exp = visitJsonObject(obj.get("exp1")).asInstanceOf[Exp]
-        val exp2: Exp = visitJsonObject(obj.get("exp2")).asInstanceOf[Exp]
-        IfExp(cond, exp1, exp2)
+        val trueBranch: List[MemberDecl] = visitJsonObject(obj.get("trueBranch")).asInstanceOf[List[MemberDecl]]
+        val falseBranch: List[MemberDecl] = visitJsonObject(obj.get("falseBranch")).asInstanceOf[List[MemberDecl]]
+        IfExp(cond, trueBranch, falseBranch)
       case "DoExp" =>
         val body = visitJsonArray(obj.get("body"), visitJsonObject).asInstanceOf[List[MemberDecl]]
         DoExp(body)
@@ -98,15 +94,13 @@ object Frontend {
         WhileExp(cond, body)
       case "ForExp" =>
         val pattern: Pattern = visitJsonObject(obj.get("pattern")).asInstanceOf[Pattern]
-        var t: Option[Type] = if (obj.keySet().contains("t")) Some(visitJsonObject(obj.get("t")).asInstanceOf[Type])
-        else None
         val exp: Exp = visitJsonObject(obj.get("exp")).asInstanceOf[Exp]
         val body = visitJsonArray(obj.get("body"), visitJsonObject).asInstanceOf[List[MemberDecl]]
-        ForExp(pattern, t, exp, body)
+        ForExp(pattern, exp, body)
       case "FunApplExp" =>
         val exp1: Exp = visitJsonObject(obj.get("exp1")).asInstanceOf[Exp]
-        val exp2: Exp = visitJsonObject(obj.get("exp2")).asInstanceOf[Exp]
-        FunApplExp(exp1, exp2)
+        val args: List[Argument] = visitJsonObject(obj.get("args")).asInstanceOf[List[Argument]]
+        FunApplExp(exp1, args)
       case "BinExp" =>
         val operator: BinaryOp =
           obj.get("op") match {
@@ -182,10 +176,8 @@ object Frontend {
         MapComprExp(map, bindings, exp)
       case "LambdaExp" =>
         var pat = visitJsonObject(obj.get("pat")).asInstanceOf[Pattern]
-        var t = if (obj.keySet().contains("t")) Some(visitJsonObject(obj.get("t")).asInstanceOf[Type])
-        else None
         var exp = visitJsonObject(obj.get("exp")).asInstanceOf[Exp]
-        LambdaExp(pat, t, exp)
+        LambdaExp(pat, exp)
       case "AssertExp" =>
         AssertExp(visitJsonObject(obj.get("exp")).asInstanceOf[Exp])
       case "StarExp" =>
@@ -247,10 +239,9 @@ object Frontend {
         var classToken: ClassToken = if(obj.get("classToken").equals("class")) Class else Assoc
         var ident: String = obj.get("ident").toString()
         var typeParams: List[TypeParam] = visitJsonArray(obj.get("typeParams"), visitJsonObject).asInstanceOf[List[TypeParam]]
-        var valueParams: List[Typing] = visitJsonArray(obj.get("valueParams"), visitJsonObject).asInstanceOf[List[Typing]]
         var extending: List[Type] = visitJsonArray(obj.get("Type"), visitJsonObject).asInstanceOf[List[Type]]
         var members: List[MemberDecl] = visitJsonArray(obj.get("MemberDecl"), visitJsonObject).asInstanceOf[List[MemberDecl]]
-        ClassDecl(classToken, ident, typeParams, valueParams, extending, members)
+        ClassDecl(classToken, ident, typeParams, extending, members)
       case "TypeParam" =>
         var ident : String = obj.get("ident").toString()
         var bound : Option[TypeBound] = 
@@ -270,14 +261,14 @@ object Frontend {
         var expr : Option[Exp] = 
           if(obj.keySet().contains("expr")) Some(visitJsonObject(obj.get("expr")).asInstanceOf[Exp])
           else None
-        var typing : Typing = visitJsonObject(obj.get("typing")).asInstanceOf[Typing]
-        ValDecl(typing, expr)
+        var pattern : Pattern = visitJsonObject(obj.get("pattern")).asInstanceOf[Pattern]
+        ValDecl(pattern, expr)
       case "VarDecl" => 
         var expr : Option[Exp] = 
           if(obj.keySet().contains("expr")) Some(visitJsonObject(obj.get("expr")).asInstanceOf[Exp])
           else None
-        var typing : Typing = visitJsonObject(obj.get("typing")).asInstanceOf[Typing]
-        VarDecl(typing, expr)
+        var pattern : Pattern = visitJsonObject(obj.get("pattern")).asInstanceOf[Pattern]
+        VarDecl(pattern, expr)
       case "FunDecl" => 
         var ident : String = obj.get("ident").toString()
         var args : List[List[Typing]] = {
@@ -291,7 +282,7 @@ object Frontend {
         }
         var t : Type = visitJsonObject(obj.get("t")).asInstanceOf[Type]
         var body : List[MemberDecl] = visitJsonArray(obj.get("body"), visitJsonObject).asInstanceOf[List[MemberDecl]]
-        FunDecl(ident, args, t, body)
+        FunDecl(ident, null, t, null, Some(body)) // TODO
       case "ConstraintDecl" => 
         var name : Option[String] = 
           if(obj.keySet().contains("name")) Some(obj.get("name").toString())
@@ -379,27 +370,23 @@ object Frontend {
             DotExp(exp, ident)
           case "FunApplExp" =>
             val exp1 = visitJsonObject2(operand.get(1).asInstanceOf[JSONObject]).asInstanceOf[Exp]
-            val exp2 = visitJsonObject2(operand.get(2).asInstanceOf[JSONObject]).asInstanceOf[Exp]
-            FunApplExp(exp1, exp2)
+            val args = visitJsonObject2(operand.get(2).asInstanceOf[JSONObject]).asInstanceOf[List[Argument]]
+            FunApplExp(exp1, args)
           case "IfExp" =>
             val cond = visitJsonObject2(operand.get(1).asInstanceOf[JSONObject]).asInstanceOf[Exp]
-            val exp1 = visitJsonObject2(operand.get(2).asInstanceOf[JSONObject]).asInstanceOf[Exp]
-            val exp2 = visitJsonObject2(operand.get(3).asInstanceOf[JSONObject]).asInstanceOf[Exp]
-            IfExp(cond, exp1, exp2)
+            val trueBranch = visitJsonObject2(operand.get(2).asInstanceOf[JSONObject]).asInstanceOf[List[MemberDecl]]
+            val falseBranch = visitJsonObject2(operand.get(3).asInstanceOf[JSONObject]).asInstanceOf[List[MemberDecl]]
+            // TODO
+            IfExp(cond, trueBranch, falseBranch)
           case "QuantifiedExp" =>
             val quantifier = visitJsonObject2(operand.get(1).asInstanceOf[JSONObject]).asInstanceOf[Quantifier]
             val bindings = getRngBindingList(operand.get(2).asInstanceOf[JSONObject]).asInstanceOf[List[RngBinding]]
             val exp = visitJsonObject2(operand.get(3).asInstanceOf[JSONObject]).asInstanceOf[Exp]
-
             QuantifiedExp(quantifier, bindings, exp)
           case "LambdaExp" =>
             val pat = getPattern(operand.get(1).asInstanceOf[JSONObject]).asInstanceOf[Pattern]
             val exp = visitJsonObject2(operand.get(2).asInstanceOf[JSONObject]).asInstanceOf[Exp]
-            val ty =
-              if (operand.get(3) != null) {
-                None // currently unsupported
-              } else None
-            LambdaExp(pat, ty, exp)
+            LambdaExp(pat, exp)
           case _ =>
             val operator: BinaryOp =
               operand.get(0).asInstanceOf[JSONObject].get("element") match {
@@ -503,13 +490,9 @@ object Frontend {
     var m: Model = ksv.visit(tree).asInstanceOf[Model];
 
     require(m.decls.count(_ => true) == 1)
-    require(
-      m.decls.count(
-        _ match {
-          case ExpressionDecl(_) => true
-          case _ => false
-        }) == 1)
-
+    println(m.toString)
+    println(m.decls(0).toString())
+    
     var exp: Exp = m.decls(0).asInstanceOf[ExpressionDecl].exp
     val array = new JSONArray()
     val operand = new JSONArray()
@@ -568,12 +551,12 @@ object Frontend {
     println("Imports: " + m.imports.size)
     println("Classes: " + m.decls.count(
       _ match {
-        case ClassDecl(Class, _, _, _, _, _) => true
+        case ClassDecl(Class, _, _, _, _) => true
         case _ => false
       }))
     println("Associations: " + m.decls.count(
       _ match {
-        case ClassDecl(Assoc, _, _, _, _, _) => true
+        case ClassDecl(Assoc, _, _, _, _) => true
         case _ => false
       }))
     println("Constraints: " + m.decls.count(
@@ -593,7 +576,7 @@ object Frontend {
       }))
     println("Functions: " + m.decls.count(
       _ match {
-        case FunDecl(_, _, _, _) => true
+        case FunDecl(_, _, _, _, _) => true
         case _ => false
       }))
     println("Types: " + m.decls.count(

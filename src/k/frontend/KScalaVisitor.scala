@@ -4,6 +4,7 @@ import scala.collection.JavaConverters._
 import k.frontend.ModelBaseVisitor
 import k.frontend.ModelParser
 import java.lang.Float
+import java.lang.Boolean
 
 class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
 
@@ -14,7 +15,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
       if (ctx.packageDeclaration() != null) Some(visit(ctx.packageDeclaration()).asInstanceOf[PackageDecl])
       else None
     var importDecls: List[ImportDecl] = ctx.importDeclaration().asScala.toList.map(visit(_).asInstanceOf[ImportDecl])
-    var topDecls: List[TopDecl] = ctx.topDeclaration().asScala.toList.map(visit(_).asInstanceOf[TopDecl])
+    var topDecls: List[TopDecl] = visit(ctx.topDeclarationList()).asInstanceOf[List[TopDecl]]
     Model(packageDecl, importDecls, topDecls)
   }
 
@@ -97,11 +98,17 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
     var t: Type = visit(ctx.`type`()).asInstanceOf[Type]
     ParenType(t)
   }
+  
+  override def visitBracketedExp(ctx : ModelParser.BracketedExpContext) : AnyRef = {
+	visit(ctx.bracketedExpression())
 
+  }
+  
   override def visitSubType(ctx: ModelParser.SubTypeContext): AnyRef = {
-    var t: Typing = visit(ctx.typing()).asInstanceOf[Typing]
+    var i: String = visit(ctx.Identifier()).asInstanceOf[String]
+    var t: Type = visit(ctx.`type`()).asInstanceOf[Type]
     var e: Exp = visit(ctx.expression()).asInstanceOf[Exp]
-    SubType(t, e)
+    SubType(i, t, e)
   }
 
   override def visitSetType(ctx: ModelParser.SetTypeContext): AnyRef = {
@@ -123,15 +130,6 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
     IdentType(ident, List(from, to))
   }
 
-  override def visitRangeType(ctx: ModelParser.RangeTypeContext): AnyRef = {
-    var t: Type = visit(ctx.`type`()).asInstanceOf[Type]
-    var e1: Exp = visit(ctx.expressionOrStar(0)).asInstanceOf[Exp]
-    var e2: Option[Exp] =
-      if (ctx.expressionOrStar(1) != null) Some(visit(ctx.expressionOrStar(1)).asInstanceOf[Exp])
-      else None
-    MultType(t, e1, e2)
-  }
-
   override def visitOptionalType(ctx: ModelParser.OptionalTypeContext): AnyRef = {
     var t: Type = visit(ctx.`type`()).asInstanceOf[Type]
     NullableType(t)
@@ -140,12 +138,6 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   override def visitTypeArguments(ctx: ModelParser.TypeArgumentsContext): AnyRef = {
     var types: List[ModelParser.TypeContext] = ctx.`type`().asScala.toList
     types.map(visit(_).asInstanceOf[Type])
-  }
-
-  override def visitTyping(ctx: ModelParser.TypingContext): AnyRef = {
-    var ident: String = ctx.Identifier().getText()
-    var t: Type = visit(ctx.`type`()).asInstanceOf[Type]
-    Typing(ident, t)
   }
 
   override def visitIdentifierList(ctx: ModelParser.IdentifierListContext): AnyRef = {
@@ -178,44 +170,45 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
     DotExp(e, ident)
   }
 
-  override def visitCreateExp(ctx: ModelParser.CreateExpContext): AnyRef = {
-    var qn: QualifiedName = visit(ctx.qualifiedName()).asInstanceOf[QualifiedName]
-    var args: List[ClassArgument] = visit(ctx.classArgumentList()).asInstanceOf[List[ClassArgument]]
-    CreateExp(qn, args)
-  }
-
   override def visitAppExp(ctx: ModelParser.AppExpContext): AnyRef = {
-
     var e0: Exp = visit(ctx.expression()).asInstanceOf[Exp]
-    var e1: Exp = visit(ctx.bracketedexpression()).asInstanceOf[Exp]
-    FunApplExp(e0, e1)
+    var argumentList =
+      if (ctx.argumentList() != null) visit(ctx.argumentList()).asInstanceOf[List[Argument]]
+      else null
+
+    FunApplExp(e0, argumentList)
   }
 
   override def visitIfExp(ctx: ModelParser.IfExpContext): AnyRef = {
-    var e0: Exp = visit(ctx.expression(0)).asInstanceOf[Exp]
-    var e1: Exp = visit(ctx.expression(1)).asInstanceOf[Exp]
-    var e2: Exp = visit(ctx.expression(2)).asInstanceOf[Exp]
-    IfExp(e0, e1, e2)
-  }
-
-  override def visitDoExp(ctx: ModelParser.DoExpContext): AnyRef = {
-    var body: List[MemberDecl] = ctx.memberDeclaration().asScala.toList.map(visit(_).asInstanceOf[MemberDecl])
-    DoExp(body)
+    var e0: Exp = visit(ctx.expression()).asInstanceOf[Exp]
+    var trueBranch: List[MemberDecl] =
+      if (ctx.memberDeclarationList(0) != null) visit(ctx.memberDeclarationList(0)).asInstanceOf[List[MemberDecl]]
+      else null
+    var falseBranch: List[MemberDecl] =
+      if (ctx.memberDeclarationList(0) != null) visit(ctx.memberDeclarationList(0)).asInstanceOf[List[MemberDecl]]
+      else null
+    IfExp(e0, trueBranch, falseBranch)
   }
 
   override def visitWhileExp(ctx: ModelParser.WhileExpContext): AnyRef = {
     var cond: Exp = visit(ctx.expression()).asInstanceOf[Exp]
-    var body: List[MemberDecl] = ctx.memberDeclaration().asScala.toList.map(visit(_).asInstanceOf[MemberDecl])
+    var body: List[MemberDecl] =
+      if (ctx.memberDeclarationList() != null)
+        visit(ctx.memberDeclarationList()).asInstanceOf[List[MemberDecl]]
+      else
+        null
     WhileExp(cond, body)
   }
 
   override def visitForExp(ctx: ModelParser.ForExpContext): AnyRef = {
     var pattern: Pattern = visit(ctx.pattern()).asInstanceOf[Pattern]
-    var t: Option[Type] = if (ctx.`type`() == null) None else
-      Some(visit(ctx.`type`()).asInstanceOf[Type])
     var exp: Exp = visit(ctx.expression()).asInstanceOf[Exp]
-    var body: List[MemberDecl] = ctx.memberDeclaration().asScala.toList.map(visit(_).asInstanceOf[MemberDecl])
-    ForExp(pattern, t, exp, body)
+    var body: List[MemberDecl] =
+      if (ctx.memberDeclarationList() != null)
+        visit(ctx.memberDeclarationList()).asInstanceOf[List[MemberDecl]]
+      else
+        null
+    ForExp(pattern, exp, body)
   }
 
   override def visitNegExp(ctx: ModelParser.NegExpContext): AnyRef = {
@@ -304,11 +297,8 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
 
   override def visitLambdaExp(ctx: ModelParser.LambdaExpContext): AnyRef = {
     var pat: Pattern = visit(ctx.pattern()).asInstanceOf[Pattern]
-    var t: Option[Type] =
-      if (ctx.`type`() != null) Some(visit(ctx.`type`()).asInstanceOf[Type])
-      else None
     var exp: Exp = visit(ctx.expression()).asInstanceOf[Exp]
-    LambdaExp(pat, t, exp)
+    LambdaExp(pat, exp)
   }
 
   override def visitBinOp1Exp(ctx: ModelParser.BinOp1ExpContext): AnyRef = {
@@ -413,16 +403,6 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
     ProductPattern(ctx.pattern().asScala.toList.map(visit(_).asInstanceOf[Pattern]))
   }
 
-  override def visitClassArgumentList(ctx: ModelParser.ClassArgumentListContext): AnyRef = {
-    ctx.classArgument().asScala.map(visit(_).asInstanceOf[ClassArgument]).toList
-  }
-
-  override def visitClassArgument(ctx: ModelParser.ClassArgumentContext): AnyRef = {
-    var ident: String = ctx.Identifier().getText()
-    var exp: Exp = visit(ctx.expression()).asInstanceOf[Exp]
-    ClassArgument(ident, exp)
-  }
-
   override def visitLiteral(ctx: ModelParser.LiteralContext): AnyRef = {
     if (ctx.IntegerLiteral() != null) {
       IntegerLiteral(Integer.parseInt(ctx.IntegerLiteral().getSymbol().getText()))
@@ -436,20 +416,26 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
       BooleanLiteral(java.lang.Boolean.parseBoolean(ctx.BooleanLiteral().getSymbol().getText()))
     }
   }
+  
+  override def visitLiteralPattern(ctx : ModelParser.LiteralPatternContext) : AnyRef = {
+    visit(ctx.literal())
+  }
 
+  override def visitTypedPattern (ctx : ModelParser.TypedPatternContext) : AnyRef = {
+	var pattern : Pattern = visit(ctx.pattern()).asInstanceOf[Pattern]
+	var t : Type = visit(ctx.`type`()).asInstanceOf[Type]
+	TypedPattern(pattern, t)
+  } 
+  
   override def visitTypeParameters(ctx: ModelParser.TypeParametersContext): AnyRef = {
     ctx.typeParameter().asScala.toList.map(visit(_).asInstanceOf[TypeParam])
   }
 
-  override def visitExpressionsWithSeparator(ctx: ModelParser.ExpressionsWithSeparatorContext): AnyRef = {
-    ExpressionDecl(visit(ctx.expression()).asInstanceOf[Exp])
+  override def visitMemberDeclarationList(ctx:ModelParser.MemberDeclarationListContext) : AnyRef = {
+	ctx.memberDeclaration().asScala.toList.map(visit(_)).asInstanceOf[List[MemberDecl]]
   }
-
-  override def visitTypingList(ctx: ModelParser.TypingListContext): AnyRef = {
-    ctx.typing().asScala.toList.map(visit(_).asInstanceOf[Typing])
-  }
-
-  override def visitMemberDeclaration(ctx: ModelParser.MemberDeclarationContext): AnyRef = {
+  
+  override def visitMemberDeclaration(ctx: ModelParser.MemberDeclarationContext): AnyRef = {	
     if (ctx.sortDeclaration() != null) visit(ctx.sortDeclaration())
     else if (ctx.typeDeclaration() != null) visit(ctx.typeDeclaration())
     else if (ctx.sortDeclaration() != null) visit(ctx.sortDeclaration())
@@ -457,10 +443,14 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
     else if (ctx.variableDeclaration() != null) visit(ctx.variableDeclaration())
     else if (ctx.functionDeclaration() != null) visit(ctx.functionDeclaration())
     else if (ctx.constraint() != null) visit(ctx.constraint())
-    else if (ctx.expressionsWithSeparator() != null) visit(ctx.expressionsWithSeparator())
+    else if (ctx.expression() != null) ExpressionDecl(visit(ctx.expression()).asInstanceOf[Exp])
     else null
   }
 
+  override def visitTopDeclarationList(ctx : ModelParser.TopDeclarationListContext) : AnyRef = {
+    ctx.topDeclaration().asScala.toList.map(visit(_)).asInstanceOf[List[TopDecl]]
+  }
+  
   override def visitTopDeclaration(ctx: ModelParser.TopDeclarationContext): AnyRef = {
     if (ctx.classDeclaration() != null) visit(ctx.classDeclaration())
     else if (ctx.memberDeclaration() != null) {
@@ -469,42 +459,107 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   }
 
   override def visitClassDeclaration(ctx: ModelParser.ClassDeclarationContext): AnyRef = {
-    var classToken: ClassToken = visit(ctx.classToken()).asInstanceOf[ClassToken]
     var ident: String = ctx.Identifier().getText()
     var typeParams: List[TypeParam] =
       if (ctx.typeParameters() == null) Nil
       else visit(ctx.typeParameters()).asInstanceOf[List[TypeParam]]
-    var valueParams : List[Typing] =
-      if (ctx.valueParameters() == null) Nil
-      else visit(ctx.valueParameters()).asInstanceOf[List[Typing]]
-    var extending : List[Type] =
+    var extending: List[Type] =
       if (ctx.extending() == null) Nil
-      else visit(ctx.extending()).asInstanceOf[List[Type]]   
-    var members: List[MemberDecl] = ctx.memberDeclaration().asScala.toList.map(visit(_).asInstanceOf[MemberDecl])
-    ClassDecl(classToken, ident, typeParams, valueParams, extending, members)
+      else visit(ctx.extending()).asInstanceOf[List[Type]]
+    var members: List[MemberDecl] =
+      if (ctx.memberDeclarationList() != null)
+        visit(ctx.memberDeclarationList()).asInstanceOf[List[MemberDecl]]
+      else
+        null
+    ClassDecl(Class, ident, typeParams, extending, members)
+  }
+
+  override def visitAssocDeclaration(ctx: ModelParser.AssocDeclarationContext): AnyRef = {
+    var ident: String = ctx.Identifier().getText();
+    var members: List[MemberDecl] = visit(ctx.assocMemberDeclarationList()).asInstanceOf[List[MemberDecl]]
+    ClassDecl(Assoc, ident, null, null, members)
+  }
+
+  override def visitAssocMemberDeclarationList(ctx: ModelParser.AssocMemberDeclarationListContext): AnyRef = {
+    ctx.assocMemberDeclaration().asScala.map(visit(_)).asInstanceOf[List[MemberDecl]]
+  }
+  
+  override def visitAssocMemberDeclaration(ctx: ModelParser.AssocMemberDeclarationContext): AnyRef = {
+	if(ctx.roleDeclaration() != null) visit(ctx.roleDeclaration())
+	else if(ctx.memberDeclaration() != null) visit(ctx.memberDeclaration())
+	else null
+  }
+
+  override def visitPositionalArgumentList(ctx: ModelParser.PositionalArgumentListContext): AnyRef = {
+    ctx.expression().asScala.map(visit(_)).asInstanceOf[List[Exp]]
+  }
+
+  override def visitNamedArgList(ctx : ModelParser.NamedArgListContext) : AnyRef = {
+    visit(ctx.namedArgumentList()).asInstanceOf[List[NamedArg]]
+  }
+  
+  override def visitNamedArgument(ctx: ModelParser.NamedArgumentContext): AnyRef = {
+    var ident: String = ctx.Identifier().getText()
+    var exp: Exp = visit(ctx.expression()).asInstanceOf[Exp]
+    NamedArg(ident, exp)
+  }
+  
+  override def visitNamedArgumentList(ctx : ModelParser.NamedArgumentListContext) : AnyRef = {
+    ctx.namedArgument().asScala.toList.map(visit(_)).asInstanceOf[List[NamedArg]]
+  }
+
+  override def visitLongFunctionDeclaration(ctx: ModelParser.LongFunctionDeclarationContext): AnyRef = {
+    var ident: String = ctx.Identifier().getText()
+    var patterns: Option[List[Pattern]] =
+      if (ctx.patternList() != null)
+        Some(ctx.patternList().asScala.map(visit(_)).asInstanceOf[List[Pattern]])
+      else None
+    var t: Type = visit(ctx.`type`()).asInstanceOf[Type]
+    var spec: List[FunSpec] =
+      if (ctx.functionSpecification() != null)
+        ctx.functionSpecification().asScala.map(visit(_)).asInstanceOf[List[FunSpec]]
+      else
+        null
+    var members: Option[List[MemberDecl]] =
+      if (ctx.memberDeclarationList() != null)
+        Some(visit(ctx.memberDeclarationList()).asInstanceOf[List[MemberDecl]])
+      else
+        None
+    FunDecl(ident, patterns, t, spec, members)
+  }
+  
+  override def visitShortFunctionDeclaration(ctx : ModelParser.ShortFunctionDeclarationContext) : AnyRef = {
+    var ident: String = ctx.Identifier().getText()
+    var patterns: Option[List[Pattern]] =
+      if (ctx.patternList() != null)
+        Some(ctx.patternList().asScala.map(visit(_)).asInstanceOf[List[Pattern]])
+      else None
+    var t: Type = visit(ctx.`type`()).asInstanceOf[Type]
+    var exp : Exp = visit(ctx.expression()).asInstanceOf[Exp]
+    ShortFunDecl(ident, patterns, t, exp)
+  }
+
+  override def visitFunctionSpecification(ctx: ModelParser.FunctionSpecificationContext): AnyRef = {
+    var pre : Boolean = 
+      if(ctx.children.get(0) == "pre") true
+      else false
+    var exp : Exp = visit(ctx.expression()).asInstanceOf[Exp]
+    FunSpec(pre, exp)
   }
 
   override def visitFunctionDeclaration(ctx: ModelParser.FunctionDeclarationContext): AnyRef = {
-    var ident: String = ctx.Identifier().getText()
-    var args: List[List[Typing]] = ctx.typingList().asScala.toList.map(visit(_).asInstanceOf[List[Typing]])
-    var resType: Type = visit(ctx.`type`()).asInstanceOf[Type]
-    var body: List[MemberDecl] = ctx.memberDeclaration().asScala.toList.map(visit(_).asInstanceOf[MemberDecl])
-    FunDecl(ident, args, resType, body)
-  }
-
-  override def visitClassToken(ctx: ModelParser.ClassTokenContext): AnyRef = {
-    ctx.getText().toString() match {
-      case "class" => Class
-      case "assoc" => Assoc
-    }
+    if (ctx.shortFunctionDeclaration() != null)
+      visit(ctx.shortFunctionDeclaration()).asInstanceOf[FunDecl]
+    else
+      visit(ctx.longFunctionDeclaration()).asInstanceOf[FunDecl]
   }
 
   override def visitVariableDeclaration(ctx: ModelParser.VariableDeclarationContext): AnyRef = {
-    val typing: Typing = visit(ctx.typing()).asInstanceOf[Typing]
+    val pattern: Pattern = visit(ctx.pattern()).asInstanceOf[Pattern]
     val expr: Option[Exp] =
       if (ctx.expression() != null) Some(visit(ctx.expression()).asInstanceOf[Exp])
       else None
-    VarDecl(typing, expr)
+    VarDecl(pattern, expr)
   }
 
   override def visitCollectionOrType(ctx: ModelParser.CollectionOrTypeContext): AnyRef = {
@@ -540,11 +595,101 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   }
 
   override def visitValueDeclaration(ctx: ModelParser.ValueDeclarationContext): AnyRef = {
-    var typing: Typing = visit(ctx.typing()).asInstanceOf[Typing]
+    val pattern: Pattern = visit(ctx.pattern()).asInstanceOf[Pattern]
     var exp: Option[Exp] =
       if (ctx.expression() != null) Some(visit(ctx.expression()).asInstanceOf[Exp])
       else None
-    ValDecl(typing, exp)
+    ValDecl(pattern, exp)
   }
 
+  override def visitMatch(ctx : ModelParser.MatchContext) : AnyRef = {
+    var patterns : List[Pattern] = ctx.pattern().asScala.toList.map(visit(_)).asInstanceOf[List[Pattern]]
+    var exp : Exp = visit(ctx.expression()).asInstanceOf[Exp]
+    MatchCase(patterns, exp)
+  }
+  
+  override def visitMatchExp(ctx: ModelParser.MatchExpContext): AnyRef = {
+    var exp: Exp = visit(ctx.expression()).asInstanceOf[Exp]
+    var m: List[MatchCase] = ctx.`match`().asScala.map(visit(_)).asInstanceOf[List[MatchCase]]
+    MatchExp(exp, m)
+  }
+
+  override def visitMultiplicity(ctx : ModelParser.MultiplicityContext) : AnyRef = {
+	var start : Exp = visit(ctx.expressionOrStar(0)).asInstanceOf[Exp]
+	var end : Option[Exp] = 
+	  if(ctx.expressionOrStar(1) != null) 
+	    Some(visit(ctx.expressionOrStar(1)).asInstanceOf[Exp])
+	  else 
+	    None
+	Multiplicity(start, end)
+  }
+  
+  override def visitPartDeclaration (ctx : ModelParser.PartDeclarationContext) : AnyRef = {
+    var ident0 : String = ctx.Identifier(0).getText()
+    var ident1 : String = ctx.Identifier(1).getText()
+    var mult : Option[Multiplicity] = 
+      if(ctx.multiplicity() != null) 
+        Some(visit(ctx.multiplicity()).asInstanceOf[Multiplicity])
+      else
+        None
+    PartRefDecl(true, ident0, ident1, mult)
+  }
+
+  override def visitRefDeclaration (ctx : ModelParser.RefDeclarationContext) : AnyRef = {
+    var ident0 : String = ctx.Identifier(0).getText()
+    var ident1 : String = ctx.Identifier(1).getText()
+    var mult : Option[Multiplicity] = 
+      if(ctx.multiplicity() != null) 
+        Some(visit(ctx.multiplicity()).asInstanceOf[Multiplicity])
+      else
+        None
+    PartRefDecl(false, ident0, ident1, mult)
+  }
+
+  override def visitRoleDeclaration(ctx : ModelParser.RoleDeclarationContext) : AnyRef = {
+	if(ctx.refDeclaration() != null) visit(ctx.refDeclaration())
+	else if (ctx.partDeclaration() != null) visit(ctx.partDeclaration())
+	else null
+  }
+  
+  override def visitTypeCheckExp(ctx : ModelParser.TypeCheckExpContext) : AnyRef = {
+	var exp : Exp = visit(ctx.expression()).asInstanceOf[Exp]
+	var t : Type = visit(ctx.`type`()).asInstanceOf[Type]
+	TypeCastCheckExp(false, exp, t)
+  }
+  
+  override def visitTypeCastExp (ctx : ModelParser.TypeCastExpContext) : AnyRef = {
+    var exp : Exp = visit(ctx.expression()).asInstanceOf[Exp]
+	var t : Type = visit(ctx.`type`()).asInstanceOf[Type]
+	TypeCastCheckExp(true, exp, t)
+  }
+  
+  override def visitReturnExp(ctx : ModelParser.ReturnExpContext)  : AnyRef = {
+    ReturnExp(visit(ctx.expression()).asInstanceOf[Exp])
+  }
+  
+  override def visitBreakExp(ctx : ModelParser.BreakExpContext) : AnyRef = {
+    BreakExp
+  }
+  
+  override def visitContinueExp(ctx : ModelParser.ContinueExpContext) : AnyRef = {
+    ContinueExp
+  }
+  
+  override def visitResultExp (ctx : ModelParser.ResultExpContext) : AnyRef = {
+    ResultExp
+  }
+  
+  override def visitExtending (ctx : ModelParser.ExtendingContext) : AnyRef = {
+    ctx.`type`().asScala.toList.map(visit(_)).asInstanceOf[List[Type]]
+  }
+  
+  override def visitDontCarePattern(ctx : ModelParser.DontCarePatternContext) : AnyRef = {
+    DontCarePattern
+  }
+  
+  override def visitPosArgList(ctx : ModelParser.PosArgListContext) : AnyRef = {
+    visit(ctx.positionalArgumentList())
+  }
+  
 }
