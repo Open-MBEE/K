@@ -28,7 +28,7 @@ public class Main {
 				};
 
 		// Expression to JSON
-		json = Frontend.exp2Json(exps[1]);
+		json = Frontend.exp2Json(exps[2]);
 		System.out.println(json);
 
 		System.out.println();

@@ -491,7 +491,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   }
 
   override def visitPositionalArgumentList(ctx: ModelParser.PositionalArgumentListContext): AnyRef = {
-    ctx.expression().asScala.map(visit(_)).asInstanceOf[List[Exp]]
+    ctx.expression().asScala.toList.map(visit(_)).asInstanceOf[List[Exp]]
   }
 
   override def visitNamedArgList(ctx : ModelParser.NamedArgListContext) : AnyRef = {
