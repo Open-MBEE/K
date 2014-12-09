@@ -81,9 +81,10 @@ val w1 : Wheel = Wheel();
 val w2 : Wheel = Wheel();
 val cw0 : CarWheel(vw, w0);
 val cw1 : CarWheel(vw, w1);
+
+-- is this allowed? 
 val cw2 : CarWheel(vw, w2);
 val cw3 : CarWheel(jeep, w2);
-
 req cw2.wheel = cw3.wheel;
 req vw.wheel = {w0,w1,w2};
 
@@ -197,4 +198,41 @@ class C extends A,B {
 }
 C(1,2,3) -- in this case A.x and B.x and A.p are uninitialized
 C(A.x = 11, B.x = 12) -- in this case i, j, y are uninitialized
+
+-- Connector with associations defined using assoc
+class A {
+}
+class B {
+}
+assoc R_ab {
+  ref x : A;
+  ref y : B 0..*;
+}
+assoc R_ca {
+  ref a : A;
+  ref c : C;
+}
+assoc R_cb {
+  ref c : C;
+  ref b : B 0..*;
+}
+class C {
+  connect conn (a, b 0..1) : R_ab;
+  -- connect (a,b 0..1) : R_ab;
+  -- connect (a,b 0..1); 
+  -- connect conn (a,b 0..1);
+}
+
+-- Connector with associations defined inside classes
+class A {
+  ref y : B 0..*;
+}
+class B {
+  ref x : A;
+}
+class C {
+  ref a : A;
+  ref b : B 0..*;
+  connect (a,b 0..1); 
+}
 
