@@ -55,6 +55,7 @@ class Car {
   -- TODO: allow users to write part/ref in classes
   --       currently, they are only allowed to do it in 
   --       an assoc.
+  -- This is not allowed right now. Keeping it for reference.
   part engine : Engine;  
   part wheels : Wheel 3..4;
 }
@@ -74,6 +75,7 @@ assoc CarEngine {
   ref car : Car;
   part engine : Engine;
 }
+
 val vw : Car = Car();
 val jeep : Car = Car();
 val w0 : Wheel = Wheel();
@@ -83,7 +85,7 @@ val cw0 : CarWheel(vw, w0);
 val cw1 : CarWheel(vw, w1);
 
 -- is this allowed? 
-val cw2 : CarWheel(vw, w2);
+ val cw2 : CarWheel(vw, w2);
 val cw3 : CarWheel(jeep, w2);
 req cw2.wheel = cw3.wheel;
 req vw.wheel = {w0,w1,w2};
@@ -217,22 +219,63 @@ assoc R_cb {
   ref b : B 0..*;
 }
 class C {
-  connect conn (a, b 0..1) : R_ab;
-  -- connect (a,b 0..1) : R_ab;
-  -- connect (a,b 0..1); 
-  -- connect conn (a,b 0..1);
+  -- TODO: implement syntax for connector 
+  --       connector name and type are optional.
+
+  connector conn (a, b 0..2) : R_ab;
+
+  -- the connector essentially introduces the following
+  -- constraint on the relation R_ab and the set of all 
+  -- instances of C
+  -- req forall c in C . 
+  --   forall a in C.a .
+  --      |R_ab(C.a) inter C.b| <= 2;
+
 }
 
 -- Connector with associations defined inside classes
-class A {
-  ref y : B 0..*;
+-- Experimental syntax for associations/relations
+-- class A{
+--   ref y : B 0..2 opposite x;
+-- }
+-- class A {
+--   rel R_ab = y : B 0..* opposite;
+--   rel R_ab1 {
+--     yy : B 0..*;
+--   }
+-- }
+-- class B {
+--   rel R_ab = x : A 1..2;
+--   rel R_ab1 = xx : A 1..2;
+-- }
+
+-- class C {
+--   ref a : A;
+--   ref b : B 0..*;
+--   connect (a,b 0..1); 
+-- }
+
+-- TODO succession, binding, connector property... what are those? 
+
+
+-- Viewpoint and View
+-- View is a class in K
+-- viewpoints always return a View (can or cannot be specified)
+-- viewpoints can take any number of arguments
+-- TODO: add to grammar
+
+--view Business exposes BusinessPackage, conforms to ConceptExplanation_Introduction;
+
+#1 val BusinessView : View = ConceptExplanation_Introduction(instanceOfBusiness);
+#2 val BusinessView : View = ConceptExplanation_Introduction(Business.class);
+
+
+#3 val BusinessView : View = ConceptExplanation_Introduction(Business);
+
+viewpoint ConceptExplanation_Introduction (bp : Business.class) : View {
+
 }
-class B {
-  ref x : A;
-}
-class C {
-  ref a : A;
-  ref b : B 0..*;
-  connect (a,b 0..1); 
+
+viewpoint ConceptExplanation_Introduction () : View {
 }
 
