@@ -1,21 +1,28 @@
 -- Package
+// How do i specify elements owned by the package?
 package k.examples.sysml
 
 -- This example shows various constructs from SysML in K.
 
 -- LiteralReal 
+// how do i refer to the object that has this value?
 0.1212;
 
 -- LiteralInteger 
+// how do i refer to the object that has this value?
 -1;
 
 -- LiteralString
+// how do i refer to the object that has this value?
 "K SysML rocks!";
 
 -- LiteralBoolean
+// how do i refer to the object that has this value?
 true;
 
 -- Expression
+// how do i refer to the object that has this value?
+// how do i refer to the elements of the tree?
 1 + 41 = 42;
 
 -- LiteralUnlimitedNatural
@@ -33,11 +40,14 @@ null;
 
 -- OpaqueExpression
 -- TODO: how do we do this? what is it? 
+// its basically a string but becuase it is a opaque there is some expectation that something knows how to execute it.
 
 -- Namespace
 -- Package, Class, or Property
+// package covers this already
 
 -- Class with OwnedAttribute
+// i expected to see association with this 
 class Engine {
   -- hybrid, gasoline etc. 
   val engineType : Int; 
