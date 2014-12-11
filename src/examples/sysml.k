@@ -264,18 +264,27 @@ class C {
 -- viewpoints can take any number of arguments
 -- TODO: add to grammar
 
---view Business exposes BusinessPackage, conforms to ConceptExplanation_Introduction;
+-- BusinessView exposes Business class/type
+-- BusinessView conforms to ConceptExplanation_Introduction;
 
-#1 val BusinessView : View = ConceptExplanation_Introduction(instanceOfBusiness);
-#2 val BusinessView : View = ConceptExplanation_Introduction(Business.class);
-
-
-#3 val BusinessView : View = ConceptExplanation_Introduction(Business);
-
-viewpoint ConceptExplanation_Introduction (bp : Business.class) : View {
-
+-- without keywords...
+fun ConceptExplanation_Introduction(c : Class) : View {
+ -- ...
 }
 
-viewpoint ConceptExplanation_Introduction () : View {
+val BusinessView : View = ConceptExplanation_Introduction(Business);
+
+-- using keywords
+viewpoint ConceptExplanation_Introduction (c : Class) : View {
+  -- ...
 }
+
+val BusinessView : View = ConceptExplanation_Introduction(Business);
+
+-- using many keywords
+viewpoint ConceptExplanation_Introduction (c : Class) : View {
+  -- ...
+}
+
+View BusinessView = ConceptExplanation_Introduction(Business);
 
