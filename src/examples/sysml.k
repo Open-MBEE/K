@@ -1,12 +1,21 @@
 -- Package
+// how do i create a new package?
+// how do i say what package it is inside of?
 // How do i specify elements owned by the package?
+// how do i move a packge? change the name of a pakcage? delete a package?
+//package k
+package k.examples
+// becomes
 package k.examples.sysml
+package j.more.sysml
+
 
 -- This example shows various constructs from SysML in K.
 
 -- LiteralReal 
 // how do i refer to the object that has this value?
 0.1212;
+
 
 -- LiteralInteger 
 // how do i refer to the object that has this value?
