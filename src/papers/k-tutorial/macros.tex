@@ -1,0 +1,307 @@
+% ------------------
+% --- semantics: ---
+% ------------------
+
+\usepackage{syntax}
+%\usepackage{proof}
+%\usepackage{semantics}
+\usepackage{framed}
+
+%\setlength{\OuterFrameSep}{0.3\topsep}
+%\setlength{\FrameSep}{\fboxsep}
+
+% -----------------
+% --- graphics: ---
+% -----------------
+
+\usepackage{graphicx}
+%\usepackage{subfigure}
+%\usepackage{subcaption}
+
+%\usepackage{pgfplots}
+\usepackage{graphics}
+\usepackage{placeins}
+
+\newcommand{\pdfig}[4]{
+\begin{figure}
+\begin{center}
+\includegraphics[width=#2pt]{figures/#3.pdf}
+\end{center}
+\caption{#4}
+\label{#1}
+\end{figure} 
+}
+
+\newcommand{\fig}[1]{Figure \ref{#1}}
+
+% ------------------
+% --- listings: ---
+% ------------------
+
+\usepackage{listings}
+\usepackage{color}
+\usepackage{amssymb}
+
+\definecolor{light-gray}{gray}{0.95}
+
+% --- Scala: ---
+
+% http://en.wikibooks.org/wiki/LaTeX/Colors
+
+\lstdefinelanguage{scala}{
+  morekeywords=
+    {package,import,class,object,trait,extends,with,match,
+     new,if,while,for,yield,def,val,var,this,case,
+     type,implicit,private,protected,abstract,final}, 
+%  otherkeywords={<-,->,=>,<=,<,+,++,|,&,_*,*,&&,[,],\{,\},--},
+  otherkeywords={&,\{,\},_*},
+  literate=
+      {\#\#}{{$\oplus\;$}}2
+      {|->}{{$\longmapsto\;$}}2
+      {-->}{{$\Longrightarrow\;$}}2
+      {->}{{$\rightarrow\;$}}2
+      {>>}{{$\gg$}}2
+      {++}{{$++$}}2
+      {|==}{{$\models$}}2
+  ,
+  sensitive=true, 
+  morecomment=[l]{//}, 
+  morecomment=[s]{/*}{*/},
+  escapeinside={(*}{*)},
+  stringstyle=\ttfamily,
+  %aboveskip=1mm,
+  %belowskip=1mm,
+  showstringspaces=false,
+  columns=flexible,
+  morestring=[b]",
+  %basicstyle={\scriptsize},
+  %numbers=left,
+  numberstyle=\scriptsize,
+  %moredelim=[is][\bf\em]{|}{|},
+  %moredelim=[is][\bf\em]{+}{+},
+  moredelim=[is][\em]{@}{@}
+}  
+
+\newcommand{\lscala}{\lstset{language=scala,backgroundcolor=\color{light-grey}, frame=single}}
+%\newcommand{\sscala}{\lstset{language=scala,backgroundcolor=\color{white}, frame=none,basicstyle={\normalsize}}}
+\newcommand{\sscala}{\lstset{language=scala,backgroundcolor=\color{white}, frame=none,basicstyle={\sffamily}}}
+\newcommand{\iscala}{\lscala\lstinline}
+
+% --- Alloy: ---
+
+\lstdefinelanguage{alloy}{
+  morekeywords=
+    {sig,set}, 
+%  otherkeywords={<-,->,=>,<=,<,+,++,|,&,_*,*,&&,[,],\{,\},--},
+  otherkeywords={&,\{,\},_*},
+  literate=
+      {\#\#}{{$\oplus\;$}}2
+      {|->}{{$\longmapsto\;$}}2
+      {-->}{{$\Longrightarrow\;$}}2
+      {->}{{$\rightarrow\;$}}2
+      {>>}{{$\gg$}}2
+      {++}{{$++$}}2
+      {|==}{{$\models$}}2
+  ,
+  sensitive=true, 
+  morecomment=[l]{//}, 
+  morecomment=[s]{/*}{*/},
+  escapeinside={(*}{*)},
+  stringstyle=\ttfamily,
+  %aboveskip=1mm,
+  %belowskip=1mm,
+  showstringspaces=false,
+  columns=flexible,
+  morestring=[b]",
+  %basicstyle={\scriptsize},
+  %numbers=left,
+  numberstyle=\scriptsize,
+  %moredelim=[is][\bf\em]{|}{|},
+  %moredelim=[is][\bf\em]{+}{+},
+  moredelim=[is][\em]{@}{@}
+}  
+
+\newcommand{\lalloy}{\lstset{language=alloy,backgroundcolor=\color{light-grey}, frame=single}}
+%\newcommand{\sscala}{\lstset{language=scala,backgroundcolor=\color{white}, frame=none,basicstyle={\normalsize}}}
+\newcommand{\salloy}{\lstset{language=alloy,backgroundcolor=\color{white}, frame=none,basicstyle={\sffamily}}}
+\newcommand{\ialloy}{\lalloy\lstinline}
+
+% --- K: ---
+
+\lstdefinelanguage{k}{
+  morekeywords=
+    {package,import,class,val,var,let,in,end,fun,req,pre,post,if,then,else,forall,exists}, 
+  otherkeywords={.},
+  literate=
+      {\#\#}{{$\oplus\;$}}2
+      {|->}{{$\longmapsto\;$}}2
+      {->}{{$\rightarrow\;$}}2
+      {=>}{{$\Rightarrow\;$}}2
+      {<=}{{$\leq$}}2
+      {>=}{{$\geq$}}2
+      {!=}{{$\neq$}}2
+      {isin}{{$\in$}}2
+      {DELTA}{{$\Delta$}}2      
+  ,
+  sensitive=true, 
+  morecomment=[l]{//}, 
+  morecomment=[s]{/*}{*/},
+  escapeinside={(*}{*)},
+  stringstyle=\ttfamily,
+  %aboveskip=1mm,
+  %belowskip=1mm,
+  showstringspaces=false,
+  columns=flexible,
+  morestring=[b]",
+  %basicstyle={\scriptsize},
+  %numbers=left,
+  numberstyle=\scriptsize,
+  %moredelim=[is][\bf\em]{|}{|},
+  %moredelim=[is][\bf\em]{+}{+},
+  moredelim=[is][\em]{@}{@}
+}  
+
+\newcommand{\lk}{\lstset{language=k,backgroundcolor=\color{light-grey}, frame=single}}
+%\newcommand{\sscala}{\lstset{language=scala,backgroundcolor=\color{white}, frame=none,basicstyle={\normalsize}}}
+\newcommand{\sk}{\lstset{language=k,backgroundcolor=\color{white}, frame=none,basicstyle={\sffamily}}}
+\newcommand{\ik}{\lk\lstinline}
+
+
+% ------------------------------
+% --- languages and systems: ---
+% ------------------------------
+
+\newcommand{\scala}{{\sc Scala}}
+\newcommand{\scaladoc}{{\sc ScalaDoc}}
+\newcommand{\jpax}{{\sc Jpax}}
+\newcommand{\ruler}{{\sc Ruler}}
+\newcommand{\drools}{{\sc Drools}}
+\newcommand{\logscope}{{\sc LogScope}}
+\newcommand{\metatem}{{\sc MetateM}}
+\newcommand{\rete}{{\sc Rete}}
+\newcommand{\reteul}{{\sc Rete/UL}}
+\newcommand{\qea}{{\sc Qea}}
+
+\newcommand{\eiffel}{{\sc Eiffel}}
+\newcommand{\specsharp}{{\sc Spec\#}}
+\newcommand{\jml}{{\sc Jml}}
+\newcommand{\java}{{\sc Java}}
+\newcommand{\cpp}{{\sc C++}}
+\newcommand{\python}{{\sc Python}}
+\newcommand{\haskell}{{\sc Haskell}}
+\newcommand{\prolog}{{\sc Prolog}}
+\newcommand{\lisp}{{\sc Lisp}}
+\newcommand{\xml}{{\sc Xml}}
+\newcommand{\eagle}{{\sc Eagle}}
+\newcommand{\hawk}{{\sc Hawk}}
+\newcommand{\rmor}{{\sc Rmor}}
+\newcommand{\rcat}{{\sc Rcat}}
+\newcommand{\scalatest}{{\sc ScalaTest}}
+\newcommand{\ltl}{{\sc Ltl}}
+\newcommand{\graphviz}{{\sc GraphViz}}
+\newcommand{\psl}{{\sc Psl}}
+\newcommand{\mcl}{{\sc Mcl}}
+\newcommand{\pdl}{{\sc Pdl}}
+\newcommand{\mop}{{\sc Mop}}
+\newcommand{\javamop}{{\sc JavaMop}}
+\newcommand{\jlo}{{\sc Jlo}}
+\newcommand{\salt}{{\sc Salt}}
+\newcommand{\gil}{{\sc Gil}}
+\newcommand{\sql}{{\sc Sql}}
+\newcommand{\aspectj}{{\sc AspectJ}}
+\newcommand{\tracematches}{{\sc TraceMatches}}
+\newcommand{\timeedit}{{\sc TimeEdit}}
+\newcommand{\mac}{{\sc Mac}}
+\newcommand{\temporalrover}{{\sc TemporalRover}}
+\newcommand{\staterover}{{\sc StateRover}}
+\newcommand{\vdm}{{\sc Vdm}}
+\newcommand{\vdmpp}{{\sc Vdm++}}
+\newcommand{\vdmsl}{{\sc Vdm-SL}}
+\newcommand{\metaiv}{{\sc Meta-IV}}
+\newcommand{\rsl}{{\sc Raise}}
+\newcommand{\asml}{{\sc Asml}}
+\newcommand{\tracecontract}{{\sc TraceContract}}
+\newcommand{\tc}{{\sc TC}}
+\newcommand{\daut}{{\sc Daut}}
+\newcommand{\alloy}{{\sc Alloy}}
+\newcommand{\zlang}{{\sc Z}}
+\newcommand{\klang}{{\sc K}}
+\newcommand{\uml}{{\sc Uml}}
+\newcommand{\sysml}{{\sc SysML}}
+\newcommand{\ocl}{{\sc Ocl}}
+
+\newcommand{\newtc}{$\mu$-{\sc TC}}
+\newcommand{\newtcref}{$\mu$-{\sc TC}$^{ref}$}
+\newcommand{\newtcint}{$\mu$-{\sc TC}$^{int}$}
+
+\newcommand{\logfire}{{\sc LogFire}}
+\newcommand{\ltlfo}{{\sc LTL}$^{\rm FO}$}
+\newcommand{\ltlfoplus}{{\sc LTL-FO}$^{+}$}
+\newcommand{\mfotl}{{\sc MFOTL}}
+\newcommand{\mopbox}{{\sc MopBox}}
+\newcommand{\mopboxfast}{{\sc prm4j}}
+\newcommand{\orchids}{{\sc Orchids}}
+
+\newcommand{\jess}{{\sc Jess}}
+\newcommand{\clips}{{\sc Clips}}
+
+\newcommand{\hammurabi}{{\sc Hammurabi}}
+\newcommand{\rooscaloo}{{\sc Rooscaloo}}
+
+\newcommand{\fireplace}{{\sc Fatte}}
+
+% ------------------------
+% --- defining syntax: ---
+% ------------------------
+
+\newcommand{\nont}[1]{\langle #1 \rangle}
+
+% --------------------
+% --- Local Fonts: ---
+% --------------------
+
+\newcommand{\name}[1]{$\textit{#1}$}
+\newcommand{\term}[1]{\underline{#1}}
+\newcommand{\code}[1]{{\tt #1}}
+
+\newcommand{\idx}[1]{'\!\_#1}
+
+% -------------------------
+% --- Writing commands: ---
+% -------------------------
+
+\newcommand{\todo}[1]{\noindent ----- {\bf #1}}
+\newcommand{\here}{\noindent}
+
+\newcommand{\e}{\end{document}}
+
+% ---------------------------
+% --- Tables and Figures: ---
+% ---------------------------
+
+\newcommand{\pair}[2]{\large{$\frac{\stackrel{}{#1}}{\stackrel{#2}{}}$}}
+
+% -------------------
+% --- References: ---
+% -------------------
+
+\newcommand{\url}[1]{#1}
+
+% ----------------
+% --- General: ---
+% ----------------
+
+\newcommand{\discuss}[1]{\vspace{0.2cm}\hrule\vspace{0.2cm}{\bf discuss:}{\em #1}\vspace{0.2cm}\hrule\vspace{0.2cm}}
+
+% ----------------
+% --- Operators: ---
+% ----------------
+
+\newcommand{\parOp}{{\tt \&\&}}
+\newcommand{\choOp}{{\tt ++}}
+\newcommand{\seqOp}{{$\gg$}}
+\newcommand{\bind}{$\rightarrow$}
+\newcommand{\assign}{{\tt :=}}
+\newcommand{\turnstile}{{$\models$}}
+
+ 
