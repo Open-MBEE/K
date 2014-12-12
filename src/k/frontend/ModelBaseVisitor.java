@@ -1,4 +1,4 @@
-// Generated from ..\grammar\Model.g4 by ANTLR 4.4
+// Generated from ../grammar/Model.g4 by ANTLR 4.4
 package k.frontend;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
@@ -151,14 +151,14 @@ public class ModelBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements 
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitSetType(@NotNull ModelParser.SetTypeContext ctx) { return visitChildren(ctx); }
+	@Override public T visitTokenImplies(@NotNull ModelParser.TokenImpliesContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitTokenImplies(@NotNull ModelParser.TokenImpliesContext ctx) { return visitChildren(ctx); }
+	@Override public T visitSetType(@NotNull ModelParser.SetTypeContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *

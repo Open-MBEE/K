@@ -1,4 +1,4 @@
-// Generated from ..\grammar\Model.g4 by ANTLR 4.4
+// Generated from ../grammar/Model.g4 by ANTLR 4.4
 package k.frontend;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
@@ -134,18 +134,18 @@ public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitPatternList(@NotNull ModelParser.PatternListContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link ModelParser#tokenImplies}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTokenImplies(@NotNull ModelParser.TokenImpliesContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code SetType}
 	 * labeled alternative in {@link ModelParser#type}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitSetType(@NotNull ModelParser.SetTypeContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link ModelParser#tokenImplies}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTokenImplies(@NotNull ModelParser.TokenImpliesContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code MapCompExp}
 	 * labeled alternative in {@link ModelParser#expression}.
