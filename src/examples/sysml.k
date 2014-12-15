@@ -1,21 +1,37 @@
 -- Package
+// how do i create a new package?
+// how do i say what package it is inside of?
+// How do i specify elements owned by the package?
+// how do i move a packge? change the name of a pakcage? delete a package?
+//package k
+package k.examples
+// becomes
 package k.examples.sysml
+package j.more.sysml
+
 
 -- This example shows various constructs from SysML in K.
 
 -- LiteralReal 
+// how do i refer to the object that has this value?
 0.1212;
 
+
 -- LiteralInteger 
+// how do i refer to the object that has this value?
 -1;
 
 -- LiteralString
+// how do i refer to the object that has this value?
 "K SysML rocks!";
 
 -- LiteralBoolean
+// how do i refer to the object that has this value?
 true;
 
 -- Expression
+// how do i refer to the object that has this value?
+// how do i refer to the elements of the tree?
 1 + 41 = 42;
 (a + b * (c + d));
 
@@ -34,6 +50,7 @@ a;
 
 -- OpaqueExpression
 -- TODO: how do we do this? what is it? 
+<<<<<<< HEAD
 var opaqueExpr = "model VsourceAC \"Sin-wave voltage source\" 
    extends TwoPin;
    parameter Voltage VA = 220 \"Amplitude\";
@@ -42,11 +59,16 @@ var opaqueExpr = "model VsourceAC \"Sin-wave voltage source\"
  equation 
    v = VA*sin(2*PI*f*time);
  end VsourceAC;";
+=======
+// its basically a string but becuase it is a opaque there is some expectation that something knows how to execute it.
+>>>>>>> f80628369d5077ea8e546793ec7647949b79a62b
 
 -- Namespace
 -- Package, Class, or Property
+// package covers this already
 
 -- Class with OwnedAttribute
+// i expected to see association with this 
 class Engine {
   -- hybrid, gasoline etc. 
   val engineType : Int; 

@@ -1,0 +1,47 @@
+\documentclass{llncs}
+
+% ------------------
+% --- listings: ---
+% ------------------
+
+\usepackage{listings}
+\usepackage{color}
+
+
+\title{An Introduction to K}
+\subtitle{A Language for Development of Systems}
+\author{Klaus Havelund and Rahul Kumar}
+\institute{
+  Jet Propulsion Laboratory\\
+  California Institute of Technology\\
+  California, USA
+}
+
+\newcommand{\comment}[1]{}
+
+\input{macros}
+
+\def\changemargin#1#2{\list{}{\rightmargin#2\leftmargin#1}\item[]}
+\let\endchangemargin=\endlist
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+...
+\end{abstract}
+
+
+\input{introduction}
+\input{requirements}
+\input{sysml}
+\input{datatypes}
+\input{relations}
+\input{manual}
+\input{conclusion}
+
+\appendix
+%\input{grammar}
+
+\end{document}
