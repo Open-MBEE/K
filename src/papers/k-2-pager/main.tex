@@ -1,6 +1,12 @@
 \documentclass{llncs}
 
-\title{A Development Language}
+\usepackage{comment}
+\usepackage{graphicx}
+
+%\newcommand{\comment}[1]{{\bf *** #1}}
+\newcommand{\lang}{K}
+
+\title{\lang{}: A Wide Spectrum Development Language}
 \author{Klaus Havelund and Rahul Kumar}
 \institute{
   Jet Propulsion Laboratory\\
@@ -8,52 +14,45 @@
   California, USA
 }
 
-\usepackage{comment}
-
-%\newcommand{\comment}[1]{{\bf *** #1}}
-\newcommand{\lang}{K}
-
 \begin{document}
 
 \maketitle 
 
-We propose to build a language, named \lang{}, for developing
-software systems at a high level of abstraction as well as at a low
-level of implementation. The language should allow a user for example
-to first specify a system at a high level, and then at later stages
-refine this specification into a detailed program, all within the same
-language.  Checks and balances should be performed to ensure that the
-detailed refinement implements the abstraction. Such checks can be
-performed statically as well as dynamically. That is, \lang{} language
-should be supported by analysis tools of various kinds, including
-static analysis, verification, and dynamic analysis (testing/runtime
+We propose to build a language, named \lang{}, for developing software
+systems at a high level of abstraction as well as at a low level of
+implementation. The language should allow a user to first specify a
+system at a high level, and then at later stages refine this
+specification into a detailed program, all within the same language.
+Checks and balances should be performed to ensure that the detailed
+refinement implements the abstraction. Such checks can be performed
+statically as well as dynamically. That is, \lang{} language should be
+supported by analysis tools of various kinds, including static
+analysis, verification, and dynamic analysis (testing/runtime
 verification). In general, \lang{} should be a vehicle and platform
 for experimenting with various ideas related to developing correct
 programs fast.
 
 
 \section{Background}
-The work is inspired by various sources. First of all, early days of
-formal methods produced specification languages such as VDM and
-Z. VDM++ (a variant of VDM) for example offers a wide-spectrum {\bf
-  specification} language that contain features such as functional
-programming/modeling with higher order functions; algebraic data
-types; pattern matching; object oriented programming/modeling with
-variables; assignment statements; loops etc; design by contract with
-pre/post conditions and class invariants; and general higher order
-predicate logic for writing Boolean expressions. VDM++ never became
-mainstream, although it was one of the main formal methods before
-theorem proving and model checking became popular.  One reason for not
-lasting was probably in part that it was a specification language, and
-not a programming language, and in part of course, because there was
-no serious tool support. Proofs, if any, would have to be carried out
-manually.  Our objective is to turn this around and define a
-wide-spectrum {\bf programming} language inspired by the same ideas,
-and use the latest results in automated verification as basis for
-tools.
+This work is inspired by various sources. One major influence is the
+set of formal specification languages such as VDM/VDM++, Z etc. These
+languages contain features such as functional programming/modeling
+with higher order functions; algebraic data types; pattern matching;
+object oriented programming/modeling with variables; assignment
+statements; loops etc; design by contract with pre/post conditions and
+class invariants; and general higher order predicate logic for writing
+Boolean expressions. VDM++ never became mainstream, although it was
+one of the main formal methods before theorem proving and model
+checking became popular.  One reason for not lasting was probably in
+part that it was a specification language, and not a programming
+language, and in part, because there was no serious tool
+support. Proofs, if any, would have to be carried out manually.  Our
+objective is to turn this around and define a wide-spectrum {\bf
+  programming} language inspired by the same ideas, and use the latest
+results in automated verification as basis for tools.
 
 A second inspiration is our current work to provide a textual
-language, named K, for SysML , to be used to design the proposed
+language, named K, for SysML, to be used to design the proposed
 Europa Clipper mission. SysML is a graphical language for creating
 models of systems (in contrast to models of software, as is the target
 of UML). SysML contains selected elements of UML but also extends
@@ -86,6 +85,16 @@ Florian and Gerard Holzmann at JPL. Their work laid less emphasis on
 high level programming but more on specification constructs with a
 verification environment surrounding them.
 
+Figure~\ref{fig:influences} graphically depicts the various influences
+on \lang{}. 
+
+\begin{figure}
+  \label{fig:influences}
+  \includegraphics[scale=0.75]{influences.png}
+  \centering
+  \caption{Influences on \lang{}}
+\end{figure}
+
 \begin{comment}
 There has also been programming languages in the past, such as SETL,
 which focused on set theory, also an inspiration.
@@ -103,7 +112,7 @@ direction. Yet, it is an interesting avenue of research that we should
 take on. 
 \end{comment}
 
-\section{The Language}
+\section{What}
 
 \begin{comment}
 We would consider the current K language (textual version of SysML) as
@@ -134,7 +143,7 @@ levels. Garbage collection could get in the way.
 \end{comment}
 
 \begin{itemize}
-  \item Programming constructs:
+  \item \textbf{Programming constructs}:
     \begin{itemize}
       \item object-oriented features, including classes and objects,
         variables, assignment (side effects), sequential composition,
@@ -158,7 +167,7 @@ levels. Garbage collection could get in the way.
         of the language: relations, logic-programming.
     \end{itemize}
  
-  \item Specification constructs:
+  \item \textbf{Specification constructs}:
     \begin{itemize}
       \item pre/post conditions and invariant specifications for functions
       \item class invariants.
@@ -173,10 +182,8 @@ levels. Garbage collection could get in the way.
     \end{itemize}
 \end{itemize}
 
-
-\section{The Tools}
-
-Apart from the language itself, we envision the development of a suite of tools that enable various scenarios. Some of these include: 
+Apart from the language itself, we envision the development of a suite
+of tools that enable the scenarios listed above. They are as follows:
 
 \begin{description}
 
@@ -202,7 +209,7 @@ Apart from the language itself, we envision the development of a suite of tools 
 
 \end{description}
 
-\section{Development Plan}
+\section{How}
 
 We propose the development of the language in three primary stages that
 are described below:
@@ -210,19 +217,26 @@ are described below:
 \begin{description}
 
 \item [Language Design] stage where the language syntax, constructs,
-  and features are developed to maturity. 
+  and features are developed to maturity. We plan on using existing
+  tools such as ANTLR for specifying the grammar and creating a
+  functional parser.
 
 \item [Language Development] stage where the language is used to
-  develop models, programs, and specifications. These most likely
-  include the Europa Clipper mission models and specifications. Any
-  feedback from language users would also be reviewed and integrated
-  back into the language.
+  develop models, programs, and specifications. These may include but
+  are not limited to the Europa Clipper mission models and
+  specifications. Any feedback from language users would also be
+  reviewed and integrated back into the language.
 
-\item [Tool Development] stage where we develop the tools listed above. 
+\item [Tool Development] stage where we develop the tools listed
+  above. Again, we plan on using some existing technologies such as
+  LLVM, Scala, ANTLR etc.
 
 \end{description}
 
-%\bibliographystyle{plainurl}
-%\bibliography{biblio}
+\section{100 Week Target}
+
+A language that includes the grammar along with a toolchain that
+supports parsing, analyzing, compiling, and executing programs
+produced in \lang{}.
 
 \end{document}
