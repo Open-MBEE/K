@@ -25,6 +25,7 @@ public class Main {
 				"x = 7 && x < 1", // 12
 				"y = x + 2 && x*x = y", // 13
 				"y = x*x - 3*x + 4 && y - x = 1", // 14
+				"forall x_1:Int . (x_1 = 1)"
 				};
 
 		// Expression to JSON

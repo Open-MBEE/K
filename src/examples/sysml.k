@@ -33,6 +33,7 @@ true;
 // how do i refer to the object that has this value?
 // how do i refer to the elements of the tree?
 1 + 41 = 42;
+(a + b * (c + d));
 
 -- LiteralUnlimitedNatural
 -- TODO: what is an unlimited natural number? 
@@ -45,11 +46,22 @@ true;
 null;
 
 -- ElementValue
--- TODO: need more clarity about ElementValue
+a;
 
 -- OpaqueExpression
 -- TODO: how do we do this? what is it? 
+<<<<<<< HEAD
+var opaqueExpr = "model VsourceAC \"Sin-wave voltage source\" 
+   extends TwoPin;
+   parameter Voltage VA = 220 \"Amplitude\";
+   parameter Real f(unit=\"Hz\") = 50 \"Frequency\";
+   constant Real PI=3.141592653589793;
+ equation 
+   v = VA*sin(2*PI*f*time);
+ end VsourceAC;";
+=======
 // its basically a string but becuase it is a opaque there is some expectation that something knows how to execute it.
+>>>>>>> f80628369d5077ea8e546793ec7647949b79a62b
 
 -- Namespace
 -- Package, Class, or Property
@@ -65,19 +77,20 @@ class Engine {
 -- Class with sub typing and inheritance
 class CarPart { 
 }
+
 class Wheel extends CarPart {
 }
 
 -- Class with relation expressed as property
-class Car {
+-- class Car {
   -- TypedProperty
   -- TODO: allow users to write part/ref in classes
   --       currently, they are only allowed to do it in 
   --       an assoc.
   -- This is not allowed right now. Keeping it for reference.
-  part engine : Engine;  
-  part wheels : Wheel 3..4;
-}
+  -- part engine : Engine;  
+  -- part wheels : Wheel 3..4;
+-- }
 
 -- Class with a relation expressed as an association
 class Car {
@@ -128,7 +141,7 @@ every possible combination of PRODUCT and SENIOR SALES REP need not be
 associated with a JUNIOR SALES REP, it is possible for a specific
 combination to be associated with more than one JUNIOR SALES REP
 (Rumbaugh et al. 2005, p. 471).  
---
+-- 		  
 
 class SeniorSaleRep { 
   val firstName : String; 
@@ -287,23 +300,23 @@ class C {
 -- BusinessView conforms to ConceptExplanation_Introduction;
 
 -- without keywords...
-fun ConceptExplanation_Introduction(c : Class) : View {
+fun ConceptExplanation_Introduction(c : Class) : view {
  -- ...
 }
 
 val BusinessView : View = ConceptExplanation_Introduction(Business);
 
 -- using keywords
-viewpoint ConceptExplanation_Introduction (c : Class) : View {
+viewpoint ConceptExplanation_Introduction (c : Class) : view {
   -- ...
 }
 
 val BusinessView : View = ConceptExplanation_Introduction(Business);
 
 -- using many keywords
-viewpoint ConceptExplanation_Introduction (c : Class) : View {
+viewpoint ConceptExplanation_Introduction (c : Class) : view {
   -- ...
 }
 
-View BusinessView = ConceptExplanation_Introduction(Business);
+view BusinessView = ConceptExplanation_Introduction(Business);
 
