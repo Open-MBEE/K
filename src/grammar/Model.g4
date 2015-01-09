@@ -8,7 +8,7 @@ model:
     EOF
   ;
 
-topDeclarationList: topDeclaration (SEP topDeclaration)* SEP?
+topDeclarationList: (topDeclaration SEP)*
   ;
 
 topDeclaration:
@@ -18,23 +18,23 @@ topDeclaration:
   ;
 
 packageDeclaration:
-    'package' qualifiedName
+    'package' qualifiedName SEP
   ;
 
 importDeclaration:
-    'import' qualifiedName ('.' '*')?
+    'import' qualifiedName ('.' '*')? SEP
   ;
 
 memberDeclarationList:
-    memberDeclaration (SEP memberDeclaration)* SEP?
+  (memberDeclaration SEP)+ 
   ;
 
 assocMemberDeclarationList:
-    assocMemberDeclaration (SEP assocMemberDeclaration)* SEP?
+  (assocMemberDeclaration SEP)+ 
   ;
 
 classDeclaration:
-    'class' Identifier typeParameters? extending? '{' memberDeclarationList? '}' 
+    'class' Identifier typeParameters? extending? ('{' memberDeclarationList? '}')? 
   ;
 
 assocDeclaration:
@@ -60,8 +60,8 @@ extending:
 type:
     primitiveType                   # PrimType
   | qualifiedName typeArguments?    # IdentType
-  | type (tokenStar type)+          # CartesianType
-  | type tokenArrow type            # FuncType
+  | type ('*' type)+          # CartesianType
+  | type '->' type            # FuncType
   | '{' type '}'                    # SetType
   | '[' type ']'                    # ListType
   | '<' type ',' type '>'           # MapType
@@ -133,17 +133,13 @@ functionDeclaration:
   ;
 
 shortFunctionDeclaration:
-    'fun' Identifier ('(' patternList? ')')+ (':' type)? 
-    '='
-    expression
+    'fun' Identifier ('(' patternList? ')')+ (':' type)? ('='expression)?
   ;
 
 longFunctionDeclaration:
     'fun' Identifier ('(' patternList? ')')+ (':' type)? 
     functionSpecification*
-    '{'
-    memberDeclarationList?
-    '}'
+    ('{' memberDeclarationList? '}')?
   ;
 
 functionSpecification:
@@ -164,71 +160,25 @@ primitiveType:
   | 'Unit'  
   ;
 
-tokenLessThan:
-    '<' 
-    | 'lt'
-    ;
-tokenGreatherThan:
-    '>'
-    | 'gt'
-    ;
-tokenLessThanEqual:
-    '<='
-| 'lte'
-;
-tokenGreaterThanEqual:
-    '>='
-    | 'gte'
-    ;
-tokenAnd:
-    '&&' 
-    | 'and'
-    ;
-tokenOr:
-    '||'
-    | 'or'
-    ;
-tokenNot:
-    '!'
-    | 'not'
-    ;
-tokenImplies:
-    '=>'
-    | 'implies'
-    ;
-tokenIFF:
-    '<=>'
-    | 'iff'
-    ;
-tokenEquals:
-    '='
-    | 'eq'
-    ;
-tokenStar:
-    '*'
-    ;
-tokenArrow:
-    '->'
-    ;
-
 tokenEnd: 
     'end' 
     ;
     
-effect:
-    expression (SEP expression)*
-  ;
 expression: 
-    bracketedExpression # BracketedExp
+    '(' expression ')' #ParenExp
+  | '(' expression (',' expression)+ ')' #TupleExp
   | literal #LiteralExp
   | Identifier #IdentExp
   | expression '.' Identifier #DotExp
   | expression '(' argumentList? ')' #AppExp
+
   | 'if' expression 'then' memberDeclarationList? ('else' memberDeclarationList?)? tokenEnd #IfExp
+  | 'match' expression 'with' match+ 'end' #MatchExp
+
   | 'while' expression 'do' memberDeclarationList? tokenEnd #WhileExp
   | 'for' '(' pattern 'in' expression ')' 'do' memberDeclarationList? tokenEnd # ForExp 
-  | 'match' expression 'with' match+ 'end' #MatchExp
-  | tokenNot expression #NotExp
+ 
+  | '!' expression #NotExp
   | 'forall' rngBindingList SUCHTHAT expression #ForallExp 
   | 'exists' rngBindingList SUCHTHAT expression #ExistsExp 
   | '{' expressionList? '}' #SetEnumExp
@@ -241,16 +191,10 @@ expression:
   | '<' mapPair '|' rngBindingList SUCHTHAT expression '>' #MapCompExp 
   | expression ('*'|'/'|'%'|'inter'|'\\'|'++'|'#'|'^') expression #BinOp1Exp
   | expression ('+'|'-'|'union') expression #BinOp2Exp
-  | expression 
-      (
-         tokenLessThanEqual | tokenGreaterThanEqual | tokenLessThan | tokenGreatherThan 
-       | tokenEquals | tokenNot tokenEquals
-       | 'isin'|'!isin'|'subset'|'psubset' 
-      )  
-    expression #BinOp3Exp
-  | expression tokenAnd expression #AndExp
-  | expression tokenOr expression #OrExp
-  | expression (tokenImplies | tokenIFF) expression #IFFExp
+  | expression ('<=' | '>=' | '<' | '>' | '=' | '!=' | 'isin'|'!isin'|'subset'|'psubset') expression #BinOp3Exp
+  | expression '&&' expression #AndExp
+  | expression '||' expression #OrExp
+  | expression ('=>' | '<=>') expression #IFFExp
   | expression ':=' expression #AssignExp
   | expression 'is' type # TypeCheckExp
   | expression 'as' type # TypeCastExp
@@ -278,19 +222,6 @@ namedArgumentList:
 
 namedArgument :
     Identifier '=' expression
-  ;
-
-bracketedExpression:
-    '(' expression ')' #ParenExp
-  | '(' expression (',' expression)+ ')' #TupleExp
-  ;
-
-idValueList:
-    idValuePair (',' idValuePair)*
-  ;
-
-idValuePair:
-    Identifier ':=' expression
   ;
 
 match:
@@ -358,9 +289,9 @@ SUCHTHAT :
 
 IntegerLiteral:
       DecimalIntegerLiteral
-    |   HexIntegerLiteral
-    |   OctalIntegerLiteral
-    |   BinaryIntegerLiteral
+    | HexIntegerLiteral
+    | OctalIntegerLiteral
+    | BinaryIntegerLiteral
     ;
 
 fragment
@@ -631,19 +562,12 @@ JavaLetterOrDigit:
         {Character.isJavaIdentifierPart(Character.toCodePoint((char)_input.LA(-2), (char)_input.LA(-1)))}?
     ;
 
-fragment // ;; added this
-CommentBegin:
-    '---' '-'*
-   | '===' '='* // to experiment with different ways of showing start of comment
-   ;
-
-fragment 
-CommentEnd:
-    '---' '-'*
+CommentBorder:
+   '===' '='* 
    ;
 
 COMMENT :
-     CommentBegin .*? CommentEnd -> skip
+     CommentBorder .*? CommentBorder -> skip
   ;
 
 LINE_COMMENT:
@@ -658,6 +582,3 @@ SEP:
     ';'
   ;
 
-SEPSEP:
-    ';;'
-  ;
