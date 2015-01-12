@@ -1,44 +1,36 @@
-
 grammar Model;
 
 model:
-    packageDeclaration?
-    importDeclaration* 
-    topDeclarationList? 
+    (packageDeclaration SEP)?
+    (importDeclaration SEP)* 
+    (topDeclaration SEP)* 
     EOF
   ;
 
-topDeclarationList: (topDeclaration SEP)*
-  ;
-
 topDeclaration:
-    memberDeclaration 
+    memberDeclaration
   | classDeclaration 
   | assocDeclaration 
   ;
 
 packageDeclaration:
-    'package' qualifiedName SEP
+    'package' qualifiedName 
   ;
 
 importDeclaration:
-    'import' qualifiedName ('.' '*')? SEP
+    'import' qualifiedName ('.' '*')? 
   ;
 
-memberDeclarationList:
-  (memberDeclaration SEP)+ 
-  ;
-
-assocMemberDeclarationList:
-  (assocMemberDeclaration SEP)+ 
+assocBlock:
+  (assocMemberDeclaration SEP)* 
   ;
 
 classDeclaration:
-    'class' Identifier typeParameters? extending? ('{' memberDeclarationList? '}')? 
+    'class' Identifier typeParameters? extending? ('{' block '}')? 
   ;
 
 assocDeclaration:
-    'assoc' Identifier  '{' assocMemberDeclarationList? '}'
+    'assoc' Identifier  '{' assocBlock '}'
   ;
 
 typeParameters:
@@ -80,10 +72,8 @@ typeArguments:
   ;
 
 memberDeclaration:
-    sortDeclaration 
-  | typeDeclaration 
-  | valueDeclaration 
-  | variableDeclaration
+    typeDeclaration 
+  | propertyDeclaration
   | functionDeclaration
   | constraint 
   | expression
@@ -94,34 +84,17 @@ assocMemberDeclaration:
   | memberDeclaration
   ;
 
-valueDeclaration:
-    'val' pattern ('=' expression)? 
-  ;
-
-sortDeclaration:
-    'type' Identifier 
+propertyDeclaration:
+    ('val' | 'var') pattern ('=' expression)? 
   ;
 
 typeDeclaration:
-    'type' Identifier typeParameters? '=' type 
-  ;
-
-variableDeclaration:
-    'var' pattern ('=' expression)? 
+    'type' Identifier (typeParameters? '=' type )?
   ;
 
 roleDeclaration:
-    partDeclaration
-  | refDeclaration
+    ('part' | 'ref') Identifier ':' Identifier multiplicity?
   ;
-
-partDeclaration:
-    'part' Identifier ':' Identifier multiplicity?
-    ;
-
-refDeclaration:
-    'ref' Identifier ':' Identifier multiplicity?
-    ;
 
 multiplicity:
     expressionOrStar ('..' expressionOrStar)?
@@ -133,13 +106,13 @@ functionDeclaration:
   ;
 
 shortFunctionDeclaration:
-    'fun' Identifier ('(' patternList? ')')+ (':' type)? ('='expression)?
+    'fun' Identifier ('(' patternList? ')')+ (':' type)? ('=' expression)?
   ;
 
 longFunctionDeclaration:
     'fun' Identifier ('(' patternList? ')')+ (':' type)? 
     functionSpecification*
-    ('{' memberDeclarationList? '}')?
+    ('{' block '}')?
   ;
 
 functionSpecification:
@@ -160,10 +133,8 @@ primitiveType:
   | 'Unit'  
   ;
 
-tokenEnd: 
-    'end' 
-    ;
-    
+block: (memberDeclaration SEP)* ;
+
 expression: 
     '(' expression ')' #ParenExp
   | '(' expression (',' expression)+ ')' #TupleExp
@@ -171,14 +142,12 @@ expression:
   | Identifier #IdentExp
   | expression '.' Identifier #DotExp
   | expression '(' argumentList? ')' #AppExp
-
-  | 'if' expression 'then' memberDeclarationList? ('else' memberDeclarationList?)? tokenEnd #IfExp
-  | 'match' expression 'with' match+ 'end' #MatchExp
-
-  | 'while' expression 'do' memberDeclarationList? tokenEnd #WhileExp
-  | 'for' '(' pattern 'in' expression ')' 'do' memberDeclarationList? tokenEnd # ForExp 
- 
   | '!' expression #NotExp
+  | 'begin' block  'end' #BlockExp
+  | 'if' expression 'then' expression? ('else' expression?)? #IfExp
+  | 'match' expression 'with' match+  #MatchExp
+  | 'while' expression 'do' expression  #WhileExp
+  | 'for' '(' pattern 'in' expression ')' 'do' expression # ForExp 
   | 'forall' rngBindingList SUCHTHAT expression #ForallExp 
   | 'exists' rngBindingList SUCHTHAT expression #ExistsExp 
   | '{' expressionList? '}' #SetEnumExp
@@ -207,6 +176,11 @@ expression:
   | '$' #ResultExp
   ;
 
+match:
+  'case' pattern ('|' pattern)* '=>' expression
+  ;
+
+
 argumentList: 
     positionalArgumentList #PosArgList
   | namedArgumentList # NamedArgList
@@ -222,10 +196,6 @@ namedArgumentList:
 
 namedArgument :
     Identifier '=' expression
-  ;
-
-match:
-  'case' pattern ('|' pattern)* '=>' expression 
   ;
 
 mapPairList:
@@ -581,4 +551,3 @@ WS:
 SEP:
     ';'
   ;
-
