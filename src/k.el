@@ -11,7 +11,7 @@
     "lt" "lte" "gt" "gte" "implies" "and" "or" "not" "eq" "end" "while"
     "if" "for" "match" "forall" "with" "do" "then" "else" "in" "exists"
     "isin" "!isin" "subset" "psubset" "union" "inter" "assert" "continue"
-    "break" "return" "$" "case" "this"
+    "break" "return" "$" "case" "this" "view" "viewpoint"
     ))
 
 (defvar k-constants 
@@ -28,8 +28,8 @@
 (defvar k-syntax-table nil "Syntax table for `k-mode'.")
 (setq k-syntax-table 
       (let ((synTable (make-syntax-table)))
-	(modify-syntax-entry ?= ". 12" synTable)
-	(modify-syntax-entry ?- ". 34" synTable)
+	(modify-syntax-entry ?= ". 1234" synTable)
+	;;(modify-syntax-entry ?= ". 23" synTable)
 	;;(modify-syntax-entry ?\n "> b" synTable)
 	synTable))
 
