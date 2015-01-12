@@ -1,4 +1,4 @@
-// Generated from ../grammar/Model.g4 by ANTLR 4.4
+// Generated from ..\grammar\Model.g4 by ANTLR 4.4
 package k.frontend;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
@@ -12,24 +12,11 @@ import org.antlr.v4.runtime.tree.ParseTreeVisitor;
  */
 public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	/**
-	 * Visit a parse tree produced by {@link ModelParser#tokenIFF}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTokenIFF(@NotNull ModelParser.TokenIFFContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link ModelParser#sortDeclaration}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitSortDeclaration(@NotNull ModelParser.SortDeclarationContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code IFFExp}
-	 * labeled alternative in {@link ModelParser#expression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitIFFExp(@NotNull ModelParser.IFFExpContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code SetEnumExp}
 	 * labeled alternative in {@link ModelParser#expression}.
@@ -37,6 +24,13 @@ public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitSetEnumExp(@NotNull ModelParser.SetEnumExpContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code IFFExp}
+	 * labeled alternative in {@link ModelParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIFFExp(@NotNull ModelParser.IFFExpContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link ModelParser#expressionList}.
 	 * @param ctx the parse tree
@@ -56,12 +50,6 @@ public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitTypeDeclaration(@NotNull ModelParser.TypeDeclarationContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link ModelParser#tokenStar}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTokenStar(@NotNull ModelParser.TokenStarContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code ListEnumExp}
 	 * labeled alternative in {@link ModelParser#expression}.
@@ -122,6 +110,13 @@ public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitOptionalType(@NotNull ModelParser.OptionalTypeContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code BlockExp}
+	 * labeled alternative in {@link ModelParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBlockExp(@NotNull ModelParser.BlockExpContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link ModelParser#longFunctionDeclaration}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -133,12 +128,6 @@ public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitPatternList(@NotNull ModelParser.PatternListContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link ModelParser#tokenImplies}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTokenImplies(@NotNull ModelParser.TokenImpliesContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code SetType}
 	 * labeled alternative in {@link ModelParser#type}.
@@ -161,18 +150,18 @@ public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitMapType(@NotNull ModelParser.MapTypeContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link ModelParser#rngBinding}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitRngBinding(@NotNull ModelParser.RngBindingContext ctx);
-	/**
 	 * Visit a parse tree produced by the {@code MatchExp}
 	 * labeled alternative in {@link ModelParser#expression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitMatchExp(@NotNull ModelParser.MatchExpContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link ModelParser#rngBinding}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitRngBinding(@NotNull ModelParser.RngBindingContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link ModelParser#collectionOrType}.
 	 * @param ctx the parse tree
@@ -185,18 +174,6 @@ public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitTypeParameter(@NotNull ModelParser.TypeParameterContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link ModelParser#idValueList}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitIdValueList(@NotNull ModelParser.IdValueListContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link ModelParser#tokenNot}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTokenNot(@NotNull ModelParser.TokenNotContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link ModelParser#typeBound}.
 	 * @param ctx the parse tree
@@ -211,18 +188,17 @@ public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitIdentPattern(@NotNull ModelParser.IdentPatternContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link ModelParser#block}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBlock(@NotNull ModelParser.BlockContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link ModelParser#constraint}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitConstraint(@NotNull ModelParser.ConstraintContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code CartesianPattern}
-	 * labeled alternative in {@link ModelParser#pattern}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitCartesianPattern(@NotNull ModelParser.CartesianPatternContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code AssignExp}
 	 * labeled alternative in {@link ModelParser#expression}.
@@ -230,6 +206,13 @@ public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitAssignExp(@NotNull ModelParser.AssignExpContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code CartesianPattern}
+	 * labeled alternative in {@link ModelParser#pattern}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCartesianPattern(@NotNull ModelParser.CartesianPatternContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code NegExp}
 	 * labeled alternative in {@link ModelParser#expression}.
@@ -239,7 +222,7 @@ public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	T visitNegExp(@NotNull ModelParser.NegExpContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code TupleExp}
-	 * labeled alternative in {@link ModelParser#bracketedExpression}.
+	 * labeled alternative in {@link ModelParser#expression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
@@ -294,12 +277,6 @@ public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitMapPair(@NotNull ModelParser.MapPairContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link ModelParser#assocMemberDeclarationList}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAssocMemberDeclarationList(@NotNull ModelParser.AssocMemberDeclarationListContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link ModelParser#positionalArgumentList}.
 	 * @param ctx the parse tree
@@ -360,12 +337,6 @@ public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitNamedArgList(@NotNull ModelParser.NamedArgListContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link ModelParser#tokenEnd}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTokenEnd(@NotNull ModelParser.TokenEndContext ctx);
-	/**
 	 * Visit a parse tree produced by the {@code BinOp1Exp}
 	 * labeled alternative in {@link ModelParser#expression}.
 	 * @param ctx the parse tree
@@ -385,12 +356,6 @@ public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitParenType(@NotNull ModelParser.ParenTypeContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link ModelParser#tokenArrow}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTokenArrow(@NotNull ModelParser.TokenArrowContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code ForExp}
 	 * labeled alternative in {@link ModelParser#expression}.
@@ -412,36 +377,17 @@ public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitTypeCheckExp(@NotNull ModelParser.TypeCheckExpContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link ModelParser#tokenGreatherThan}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTokenGreatherThan(@NotNull ModelParser.TokenGreatherThanContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link ModelParser#partDeclaration}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitPartDeclaration(@NotNull ModelParser.PartDeclarationContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code BracketedExp}
-	 * labeled alternative in {@link ModelParser#expression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitBracketedExp(@NotNull ModelParser.BracketedExpContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link ModelParser#variableDeclaration}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitVariableDeclaration(@NotNull ModelParser.VariableDeclarationContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link ModelParser#tokenLessThan}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTokenLessThan(@NotNull ModelParser.TokenLessThanContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code IdentExp}
 	 * labeled alternative in {@link ModelParser#expression}.
@@ -472,7 +418,7 @@ public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	T visitLiteralPattern(@NotNull ModelParser.LiteralPatternContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code ParenExp}
-	 * labeled alternative in {@link ModelParser#bracketedExpression}.
+	 * labeled alternative in {@link ModelParser#expression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
@@ -550,12 +496,6 @@ public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitMatch(@NotNull ModelParser.MatchContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link ModelParser#tokenEquals}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTokenEquals(@NotNull ModelParser.TokenEqualsContext ctx);
-	/**
 	 * Visit a parse tree produced by the {@code WhileExp}
 	 * labeled alternative in {@link ModelParser#expression}.
 	 * @param ctx the parse tree
@@ -588,24 +528,11 @@ public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitResultExp(@NotNull ModelParser.ResultExpContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link ModelParser#tokenAnd}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTokenAnd(@NotNull ModelParser.TokenAndContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link ModelParser#identifierList}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitIdentifierList(@NotNull ModelParser.IdentifierListContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code DontCarePattern}
-	 * labeled alternative in {@link ModelParser#pattern}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitDontCarePattern(@NotNull ModelParser.DontCarePatternContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code AppExp}
 	 * labeled alternative in {@link ModelParser#expression}.
@@ -614,17 +541,12 @@ public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitAppExp(@NotNull ModelParser.AppExpContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link ModelParser#tokenOr}.
+	 * Visit a parse tree produced by the {@code DontCarePattern}
+	 * labeled alternative in {@link ModelParser#pattern}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitTokenOr(@NotNull ModelParser.TokenOrContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link ModelParser#tokenLessThanEqual}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTokenLessThanEqual(@NotNull ModelParser.TokenLessThanEqualContext ctx);
+	T visitDontCarePattern(@NotNull ModelParser.DontCarePatternContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link ModelParser#shortFunctionDeclaration}.
 	 * @param ctx the parse tree
@@ -657,18 +579,6 @@ public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitExpressionOrStar(@NotNull ModelParser.ExpressionOrStarContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link ModelParser#tokenGreaterThanEqual}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTokenGreaterThanEqual(@NotNull ModelParser.TokenGreaterThanEqualContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link ModelParser#idValuePair}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitIdValuePair(@NotNull ModelParser.IdValuePairContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code PosArgList}
 	 * labeled alternative in {@link ModelParser#argumentList}.
@@ -731,17 +641,17 @@ public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitCartesianType(@NotNull ModelParser.CartesianTypeContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link ModelParser#effect}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitEffect(@NotNull ModelParser.EffectContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link ModelParser#primitiveType}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitPrimitiveType(@NotNull ModelParser.PrimitiveTypeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link ModelParser#assocBlock}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAssocBlock(@NotNull ModelParser.AssocBlockContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code MapEnumExp}
 	 * labeled alternative in {@link ModelParser#expression}.
