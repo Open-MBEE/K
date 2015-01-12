@@ -7,12 +7,6 @@ model:
     EOF
   ;
 
-topDeclaration:
-    memberDeclaration
-  | classDeclaration 
-  | assocDeclaration 
-  ;
-
 packageDeclaration:
     'package' qualifiedName 
   ;
@@ -21,16 +15,14 @@ importDeclaration:
     'import' qualifiedName ('.' '*')? 
   ;
 
-assocBlock:
-  (assocMemberDeclaration SEP)* 
+topDeclaration:
+    classDeclaration 
+  | assocDeclaration 
+  | memberDeclaration
   ;
 
 classDeclaration:
     'class' Identifier typeParameters? extending? ('{' block '}')? 
-  ;
-
-assocDeclaration:
-    'assoc' Identifier  '{' assocBlock '}'
   ;
 
 typeParameters:
@@ -49,26 +41,16 @@ extending:
     'extends' type (',' type)*
   ;
 
-type:
-    primitiveType                   # PrimType
-  | qualifiedName typeArguments?    # IdentType
-  | type ('*' type)+          # CartesianType
-  | type '->' type            # FuncType
-  | '{' type '}'                    # SetType
-  | '[' type ']'                    # ListType
-  | '<' type ',' type '>'           # MapType
-  | '(' type ')'					# ParenType
-  | '{|' Identifier ':' type  SUCHTHAT expression '|}' # SubType 
-  | type '?' # OptionalType
+assocDeclaration:
+    'assoc' Identifier  '{' assocBlock '}'
   ;
 
-expressionOrStar:
-    expression
-    | '*'
-    ;
+block: 
+  (memberDeclaration SEP)* 
+  ;
 
-typeArguments:
-    '[' type (',' type)* ']'
+assocBlock: 
+  (assocMemberDeclaration SEP)* 
   ;
 
 memberDeclaration:
@@ -79,26 +61,13 @@ memberDeclaration:
   | expression
   ;
 
-assocMemberDeclaration:
-    roleDeclaration
-  | memberDeclaration
+typeDeclaration:
+    'type' Identifier (typeParameters? '=' type )?
   ;
 
 propertyDeclaration:
     ('val' | 'var') pattern ('=' expression)? 
   ;
-
-typeDeclaration:
-    'type' Identifier (typeParameters? '=' type )?
-  ;
-
-roleDeclaration:
-    ('part' | 'ref') Identifier ':' Identifier multiplicity?
-  ;
-
-multiplicity:
-    expressionOrStar ('..' expressionOrStar)?
-    ;
 
 functionDeclaration:
     shortFunctionDeclaration
@@ -124,6 +93,41 @@ constraint:
     'req' (Identifier ':')?  expression
   ;
 
+assocMemberDeclaration:
+    roleDeclaration
+  | memberDeclaration
+  ;
+
+roleDeclaration:
+    ('part' | 'ref') Identifier ':' Identifier multiplicity?
+  ;
+
+multiplicity:
+    expressionOrStar ('..' expressionOrStar)?
+    ;
+
+expressionOrStar:
+    expression
+    | '*'
+    ;
+
+type:
+    primitiveType                   # PrimType
+  | qualifiedName typeArguments?    # IdentType
+  | type ('*' type)+          # CartesianType
+  | type '->' type            # FuncType
+  | '{' type '}'                    # SetType
+  | '[' type ']'                    # ListType
+  | '<' type ',' type '>'           # MapType
+  | '(' type ')'					# ParenType
+  | '{|' Identifier ':' type  SUCHTHAT expression '|}' # SubType 
+  | type '?' # OptionalType
+  ;
+
+typeArguments:
+    '[' type (',' type)* ']'
+  ;
+
 primitiveType:
     'Bool'
   | 'Char'
@@ -132,8 +136,6 @@ primitiveType:
   | 'String'
   | 'Unit'  
   ;
-
-block: (memberDeclaration SEP)* ;
 
 expression: 
     '(' expression ')' #ParenExp
