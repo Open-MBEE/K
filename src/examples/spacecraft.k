@@ -4,22 +4,22 @@ package nasa.jpl.spacecraft
 
 =================
 Space Craft Model
------------------
+=================
 
 class Instrument {
-    val name : String; 
-    val id : Int;
-    val powerConsumption : Real = 1000; -- Wh
-    val weight : Real; -- Grams
-    var currentPowerConsumption : Real; -- Wh
-    var operating : Boolean = false; 
+  val name : String; 
+  val id : Int;
+  val powerConsumption : Real = 1000; -- Wh
+  val weight : Real; -- Grams
+  var currentPowerConsumption : Real; -- Wh
+  var operating : Boolean = false; 
     
     -- toggle the operating state of the instrument
     -- update the power consumption
     fun toggleOperating() {
       operating := !operating;
       if not operating then 
-        currentPowerConsumption := 0;
+        currentPowerConsumption := 0
       else
         currentPowerConsumption := powerConsumption;
     }
@@ -33,7 +33,7 @@ class Instrument {
 
 class Camera extends Instrument {
   val fps : Int;
-}
+};
 
 class AngularVector {
   var angle1 : Real;
@@ -48,10 +48,11 @@ class Attitude {
   val distanceToEarth : unit -> Real;
 };
 
-class Battery {
-};
+class Battery {};
+
 -- connector
-assoc BatteryInstrument{
+
+assoc BatteryInstrument {
   ref bat : Battery;
   ref inst : Instrument 0..*;
 };
@@ -104,9 +105,10 @@ req CameraAlwaysOn:
 
 -- the same constraint written as one would write it in OCL (using a library)
 req CameraAlwaysOnOCL:
-  Clipper.instrument.exists(inst => inst is Camera && inst.operating = true);
+  Clipper.instrument.exists(inst -> inst is Camera && inst.operating = true);
 
 -- view on a class definition
+
 view SpacecraftFields {
   var fieldType : [(String,String)];
 };
@@ -114,73 +116,34 @@ view SpacecraftFields {
 viewpoint SpacecraftView(): SpacecraftFields {
   var sf : SpacecraftFields = SpacecraftFields()
   for (f in Reflection.fields(Spacecraft)) do 
-    sf.fields += (f.name, f.type);
-  end
-  sf
+    sf.fields = sf.fields + (f.name, f.type);
 }
-
--- view on an instance not using keyword
-class MassRollupView extends View {
-  var nameWeight : [(String,Real)];
-  var total : Real;
-};
-
-fun MassRollup (s : Spacecraft) : MassRollupView {
-    val retVal : MassRollupView = MassRollupView();
-
-    for (i in s.instrument) do
-      retVal.nameWeight += (i.name, i.weight);
-      retVal.total += i.weight;
-    end
-    
-    retVal
-}
-
-val clipperMassRollup : MassRollupView = MassRollup(Clipper);
 
 ================================
 Instantiation as in programming:
---------------------------------
+================================
 
 class SpaceCraft {
-  val name : String
+  val name : String;
 }
 
-var clipper = SpaceCraft(name="Clipper")
-var msl = SpaceCraft(name="msl")
+var clipper = SpaceCraft(name="Clipper");
+var msl = SpaceCraft(name="msl");
 
 ================================
 Instantiation using inheritance:
---------------------------------
+================================
 
 class SpaceCraft {
-  val name : String
-  val weight : Real
-}
+  val name : String;
+  val weight : Real;
+};
 
 class Clipper extends SpaceCraft {
-  name = "clipper"
-}
+  name = "clipper";
+};
 
 class MSL extends SpaceCraft {
-  name = "msl"
-}
-
-===========================
-Instantiation using hybrid:
---------------------------
-
-class SpaceCraft {
-  val name : String
-  val weight : Real
-}
-
-instance Clipper extends SpaceCraft {
-  name = "clipper"
-}
-
-instance MSL extends SpaceCraft {
-  name = "msl"
-}
-
+  name = "msl";
+};
 

@@ -22,7 +22,7 @@ topDeclaration:
   ;
 
 classDeclaration:
-    'class' Identifier typeParameters? extending? ('{' block '}')? 
+  ('class'|'view') Identifier typeParameters? extending? ('{' block '}')? 
   ;
 
 typeParameters:
@@ -75,7 +75,7 @@ functionDeclaration:
   ;
 
 shortFunctionDeclaration:
-    'fun' Identifier ('(' patternList? ')')+ (':' type)? ('=' expression)?
+  ('fun'|'viewpoint') Identifier ('(' patternList? ')')+ (':' type)? ('=' expression)?
   ;
 
 longFunctionDeclaration:
