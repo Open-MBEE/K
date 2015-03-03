@@ -1,25 +1,37 @@
 --WSTS modeling pattern
 --simple Test script invoking STAKR.rb
 
-//val DurativeEvent = DurativeEvent(name="StringName"); 
-//val Timepoint startTime = Timepoint(name="StartTime",value="this");
-//val Duration duration = Duration("this");
-//val Timepoint endTime = Timepoint(name="EndTime",value="this");
+class Spacecraft {
+}
 
-val Functioncall Exit() = Functioncall(object="STAKR.rb",method="Exit");
+class TestBed {
+}
+
+class WSTS extends TestBed {
+}
+
+// make this a command?  event?
+//val Functioncall Exit() = Functioncall(object="STAKR.rb",method="Exit");
+
+
 
 
 --call start command from STAKR
 --Start STAKR session
 
-val StartCMD : DurativeEvent("StartCMD");
+event StartCMD;
 
-StartCMD.command = Functioncall(object="STAKR.rb",method="START");
+StartCMD.command {
+    STAKR.rb.START;
+}
 
+event SetLogFile;
 
-val Functioncall SetLogFile = Functioncall(object="STAKR.rb",method="SetLogFile");
-	SetLogFile(filename="D-65303Log.txt");
+fileName = "D-65303Log.txt";
 
+SetLogFile.command {
+    STAKR.rb.SetLogFile(fileName);
+}
 
 --Write message to console
 
@@ -29,22 +41,21 @@ val Functioncall WriteMsg = Functioncall(object="STAKR.rb",method="Write");
 --Start() startTime
 
 req startTimeConstraints:
-	StartCMD.startTime = Timepoint("2015-03-03T10:10:10.000-800"); // ???
+	StartCMD.startTime = 2015-03-03T10:10:10.000-800;
 	
 	
 --make sure StartCMD schedule is on time	
 
-// no constraint -- WSTS will tell us what it was
-//req startCMDDurationConstraint:
-//    StartCMD.duration = 5; // seconds
-
-
+req startCMDDurationConstraint:
+    StartCMD.duration = 5s;
+    
 --EVR and EHA timelines
 class EVR {
     channels : String[]
 }
 
 val EVR : TimeVaryingMap
+
 
 --Write message to console
 
