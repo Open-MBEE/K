@@ -24,108 +24,127 @@ class TestBed {
 		//--call start command from STAKR-------------------------------------------------------------------
 		//--Start STAKR session
 
-		event StartCMD;
+		event StartCMD{
 		
-			StartCMD.command {
-		    	STAKR.rb.START;
+			
+		    command{ 
+		    	STAKR.rb.START; 
 			}
 		
 		
 			constraint startTimeConstraints:
-				StartCMD.startTime = 2015-03-03T10:10:10.000-800;
+				startTime = 2015-03-03T10:10:10.000-800;
 			
 			
 			//make sure StartCMD schedule is on time	
 		
 			constraint startCMDDurationConstraint:
-		    	StartCMD.duration = 5s;
+		    	duration = 5s;
+		    	
+		    constraints EndTime:
+		    	EndTime = startTime + duration;
 		
-		
+		}
 		//--call SetLogFile---------------------------------------------------------------------------------
 		
-		event SetLogFile;
+		event SetLogFile(fileName){
 		
 		fileName = "D-65303Log.txt";
 		
-			SetLogFile.command {
+			command {
 		    	STAKR.rb.SetLogFile(fileName);
 			}
 		
 				constraint SetLogFile:
-					SetLogFile.startTime > StartCMD.endTime;
+					startTime > StartCMD.endTime;
 		
+		}
 		
 		//--Write message to console------------------------------------------------------------------------
 		
-		event WriteMessageCMD();
+		event WriteMessageCMD(messageToBeSend, messageOutputFile){
 		
 		messageToBeSend : String;
 		messageOutputFile : String;
 		
 		
-			WriteMessageCMD(messageToBeSend, messageOutputFile).command {
+			command {
 				STAKR.rb.Write(messageToBeSend, messageOutputFile);
 			}
 		
 				constraint WriteMessageCMDscheduleTimer:
-					WriteMessageCMD.startTime > StartCMD.endTime;
+					startTime > StartCMD.endTime;
 		
-		    
+		 }
 		    
 		//--Send(CMDmessage)-------------------------------------------------------------------------------
 		
-		event SendCMD();
+		event SendCMD(CMDmessage){
 		
 		CMDmessage : String;
 		
-			SendCMD(CMDmessage).command {
+			command {
 				STAKR.rb.Send(CMDmessage);
 			}
 		
 				constraint SendCMDscheduleTimer:
-					SendCMD.startTime > StartCMD.endTime;
-		
-		
-		
+					startTime > StartCMD.endTime;		
+		}
 		
 		    
 		//--EVR and EHA timelines
 		
 		//--VerifyEHA()------------------------------------------------------------------------------------
 		    
-		event verifyEHA();
+		event verifyEHA(channelID,BASE){
 		
 		channelID : String[];
 		BASE = "10"; //16 if HEX, default set to base 10
 		
 			
 			//--verifyEHA("") --parameter should be ID of telemetry channel
-		    verifyEHA(channelID,BASE).command{
+		    
+		    command{
 				STAKR.rb.VerifyEHA(channelID,BASE);
 			}
 			
 				constraint VerifyEHAscheduleTimer:
-					verifyEHA.startTime > SendCMD.endTime;
-		
+					startTime > SendCMD.endTime;
+		}
 		
 		//--VerifyEVR()------------------------------------------------------------------------------------
 		//VerifyEVR(search_string = “”, lower_sclk = “0”)
 		
-		event verifyEVR();
+		event verifyEVR(search_string,sclk){
 		
 		search_string : String;
 		lower_sclk : Double;
 		
-			verifyEVR(search_string,sclk).command{
+			command{
 				STAKR.rb.VerifyEVR(search_string,sclk);
 			}
 		
 				constraint VerifyEHAscheduleTimer:
-					verifyEVR.startTime > SendCMD.endTime;
+					startTime > SendCMD.endTime;
 					
 				constraint VerifyEHAscheduleTimer2:
-					verifyEVR.startTime > WriteMessageCMD.endTime;
-
+					startTime > WriteMessageCMD.endTime;
+		}
+		
+		//--VerifyDP()------------------------------------------------------------------------------------
+		
+		event verifyDP(apID,args){
+		
+		apID : String;
+		//args : data structure or array, where contents of file with the ID "apID" are stored 
+			command{
+				STAKR.rb.verifyDP(apID,args);
+			}
+			
+				constraint VerifyapID:
+					apID != null;
+		}
+				
 }
 
 
