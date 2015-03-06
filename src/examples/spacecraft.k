@@ -1,149 +1,172 @@
 package nasa.jpl.spacecraft
 
--- Should package contents be in {..}?
-
-=================
+==================
 Space Craft Model
-=================
+==================
+
+class Util {
+
+  fun binarySearch (l : Seq[Int], x:Int) : (Bool*String) 
+  -- specify that the list should be sorted
+    pre forall i : Int . 
+          forall j : Int .
+            i >= 0 && j >= 0 && 
+            i < l.size() && 
+            j > i && j < l.size() => l.at(i) < l.at(j)
+    post $.1 = true => x isin l
+  {
+    r : Int = rand()
+    mid : Int = l.size()/2
+
+    if l.size() = 0 then return false
+
+    -- poor mans sleep
+    while true do {
+      temp : Bool
+      temp := r % 47
+      if temp then break
+      r := rand()
+    }
+    
+
+    if l.at(mid) = x then {
+      println("I found it!")
+      return Tuple(true, x.toString())
+    }
+    else {
+      if l.at(mid) < x then 
+        return binarySearch(l.subList(mid+1, l.size()), x)
+      else 
+        return binarySearch(l.subList(0, mid-1), x)
+    }
+  }
+
+  
+}
 
 class Instrument {
-  val name : String; 
-  val id : Int;
-  val powerConsumption : Real = 1000; -- Wh
-  val weight : Real; -- Grams
-  var currentPowerConsumption : Real; -- Wh
-  var operating : Boolean = false; 
+   name : String 
+   id : Int
+   powerConsumption : Real = 1000 -- Wh
+   weight : Real -- Grams
+   currentPowerConsumption : Real -- Wh
+   operating : Boolean = false 
     
     -- toggle the operating state of the instrument
     -- update the power consumption
-    fun toggleOperating() {
-      operating := !operating;
-      if not operating then 
+    fun toggleOperating {
+      operating := !operating
+      if !operating then 
         currentPowerConsumption := 0
       else
-        currentPowerConsumption := powerConsumption;
+        currentPowerConsumption := powerConsumption
     }
 
     req OperatingPower: 
       !operating implies currentPowerConsumption = 0 &&
-      operating implies currentPowerConsumption = powerConsumption;
+      operating implies currentPowerConsumption = powerConsumption
 
-    req ValidId: id >= 0;
-};
+    req idId: id >= 0
+}
 
 class Camera extends Instrument {
-  val fps : Int;
-};
+   fps : Int
+}
 
 class AngularVector {
-  var angle1 : Real;
-  var angle2 : Real;
-  var angle3 : Real;
-};
+   angle1 : Real
+   angle2 : Real
+   angle3 : Real
+}
 
 class Attitude {
-  var angularPosition : AngularVector;
-  var speed : Real;
-  var acceleration : Real;
-  val distanceToEarth : unit -> Real;
-};
+   angularPosition : AngularVector
+   speed : Real
+   acceleration : Real
+   distanceToEarth : unit -> Real
+}
 
-class Battery {};
+class Battery {}
 
 -- connector
 
 assoc BatteryInstrument {
-  ref bat : Battery;
-  ref inst : Instrument 0..*;
-};
+  bat : Battery
+  inst : Instrument [0,*]
+}
 
 class Spacecraft {
-  val name : String;
-  val attitude : Attitude;
+   name : String
+   attitude : Attitude
 
   req EarthSafeDistance:
     attitude.distanceToEarth > 50000 &&
-    attitude.distanceToEarth < 350000;
+    attitude.distanceToEarth < 350000
 
   req notTooHeavy:
-    instrument.collect(i -> i.weight).sum() <= maxWeight;
+    instrument.collect(i -> i.weight).sum() <= maxWeight
 
-  -- the battery on the spacecraft can be connected to upto
-  -- 10 instruments.
-  connector BatInst (bat, inst 1..10) : BatteryInstrument;
-};
+}
 
 -- an association between a spacecraft and some instruments.
 -- only a maximum of 10 instruments are allowed. 
 -- each instrument has to be unique. 
 
 assoc SpacecraftInstrument {
-    ref spacecraft : Spacecraft;
-    part instrument: Instrument 1 .. 10;
-};
+    spacecraft : Spacecraft
+    part instrument: Instrument[1,10]
+}
 
 -- create some instruments
-var Camera1 : Camera = Instrument(name="HighPixel", id=42, powerConsumption=2000, operating=true, fps=2);
-var Camera2 : Camera = Instrument(name="SharpShooter", id=3, powerConsumptino=10000, operating=false, fps=1000);
-var SolarPanel : Instrument = Instrument(name="SP1", id=2, powerConsumption=~1000);
-var Magnetometer : Instrument = Instrument(name="Magnetometer", id=5, powerConsumption=1500, operating=true);
-var Battery : Instrument = Instrument(name="Battery", id=11, powerConsumption=-100000, operating=true);
+Camera1 : Camera = Instrument(name="HighPixel", id=42, powerConsumption=2000, operating=true, fps=2)
+Camera2 : Camera = Instrument(name="SharpShooter", id=3, powerConsumptino=10000, operating=false, fps=1000)
+SolarPanel : Instrument = Instrument(name="SP1", id=2, powerConsumption=~1000)
+Magnetometer : Instrument = Instrument(name="Magnetometer", id=5, powerConsumption=1500, operating=true)
+Battery : Instrument = Instrument(name="Battery", id=11, powerConsumption=~100000, operating=true)
 
 -- create clipper spacecraft object
-var Clipper = Spacecraft(name="Clipper");
+Clipper = Spacecraft(name="Clipper")
 
 -- add instruments to spacecraft
 
-SpacecraftInstrument(Spacecraft=Clipper, instrument=Camera1);
-SpacecraftInstrument(Spacecraft=Clipper, instrument=Camera2);
-SpacecraftInstrument(Spacecraft=Clipper, instrument=SolarPanel);
-SpacecraftInstrument(Spacecraft=Clipper, instrument=Magnetometer);
+SpacecraftInstrument(Spacecraft=Clipper, instrument=Camera1)
+SpacecraftInstrument(Spacecraft=Clipper, instrument=Camera2)
+SpacecraftInstrument(Spacecraft=Clipper, instrument=SolarPanel)
+SpacecraftInstrument(Spacecraft=Clipper, instrument=Magnetometer)
 
 -- add another requirement that one camera is always turned on in Clipper
 req CameraAlwaysOn: 
-   exists Clipper.instrument inst . inst is Camera && inst.operating = true;
+   exists inst : Clipper.instrument . inst is Camera && inst.operating = true
 
 -- the same constraint written as one would write it in OCL (using a library)
 req CameraAlwaysOnOCL:
-  Clipper.instrument.exists(inst -> inst is Camera && inst.operating = true);
-
--- view on a class definition
-
-view SpacecraftFields {
-  var fieldType : [(String,String)];
-};
-
-viewpoint SpacecraftView(): SpacecraftFields {
-  var sf : SpacecraftFields = SpacecraftFields()
-  for (f in Reflection.fields(Spacecraft)) do 
-    sf.fields = sf.fields + (f.name, f.type);
-}
+  Clipper.instrument.Exists(inst -> inst is Camera && inst.operating = true)
 
 ================================
 Instantiation as in programming:
 ================================
 
 class SpaceCraft {
-  val name : String;
+   name : String
 }
 
-var clipper = SpaceCraft(name="Clipper");
-var msl = SpaceCraft(name="msl");
+clipper = SpaceCraft(name="Clipper")
+msl = SpaceCraft(name="msl")
 
 ================================
 Instantiation using inheritance:
 ================================
 
 class SpaceCraft {
-  val name : String;
-  val weight : Real;
-};
+   name : String
+   weight : Real
+}
 
 class Clipper extends SpaceCraft {
-  name = "clipper";
-};
+  name = "clipper"
+}
 
 class MSL extends SpaceCraft {
-  name = "msl";
-};
+  name = "msl"
+}
 
