@@ -1,60 +1,80 @@
+
+// VERSION 6 (LATEST):
+
 grammar Model;
 
+//model:
+//  (packageDeclaration SEP)?
+//  (importDeclaration SEP)* 
+//  (annotationDeclaration SEP)*
+//  (topDeclaration SEP)* 
+//  EOF
+//;
+
 model:
-    (packageDeclaration SEP)?
-    (importDeclaration SEP)* 
-    (topDeclaration SEP)* 
-    EOF
-  ;
+  packageDeclaration?
+  importDeclaration* 
+  annotationDeclaration*
+  topDeclaration* 
+  EOF
+;
 
 packageDeclaration:
-    'package' qualifiedName 
-  ;
+  'package' qualifiedName 
+;
 
 importDeclaration:
-    'import' qualifiedName ('.' '*')? 
-  ;
+  'import' qualifiedName ('.' '*')? 
+;
+
+annotationDeclaration:
+  'annotation' Identifier ':' type
+;
+
+annotation:
+  '@' Identifier '(' expression ')'
+;
 
 topDeclaration:
-    classDeclaration 
-  | assocDeclaration 
-  | memberDeclaration
-  ;
+  annotation* entityDeclaration
+| annotation* memberDeclaration
+;
 
-classDeclaration:
-  ('class'|'view') Identifier typeParameters? extending? ('{' block '}')? 
-  ;
+entityDeclaration:
+  ('class'|'assoc'|Identifier) Keyword? Identifier typeParameters? extending? 
+  ('{' block '}')?
+;
+
+Keyword:
+  '<' Identifier '>'
+;
 
 typeParameters:
-      '[' typeParameter (',' typeParameter)* ']'
-    ;
+  '[' typeParameter (',' typeParameter)* ']'
+;
 
 typeParameter:
-      Identifier (':' typeBound)?
-    ;
+  Identifier (':' typeBound)?
+;
 
 typeBound:
-      type ('+' type)*
-    ;
+  type ('+' type)*
+;
       
 extending:
-    'extends' type (',' type)*
-  ;
+  'extends' type (',' type)*
+;
 
-assocDeclaration:
-    'assoc' Identifier  '{' assocBlock '}'
-  ;
+//block: 
+//  (annotation* memberDeclaration SEP)* 
+//;
 
 block: 
-  (memberDeclaration SEP)* 
-  ;
-
-assocBlock: 
-  (assocMemberDeclaration SEP)* 
-  ;
+  (annotation* memberDeclaration)* 
+;
 
 memberDeclaration:
-    typeDeclaration 
+    typeDeclaration
   | propertyDeclaration
   | functionDeclaration
   | constraint 
@@ -62,71 +82,61 @@ memberDeclaration:
   ;
 
 typeDeclaration:
-    'type' Identifier (typeParameters? '=' type )?
-  ;
+  'type' Identifier (typeParameters? '=' type )?
+;
 
 propertyDeclaration:
-    ('val' | 'var') pattern ('=' expression)? 
-  ;
+  propertyModifier* Identifier ':' type multiplicity? ('=' expression)?
+;
+
+propertyModifier:
+  'part'
+| 'var'
+| 'val'
+| 'ordered'
+| 'unique'
+;
 
 functionDeclaration:
-    shortFunctionDeclaration
-  | longFunctionDeclaration
-  ;
-
-shortFunctionDeclaration:
-  ('fun'|'viewpoint') Identifier ('(' patternList? ')')+ (':' type)? ('=' expression)?
-  ;
-
-longFunctionDeclaration:
-    'fun' Identifier ('(' patternList? ')')+ (':' type)? 
+  'fun' Identifier ('(' paramList ')')? (':' type)?
     functionSpecification*
-    ('{' block '}')?
-  ;
+  ('{' block '}')?
+;
+
+paramList:
+  param (',' param)*
+;
+
+param:
+  Identifier ':' type
+;
 
 functionSpecification:
-    'pre'  expression 
-  | 'post' expression   
-  ;
+  'pre'  expression 
+| 'post' expression   
+;
 
 constraint:
-    'req' (Identifier ':')?  expression
-  ;
-
-assocMemberDeclaration:
-    roleDeclaration
-  | memberDeclaration
-  ;
-
-roleDeclaration:
-    ('part' | 'ref') Identifier ':' Identifier multiplicity?
-  ;
+  'req' (Identifier ':')?  expression
+;
 
 multiplicity:
-    expressionOrStar ('..' expressionOrStar)?
-    ;
+  '[' expressionOrStar (',' expressionOrStar)? ']'
+;
 
 expressionOrStar:
-    expression
-    | '*'
-    ;
+  expression
+| '*'
+;
 
 type:
-    primitiveType                   # PrimType
-  | qualifiedName typeArguments?    # IdentType
-  | type ('*' type)+          # CartesianType
-  | type '->' type            # FuncType
-  | '{' type '}'                    # SetType
-  | '[' type ']'                    # ListType
-  | '<' type ',' type '>'           # MapType
-  | '(' type ')'					# ParenType
-  | '{|' Identifier ':' type  SUCHTHAT expression '|}' # SubType 
-  | type '?' # OptionalType
-  ;
-
-typeArguments:
-    '[' type (',' type)* ']'
-  ;
+  primitiveType                   # PrimType
+| classIdentifier typeArguments?  # IdentType
+| type ('*' type)+                # CartesianType
+| type '->' type                  # FuncType
+| '(' type ')'					  # ParenType
+| '{|' Identifier ':' type  SUCHTHAT expression '|}' # SubType 
+;
 
 primitiveType:
     'Bool'
@@ -137,29 +147,40 @@ primitiveType:
   | 'Unit'  
   ;
 
+classIdentifier:
+  Identifier
+| 'Class'
+| collectionKind
+;
+
+collectionKind:
+  'Set'
+| 'Bag'
+| 'Seq' 
+;
+
+typeArguments:
+    '[' type (',' type)* ']'
+  ;
+
 expression: 
     '(' expression ')' #ParenExp
-  | '(' expression (',' expression)+ ')' #TupleExp
+  | 'Tuple' '(' expression (',' expression)+ ')' #TupleExp
   | literal #LiteralExp
   | Identifier #IdentExp
   | expression '.' Identifier #DotExp
   | expression '(' argumentList? ')' #AppExp
   | '!' expression #NotExp
-  | 'begin' block  'end' #BlockExp
-  | 'if' expression 'then' expression? ('else' expression?)? #IfExp
+  | '{' block  '}' #BlockExp
+  | 'if' expression 'then' expression ('else' expression)? #IfExp
   | 'match' expression 'with' match+  #MatchExp
   | 'while' expression 'do' expression  #WhileExp
   | 'for' '(' pattern 'in' expression ')' 'do' expression # ForExp 
   | 'forall' rngBindingList SUCHTHAT expression #ForallExp 
   | 'exists' rngBindingList SUCHTHAT expression #ExistsExp 
-  | '{' expressionList? '}' #SetEnumExp
-  | '{' expression '..' expression '}' #SetRngExp
-  | '{' expression '|' rngBindingList SUCHTHAT expression '}' #SetCompExp 
-  | '[' expressionList? ']' #ListEnumExp
-  | '[' expression '..' expression ']' #ListRngExp
-  | '[' expression '|' pattern 'in' expression SUCHTHAT expression ']' #ListCompExp 
-  | '<' mapPairList? '>' #MapEnumExp
-  | '<' mapPair '|' rngBindingList SUCHTHAT expression '>' #MapCompExp 
+  | collectionKind '{' expressionList? '}' #SetEnumExp
+  | collectionKind '{' expression '..' expression '}' #SetRngExp
+  | collectionKind '{' expression '|' rngBindingList SUCHTHAT expression '}' #SetCompExp 
   | expression ('*'|'/'|'%'|'inter'|'\\'|'++'|'#'|'^') expression #BinOp1Exp
   | expression ('+'|'-'|'union') expression #BinOp2Exp
   | expression ('<=' | '>=' | '<' | '>' | '=' | '!=' | 'isin'|'!isin'|'subset'|'psubset') expression #BinOp3Exp
@@ -182,7 +203,6 @@ match:
   'case' pattern ('|' pattern)* '=>' expression
   ;
 
-
 argumentList: 
     positionalArgumentList #PosArgList
   | namedArgumentList # NamedArgList
@@ -200,12 +220,9 @@ namedArgument :
     Identifier '=' expression
   ;
 
-mapPairList:
-    mapPair (',' mapPair)*
-  ;
-
-mapPair:
-    expression ':' expression 
+collectionOrType:
+    expression
+  | type
   ;
 
 rngBindingList:
@@ -220,11 +237,6 @@ patternList:
     pattern (',' pattern)*
   ;
 
-collectionOrType:
-    expression
-  | type
-  ;
-  
 pattern:
     literal # LiteralPattern
   | '_' #DontCarePattern   
@@ -551,5 +563,5 @@ WS:
   ;
 
 SEP:
-    ';'
-  ;
+  ';' 
+;
