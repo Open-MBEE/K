@@ -1,4 +1,13 @@
-The classes need to be built using the ./build.sh command. This
-issues a single javac command to compile all Model*.java classes.
-The files are then moved to the src/k/frontend directory where 
-they are used as part of the project. 
+1. Standard Build 
+   - Run ./build.sh
+   - This will update the lexer/parser in the ../k/frontend folder
+   - Now you can work on visitor etc. 
+   - You will NOT have access to a runnable version of the parser
+
+2. Build when developing grammar
+   - Run ./onlyGrammar.sh
+   - javac *.java to compile files placed in current folder
+   - copy an example from examples folder
+   - to produce GUI tree: grun Model model <example_file> -gui
+
+
