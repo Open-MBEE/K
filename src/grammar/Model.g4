@@ -191,12 +191,13 @@ expression:
   | expression 'is' type # TypeCheckExp
   | expression 'as' type # TypeCastExp
   | 'assert' '(' expression ')' #AssertExp 
-  | '~' expression #NegExp
+  | '-' expression #NegExp
+  | qualifiedName '~' #PrevExp
   | pattern '->' expression #LambdaExp
   | 'continue' #ContinueExp
   | 'break' #BreakExp
   | 'return' expression? #ReturnExp
-  | '$' #ResultExp
+  | '$result' #ResultExp
   ;
 
 match:

@@ -9,10 +9,10 @@
 (defvar k-keywords
   '("req" "type" "package" "import" "annotation" 
     "forall" "extends" "fun" "pre" "post" "is" "as"
-    "implies" "end" "while" "if" "for" "match" 
+    "end" "while" "if" "for" "match" 
     "forall" "with" "do" "then" "else" "in" "exists"
     "isin" "!isin" "subset" "psubset" "union" "inter" 
-    "assert" "continue" "break" "return" "$" "case" "this" 
+    "assert" "continue" "break" "return" "$result" "case" "this" 
     ))
 
 (defvar k-sysml-keywords
