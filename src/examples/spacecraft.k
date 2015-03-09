@@ -61,6 +61,7 @@ class Spacecraft {
   name : String
   attitude : Attitude
   weight : Real
+  maxWeight : Real = 1000
 
   req EarthSafeDistance:
     attitude.distanceToEarth > 50000 &&
@@ -98,19 +99,19 @@ assoc SpacecraftInstrument {
 ==============
 Instances
 ==============
+camera1 : Camera = Camera(name="HighPixel", id=42, powerConsumption=2000, operating=true, fps=2)
+camera2 : Camera = Camera(name="SharpShooter", id=3, powerConsumptino=10000, operating=false, fps=1000)
+solarPanel : Instrument = Instrument(name="SP1", id=2, powerConsumption=-1000)
+magnetometer : Instrument = Instrument(name="Magnetometer", id=5, powerConsumption=1500, operating=true)
+battery : Battery = Battery()
 
-Camera1 : Camera = Instrument(name="HighPixel", id=42, powerConsumption=2000, operating=true, fps=2)
-Camera2 : Camera = Instrument(name="SharpShooter", id=3, powerConsumptino=10000, operating=false, fps=1000)
-SolarPanel : Instrument = Instrument(name="SP1", id=2, powerConsumption=-1000)
-Magnetometer : Instrument = Instrument(name="Magnetometer", id=5, powerConsumption=1500, operating=true)
-Battery : Instrument = Instrument(name="Battery", id=11, powerConsumption=-100000, operating=true)
+clipper = Spacecraft(name="Clipper")
 
-Clipper = Spacecraft(name="Clipper")
-
-SpacecraftInstrument(Spacecraft=Clipper, instrument=Camera1)
-SpacecraftInstrument(Spacecraft=Clipper, instrument=Camera2)
-SpacecraftInstrument(Spacecraft=Clipper, instrument=SolarPanel)
-SpacecraftInstrument(Spacecraft=Clipper, instrument=Magnetometer)
+SpacecraftInstrument(Spacecraft=clipper, instrument=camera1)
+SpacecraftInstrument(Spacecraft=clipper, instrument=camera2)
+SpacecraftInstrument(Spacecraft=clipper, instrument=solarPanel)
+SpacecraftInstrument(Spacecraft=clipper, instrument=magnetometer)
+SpacecraftInstrument(Spacecraft=clipper, instrument=battery)
 
 req CameraAlwaysOn: 
   exists inst : Clipper.instrument . inst is Camera && inst.operating = true
