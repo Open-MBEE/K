@@ -41,13 +41,13 @@ class Util {
 }
 
 class ModelElement{
-  ...
+
 }
 
 class <view> View extends ModelElement {
-  ...
+
 }
 
 view MyView {
-  ...
+
 }
