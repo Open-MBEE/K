@@ -1,15 +1,4 @@
-
-// VERSION 6 (LATEST):
-
 grammar Model;
-
-//model:
-//  (packageDeclaration SEP)?
-//  (importDeclaration SEP)* 
-//  (annotationDeclaration SEP)*
-//  (topDeclaration SEP)* 
-//  EOF
-//;
 
 model:
   packageDeclaration?
@@ -64,10 +53,6 @@ typeBound:
 extending:
   'extends' type (',' type)*
 ;
-
-//block: 
-//  (annotation* memberDeclaration SEP)* 
-//;
 
 block: 
   (annotation* memberDeclaration)* 
