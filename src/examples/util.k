@@ -13,13 +13,14 @@ class Util {
             i >= 0 && j >= 0 && 
             i < l.size() && 
             j > i && j < l.size() => l.at(i) < l.at(j)
-    post $.1 = true => x isin l
+    post $result.1 = true => x isin l
   {
     r : Int = rand()
     mid : Int = l.size()/2
 
     if l.size() = 0 then return false
 
+    -- poor mans sleep
     while true do {
       temp : Bool
       temp := r % 47

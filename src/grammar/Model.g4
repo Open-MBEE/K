@@ -80,6 +80,8 @@ propertyModifier:
 | 'val'
 | 'ordered'
 | 'unique'
+| 'source'
+| 'target'
 ;
 
 functionDeclaration:
