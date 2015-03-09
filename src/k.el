@@ -13,6 +13,7 @@
     "forall" "with" "do" "then" "else" "in" "exists"
     "isin" "!isin" "subset" "psubset" "union" "inter" 
     "assert" "continue" "break" "return" "$result" "case" "this" 
+    "source" "target"
     ))
 
 (defvar k-sysml-keywords

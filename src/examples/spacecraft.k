@@ -53,8 +53,8 @@ class Attitude {
 
 
 assoc BatteryInstrument {
-  bat : Battery
-  inst : Instrument [0,*]
+  source bat : Battery
+  target inst : Instrument [0,*]
 }
 
 class Spacecraft {
@@ -92,8 +92,8 @@ class Spacecraft {
 }
 
 assoc SpacecraftInstrument {
-  spacecraft : Spacecraft
-  part instrument: Instrument[1,10]
+  source spacecraft : Spacecraft
+  target part instrument: Instrument[1,10]
 }
 
 ==============
