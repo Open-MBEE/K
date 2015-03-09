@@ -1,18 +1,5 @@
 package small
 
-class B {}
-
-class A {
-  x : Int = 1
-  y : Int
-  b : B[0,5] = B()
-
-  fun next(a : Int) { return a + 1 }
-
-  x := x + next(1)
-  y := next(x) + 1
-}
-
 class Car {
   price : Int
   make : String
@@ -46,7 +33,4 @@ class Person {
   totalWorth  : Int = garages.collect(g -> g.garageValue(g.cars)).sum()
 
   dob = 12345678
-
-  
-
 }

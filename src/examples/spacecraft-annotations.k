@@ -3,9 +3,20 @@ package nasa.jpl.spacecraft
 import nasa.jpl.physics
 import nasa.jpl.europa.trajectory
 
+==============
+Annotations
+==============
+annotation name : String
+annotation id : String
+annotation doc : String
+
 ==================
 Space Craft Model
 ==================
+
+@name("InstrumentClass")
+@id("_GHSZ3432")
+@doc("This class describes the basic instrument for a spacecraft.")
 
 class Instrument {
   name : String 
@@ -25,6 +36,10 @@ class Instrument {
       currentPowerConsumption := powerConsumption
   }
 
+  @name("OperatingPowerOfInstrument")
+  @doc("The current power consumption of an instrument should either be 0, 
+        when it is turned off, or if it is on,
+        it should be what the operating power is specified to be.")
   req OperatingPower: 
     !operating => currentPowerConsumption = 0 &&
       operating => currentPowerConsumption = powerConsumption
@@ -32,6 +47,9 @@ class Instrument {
   req idId: id >= 0
 }
 
+@name("BasicCameraInstrument")
+@id("_fgds2345234")
+@doc("This is the basic camera for a spacecraft")
 class Camera extends Instrument {
   fps : Int
 }
