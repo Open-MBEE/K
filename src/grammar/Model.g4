@@ -135,7 +135,7 @@ primitiveType:
   ;
 
 classIdentifier:
-  Identifier
+  qualifiedName
 | 'Class'
 | collectionKind
 ;
@@ -247,7 +247,7 @@ qualifiedName:
 
 literal:
     IntegerLiteral
-  | FloatingPointLiteral
+  | RealLiteral
   | CharacterLiteral
   | StringLiteral
   | BooleanLiteral
@@ -387,7 +387,7 @@ BinaryDigitOrUnderscore:
     |   '_'
     ;
 
-FloatingPointLiteral:
+RealLiteral:
       DecimalFloatingPointLiteral
     |   HexadecimalFloatingPointLiteral
     ;
