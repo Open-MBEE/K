@@ -71,7 +71,7 @@ typeDeclaration:
 ;
 
 propertyDeclaration:
-  propertyModifier* Identifier ':' type multiplicity? ('=' expression)?
+  propertyModifier* Identifier ':' type multiplicity? (('='|':=') expression)?
 ;
 
 propertyModifier:
@@ -85,7 +85,7 @@ propertyModifier:
 ;
 
 functionDeclaration:
-  'fun' Identifier ('(' paramList ')')? (':' type)?
+  'fun' Identifier typeParameters? ('(' paramList ')')? (':' type)?
     functionSpecification*
   ('{' block '}')?
 ;
