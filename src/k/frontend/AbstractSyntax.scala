@@ -56,7 +56,12 @@ case class PackageDecl(name: QualifiedName) {
   def toJson2: JSONObject = null // TODO
 }
 
-case class AnnotationDecl(name: String, t: Type) {}
+case class AnnotationDecl(name: String, t: Type) extends TopDecl {
+  override def toString = s"annotation $name : $t"
+  override def toJson = null
+  override def toJson2 = null
+
+}
 
 case class Annotation(name: String, exp: Exp)
 
@@ -114,7 +119,7 @@ case class EntityDecl(
     }
     result += " {\n"
     //for (member <- members) {
-      //result += "  " + member + "\n"
+    //result += "  " + member + "\n"
     //}
     result += "}"
     result
@@ -238,7 +243,9 @@ case class TypeDecl(ident: String,
 
 }
 
-case class PropertyDecl(modifiers: List[PropertyModifier], name: String, t: Type,
+case class PropertyDecl(modifiers: List[PropertyModifier],
+                        name: String, 
+                        t: Type,
                         multiplicity: Option[Multiplicity],
                         assignment: Option[Boolean],
                         expr: Option[Exp]) extends MemberDecl {
