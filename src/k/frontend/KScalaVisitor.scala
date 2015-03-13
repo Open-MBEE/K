@@ -617,7 +617,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
     AnnotationDecl(name, t)
   }
 
-  override def visitPrevExp(ctx: ModelParser.PrevExpContext): AnyRef = {
+    override def visitPrevExp(ctx: ModelParser.PrevExpContext): AnyRef = {
     UnaryExp(PREV, IdentExp(ctx.qualifiedName().getText()))
   }
 

@@ -44,7 +44,7 @@ object Frontend {
       }
 
     options.get('stats) match {
-      //case Some(_) => printStats(model)
+      case Some(_) => printStats(model)
       case None => ()
     }
 
@@ -551,17 +551,11 @@ object Frontend {
     exp
   }
 
-  /*
   def printStats(m: Model) {
     println("Imports: " + m.imports.size)
-    println("Classes: " + m.decls.count(
+    println("Entities: " + m.decls.count(
       _ match {
-        case ClassDecl(Class, _, _, _, _) => true
-        case _ => false
-      }))
-    println("Associations: " + m.decls.count(
-      _ match {
-        case ClassDecl(Assoc, _, _, _, _) => true
+        case EntityDecl(_,_, _, _, _, _) => true
         case _ => false
       }))
     println("Constraints: " + m.decls.count(
@@ -569,19 +563,14 @@ object Frontend {
         case ConstraintDecl(_, _) => true
         case _ => false
       }))
-    println("Variables: " + m.decls.count(
+    println("Properties: " + m.decls.count(
       _ match {
-        case VarDecl(_, _) => true
-        case _ => false
-      }))
-    println("Values: " + m.decls.count(
-      _ match {
-        case ValDecl(_, _) => true
+        case PropertyDecl(_,_,_,_,_,_) => true
         case _ => false
       }))
     println("Functions: " + m.decls.count(
       _ match {
-        case FunDecl(_, _, _, _, _) => true
+        case FunDecl(_, _, _, _, _,_) => true
         case _ => false
       }))
     println("Types: " + m.decls.count(
@@ -594,8 +583,11 @@ object Frontend {
         case ExpressionDecl(_) => true
         case _ => false
       }))
+    println("AnnotationDecls: " + m.annotations.size)
+
+
   }
-*/
+
   def analyze(m: Model) {
 
   }
