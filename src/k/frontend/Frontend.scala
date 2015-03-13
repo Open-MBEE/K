@@ -44,7 +44,7 @@ object Frontend {
       }
 
     options.get('stats) match {
-      case Some(_) => printStats(model)
+      //case Some(_) => printStats(model)
       case None => ()
     }
 
@@ -62,12 +62,15 @@ object Frontend {
 
     options.get('json) match {
       case Some(jsonString: String) => {
-        json2exp(jsonString)
+        //json2exp(jsonString)
       }
       case None => ()
     }
+    
+    if(model != null) 
+      println(model.toString())
   }
-
+/* TODO
   def visitJsonObject(o: Any): AnyRef = {
     val obj = o.asInstanceOf[JSONObject]
     obj.get("type") match {
@@ -307,7 +310,7 @@ object Frontend {
         System.exit(-1).asInstanceOf[Nothing]
     }
   }
-
+*/
   def visitJsonArray(o: Any, f: Any => AnyRef): List[AnyRef] = {
     val obj = o.asInstanceOf[JSONArray]
     var res: List[AnyRef] = Nil
@@ -317,7 +320,7 @@ object Frontend {
     }
     res
   }
-
+/*
   // Assuming that the input to this is an expression in JSON string format
   def json2exp(expressionString: String): String = {
     var tokener: JSONTokener = new JSONTokener(expressionString)
@@ -355,6 +358,7 @@ object Frontend {
     val collection = getCollection(obj.get(1).asInstanceOf[JSONObject])
     RngBinding(bindings, collection)
   }
+
 
   def visitJsonObject2(obj: JSONObject): AnyRef = {
     obj.get("type") match {
@@ -460,24 +464,24 @@ object Frontend {
     var exp: Exp = visitJsonObject2(specialization.get("specialization").asInstanceOf[JSONObject]).asInstanceOf[Exp]
     exp.toString();
   }
-
+*/
   def getVisitor(contents: String): (KScalaVisitor, ModelContext) = {
 
-    var input: ANTLRInputStream = new ANTLRInputStream(contents);
-    var lexer: ModelLexer = new ModelLexer(input);
-    var tokens: CommonTokenStream = new CommonTokenStream(lexer);
-    var parser: ModelParser = new ModelParser(tokens);
-    var tree = parser.model();
-    var ksv: KScalaVisitor = new KScalaVisitor();
+    var input: ANTLRInputStream = new ANTLRInputStream(contents)
+    var lexer: ModelLexer = new ModelLexer(input)
+    var tokens: CommonTokenStream = new CommonTokenStream(lexer)
+    var parser: ModelParser = new ModelParser(tokens)
+    var tree = parser.model()
+    var ksv: KScalaVisitor = new KScalaVisitor()
     (ksv, tree)
   }
 
   def getModelFromFile(f: String): Model = {
     var path: Path = Paths.get(f)
     var bytes: Array[Byte] = Files.readAllBytes(path)
-    var fileContents: String = new String(bytes, "UTF-8");
+    var fileContents: String = new String(bytes, "UTF-8")
     val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(fileContents)
-    var m: Model = ksv.visit(tree).asInstanceOf[Model];
+    var m: Model = ksv.visit(tree).asInstanceOf[Model]
     m
   }
 
@@ -486,8 +490,8 @@ object Frontend {
   }
 
   def exp2Json(expressionString: String): String = {
-    val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(expressionString + ";")
-    var m: Model = ksv.visit(tree).asInstanceOf[Model];
+    val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(expressionString)
+    var m: Model = ksv.visit(tree).asInstanceOf[Model]
 
     require(m.decls.count(_ => true) == 1)
     println(m.toString)
@@ -507,8 +511,8 @@ object Frontend {
   }
 
   def exp2Json2(expressionString: String): String = {
-    val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(expressionString + ";")
-    var m: Model = ksv.visit(tree).asInstanceOf[Model];
+    val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(expressionString)
+    var m: Model = ksv.visit(tree).asInstanceOf[Model]
 
     require(m.decls.count(_ => true) == 1)
     require(
@@ -532,8 +536,8 @@ object Frontend {
   }
   
   def exp2KExp(expressionString : String) : Exp = {
-    val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(expressionString + ";")
-    var m: Model = ksv.visit(tree).asInstanceOf[Model];
+    val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(expressionString)
+    var m: Model = ksv.visit(tree).asInstanceOf[Model]
 
     require(m.decls.count(_ => true) == 1)
     require(
@@ -547,6 +551,7 @@ object Frontend {
     exp
   }
 
+  /*
   def printStats(m: Model) {
     println("Imports: " + m.imports.size)
     println("Classes: " + m.decls.count(
@@ -590,7 +595,7 @@ object Frontend {
         case _ => false
       }))
   }
-
+*/
   def analyze(m: Model) {
 
   }

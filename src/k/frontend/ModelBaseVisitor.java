@@ -116,6 +116,13 @@ public class ModelBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements 
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
+	@Override public T visitBlockDeclaration(@NotNull ModelParser.BlockDeclarationContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
 	@Override public T visitIdentExp(@NotNull ModelParser.IdentExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}

@@ -55,8 +55,12 @@ extending:
 ;
 
 block: 
-  (annotation* memberDeclaration)* 
+  blockDeclaration* 
 ;
+
+blockDeclaration:
+  annotation* memberDeclaration
+  ;
 
 memberDeclaration:
     typeDeclaration

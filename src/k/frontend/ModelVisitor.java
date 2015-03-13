@@ -104,6 +104,12 @@ public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitBinOp3Exp(@NotNull ModelParser.BinOp3ExpContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link ModelParser#blockDeclaration}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBlockDeclaration(@NotNull ModelParser.BlockDeclarationContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code IdentExp}
 	 * labeled alternative in {@link ModelParser#expression}.
 	 * @param ctx the parse tree
