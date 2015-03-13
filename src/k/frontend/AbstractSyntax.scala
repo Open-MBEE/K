@@ -10,7 +10,7 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
   override def toString = {
     var result =
       packageName match {
-        case Some(p) => p + "\n\n"
+        case Some(p) => p + "\n"
         case None    => ""
       }
     if (!imports.isEmpty) {
@@ -25,7 +25,7 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
     }
 
     for (decl <- decls) {
-      result += decl + "\n\n"
+      result += decl + "\n"
     }
 
     result
@@ -129,9 +129,7 @@ case class EntityDecl(
     if (!extending.isEmpty) {
       result += s" extending ${extending.mkString(",")}"
     }
-    result += " {\n"
-    result += "  " + members + "\n"
-    result += "}"
+    result += members
     result
   }
 
@@ -328,7 +326,7 @@ case class FunDecl(ident: String,
                    spec: List[FunSpec],
                    body: Option[Exp]) extends MemberDecl {
   override def toString = {
-    var result = "fun "
+    var result = "\nfun "
     result += ident
     if (typeParams.size > 0) {
       result += "[" + typeParams.mkString(",") + "]"
@@ -340,9 +338,7 @@ case class FunDecl(ident: String,
       result += " : " + t + "\n"
     }
     result += spec.mkString("\n")
-    result += "{\n"
     if (body.nonEmpty) result += body.get
-    result += "}"
     result
   }
   override def toJson = {
@@ -393,7 +389,7 @@ case class ConstraintDecl(name: Option[String], exp: Exp) extends MemberDecl {
   override def toJson2 = null // TODO
 }
 case class ExpressionDecl(exp: Exp) extends MemberDecl {
-  override def toString = s"$exp;"
+  override def toString = s"$exp"
 
   override def toJson = {
     val expressiondecl = new JSONObject()
@@ -496,7 +492,7 @@ case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
 case class IfExp(cond: Exp, trueBranch: Exp, falseBranch: Option[Exp]) extends Exp {
   override def toString =
     if (falseBranch.nonEmpty)
-      s"if $cond then {\n$trueBranch} else {\nb$falseBranch}\n"
+      s"if $cond then {\n$trueBranch\n} \nelse {\n${falseBranch.get}\n}"
     else
       s"if $cond then {\n$trueBranch}\n"
 
@@ -545,7 +541,7 @@ case class MatchCase(patterns: List[Pattern], exp: Exp) extends Exp {
 
 case class BlockExp(body: List[MemberDecl]) extends Exp {
   override def toString =
-    s"{\n ${body.foldLeft("")((res, m) => res + s"  $m\n")}}"
+    s"{\n ${body.foldLeft("")((res, m) => res + s"  $m")}}"
 
   override def toJson = {
     val expression = new JSONObject()
