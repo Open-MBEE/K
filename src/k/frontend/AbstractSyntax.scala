@@ -19,9 +19,15 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
       }
       result += "\n"
     }
+
+    for (annotationDecl <- annotations) {
+      result += annotationDecl + "\n"
+    }
+
     for (decl <- decls) {
       result += decl + "\n\n"
     }
+
     result
   }
 
@@ -63,7 +69,9 @@ case class AnnotationDecl(name: String, t: Type) extends TopDecl {
 
 }
 
-case class Annotation(name: String, exp: Exp)
+case class Annotation(name: String, exp: Exp) {
+  override def toString = s"@$name($exp)"
+}
 
 case class QualifiedName(names: List[String]) {
   override def toString = names.mkString(".")
@@ -110,7 +118,11 @@ case class EntityDecl(
   members: BlockExp) extends TopDecl {
   var annotations: List[Annotation] = null
   override def toString = {
-    var result = s"$entityToken $ident"
+    var result = ""
+    for (annotation <- annotations) {
+      result += annotation + "\n"
+    }
+    result += s"$entityToken $ident"
     if (!typeParams.isEmpty) {
       result += s"[${typeParams.mkString(",")}]"
     }
@@ -118,9 +130,7 @@ case class EntityDecl(
       result += s" extending ${extending.mkString(",")}"
     }
     result += " {\n"
-    //for (member <- members) {
-    //result += "  " + member + "\n"
-    //}
+    result += "  " + members + "\n"
     result += "}"
     result
   }
@@ -214,7 +224,14 @@ trait MemberDecl extends TopDecl {
 }
 
 case class BlockDecl(body: MemberDecl) extends MemberDecl {
-  override def toString = null // TODO
+  override def toString = {
+    var result: String = ""
+    for (annotation <- annotations) {
+      result += annotation + "\n"
+    }
+    result += body + "\n"
+    result
+  }
   override def toJson = null
   override def toJson2 = null
 }
@@ -244,31 +261,65 @@ case class TypeDecl(ident: String,
 }
 
 case class PropertyDecl(modifiers: List[PropertyModifier],
-                        name: String, 
+                        name: String,
                         t: Type,
                         multiplicity: Option[Multiplicity],
                         assignment: Option[Boolean],
                         expr: Option[Exp]) extends MemberDecl {
 
   override def toJson = null
-  override def toString = null
   override def toJson2 = null // TODO
+
+  override def toString = {
+    var result = ""
+    result += modifiers.mkString(" ") + " "
+    result += name
+    result += ":" + t
+    if (multiplicity.nonEmpty) result += multiplicity.get
+    if (expr.nonEmpty) {
+      if (assignment.nonEmpty) result += (if (assignment.get) " := " else " = ") + expr.get
+      else {
+        println("Non-empty expression for property declaration, but assignment type not specified.")
+        System.exit(-1).asInstanceOf[String]
+      }
+    }
+    result
+  }
+
 }
 
 trait PropertyModifier
-case object Part extends PropertyModifier
-case object Var extends PropertyModifier
-case object Val extends PropertyModifier
-case object Ordered extends PropertyModifier
-case object Unique extends PropertyModifier
-case object Source extends PropertyModifier
-case object Target extends PropertyModifier
-
-case class FunSpec(pre: Boolean, exp: Exp) {
-
+case object Part extends PropertyModifier {
+  override def toString = "part"
+}
+case object Var extends PropertyModifier {
+  override def toString = "var"
+}
+case object Val extends PropertyModifier {
+  override def toString = "val"
+}
+case object Ordered extends PropertyModifier {
+  override def toString = "ordered"
+}
+case object Unique extends PropertyModifier {
+  override def toString = "unique"
+}
+case object Source extends PropertyModifier {
+  override def toString = "source"
+}
+case object Target extends PropertyModifier {
+  override def toString = "target"
 }
 
-case class Param(name: String, t: Type) {}
+case class FunSpec(pre: Boolean, exp: Exp) {
+  override def toString =
+    if (pre) s"pre $exp"
+    else s"post $exp"
+}
+
+case class Param(name: String, t: Type) {
+  override def toString = s"$name:$t"
+}
 
 case class FunDecl(ident: String,
                    typeParams: List[TypeParam],
@@ -276,7 +327,24 @@ case class FunDecl(ident: String,
                    t: Option[Type],
                    spec: List[FunSpec],
                    body: Option[Exp]) extends MemberDecl {
-  override def toString = null
+  override def toString = {
+    var result = "fun "
+    result += ident
+    if (typeParams.size > 0) {
+      result += "[" + typeParams.mkString(",") + "]"
+    }
+    if (params.size > 0) {
+      result += "(" + params.mkString(",") + ")"
+    }
+    if (t.nonEmpty) {
+      result += " : " + t + "\n"
+    }
+    result += spec.mkString("\n")
+    result += "{\n"
+    if (body.nonEmpty) result += body.get
+    result += "}"
+    result
+  }
   override def toJson = {
     val fundecl = new JSONObject()
     val theArgs = new JSONArray()
@@ -306,9 +374,9 @@ case class ConstraintDecl(name: Option[String], exp: Exp) extends MemberDecl {
   override def toString =
     name match {
       case None =>
-        s"constraint { $exp }"
+        s"req { $exp }"
       case Some(n) =>
-        s"constraint $n { $exp }"
+        s"req $n: { $exp }"
     }
 
   override def toJson = {
@@ -405,8 +473,14 @@ case class DotExp(exp: Exp, ident: String) extends Exp {
 }
 
 case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
-  // TODO: toString, toJson, toJson2
-  override def toString = s"fun"
+  // TODO: toJson, toJson2
+  override def toString = {
+    var result = ""
+    result += exp1
+    if (args != null)
+      result += "(" + args.mkString(",") + ")"
+    result
+  }
 
   override def toJson = {
     val expression = new JSONObject()
@@ -420,7 +494,11 @@ case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
 }
 
 case class IfExp(cond: Exp, trueBranch: Exp, falseBranch: Option[Exp]) extends Exp {
-  override def toString = s"if $cond then $trueBranch else $falseBranch"
+  override def toString =
+    if (falseBranch.nonEmpty)
+      s"if $cond then {\n$trueBranch} else {\nb$falseBranch}\n"
+    else
+      s"if $cond then {\n$trueBranch}\n"
 
   override def toJson = {
     val expression = new JSONObject()
@@ -453,20 +531,21 @@ case class IfExp(cond: Exp, trueBranch: Exp, falseBranch: Option[Exp]) extends E
 }
 
 case class MatchExp(exp: Exp, m: List[MatchCase]) extends Exp {
-  override def toString = null // TODO
+  override def toString = s"match $exp with {" + m.mkString("\n") + "}"
   override def toJson = null // TODO
   override def toJson2 = null // TODO
 }
 
 case class MatchCase(patterns: List[Pattern], exp: Exp) extends Exp {
-  override def toString = null // TODO
+  override def toString =
+    "case " + patterns.mkString("|") + " => " + exp
   override def toJson = null // TODO
   override def toJson2 = null // TODO
 }
 
 case class BlockExp(body: List[MemberDecl]) extends Exp {
   override def toString =
-    s"do {\n ${body.foldLeft("")((res, m) => res + s"  $m\n")}}"
+    s"{\n ${body.foldLeft("")((res, m) => res + s"  $m\n")}}"
 
   override def toJson = {
     val expression = new JSONObject()
@@ -481,8 +560,8 @@ case class BlockExp(body: List[MemberDecl]) extends Exp {
 }
 
 case class WhileExp(cond: Exp, body: Exp) extends Exp {
-  override def toString = null
-  // s"while ($cond) {\n  ${body.foldLeft("")((res, m) => res + "  $m\n")} }"
+  override def toString =
+    s"while ($cond) do $body "
 
   override def toJson = {
     val whileexp = new JSONObject()
@@ -498,10 +577,8 @@ case class WhileExp(cond: Exp, body: Exp) extends Exp {
 }
 
 case class ForExp(pattern: Pattern, exp: Exp, body: Exp) extends Exp {
-  override def toString = {
-    null
-    //s"for ($pattern in $exp) do\n ${body.foldLeft("")((res, m) => res + "  $m\n")} }"
-  }
+  override def toString =
+    s"for ($pattern in $exp) do \n $body"
 
   override def toJson = {
     val forexp = new JSONObject()
@@ -546,7 +623,11 @@ case class BinExp(exp1: Exp, op: BinaryOp, exp2: Exp) extends Exp {
 }
 
 case class UnaryExp(op: UnaryOp, exp: Exp) extends Exp {
-  override def toString = s"$op$exp"
+  override def toString =
+    if (op == PREV)
+      s"$exp$op"
+    else
+      s"$op$exp"
 
   override def toJson = {
     val expression = new JSONObject()
@@ -615,7 +696,7 @@ case class QuantifiedExp(quant: Quantifier, bindings: List[RngBinding], exp: Exp
 }
 
 case class TupleExp(exps: List[Exp]) extends Exp {
-  override def toString = "(" + exps.mkString(",") + ")"
+  override def toString = "Tuple(" + exps.mkString(",") + ")"
 
   override def toJson = {
     val tupleExp = new JSONObject()
@@ -636,12 +717,18 @@ case class TupleExp(exps: List[Exp]) extends Exp {
 }
 
 trait CollectionKind
-case object SetKind extends CollectionKind
-case object SeqKind extends CollectionKind
-case object BagKind extends CollectionKind
+case object SetKind extends CollectionKind{
+  override def toString = "Set"
+}
+case object SeqKind extends CollectionKind{
+  override def toString = "Seq"
+}
+case object BagKind extends CollectionKind{
+  override def toString = "Bag"
+}
 
 case class CollectionEnumExp(kind: CollectionKind, exps: List[Exp]) extends Exp {
-  override def toString = "{" + exps.mkString(",") + "}"
+  override def toString = kind + "{" + exps.mkString(",") + "}"
 
   override def toJson = {
     val setEnumExp = new JSONObject()
@@ -662,7 +749,7 @@ case class CollectionEnumExp(kind: CollectionKind, exps: List[Exp]) extends Exp 
 }
 
 case class CollectionRangeExp(kind: CollectionKind, exp1: Exp, exp2: Exp) extends Exp {
-  override def toString = s"{$exp1 .. $exp2}"
+  override def toString = s"$kind{$exp1 .. $exp2}"
 
   override def toJson = {
     val setRangeExp = new JSONObject()
@@ -683,7 +770,7 @@ case class CollectionRangeExp(kind: CollectionKind, exp1: Exp, exp2: Exp) extend
 }
 
 case class CollectionComprExp(kind: CollectionKind, exp1: Exp, bindings: List[RngBinding], exp2: Exp) extends Exp {
-  override def toString = s"{$exp1 | ${bindings.mkString(",")} . $exp2}"
+  override def toString = s"$kind{$exp1 | ${bindings.mkString(",")} . $exp2}"
 
   override def toJson = {
     val setComprExp = new JSONObject()
@@ -755,13 +842,15 @@ case class AssertExp(exp: Exp) extends Exp {
 }
 
 case class TypeCastCheckExp(cast: Boolean, exp: Exp, t: Type) extends Exp {
-  override def toString = null // TODO
+  override def toString = 
+    if(cast) s"$exp as $t"
+    else s"$exp is $t"
   override def toJson = null // TODO
   override def toJson2 = null // TODO
 }
 
 case class ReturnExp(exp: Exp) {
-  override def toString = null // TODO
+  override def toString = s"return $exp"
   def toJson = null // TODO
   def toJson2 = null // TODO
 }
@@ -1311,6 +1400,7 @@ trait Pattern {
 }
 
 case class LiteralPattern(literal: Literal) extends Pattern {
+  override def toString = literal.toString
   override def toJson = null
   override def toJson2 = null
 }
@@ -1355,13 +1445,13 @@ case class ProductPattern(patterns: List[Pattern]) extends Pattern {
 }
 
 case class TypedPattern(pattern: Pattern, t: Type) extends Pattern {
-  override def toString = null //TODO
+  override def toString = s"$pattern : $t"
   override def toJson = null //TODO
   override def toJson2 = null //TODO
 }
 
 case object DontCarePattern extends Pattern {
-  override def toString = null //TODO
+  override def toString = "_"
   override def toJson = null //TODO
   override def toJson2 = null //TODO
 }
@@ -1433,7 +1523,11 @@ case class TypeCollection(ty: Type) extends Collection {
 }
 
 case class Multiplicity(exp1: Exp, exp2: Option[Exp]) {
-  override def toString = null // TODO
+  override def toString = 
+    if(exp2.nonEmpty)
+      s"[$exp1..${exp2.get}]"
+    else
+      s"[$exp1]"
   def toJson = null // TODO
   def toJson2 = null // TODO
 }
