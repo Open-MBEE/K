@@ -1,26 +1,56 @@
 --WSTS modeling pattern
---simple Test script invoking STAKR.rb
+--simple Test script invoking TestBed
 
 
 //EHA = Engineering Housekeeping and Accountability Packet
 //EVR = Event Report
 
 
-class Spacecraft {
+class SpacecraftTestBed {
+
+	
+	val curr_sclk : Int;
+	val lower_sclk : Int;
+	//i.e TchannelID- temporal constraints
+	var DMX_ID : String[];
+	var ChannelID : Int[];
+
+
 }
 
 
 
+class MTAK extends TestBed {
+
+		val session_key :	Int;
+		val user_name :		String;
+		val start_time :	Int;
+		val sse_session :	Int;
+		
+}
+
 class WSTS extends TestBed {
+
+	
+
 }
 
 // make this a command?  event?
 //Exit() is a command -- no time constraints on Exit
-//val Functioncall Exit() = Functioncall(object="STAKR.rb",method="Exit");
+//val Functioncall Exit() = Functioncall(object="TestBed",method="Exit");
 
+
+
+
+//STAKR class
 class TestBed {
 
-
+		val host :	Var;
+		val port :	Var;
+		val configString :	String;
+		val startTime : Int;
+		val startcommand : StartCMD;
+		
 		//--call start command from STAKR-------------------------------------------------------------------
 		//--Start STAKR session
 
@@ -28,7 +58,7 @@ class TestBed {
 		
 			
 		    command{ 
-		    	STAKR.rb.START; 
+		    	TestBed.START; 
 			}
 		
 		
@@ -39,24 +69,23 @@ class TestBed {
 			//make sure StartCMD schedule is on time	
 		
 			constraint startCMDDurationConstraint:
-		    	duration = 5s;
+		    	duration = 2s;
 		    	
-		    constraints EndTime:
-		    	EndTime = startTime + duration;
 		
 		}
 		//--call SetLogFile---------------------------------------------------------------------------------
 		
 		event SetLogFile(fileName){
 		
-		fileName = "D-65303Log.txt";
+		var startCommand : StartCMD;
+		fileName : String;
 		
 			command {
-		    	STAKR.rb.SetLogFile(fileName);
+		    		TestBed.SetLogFile(fileName);
 			}
 		
 				constraint SetLogFile:
-					startTime > StartCMD.endTime;
+					startTime = startCommand.endTime;
 		
 		}
 		
@@ -64,71 +93,114 @@ class TestBed {
 		
 		event WriteMessageCMD(messageToBeSend, messageOutputFile){
 		
+		//startCommand is an instance of the class StartCMD
+		var startCommand : StartCMD;
 		messageToBeSend : String;
 		messageOutputFile : String;
 		
 		
 			command {
-				STAKR.rb.Write(messageToBeSend, messageOutputFile);
+				TestBed.Write(messageToBeSend, messageOutputFile);
 			}
 		
 				constraint WriteMessageCMDscheduleTimer:
-					startTime > StartCMD.endTime;
+					startTime = startCommand.endTime;
 		
 		 }
 		    
 		//--Send(CMDmessage)-------------------------------------------------------------------------------
+		
 		
 		event SendCMD(CMDmessage){
 		
 		CMDmessage : String;
 		
 			command {
-				STAKR.rb.Send(CMDmessage);
+				TestBed.Send(CMDmessage);
 			}
 		
 				constraint SendCMDscheduleTimer:
-					startTime > StartCMD.endTime;		
+					startTime = StartCMD.endTime;		
 		}
 		
-		    
-		//--EVR and EHA timelines
+		//--SendSCMF(filePath)-------------------------------------------------------------------------------
+		// This is a command, no constraints are required
 		
+		filePath: String;
+			
+			SendSCMF(filePath).command{
+				Stakr.rb.SendSCMF(filePath);
+			}
+			
+		
+		//--EVR and EHA timelines
 		//--VerifyEHA()------------------------------------------------------------------------------------
 		    
 		event verifyEHA(channelID,BASE){
 		
-		channelID : String[];
+		//set channelID as temporal constraint
+		//channelID(t) = y
+		
+		
+		var SendCommand : Send;
+		channelID : SpaceCraft;
 		BASE = "10"; //16 if HEX, default set to base 10
 		
 			
 			//--verifyEHA("") --parameter should be ID of telemetry channel
 		    
 		    command{
-				STAKR.rb.VerifyEHA(channelID,BASE);
+				TestBed.VerifyEHA(channelID,BASE);
 			}
 			
 				constraint VerifyEHAscheduleTimer:
-					startTime > SendCMD.endTime;
+					startTime = SendCommand.endTime;
 		}
 		
 		//--VerifyEVR()------------------------------------------------------------------------------------
-		//VerifyEVR(search_string = “”, lower_sclk = “0”)
+		//VerifyEVR(search_string, lower_sclk)
 		
 		event verifyEVR(search_string,sclk){
 		
 		search_string : String;
-		lower_sclk : Double;
+		lower_sclk : SpacecraftTestBed;
 		
 			command{
-				STAKR.rb.VerifyEVR(search_string,sclk);
+				TestBed.VerifyEVR(search_string,sclk);
 			}
 		
 				constraint VerifyEHAscheduleTimer:
-					startTime > SendCMD.endTime;
+					startTime = SendCMD.endTime;
 					
 				constraint VerifyEHAscheduleTimer2:
-					startTime > WriteMessageCMD.endTime;
+					startTime = WriteMessageCMD.endTime;
+					
+		}
+		
+		//--VerifyEVRCritical()------------------------------------------------------------------------------------
+		
+		event verifyEVRCritical(search_string,sclk){
+		
+		//writeMessageCommand is an instance of the class WriteMessageCMD
+		writeMessageCommand : WriteMessageCMD;
+		search_string : String;
+		lower_sclk : SpacecraftTestBed;
+		
+			command{
+				TestBed.VerifyEVRCritical(search_string,sclk);
+			}
+			
+			constraint emptySearchString:
+				search_string != null;
+				Exit();
+				
+			constraint VerifyEHAscheduleTimer:
+				startTime = SendCMD.endTime;
+					
+			constraint VerifyEHAscheduleTimer2:
+				startTime = WriteMessageCMD.endTime;
+				
+		
 		}
 		
 		//--VerifyDP()------------------------------------------------------------------------------------
@@ -136,14 +208,56 @@ class TestBed {
 		event verifyDP(apID,args){
 		
 		apID : String;
+		args : String[];
 		//args : data structure or array, where contents of file with the ID "apID" are stored 
+			
 			command{
-				STAKR.rb.verifyDP(apID,args);
+				TestBed.verifyDP(apID,args);
 			}
 			
-				constraint VerifyapID:
-					apID != null;
+			constraint fileExist:
+				apID.isEmpty() ==  false;	
+	
 		}
+		
+		//--DisplaySessionInfo()------------------------------------------------------------------------------------
+		
+		event DisplaySessionInfo(){
+		
+			var session_key :	MTAK;
+			var user_name :		MTAK;
+			var start_time :	MTAK;
+			var sse_session :	MTAK;
+			
+			var startCommand : StartCMD;
+				
+				constraint DisplaySessionInfoTimer:
+					startTime = startCommand.endTime;
+		
+		}
+		
+		//--SetMode(mode)------------------------------------------------------------------------------------
+		
+		event SetMode(mode){
+		
+		//output file type
+		var mode : String[];
+		val mode[0] := "Quiet";
+		val mode[1] := "Q";
+		val mode[2] := "Verbose";
+		val mode[3] := "Debug";
+		
+			constraint ModeHasChanged:
+				mode[endTime] != mode[startTime];
+			
+		}		
+		
+		
+		
+			
+		
+		
+		
 				
 }
 

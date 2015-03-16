@@ -59,7 +59,6 @@ assoc BatteryInstrument {
 
 class Spacecraft {
   val name : String;
-  val attitude : Attitude;
 
   req EarthSafeDistance:
     attitude.distanceToEarth > 50000 &&
