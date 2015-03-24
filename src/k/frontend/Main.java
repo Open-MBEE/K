@@ -23,13 +23,15 @@ public class Main {
 				"2*x + y = 7 && 3*x - y = 8", // 10
 				"x - y + z = 10 && (3*x + y + 2*z = 34) && ((-5)*x + 2*y - z = -14)", // 11
 				"x = 7 && x < 1", // 12
-				"y = x + 2 && x*x = y", // 13
+				"(y := 16) && (x > 4) && y = x + 12 && x*x = y", // 13
 				"y = x*x - 3*x + 4 && y - x = 1", // 14
-				"forall x_1:Int . (x_1 = 1)"
+				//"forall x_1:Int . (x_1 = 1)", // 15
+				"x != (0) || x = (1) || ((x!=(1)) && (y=(42)))",
+				"(x := 4) && x + 1 = z"
 				};
 
 		// Expression to JSON
-		json = Frontend.exp2Json(exps[2]);
+		json = Frontend.exp2Json(exps[15]);
 		System.out.println(json);
 
 		System.out.println();

@@ -7,7 +7,7 @@ class Car {
   mfdate : Int
 }
 
-class Garage {
+class Garage { 
 
   cars : Set[Car][0,42]
 

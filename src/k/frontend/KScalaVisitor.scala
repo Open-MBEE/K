@@ -401,11 +401,11 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
     var extending: List[Type] =
       if (ctx.extending() == null) Nil
       else visit(ctx.extending()).asInstanceOf[List[Type]]
-    var members: BlockExp =
+    var members: List[MemberDecl] =
       if (ctx.block() != null)
-        visit(ctx.block()).asInstanceOf[BlockExp]
+        visit(ctx.block()).asInstanceOf[List[MemberDecl]]
       else
-        null
+        Nil
     EntityDecl(entityToken, keyword, ident, typeParams, extending, members)
   }
 
@@ -455,10 +455,10 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
         ctx.functionSpecification().asScala.toList.map(visit(_)).asInstanceOf[List[FunSpec]]
       else
         null
-    var body: Option[Exp] =
+    var body: List[MemberDecl] =
       if (ctx.block() != null)
-        Some(visit(ctx.block()).asInstanceOf[BlockExp])
-      else None
+        visit(ctx.block()).asInstanceOf[List[MemberDecl]]
+      else Nil
     FunDecl(ident, typeParams, paramList, t, spec, body)
   }
 
@@ -532,15 +532,14 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   }
 
   override def visitBlock(ctx: ModelParser.BlockContext): AnyRef = {
-    BlockExp(ctx.blockDeclaration().asScala.toList.map(visit(_)).asInstanceOf[List[MemberDecl]])
+    ctx.blockDeclaration().asScala.toList.map(visit(_)).asInstanceOf[List[MemberDecl]]
   }
 
   override def visitBlockDeclaration(ctx: ModelParser.BlockDeclarationContext): AnyRef = {
     val annotations: List[Annotation] = ctx.annotation().asScala.toList.map(visit(_)).asInstanceOf[List[Annotation]]
     val member: MemberDecl = visit(ctx.memberDeclaration()).asInstanceOf[MemberDecl]
-    val block: BlockDecl = BlockDecl(member)
-    block.annotations = annotations
-    block
+    member.annotations = annotations
+    member
   }
 
   override def visitMultiplicity(ctx: ModelParser.MultiplicityContext): AnyRef = {

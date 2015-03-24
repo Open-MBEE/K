@@ -9,6 +9,7 @@ Annotations
 annotation name : String
 annotation id : String
 annotation doc : String
+annotation owner : String
 
 ==================
 Space Craft Model
@@ -19,9 +20,11 @@ Space Craft Model
 @doc("This class describes the basic instrument for a spacecraft.")
 
 class Instrument {
-  name : String 
+  name : String
   id : Int
+  @owner("Rahul")
   powerConsumption : Real = 1000 
+  @owner("Bjorn")
   weight : Real
   currentPowerConsumption : Real 
   operating : Boolean = false 

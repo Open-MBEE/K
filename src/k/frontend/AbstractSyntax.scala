@@ -115,7 +115,7 @@ case class EntityDecl(
   ident: String,
   typeParams: List[TypeParam],
   extending: List[Type],
-  members: BlockExp) extends TopDecl {
+  members: List[MemberDecl]) extends TopDecl {
   var annotations: List[Annotation] = null
   override def toString = {
     var result = ""
@@ -221,19 +221,6 @@ trait MemberDecl extends TopDecl {
   var annotations: List[Annotation] = null
 }
 
-case class BlockDecl(body: MemberDecl) extends MemberDecl {
-  override def toString = {
-    var result: String = ""
-    for (annotation <- annotations) {
-      result += annotation + "\n"
-    }
-    result += body + "\n"
-    result
-  }
-  override def toJson = null
-  override def toJson2 = null
-}
-
 case class TypeDecl(ident: String,
                     typeParams: List[TypeParam],
                     t: Option[Type]) extends MemberDecl {
@@ -324,7 +311,7 @@ case class FunDecl(ident: String,
                    params: List[Param],
                    t: Option[Type],
                    spec: List[FunSpec],
-                   body: Option[Exp]) extends MemberDecl {
+                   body: List[MemberDecl]) extends MemberDecl {
   override def toString = {
     var result = "\nfun "
     result += ident
@@ -338,7 +325,7 @@ case class FunDecl(ident: String,
       result += " : " + t + "\n"
     }
     result += spec.mkString("\n")
-    if (body.nonEmpty) result += body.get
+    //if (body.nonEmpty) result += body.get
     result
   }
   override def toJson = {

@@ -105,8 +105,8 @@ object K2Z3 {
             var v2: Expr = Expr2Z3(e2).asInstanceOf[Expr]
             ctx.MkEq(v1, v2)
           case NEQ =>
-            var v1: BoolExpr = Expr2Z3(e1).asInstanceOf[BoolExpr]
-            var v2: BoolExpr = Expr2Z3(e2).asInstanceOf[BoolExpr]
+            var v1 = Expr2Z3(e1)
+            var v2 = Expr2Z3(e2)
             ctx.MkNot(ctx.MkEq(v1, v2))
           case MUL =>
             var v1: ArithExpr = Expr2Z3(e1).asInstanceOf[ArithExpr]
