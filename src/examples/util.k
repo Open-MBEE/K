@@ -49,6 +49,7 @@ class <view> View extends ModelElement {
 
 }
 
-view MyView {
+
+view MyView { 
 
 }
