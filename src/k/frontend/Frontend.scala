@@ -22,7 +22,7 @@ object Frontend {
       case Nil => map
       case "-f" :: value :: tail =>
         parseArgs(map ++ Map('modelFile -> value), tail)
-      case "-v" :: tail => parseArgs(map ++ Map('verbose -> true), tail)
+      case "-v" :: tail     => parseArgs(map ++ Map('verbose -> true), tail)
       case "-stats" :: tail => parseArgs(map ++ Map('stats -> true), tail)
       case "-expressionToJson" :: value :: tail =>
         parseArgs(map ++ Map('expression -> value), tail)
@@ -40,17 +40,17 @@ object Frontend {
     val model: Model =
       options.get('modelFile) match {
         case Some(f: String) => getModelFromFile(f)
-        case None => null
+        case None            => null
       }
 
     options.get('stats) match {
       case Some(_) => printStats(model)
-      case None => ()
+      case None    => ()
     }
 
     options.get('verbose) match {
       case Some(_) => printModel(model)
-      case None => ()
+      case None    => ()
     }
 
     options.get('expression) match {
@@ -66,11 +66,11 @@ object Frontend {
       }
       case None => ()
     }
-    
-    if(model != null) 
+
+    if (model != null)
       println(model.toString())
   }
-/* TODO
+  /* TODO
   def visitJsonObject(o: Any): AnyRef = {
     val obj = o.asInstanceOf[JSONObject]
     obj.get("type") match {
@@ -320,7 +320,7 @@ object Frontend {
     }
     res
   }
-/*
+  /*
   // Assuming that the input to this is an expression in JSON string format
   def json2exp(expressionString: String): String = {
     var tokener: JSONTokener = new JSONTokener(expressionString)
@@ -496,7 +496,7 @@ object Frontend {
     require(m.decls.count(_ => true) == 1)
     println(m.toString)
     println(m.decls(0).toString())
-    
+
     var exp: Exp = m.decls(0).asInstanceOf[ExpressionDecl].exp
     val array = new JSONArray()
     val operand = new JSONArray()
@@ -519,7 +519,7 @@ object Frontend {
       m.decls.count(
         _ match {
           case ExpressionDecl(_) => true
-          case _ => false
+          case _                 => false
         }) == 1)
 
     var exp: Exp = m.decls(0).asInstanceOf[ExpressionDecl].exp
@@ -534,8 +534,8 @@ object Frontend {
     var res: JSONObject = root.put("elements", array)
     res.toString(4)
   }
-  
-  def exp2KExp(expressionString : String) : Exp = {
+
+  def exp2KExp(expressionString: String): Exp = {
     val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(expressionString)
     var m: Model = ksv.visit(tree).asInstanceOf[Model]
 
@@ -544,47 +544,52 @@ object Frontend {
       m.decls.count(
         _ match {
           case ExpressionDecl(_) => true
-          case _ => false
+          case _                 => false
         }) == 1)
 
     var exp: Exp = m.decls(0).asInstanceOf[ExpressionDecl].exp
     exp
   }
 
+  def exp2KExpList(expressionString: String): List[Exp] = {
+    val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(expressionString)
+    var m: Model = ksv.visit(tree).asInstanceOf[Model]
+    m.decls.map(x => x.asInstanceOf[ExpressionDecl].exp)
+  }
+
   def printStats(m: Model) {
     println("Imports: " + m.imports.size)
     println("Entities: " + m.decls.count(
       _ match {
-        case EntityDecl(_,_, _, _, _, _) => true
-        case _ => false
+        case EntityDecl(_, _, _, _, _, _) => true
+        case _                            => false
       }))
     println("Constraints: " + m.decls.count(
       _ match {
         case ConstraintDecl(_, _) => true
-        case _ => false
+        case _                    => false
       }))
     println("Properties: " + m.decls.count(
       _ match {
-        case PropertyDecl(_,_,_,_,_,_) => true
-        case _ => false
+        case PropertyDecl(_, _, _, _, _, _) => true
+        case _                              => false
       }))
     println("Functions: " + m.decls.count(
       _ match {
-        case FunDecl(_, _, _, _, _,_) => true
-        case _ => false
+        case FunDecl(_, _, _, _, _, _) => true
+        case _                         => false
       }))
     println("Types: " + m.decls.count(
       _ match {
         case TypeDecl(_, _, _) => true
-        case _ => false
+        case _                 => false
       }))
     println("Expressions: " + m.decls.count(
       _ match {
         case ExpressionDecl(_) => true
-        case _ => false
+        case _                 => false
       }))
     println("AnnotationDecls: " + m.annotations.size)
-
 
   }
 

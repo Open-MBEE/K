@@ -10,154 +10,222 @@ import com.microsoft.z3.Status
 import com.microsoft.z3.Z3Exception
 import collection.JavaConversions._
 import com.microsoft.z3.Expr
+import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ HashMap => MMap }
 
 object K2Z3 {
 
-  var cfg: Map[String, String] = Map("model" -> "true");
-  var ctx: Context = new Context(cfg);
-  var idents : Set[Expr] = Set()
-  var model : com.microsoft.z3.Model = null
+  val debug: Boolean = false
+  var cfg: Map[String, String] = Map("model" -> "true",
+    "auto-config" -> "false")
+  var ctx: Context = new Context(cfg)
+  var idents: MMap[String, (Expr, com.microsoft.z3.StringSymbol)] = MMap()
+  var model: com.microsoft.z3.Model = null
 
-  def reset(){
+  def reset() {
     model = null
-    idents = Set()
+    idents = new MMap()
     ctx = new Context(cfg)
+    ctx.mkIntSort()
   }
-  
+
   def PrintModel() {
-    if(model == null){
+    if (model == null) {
       println("UNSATISFIABLE! No assignments could be found to satisfy the given expression.")
-    }
-    else{
-      for(i <- idents){
-        println(i.toString() + " = " + model.Evaluate(i, false))
+    } else {
+      for ((i, (e, s)) <- idents) {
+        println(e.toString() + " = " + model.evaluate(e, true))
       }
+
     }
   }
-  
-  def Check(f: BoolExpr, sat: Status): com.microsoft.z3.Model = {
-    var s: Solver = ctx.MkSolver();
-    s.Assert(f);
-    if (s.Check() != sat)
-      throw new Exception();
-    if (sat == Status.SATISFIABLE){
-      model = s.Model()
-    }
-    else{
+
+  def SolveExp(e: Exp): com.microsoft.z3.Model = {
+    reset()
+    SolveExp(Expr2Z3(e).asInstanceOf[BoolExpr])
+  }
+
+  def SolveExp(e: BoolExpr): com.microsoft.z3.Model = {
+    var solver: Solver = ctx.mkSolver()
+    solver.add(e)
+    val params = ctx.mkParams()
+    //params.add("mbqi", false)
+    solver.setParameters(params)
+    if (debug) println("solving " + solver)
+    val status = solver.check()
+    if (Status.SATISFIABLE == status) {
+      println("SAT")
+      model = solver.getModel
+    } else if (status == Status.UNSATISFIABLE) {
+      println("UNSAT")
+    } else {
+      println("UNKNOWN")
       model = null
     }
     model
   }
-  
-  def SolveExp(e:Exp) : com.microsoft.z3.Model = {
-    var o = Expr2Z3(e).asInstanceOf[BoolExpr]
-    var solver : Solver = ctx.MkSolver();
-    solver.Assert(o)
-    if (Status.SATISFIABLE == solver.Check()){
-        model = solver.Model();
-    }
-    else{
-    	model = null
-    }
-    model
-  }
-  
+
   def Expr2Z3(e: Exp): com.microsoft.z3.Expr = {
     e match {
-      case ParenExp(e) => 
+      case ParenExp(e) =>
         Expr2Z3(e)
       case BinExp(e1, o, e2) =>
         o match {
           case LT =>
             var v1: ArithExpr = Expr2Z3(e1).asInstanceOf[ArithExpr]
             var v2: ArithExpr = Expr2Z3(e2).asInstanceOf[ArithExpr]
-            ctx.MkLt(v1, v2)
+            ctx.mkLt(v1, v2)
           case LTE =>
             var v1: ArithExpr = Expr2Z3(e1).asInstanceOf[ArithExpr]
             var v2: ArithExpr = Expr2Z3(e2).asInstanceOf[ArithExpr]
-            ctx.MkLe(v1, v2)
+            ctx.mkLe(v1, v2)
           case GT =>
             var v1: ArithExpr = Expr2Z3(e1).asInstanceOf[ArithExpr]
             var v2: ArithExpr = Expr2Z3(e2).asInstanceOf[ArithExpr]
-            ctx.MkGt(v1, v2)
+            ctx.mkGt(v1, v2)
           case GTE =>
             var v1: ArithExpr = Expr2Z3(e1).asInstanceOf[ArithExpr]
             var v2: ArithExpr = Expr2Z3(e2).asInstanceOf[ArithExpr]
-            ctx.MkGe(v1, v2)
+            ctx.mkGe(v1, v2)
           case AND =>
             var v1: BoolExpr = Expr2Z3(e1).asInstanceOf[BoolExpr]
             var v2: BoolExpr = Expr2Z3(e2).asInstanceOf[BoolExpr]
-            ctx.MkAnd(Array(v1, v2))
+            ctx.mkAnd(v1, v2)
           case OR =>
             var v1: BoolExpr = Expr2Z3(e1).asInstanceOf[BoolExpr]
             var v2: BoolExpr = Expr2Z3(e2).asInstanceOf[BoolExpr]
-            ctx.MkOr(Array(v1, v2))
+            ctx.mkOr(v1, v2)
           case IMPL =>
             var v1: BoolExpr = Expr2Z3(e1).asInstanceOf[BoolExpr]
             var v2: BoolExpr = Expr2Z3(e2).asInstanceOf[BoolExpr]
-            ctx.MkImplies(v1, v2)
+            ctx.mkImplies(v1, v2)
           case IFF =>
             var v1: BoolExpr = Expr2Z3(e1).asInstanceOf[BoolExpr]
             var v2: BoolExpr = Expr2Z3(e2).asInstanceOf[BoolExpr]
-            ctx.MkIff(v1, v2)
+            ctx.mkIff(v1, v2)
           case EQ =>
             var v1: Expr = Expr2Z3(e1).asInstanceOf[Expr]
             var v2: Expr = Expr2Z3(e2).asInstanceOf[Expr]
-            ctx.MkEq(v1, v2)
+            ctx.mkEq(v1, v2)
           case NEQ =>
             var v1 = Expr2Z3(e1)
             var v2 = Expr2Z3(e2)
-            ctx.MkNot(ctx.MkEq(v1, v2))
+            ctx.mkNot(ctx.mkEq(v1, v2))
           case MUL =>
             var v1: ArithExpr = Expr2Z3(e1).asInstanceOf[ArithExpr]
             var v2: ArithExpr = Expr2Z3(e2).asInstanceOf[ArithExpr]
-            ctx.MkMul(Array(v1, v2))
+            ctx.mkMul(v1, v2)
           case DIV =>
             var v1: ArithExpr = Expr2Z3(e1).asInstanceOf[ArithExpr]
             var v2: ArithExpr = Expr2Z3(e2).asInstanceOf[ArithExpr]
-            ctx.MkDiv(v1, v2)
+            ctx.mkDiv(v1, v2)
           case REM =>
             var v1: IntExpr = Expr2Z3(e1).asInstanceOf[IntExpr]
             var v2: IntExpr = Expr2Z3(e2).asInstanceOf[IntExpr]
-            ctx.MkRem(v1, v2)
+            ctx.mkRem(v1, v2)
           case ADD =>
             var v1: ArithExpr = Expr2Z3(e1).asInstanceOf[ArithExpr]
             var v2: ArithExpr = Expr2Z3(e2).asInstanceOf[ArithExpr]
-            ctx.MkAdd(Array(v1, v2))
+            ctx.mkAdd(v1, v2)
           case SUB =>
             var v1: ArithExpr = Expr2Z3(e1).asInstanceOf[ArithExpr]
             var v2: ArithExpr = Expr2Z3(e2).asInstanceOf[ArithExpr]
-            ctx.MkSub(Array(v1, v2))
+            ctx.mkSub(v1, v2)
           case ASSIGN =>
             var v1: Expr = Expr2Z3(e1).asInstanceOf[Expr]
             var v2: Expr = Expr2Z3(e2).asInstanceOf[Expr]
-            ctx.MkEq(v1, v2)
+            ctx.mkEq(v1, v2)
         }
       case UnaryExp(o, e) =>
         o match {
           case NOT =>
-            var v : BoolExpr = Expr2Z3(e).asInstanceOf[BoolExpr]
-            ctx.MkNot(v)
+            var v: BoolExpr = Expr2Z3(e).asInstanceOf[BoolExpr]
+            ctx.mkNot(v)
           case NEG =>
-            var v : ArithExpr = Expr2Z3(e).asInstanceOf[ArithExpr]
-            ctx.MkMul((Array(ctx.MkInt(-1),v)))
+            var v: ArithExpr = Expr2Z3(e).asInstanceOf[ArithExpr]
+            ctx.mkMul(ctx.mkInt(-1), v)
         }
       case IdentExp(i) =>
-        var ie = ctx.MkIntConst(i)
-        idents = idents + ie
-        ie
+        idents.get(i) match {
+          case None =>
+            var s = ctx.mkSymbol(i)
+            var ie = ctx.mkIntConst(s)
+            idents.put(i, (ie, s))
+            ie
+          case Some(x) =>
+            x._1
+        }
       case IntegerLiteral(i) =>
-        ctx.MkInt(i)
+        ctx.mkInt(i)
       case BooleanLiteral(b) =>
-        ctx.MkBool(b)
+        ctx.mkBool(b)
       case RealLiteral(r) =>
-        ctx.MkReal(r.toString)
-      case _ =>
-        println("Currently all other expressions are not supported in K2Z3.")
-        println("Please rewrite your expression and try again.")
-        println(e.getClass().toString())
-        System.exit(-1).asInstanceOf[Nothing]
-    }
+        ctx.mkReal(r.toString)
+      case QuantifiedExp(quantifier, bindings, expression) =>
 
+        var qtypes = new ListBuffer[com.microsoft.z3.Sort]()
+        var names = new ListBuffer[com.microsoft.z3.Symbol]()
+        var patterns = new ListBuffer[com.microsoft.z3.Pattern]()
+        var ies = new ListBuffer[Expr]()
+        for (b <- bindings) {
+          for (p <- b.patterns) {
+            p match {
+              case IdentPattern(x) =>
+                idents.get(x) match {
+                  case None =>
+                    val xSym = ctx.mkSymbol(x)
+                    var ie = ctx.mkConst(xSym, ctx.getIntSort)
+                    idents.put(x, (ie, xSym))
+                    names.add(xSym)
+                    ies.add(ie)
+                    b.collection match {
+                      case TypeCollection(ty) =>
+                        ty match {
+                          case BoolType => qtypes.add(ctx.getBoolSort())
+                          case IntType =>
+                            qtypes.add(ctx.getIntSort())
+                            val pattern = ctx.mkPattern(ie)
+                            patterns.add(ctx.mkPattern(ie))
+
+                          case RealType => qtypes.add(ctx.getRealSort())
+                          case _ =>
+                            Misc.error("Only bool, int, and real primitive types are supported for quantified expressions in Z3." + expression)
+                        }
+                      case _ =>
+                        Misc.error("Only type collections are supported for quantified expressions in Z3." +
+                          "\nPlease check expression " + expression)
+                    }
+                  case Some(x) => ()
+                }
+
+              case _ =>
+                Misc.error("Only literal and ident patterns are supported for quantified expressions in Z3." +
+                  "Please check expression " + expression)
+            }
+          }
+        }
+
+        var body: Expr = Expr2Z3(expression)
+
+        // There are two ways to construct quantified expressions in Z3
+        // one is by using named constants
+        // the other is by de-Brujin indexed variables.
+        // We have to be careful, because there are no checks for actually 
+        // checking if you are mixing the two and doing it incorrectly
+        // The following uses de-Brujin indexed variables for forall
+        // and named constants for exists. 
+        // This probably can be cleaned up, but it is the only way I got
+        // it to work.
+        quantifier match {
+          case Forall =>
+            ctx.mkForall(ies.toArray, body, 0, null,
+              null, null, null)
+          case Exists =>
+            ctx.mkExists(qtypes.toArray, names.toArray,
+              body, 1, null, null, null, null)
+          //ctx.mkExists(ies.toArray, body, 0, null, null, null, null)
+        }
+    }
   }
+
 }
