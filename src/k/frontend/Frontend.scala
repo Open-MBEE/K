@@ -485,6 +485,12 @@ object Frontend {
     m
   }
 
+  def getModelFromString(f: String): Model = {
+    val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(f)
+    var m: Model = ksv.visit(tree).asInstanceOf[Model]
+    m
+  }
+  
   def printModel(m: Model) {
     println(m)
   }

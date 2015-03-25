@@ -321,11 +321,15 @@ case class FunDecl(ident: String,
     if (params.size > 0) {
       result += "(" + params.mkString(",") + ")"
     }
-    if (t.nonEmpty) {
-      result += " : " + t + "\n"
+    t match {
+      case Some(ty) => result += " : " + ty + "\n"
+      case _ => ()
     }
     result += spec.mkString("\n")
-    //if (body.nonEmpty) result += body.get
+    result += " {\n"
+    result += body.mkString("\n")
+    result += "\n}"
+
     result
   }
   override def toJson = {
@@ -610,7 +614,7 @@ case class UnaryExp(op: UnaryOp, exp: Exp) extends Exp {
     if (op == PREV)
       s"$exp$op"
     else
-      s"$op$exp"
+      s"$op($exp)"
 
   override def toJson = {
     val expression = new JSONObject()
@@ -700,13 +704,13 @@ case class TupleExp(exps: List[Exp]) extends Exp {
 }
 
 trait CollectionKind
-case object SetKind extends CollectionKind{
+case object SetKind extends CollectionKind {
   override def toString = "Set"
 }
-case object SeqKind extends CollectionKind{
+case object SeqKind extends CollectionKind {
   override def toString = "Seq"
 }
-case object BagKind extends CollectionKind{
+case object BagKind extends CollectionKind {
   override def toString = "Bag"
 }
 
@@ -825,8 +829,8 @@ case class AssertExp(exp: Exp) extends Exp {
 }
 
 case class TypeCastCheckExp(cast: Boolean, exp: Exp, t: Type) extends Exp {
-  override def toString = 
-    if(cast) s"$exp as $t"
+  override def toString =
+    if (cast) s"$exp as $t"
     else s"$exp is $t"
   override def toJson = null // TODO
   override def toJson2 = null // TODO
@@ -1506,8 +1510,8 @@ case class TypeCollection(ty: Type) extends Collection {
 }
 
 case class Multiplicity(exp1: Exp, exp2: Option[Exp]) {
-  override def toString = 
-    if(exp2.nonEmpty)
+  override def toString =
+    if (exp2.nonEmpty)
       s"[$exp1..${exp2.get}]"
     else
       s"[$exp1]"
