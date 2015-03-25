@@ -464,7 +464,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
 
   override def visitFunctionSpecification(ctx: ModelParser.FunctionSpecificationContext): AnyRef = {
     var pre: Boolean =
-      if (ctx.children.get(0) == "pre") true
+      if (ctx.children.get(0).getText().equals("pre")) true
       else false
     var exp: Exp = visit(ctx.expression()).asInstanceOf[Exp]
     FunSpec(pre, exp)
@@ -616,7 +616,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
     AnnotationDecl(name, t)
   }
 
-    override def visitPrevExp(ctx: ModelParser.PrevExpContext): AnyRef = {
+  override def visitPrevExp(ctx: ModelParser.PrevExpContext): AnyRef = {
     UnaryExp(PREV, IdentExp(ctx.qualifiedName().getText()))
   }
 

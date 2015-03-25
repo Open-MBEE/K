@@ -64,5 +64,7 @@ public class Main {
 		}
 
 		Misc.wpTest();
+		
+		Misc.wpTest2();
 	}
 }

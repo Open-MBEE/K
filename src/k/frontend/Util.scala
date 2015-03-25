@@ -43,8 +43,68 @@ object Misc {
                 BinExp(p, AND, UnaryExp(NOT, cond)))
           }
         case _ =>
-          error("Unknown expression in wp.")
+          error("Unknown expression in wp: " + e)
       })
+  }
+
+  def functionWp(f: FunDecl, pred: Exp): Exp = {
+    f.body.foldLeft(pred)((r, d) =>
+      d match {
+        case ConstraintDecl(name, exp) => BinExp(r, AND, exp)
+        case ExpressionDecl(exp)       => wp(List(r), exp)
+        case _                         => r
+      })
+  }
+
+  def functionBodyWp(b: List[MemberDecl], pred: Exp): Exp = {
+    b.foldLeft(pred)((r, d) =>
+      d match {
+        case ConstraintDecl(name, exp) => BinExp(r, AND, exp)
+        case ExpressionDecl(exp)       => wp(List(exp), r)
+        case _                         => r
+      })
+  }
+
+  def wpTest2() {
+    println("+++++++++++++++++++++++++++++++")
+
+    val input = "x : Int y : Int fun test pre(x = 0) post(y = 42) post(y > 100) {x:= 4 if x = 0 then y := 42 else y := 42}"
+    val model = Frontend.getModelFromString(input)
+
+    val globals =
+      model.decls.foldLeft(List[(String, Type)]())((r, d) =>
+        d match {
+          case PropertyDecl(_, name, t, _, _, _) => (name, t) :: r
+          case _                                 => r
+        })
+
+    for (md <- model.decls) {
+      md match {
+        case FunDecl(ident, typeParams, params, t, spec, body) =>
+          println("Processing function " + ident)
+          val posts = spec.filter { s => !s.pre }
+          val pre = spec.filter { s => s.pre }
+          val preConjugated = pre.foldLeft(BooleanLiteral(true).asInstanceOf[Exp])((r, p) => BinExp(r, AND, p.exp))
+          for (post <- posts) {
+            val wpPost = functionBodyWp(body.reverse, post.exp)
+            val check = BinExp(preConjugated, IMPL, wpPost)
+            val rangeBindings =
+              globals.foldLeft(List[RngBinding]()) { (r, g) =>
+                val rngBinding = RngBinding(List(IdentPattern(g._1)), TypeCollection(g._2))
+                rngBinding :: r
+              }
+            val checkWithQuantifiers = QuantifiedExp(Forall, rangeBindings, check)
+            println("Checking " + checkWithQuantifiers)
+            K2Z3.SolveExp(checkWithQuantifiers)
+          }
+
+        case _ => ()
+      }
+    }
+
+    // for all post conditions
+    // construct pre_0 && pre_1 && ... && pre_n => WP(function, post)
+    println("--------------------------------")
   }
 
   def wpTest() {
@@ -62,7 +122,6 @@ object Misc {
       BinExp(preCondition, IMPL, result))
     K2Z3.SolveExp(finalCheck)
     K2Z3.PrintModel()
-
   }
 
   def error(message: String): Nothing = {
