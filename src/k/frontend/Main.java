@@ -38,7 +38,6 @@ public class Main {
 		// Expression to JSON
 		json = Frontend.exp2Json(exps[15]);
 		System.out.println(json);
-
 		System.out.println();
 
 		// JSON to Expression from AST
@@ -66,5 +65,7 @@ public class Main {
 		Misc.wpTest();
 		
 		Misc.wpTest2();
+
+		
 	}
 }

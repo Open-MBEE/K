@@ -145,8 +145,10 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   override def visitAppExp(ctx: ModelParser.AppExpContext): AnyRef = {
     var e0: Exp = visit(ctx.expression()).asInstanceOf[Exp]
     var argumentList =
-      if (ctx.argumentList() != null) visit(ctx.argumentList()).asInstanceOf[List[Argument]]
-      else null
+      if (ctx.argumentList() != null) 
+        visit(ctx.argumentList()).asInstanceOf[List[Exp]]
+      else 
+        Nil
 
     FunApplExp(e0, argumentList)
   }
@@ -406,7 +408,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
         visit(ctx.block()).asInstanceOf[List[MemberDecl]]
       else
         Nil
-    EntityDecl(entityToken, keyword, ident, typeParams, extending, members)
+    EntityDecl(null, entityToken, keyword, ident, typeParams, extending, members)
   }
 
   override def visitParamList(ctx: ModelParser.ParamListContext): AnyRef = {
@@ -425,17 +427,17 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   }
 
   override def visitNamedArgList(ctx: ModelParser.NamedArgListContext): AnyRef = {
-    visit(ctx.namedArgumentList()).asInstanceOf[List[NamedArg]]
+    visit(ctx.namedArgumentList()).asInstanceOf[List[NamedArgument]]
   }
 
   override def visitNamedArgument(ctx: ModelParser.NamedArgumentContext): AnyRef = {
     var ident: String = ctx.Identifier().getText()
     var exp: Exp = visit(ctx.expression()).asInstanceOf[Exp]
-    NamedArg(ident, exp)
+    NamedArgument(ident, exp)
   }
 
   override def visitNamedArgumentList(ctx: ModelParser.NamedArgumentListContext): AnyRef = {
-    ctx.namedArgument().asScala.toList.map(visit(_)).asInstanceOf[List[NamedArg]]
+    ctx.namedArgument().asScala.toList.map(visit(_)).asInstanceOf[List[NamedArgument]]
   }
 
   override def visitFunctionDeclaration(ctx: ModelParser.FunctionDeclarationContext): AnyRef = {
