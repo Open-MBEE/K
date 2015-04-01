@@ -102,7 +102,7 @@ object Frontend {
         IfExp(cond, trueBranch, falseBranch)
       case "WhileExp" =>
         val cond: Exp = visitJsonObject(obj.get("condition")).asInstanceOf[Exp]
-        val body = visitJsonArray(obj.get("body"), visitJsonObject).asInstanceOf[Exp]
+        val body = visitJsonObject(obj.get("body")).asInstanceOf[Exp]
         WhileExp(cond, body)
       case "ForExp" =>
         val pattern: Pattern = visitJsonObject(obj.get("pattern")).asInstanceOf[Pattern]
@@ -162,14 +162,14 @@ object Frontend {
       case "TupleExp" =>
         TupleExp(visitJsonArray(obj.get("exps"), visitJsonObject).asInstanceOf[List[Exp]])
       case "CollectionEnumExp" =>
-        CollectionEnumExp(visitJsonObject(obj.get("kind")).asInstanceOf[CollectionKind],
+        CollectionEnumExp(getCollectionKind(obj.getString("kind")),
           visitJsonArray(obj.get("exps"), visitJsonObject).asInstanceOf[List[Exp]])
       case "CollectionRangeExp" =>
-        CollectionRangeExp(visitJsonObject(obj.get("kind")).asInstanceOf[CollectionKind],
+        CollectionRangeExp(getCollectionKind(obj.getString("kind")),
           visitJsonObject(obj.get("exp1")).asInstanceOf[Exp],
           visitJsonObject(obj.get("exp2")).asInstanceOf[Exp])
       case "CollectionComprExp" =>
-        var kind = visitJsonObject(obj.get("kind")).asInstanceOf[CollectionKind]
+        var kind = getCollectionKind(obj.getString("kind"))
         var exp1 = visitJsonObject(obj.get("exp1")).asInstanceOf[Exp]
         var bindings = visitJsonArray(obj.get("bindings"), visitJsonObject).asInstanceOf[List[RngBinding]]
         var exp2 = visitJsonObject(obj.get("exp2")).asInstanceOf[Exp]
@@ -323,6 +323,8 @@ object Frontend {
         }
       case "TypeCastCheckExp" =>
         TypeCastCheckExp(obj.getBoolean("cast"), visitJsonObject(obj.get("exp")).asInstanceOf[Exp], visitJsonObject(obj.get("ty")).asInstanceOf[Type])
+      case "BlockExp" =>
+        BlockExp(visitJsonArray(obj.getJSONArray("body"), visitJsonObject).asInstanceOf[List[MemberDecl]])
       case "BoolType"   => BoolType
       case "IntType"    => IntType
       case "RealType"   => RealType
@@ -394,6 +396,14 @@ object Frontend {
     }
   }
 
+  def getCollectionKind(o: String): CollectionKind = {
+    o match {
+      case "Set" => SetKind
+      case "Seq" => SeqKind
+      case "Bag" => BagKind
+    }
+  }
+
   def getRngBinding(o: Any): AnyRef = {
     val obj = o.asInstanceOf[JSONObject].getJSONArray("operand")
     val patternList: MList[Pattern] = MList()
@@ -452,6 +462,15 @@ object Frontend {
             val bindings = getRngBindingList(operand.getJSONObject(2)).asInstanceOf[List[RngBinding]]
             val exp = visitJsonObject2(operand.getJSONObject(3)).asInstanceOf[Exp]
             QuantifiedExp(quantifier, bindings, exp)
+          case "CollectionComprExp" =>
+            var kind = getCollectionKind(operand.getString(1))
+            var exp1 = visitJsonObject2(operand.get(2)).asInstanceOf[Exp]
+            var exp2 = visitJsonObject2(operand.get(3)).asInstanceOf[Exp]
+            val bindings: MList[RngBinding] = MList()
+            for (i <- Range(4, operand.length())) {
+              bindings += visitJsonObject2(operand.get(i)).asInstanceOf[RngBinding]
+            }
+            CollectionComprExp(kind, exp1, bindings.toList, exp2)
           case "LambdaExp" =>
             val pat = getPattern(operand.getJSONObject(1)).asInstanceOf[Pattern]
             val exp = visitJsonObject2(operand.getJSONObject(2)).asInstanceOf[Exp]
@@ -540,6 +559,17 @@ object Frontend {
                   System.exit(-1).asInstanceOf[Nothing]
               }
             UnaryExp(operator, visitJsonObject2(operand.getJSONObject(2)).asInstanceOf[Exp])
+          case "RngBinding" =>
+            val patterns: MList[Pattern] = MList()
+            for (i <- Range(2, operand.length())) {
+              patterns += visitJsonObject2(operand.get(i)).asInstanceOf[Pattern]
+            }
+            val collection = visitJsonObject2(operand.get(1)).asInstanceOf[Collection]
+            RngBinding(patterns.toList, collection)
+          case "ExpCollection" =>
+            ExpCollection(visitJsonObject2(operand.get(1)).asInstanceOf[Exp])
+          case "IdentPattern" =>
+            IdentPattern(operand.get(1).asInstanceOf[String])
         }
       case "IdentExp" | "ElementValue" =>
         IdentExp(obj.get("element").asInstanceOf[String])
@@ -705,6 +735,7 @@ object Frontend {
     val array = new JSONArray()
     val operand = new JSONArray()
     val root = new JSONObject()
+    Options.useJson1 = true
     var elements = exp.toJson
     var specialization = new JSONObject()
     specialization = new JSONObject()
