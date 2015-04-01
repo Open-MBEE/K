@@ -728,9 +728,6 @@ object Frontend {
     val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(expressionString)
     var m: Model = ksv.visit(tree).asInstanceOf[Model]
 
-    require(m.decls.count(_ => true) == 1)
-    require(m.decls(0).isInstanceOf[ExpressionDecl])
-
     var exp: Exp = m.decls(0).asInstanceOf[ExpressionDecl].exp
     val array = new JSONArray()
     val operand = new JSONArray()
@@ -748,9 +745,6 @@ object Frontend {
   def exp2Json2(expressionString: String): String = {
     val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(expressionString)
     var m: Model = ksv.visit(tree).asInstanceOf[Model]
-
-    require(m.decls.count(_ => true) == 1)
-    require(getDeclCount(m, ExpressionDecl.getClass) == 1)
 
     var exp: Exp = m.decls(0).asInstanceOf[ExpressionDecl].exp
     val array = new JSONArray()
@@ -772,9 +766,6 @@ object Frontend {
     val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(expressionString)
     var m: Model = ksv.visit(tree).asInstanceOf[Model]
 
-    require(m.decls.count(_ => true) == 1)
-    require(getDeclCount(m, ExpressionDecl.getClass) == 1)
-
     var exp: Exp = m.decls(0).asInstanceOf[ExpressionDecl].exp
     exp
   }
@@ -785,23 +776,18 @@ object Frontend {
     m.decls.map(x => x.asInstanceOf[ExpressionDecl].exp)
   }
 
-  def getDeclCount(m: Model, d: AnyRef): Int = {
-    m.decls.count(
-      _.getClass match {
-        case d => true
-        case _ => false
-      })
+  def getDeclCount(m: Model, d: Class[_]): Int = {
+    m.decls.count(decl => (d == decl.getClass))
   }
 
   def printStats(m: Model) {
     println("Imports: " + m.imports.size)
-    println("Entities: " + getDeclCount(m, EntityDecl.getClass))
-    println("Properties: " + getDeclCount(m, PropertyDecl.getClass))
-    println("Functions: " + getDeclCount(m, FunDecl.getClass))
-    println("Types: " + getDeclCount(m, TypeDecl.getClass))
-    println("Expressions: " + getDeclCount(m, ExpressionDecl.getClass))
-    println("Annotations: " + getDeclCount(m, AnnotationDecl.getClass))
-    println("Constraints: " + getDeclCount(m, ConstraintDecl.getClass))
+    println("Entities: " + getDeclCount(m, classOf[EntityDecl]))
+    println("Properties: " + getDeclCount(m, classOf[PropertyDecl]))
+    println("Functions: " + getDeclCount(m, classOf[FunDecl]))
+    println("Types: " + getDeclCount(m, classOf[TypeDecl]))
+    println("Expressions: " + getDeclCount(m, classOf[ExpressionDecl]))
+    println("Constraints: " + getDeclCount(m, classOf[ConstraintDecl]))
   }
 
   def analyze(m: Model) {
