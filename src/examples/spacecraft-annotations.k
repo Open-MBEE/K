@@ -10,6 +10,7 @@ annotation name : String
 annotation id : String
 annotation doc : String
 annotation owner : String
+annotation url : String
 
 ==================
 Space Craft Model
@@ -75,7 +76,7 @@ class Attitude {
 
 assoc BatteryInstrument {
   source bat : Battery
-  target inst : Instrument [0,*]
+  target inst : Instrument [*] -- Set[Instrument] ? 
 }
 
 class Spacecraft {
