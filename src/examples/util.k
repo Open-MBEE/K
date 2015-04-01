@@ -15,18 +15,9 @@ class Util {
             j > i && j < l.size() => l.at(i) < l.at(j)
     post $result.1 = true => x isin l
   {
-    r : Int = rand()
     mid : Int = l.size()/2
 
     if l.size() = 0 then return false
-
-    -- poor mans sleep
-    while true do {
-      temp : Bool
-      temp := r % 47
-      if temp then break
-      r := rand()
-    }
 
     if l.at(mid) = x then {
       println("I found it!")
@@ -53,3 +44,8 @@ class <view> View extends ModelElement {
 view MyView { 
 
 }
+
+view MyView2 {
+
+}
+

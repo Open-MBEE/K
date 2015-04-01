@@ -411,12 +411,19 @@ object Frontend {
         val operand: JSONArray = obj.get("operand").asInstanceOf[JSONArray]
         val kind = operand.get(0).asInstanceOf[JSONObject].get("type").asInstanceOf[String]
         kind match {
+          case "BlockExp" =>
+            val memberDecls: MList[MemberDecl] = MList()
+            for (i <- Range(1, operand.length())) {
+              memberDecls += visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[MemberDecl]
+            }
+            BlockExp(memberDecls.toList)
           case "ParenExp" =>
             ParenExp(visitJsonObject2(operand.getJSONObject(1)).asInstanceOf[Exp])
           case "DotExp" =>
             val exp = visitJsonObject2(operand.getJSONObject(1)).asInstanceOf[Exp]
             val ident = operand.getString(2)
             DotExp(exp, ident)
+          case "StarExp" => StarExp
           case "FunApplExp" =>
             val exp1 = visitJsonObject2(operand.getJSONObject(1)).asInstanceOf[Exp]
             val args =
@@ -428,6 +435,10 @@ object Frontend {
                 argsList.toList
               } else Nil
             FunApplExp(exp1, args)
+          case "WhileExp" =>
+            val cond: Exp = visitJsonObject2(operand.getJSONObject(1)).asInstanceOf[Exp]
+            val body = visitJsonObject2(operand.getJSONObject(2)).asInstanceOf[Exp]
+            WhileExp(cond, body)
           case "IfExp" =>
             val cond = visitJsonObject2(operand.getJSONObject(1)).asInstanceOf[Exp]
             val trueBranch = visitJsonObject2(operand.getJSONObject(2)).asInstanceOf[Exp]
@@ -530,7 +541,7 @@ object Frontend {
               }
             UnaryExp(operator, visitJsonObject2(operand.getJSONObject(2)).asInstanceOf[Exp])
         }
-      case "ElementValue" =>
+      case "IdentExp" | "ElementValue" =>
         IdentExp(obj.get("element").asInstanceOf[String])
       // Non-Expr, similar to regular JSON
       case "Model" =>
@@ -714,7 +725,10 @@ object Frontend {
     val array = new JSONArray()
     val operand = new JSONArray()
     val root = new JSONObject()
-    var elements = exp.toJson2
+
+    Options.useJson1 = false
+
+    var elements = exp.toJson
     var specialization = new JSONObject()
     specialization = new JSONObject()
     specialization.put("specialization", elements)
