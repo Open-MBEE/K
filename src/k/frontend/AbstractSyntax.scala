@@ -916,8 +916,8 @@ case class CollectionComprExp(kind: CollectionKind,
     operand.put(new JSONObject().put("type", "CollectionComprExp").put("element", "ElementValue"))
     operand.put(kind.toJson)
     operand.put(exp1.toJson)
-    for (binding <- bindings) operand.put(binding.toJson)
     operand.put(exp2.toJson)
+    for (binding <- bindings) operand.put(binding.toJson)
     expression.put("type", "Expression")
     expression.put("operand", operand)
   }
