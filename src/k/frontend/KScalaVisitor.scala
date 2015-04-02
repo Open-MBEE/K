@@ -530,7 +530,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   }
 
   override def visitBlockExp(ctx: ModelParser.BlockExpContext): AnyRef = {
-    visit(ctx.block()).asInstanceOf[BlockExp]
+    BlockExp(visit(ctx.block()).asInstanceOf[List[MemberDecl]])
   }
 
   override def visitBlock(ctx: ModelParser.BlockContext): AnyRef = {

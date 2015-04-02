@@ -58,10 +58,12 @@ assoc BatteryInstrument {
 }
 
 class Spacecraft {
+
   name : String
   attitude : Attitude
   weight : Real
   maxWeight : Real = 1000
+
 
   req EarthSafeDistance:
     attitude.distanceToEarth > 50000 &&
