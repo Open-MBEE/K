@@ -3,19 +3,30 @@
     ))
 
 (defvar k-variables
-  '("var" "val" "ref" "part"
+  '("var" "val" "part" "ordered" "unique"
     ))
 
 (defvar k-keywords
-  '("req" "type" "package" "import" "forall" "extends" "fun" "pre" "post"
-    "lt" "lte" "gt" "gte" "implies" "and" "or" "not" "eq" "end" "while"
-    "if" "for" "match" "forall" "with" "do" "then" "else" "in" "exists"
-    "isin" "!isin" "subset" "psubset" "union" "inter" "assert" "continue"
-    "break" "return" "$" "case" "this" "view" "viewpoint"
+  '("req" "type" "package" "import" "annotation" 
+    "forall" "extends" "fun" "pre" "post" "is" "as"
+    "end" "while" "if" "for" "match" 
+    "forall" "with" "do" "then" "else" "in" "exists"
+    "isin" "!isin" "subset" "psubset" "union" "inter" 
+    "assert" "continue" "break" "return" "$result" "case" "this" 
+    "source" "target"
+    ))
+
+(defvar k-sysml-keywords
+  '("view" "viewpoint" "block" "constraint" "relationship" "step" "flow"
+    "behavior"
     ))
 
 (defvar k-constants 
   '("true" "false"
+    ))
+
+(defvar k-collection-kind
+  '("Set" "Seq" "Bag" "Tuple"
     ))
 
 (defvar k-types
@@ -46,6 +57,8 @@
      ( ,(regexp-opt k-variables 'words) . font-lock-variable-name-face)
      ( ,(regexp-opt k-types 'words) . font-lock-type-face)
      ( ,(regexp-opt k-constants 'words) . font-lock-constant-face)
+     ( ,(regexp-opt k-sysml-keywords 'words) . font-lock-constant-face)
+     ( ,(regexp-opt k-collection-kind 'words) . font-lock-constant-face)
      )))
 
 (define-derived-mode k-mode fundamental-mode "K script"
