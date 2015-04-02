@@ -6,6 +6,15 @@ import com.microsoft.z3.Status;
 import k.frontend.IMPL;
 
 public class Main {
+
+	private static void header(String text) {
+		System.out.println();
+		System.out.println("--------------------------");
+		System.out.println("  " + text);
+		System.out.println("--------------------------");
+		System.out.println();
+	}
+
 	public static void main(String[] args) throws Exception {
 		Frontend.scala_main(args);
 		String json, exp;
@@ -33,7 +42,9 @@ public class Main {
 				"(x := 4) && x + 1 = z", // 17
 				"forall i : Int . forall j : Int . ((i = 0) => (j = 42)) && (i = 0)", // 18
 				"exists i : Int . (i > 10)", // 19
-				"(exists i : Int . ((i * i < 0)))" };
+				"(exists i : Int . ((i * i < 0)))", // 20
+				"forall x, y:Int . x * y = 0" // 21
+		};
 
 		// Expression to JSON
 		json = Frontend.exp2Json(exps[15]);
@@ -52,6 +63,8 @@ public class Main {
 		com.microsoft.z3.Model model = K2Z3.SolveExp(be);
 		System.out.println("******************");
 
+		header("SOLVING EXPRESSIONS");
+
 		for (int i = 7; i < exps.length; i++) {
 			K2Z3.reset();
 			String solvingExpression = exps[i];
@@ -63,9 +76,8 @@ public class Main {
 		}
 
 		Misc.wpTest();
-		
+
 		Misc.wpTest2();
 
-		
 	}
 }

@@ -27,11 +27,13 @@ object K2Z3 {
     idents = new MMap()
     ctx = new Context(cfg)
     ctx.mkIntSort()
+
   }
 
   def PrintModel() {
     if (model == null) {
-      println("UNSATISFIABLE! No assignments could be found to satisfy the given expression.")
+      //println("UNSATISFIABLE! No assignments could be found to satisfy the given expression.")
+      //not necessary to say ... again.
     } else {
       for ((i, (e, s)) <- idents) {
         println(e.toString() + " = " + model.evaluate(e, true))
@@ -42,7 +44,9 @@ object K2Z3 {
 
   def SolveExp(e: Exp): com.microsoft.z3.Model = {
     reset()
-    SolveExp(Expr2Z3(e).asInstanceOf[BoolExpr])
+    val boolExpr = Expr2Z3(e).asInstanceOf[BoolExpr];
+    println(s"transforming to\n  $boolExpr")
+    SolveExp(boolExpr)
   }
 
   def SolveExp(e: BoolExpr): com.microsoft.z3.Model = {
@@ -162,10 +166,9 @@ object K2Z3 {
       case RealLiteral(r) =>
         ctx.mkReal(r.toString)
       case QuantifiedExp(quantifier, bindings, expression) =>
-
         var qtypes = new ListBuffer[com.microsoft.z3.Sort]()
         var names = new ListBuffer[com.microsoft.z3.Symbol]()
-        var patterns = new ListBuffer[com.microsoft.z3.Pattern]()
+        var patterns = new ListBuffer[com.microsoft.z3.Pattern]() // not used
         var ies = new ListBuffer[Expr]()
         for (b <- bindings) {
           for (p <- b.patterns) {
@@ -185,9 +188,8 @@ object K2Z3 {
                           case IntType =>
                             qtypes.add(ctx.getIntSort())
                             val pattern = ctx.mkPattern(ie)
-                            patterns.add(ctx.mkPattern(ie))
-
-                          case RealType => qtypes.add(ctx.getRealSort())
+                            patterns.add(ctx.mkPattern(ie)) // use pattern, but not used anyway
+                          case RealType => qtypes.add(ctx.getRealSort()) 
                           case _ =>
                             Misc.error("Only bool, int, and real primitive types are supported for quantified expressions in Z3." + expression)
                         }
@@ -195,7 +197,7 @@ object K2Z3 {
                         Misc.error("Only type collections are supported for quantified expressions in Z3." +
                           "\nPlease check expression " + expression)
                     }
-                  case Some(x) => ()
+                  case Some(x) => () // so you can't quantify over an existing variable?
                 }
 
               case _ =>
