@@ -762,7 +762,7 @@ case class WhileExp(cond: Exp, body: Exp) extends Exp {
     moveOut
     result
   }
-  
+
   override def toJson1 = {
     val whileexp = new JSONObject()
     whileexp.put("type", "WhileExp")
@@ -793,7 +793,7 @@ case class ForExp(pattern: Pattern, exp: Exp, body: Exp) extends Exp {
     moveOut
     result
   }
-  
+
   override def toJson1 = {
     val forexp = new JSONObject()
     forexp.put("type", "ForExp")
@@ -1002,6 +1002,7 @@ case class CollectionComprExp(kind: CollectionKind,
                               exp1: Exp,
                               bindings: List[RngBinding],
                               exp2: Exp) extends Exp {
+
   override def toString = s"$kind{$exp1 | ${bindings.mkString(",")} . $exp2}"
 
   override def toJson1 = {
@@ -1049,7 +1050,6 @@ case class LambdaExp(pat: Pattern, exp: Exp) extends Exp {
 
     expression.put("type", "Expression")
     expression.put("operand", operand)
-
   }
 }
 
@@ -1080,7 +1080,7 @@ case class TypeCastCheckExp(cast: Boolean, exp: Exp, ty: Type) extends Exp {
   override def toJson1 = {
     val typecastcheckexp = new JSONObject()
     typecastcheckexp.put("type", "TypeCastCheckExp")
-    typecastcheckexp.put("cast", cast)
+    typecastcheckexp.put("cast", cast.toString)
     typecastcheckexp.put("exp", exp.toJson)
     typecastcheckexp.put("ty", ty.toJson)
   }
@@ -1090,7 +1090,7 @@ case class TypeCastCheckExp(cast: Boolean, exp: Exp, ty: Type) extends Exp {
     val operand = new JSONArray()
 
     operand.put(new JSONObject().put("type", "TypeCastCheckExp").put("element", "ElementValue"))
-    operand.put(cast)
+    operand.put(cast.toString)
     operand.put(exp.toJson)
     operand.put(ty.toJson)
 
@@ -1114,6 +1114,7 @@ case class ReturnExp(exp: Exp) extends Exp {
     val operand = new JSONArray()
 
     operand.put(new JSONObject().put("type", "ReturnExp").put("element", "ElementValue"))
+    operand.put(exp.toJson)
 
     expression.put("type", "Expression")
     expression.put("operand", operand)
@@ -1124,9 +1125,8 @@ case class ReturnExp(exp: Exp) extends Exp {
 case object BreakExp extends Exp {
   override def toString = "break"
 
-  override def toJson1 = {
+  override def toJson1 =
     new JSONObject().put("type", "BreakExp")
-  }
 
   override def toJson2 = {
     val expression = new JSONObject()
@@ -1143,9 +1143,10 @@ case object BreakExp extends Exp {
 
 case object ContinueExp extends Exp {
   override def toString = "continue"
-  override def toJson1 = {
+
+  override def toJson1 =
     new JSONObject().put("type", "ContinueExp")
-  }
+
   override def toJson2 = {
     val expression = new JSONObject()
     val operand = new JSONArray()
@@ -1154,16 +1155,16 @@ case object ContinueExp extends Exp {
 
     expression.put("type", "Expression")
     expression.put("operand", operand)
-
   }
-
 }
 
 case object ResultExp extends Exp {
   override def toString = "$result"
+
   override def toJson1 = {
     new JSONObject().put("type", "ResultExp")
   }
+
   override def toJson2 = {
     val expression = new JSONObject()
     val operand = new JSONArray()
@@ -1172,7 +1173,6 @@ case object ResultExp extends Exp {
 
     expression.put("type", "Expression")
     expression.put("operand", operand)
-
   }
 
 }
@@ -1187,8 +1187,8 @@ case object StarExp extends Exp {
   override def toJson2 = {
     val expression = new JSONObject()
     val operand = new JSONArray()
-    operand.put(new JSONObject().put("type", "StarExp").put("element", "ElementValue"))
 
+    operand.put(new JSONObject().put("type", "StarExp").put("element", "ElementValue"))
     expression.put("type", "Expression")
     expression.put("operand", operand)
   }
@@ -1197,16 +1197,18 @@ case object StarExp extends Exp {
 trait Argument extends Exp
 
 case class PositionalArgument(exp: Exp) extends Argument {
-  override def toString = s"$exp"
+  override def toString = exp.toString
 
   override def toJson1 = {
     val positionalArgument = new JSONObject()
     positionalArgument.put("type", "PositionalArgument")
     positionalArgument.put("exp", exp.toJson)
   }
+
   override def toJson2 = {
     val expression = new JSONObject()
     val operand = new JSONArray()
+
     operand.put(new JSONObject().put("type", "PositionalArgument").put("element", "ElementValue"))
     operand.put(exp.toJson)
     expression.put("type", "Expression")
@@ -1223,9 +1225,11 @@ case class NamedArgument(ident: String, exp: Exp) extends Argument {
     classArgument.put("ident", ident)
     classArgument.put("exp", exp.toJson)
   }
+
   override def toJson2 = {
     val expression = new JSONObject()
     val operand = new JSONArray()
+  
     operand.put(new JSONObject().put("type", "NamedArgument").put("element", "ElementValue"))
     operand.put(ident)
     operand.put(exp.toJson)
@@ -1237,137 +1241,151 @@ case class NamedArgument(ident: String, exp: Exp) extends Argument {
 trait BinaryOp {
   def toJsonName: String
 }
+
 case object LT extends BinaryOp {
   override def toString = "<"
 
   override def toJsonName = "LT"
 }
+
 case object LTE extends BinaryOp {
   override def toString = "<="
 
   override def toJsonName = "LTE"
 }
+
 case object GT extends BinaryOp {
   override def toString = ">"
 
   override def toJsonName = "GT"
 }
+
 case object GTE extends BinaryOp {
   override def toString = ">="
 
   override def toJsonName = "GTE"
 }
+
 case object AND extends BinaryOp {
   override def toString = "&&"
 
   override def toJsonName = "And"
 }
+
 case object OR extends BinaryOp {
   override def toString = "||"
 
   override def toJsonName = "OR"
-
 }
+
 case object IMPL extends BinaryOp {
   override def toString = "=>"
 
   override def toJsonName = "Implies"
-
 }
+
 case object IFF extends BinaryOp {
   override def toString = "<=>"
 
   override def toJsonName = "Iff"
-
 }
+
 case object EQ extends BinaryOp {
   override def toString = "="
 
   override def toJsonName = "EQ"
 }
+
 case object NEQ extends BinaryOp {
   override def toString = "!="
 
   override def toJsonName = "NotEQ"
-
 }
+
 case object MUL extends BinaryOp {
   override def toString = "*"
 
   override def toJsonName = "Times"
-
 }
+
 case object DIV extends BinaryOp {
   override def toString = "/"
 
   override def toJsonName = "Divide"
-
 }
+
 case object REM extends BinaryOp {
   override def toString = "%"
 
   override def toJsonName = "Modulo"
-
 }
+
 case object SETINTER extends BinaryOp {
   override def toString = "inter"
 
   override def toJsonName = "Inter"
-
 }
+
 case object SETDIFF extends BinaryOp {
   override def toString = "\\"
 
   override def toJsonName = "SetDiff"
-
 }
+
 case object LISTCONCAT extends BinaryOp {
   override def toString = "^"
 
   override def toJsonName = "Concat"
 }
+
 case object TUPLEINDEX extends BinaryOp {
   override def toString = "#"
 
   override def toJsonName = "TupleIndex"
 }
+
 case object ADD extends BinaryOp {
   override def toString = "+"
 
   override def toJsonName = "Plus"
 }
+
 case object SUB extends BinaryOp {
   override def toString = "-"
 
   override def toJsonName = "Minus"
 }
+
 case object SETUNION extends BinaryOp {
   override def toString = "union"
 
   override def toJsonName = "Union"
 }
+
 case object ISIN extends BinaryOp {
   override def toString = "isin"
 
   override def toJsonName = "IsIn"
-
 }
+
 case object NOTISIN extends BinaryOp {
   override def toString = "!isin"
 
   override def toJsonName = "NotIn"
-
 }
+
 case object SUBSET extends BinaryOp {
   override def toString = "subset"
 
   override def toJsonName = "Subset"
 }
+
 case object PSUBSET extends BinaryOp {
   override def toString = "psubset"
 
   override def toJsonName = "PSubset"
 }
+
 case object ASSIGN extends BinaryOp {
   override def toString = ":="
 
@@ -1375,24 +1393,30 @@ case object ASSIGN extends BinaryOp {
 }
 
 trait UnaryOp {
-  def toJsonName: String
+  def toJsonName: String // why is it called toJsonName and not toJson?
 }
+
 case object NOT extends UnaryOp {
   override def toString = "!"
 
   override def toJsonName = "Not"
 }
+
 case object NEG extends UnaryOp {
   override def toString = "-"
 
   override def toJsonName = "Neg"
 }
+
 case object PREV extends UnaryOp {
   override def toString = "~"
   override def toJsonName = "Prev"
 }
 
 trait Literal extends Exp
+
+// @@@ I got to here (Klaus)
+
 case class IntegerLiteral(i: Int) extends Literal {
   override def toString = i.toString
 

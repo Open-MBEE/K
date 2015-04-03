@@ -1,4 +1,9 @@
 
+* Let's give the world a fold-left language construct that one can actually read and
+  remember to write.
+
+* match expressions do not seem to be handled by the Java to Scala translator
+
 * Maybe a toJson1 and toJson2 in every class
 
 * Documentation
