@@ -1,3 +1,4 @@
+
 package kFrontendTest;
 
 import k.frontend.*;
@@ -10,10 +11,10 @@ public class test {
 				"a.b.c.f", // 0
 				"x < y + z", // 1
 				"1 + c + d * (-1) = 42", // 2
-                 "x + 1", // 3
+				"x + 1", // 3
 				"x isin S.collect(x -> x + 1).select(x -> x > 4)", // 4
 				"{val x : Int = 1 x + 1}", // 5
-				"while (x > 0) do { x := x - 1 }", // 6
+				"STOP", //"while (x > 0) do { x := x - 1 }", // 6
 				"1 = 0", // 7
 				"x > y && x = 2*y", // 8
 				"x < y && x > 2", // 9
@@ -28,17 +29,20 @@ public class test {
 				"(x := 4) && x + 1 = z", // 18
 				"forall i : Int . forall j : Int . ((i = 0) => (j = 42)) && (i = 0)", // 19
 				"exists i : Int . (i > 10)", // 20
-				"(exists i : Int . ((i * i < 0)))" // 21
+				"(exists i : Int . ((i * i < 0)))", // 21
+				"exists i : Int . (i > 10)" // 22
 		};
 
-		String exp = exps[3];
+		for (int x = 0; x <= 22; x++) {
+			String exp = exps[x];
 
-		System.out.println("expr:\n" + exp);
-		String json = Frontend.exp2Json2(exp);
-		System.out.println("\njson:\n" + json);
-		String expBack = Frontend.json2exp2(json);
-		System.out.println("\nexp back:\n " + expBack);
-
+			System.out.println("\n--- " + x + " ---------------------\n");
+			System.out.println("expr:\n" + exp);
+			String json = Frontend.exp2Json2(exp);
+			System.out.println("\njson:\n" + json);
+			String expBack = Frontend.json2exp2(json);
+			System.out.println("\nand back:\n " + expBack);
+		}
 	}
-
 }
+

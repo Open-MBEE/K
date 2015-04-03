@@ -43,7 +43,7 @@ public class Main {
 				"forall i : Int . forall j : Int . ((i = 0) => (j = 42)) && (i = 0)", // 18
 				"exists i : Int . (i > 10)", // 19
 				"(exists i : Int . ((i * i < 0)))", // 20
-				"forall x, y:Int . x * y = 0" // 21
+				"forall x, y:Int . (x * y = 0)" // 21
 		};
 
 		// Expression to JSON
