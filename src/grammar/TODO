@@ -1,4 +1,39 @@
 
+* Maybe a toJson1 and toJson2 in every class
+
+* Documentation
+
+* Simpler way to write JSON transformers:
+
+  Original version:
+  
+  override def toJson1 = {
+    val typedecl = new JSONObject()
+    val params = new JSONArray()
+    typedecl.put("ident", ident)
+    for (typeParam <- typeParams) params.put(typeParam.toJson)
+    typedecl.put("type", "TypeDecl")
+    typedecl.put("params", params)
+    if (ty.nonEmpty) typedecl.put("ty", ty.get.toJson)
+    else typedecl
+  }
+
+  Simpler version:
+
+  override def toJson1 = {
+    val typedecl = newJSONObject("TypeDecl")
+    typedecl.put("ident", ident)
+    typedecl.array("params",typeParams)
+    typedecl.optput("ty",ty)
+  }
+
+* It does not seem to handle type declarations correctly in the translation
+from a Java tree to a Scala tree.
+
+
+
+---------
+
 Semicolon: 
 
 - also, in pure functions it looks strange, like a defintion that could look like 

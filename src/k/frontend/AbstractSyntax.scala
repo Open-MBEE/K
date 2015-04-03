@@ -12,6 +12,22 @@ object Options {
   var useJson1 = true
 }
 
+private[frontend] object Util {
+  private val space = "  "
+  private var level: Int = 0
+
+  def moveIn {
+    level += 1
+  }
+
+  def moveOut {
+    level -= 1
+  }
+
+  def indent: String = space * level
+}
+import Util._
+
 case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
                  annotations: List[AnnotationDecl],
                  decls: List[TopDecl]) {
@@ -23,18 +39,24 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
         case None    => ""
       }
     if (!imports.isEmpty) {
+      result += "\n"
       for (imp <- imports) {
         result += imp + "\n"
       }
+    }
+
+    if (!annotations.isEmpty) {
       result += "\n"
+      for (annotationDecl <- annotations) {
+        result += annotationDecl + "\n"
+      }
     }
 
-    for (annotationDecl <- annotations) {
-      result += annotationDecl + "\n"
-    }
-
-    for (decl <- decls) {
-      result += decl + "\n"
+    if (!decls.isEmpty) {
+      result += "\n"
+      for (decl <- decls) {
+        result += decl + "\n\n"
+      }
     }
 
     result
@@ -79,6 +101,7 @@ case class PackageDecl(name: QualifiedName) {
 
 case class AnnotationDecl(name: String, ty: Type) extends TopDecl {
   override def toString = s"annotation $name : $ty"
+
   override def toJson1 = {
     val annotationDecl = new JSONObject()
     annotationDecl.put("type", "AnnotationDecl")
@@ -90,6 +113,7 @@ case class AnnotationDecl(name: String, ty: Type) extends TopDecl {
 
 case class Annotation(name: String, exp: Exp) {
   override def toString = s"@$name($exp)"
+
   def toJson = {
     val annotation = new JSONObject()
     annotation.put("type", "Annotation")
@@ -143,17 +167,31 @@ case class EntityDecl(
 
   override def toString = {
     var result = ""
-    for (annotation <- annotations) {
-      result += annotation + "\n"
+    if (!annotations.isEmpty) {
+      for (annotation <- annotations) {
+        result += annotation + "\n"
+      }
+      result += "\n"
     }
-    result += s"$entityToken $ident"
+    result += s"$entityToken"
+    keyword match {
+      case None      =>
+      case Some(str) => result += s" <$str>"
+    }
+    result += s" $ident"
     if (!typeParams.isEmpty) {
       result += s"[${typeParams.mkString(",")}]"
     }
     if (!extending.isEmpty) {
       result += s" extending ${extending.mkString(",")}"
     }
-    result += members
+    if (!members.isEmpty) {
+      result += " {\n"
+      moveIn
+      result += members.mkString("\n")
+      moveOut
+      result += "\n}"
+    }
     result
   }
 
@@ -183,7 +221,6 @@ case class EntityDecl(
 
 trait EntityToken {
   def toJson: String
-
 }
 
 case object ClassToken extends EntityToken {
@@ -242,11 +279,19 @@ trait MemberDecl extends TopDecl {
 case class TypeDecl(ident: String,
                     typeParams: List[TypeParam],
                     ty: Option[Type]) extends MemberDecl {
-  override def toString =
-    if (typeParams.isEmpty)
-      s"type $ident = $ty"
-    else
-      s"type $ident[${typeParams.mkString(",")}] = $ty"
+
+  override def toString = {
+    var result: String = indent + s"type $ident"
+    if (!typeParams.isEmpty) {
+      result += s"[${typeParams.mkString(",")}]"
+    }
+    ty match {
+      case None =>
+      case Some(t) =>
+        result += s" = $t"
+    }
+    result
+  }
 
   override def toJson1 = {
     val typedecl = new JSONObject()
@@ -270,8 +315,10 @@ case class PropertyDecl(modifiers: List[PropertyModifier],
                         expr: Option[Exp]) extends MemberDecl {
 
   override def toString = {
-    var result = ""
-    result += modifiers.mkString(" ") + " "
+    var result = indent
+    if (!modifiers.isEmpty) {
+      result += modifiers.mkString(" ") + " "
+    }
     result += name
     result += ":" + ty
     if (multiplicity.nonEmpty) result += multiplicity.get
@@ -338,13 +385,12 @@ case object Target extends PropertyModifier {
 
 case class FunSpec(pre: Boolean, exp: Exp) {
   override def toString =
-    if (pre) s"pre $exp"
-    else s"post $exp"
+    indent + (if (pre) s"pre $exp" else s"post $exp")
 
   def toJson = {
     val funspec = new JSONObject()
     funspec.put("type", "FunSpec")
-    funspec.put("pre", pre)
+    funspec.put("pre", pre.toString)
     funspec.put("exp", exp.toJson)
   }
 
@@ -352,6 +398,7 @@ case class FunSpec(pre: Boolean, exp: Exp) {
 
 case class Param(name: String, ty: Type) {
   override def toString = s"$name:$ty"
+
   def toJson = {
     val param = new JSONObject()
     param.put("type", "Param")
@@ -367,8 +414,8 @@ case class FunDecl(ident: String,
                    spec: List[FunSpec],
                    body: List[MemberDecl]) extends MemberDecl {
   override def toString = {
-    var result = "\nfun "
-    result += ident
+    var result = "\n"
+    result += indent + s"fun $ident"
     if (typeParams.size > 0) {
       result += "[" + typeParams.mkString(",") + "]"
     }
@@ -376,16 +423,26 @@ case class FunDecl(ident: String,
       result += "(" + params.mkString(",") + ")"
     }
     ty match {
-      case Some(ty) => result += " : " + ty + "\n"
-      case _        => ()
+      case Some(ty) => result += " : " + ty
+      case _        =>
     }
-    result += spec.mkString("\n")
-    result += " {\n"
-    result += body.mkString("\n")
-    result += "\n}"
-
+    result += "\n"
+    if (!spec.isEmpty) {
+      moveIn
+      result += spec.mkString("\n") + "\n"
+      moveOut
+    }
+    if (!body.isEmpty) {
+      result += indent + "{\n"
+      moveIn
+      result += body.mkString("\n")
+      moveOut
+      result += "\n"
+      result += indent + "}"
+    }
     result
   }
+
   override def toJson1 = {
     val fundecl = new JSONObject()
     val theTypeParams = new JSONArray()
@@ -410,12 +467,12 @@ case class FunDecl(ident: String,
 
 case class ConstraintDecl(name: Option[String], exp: Exp) extends MemberDecl {
   override def toString =
-    name match {
+    indent + (name match {
       case None =>
-        s"req { $exp }"
+        s"req $exp"
       case Some(n) =>
-        s"req $n: { $exp }"
-    }
+        s"req $n: $exp"
+    })
 
   override def toJson1 = {
     val constraintdecl = new JSONObject
@@ -432,7 +489,7 @@ case class ConstraintDecl(name: Option[String], exp: Exp) extends MemberDecl {
 }
 
 case class ExpressionDecl(exp: Exp) extends MemberDecl {
-  override def toString = s"$exp"
+  override def toString = indent + exp
 
   override def toJson1 = {
     val expressiondecl = new JSONObject()
