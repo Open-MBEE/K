@@ -12,7 +12,7 @@ object Options {
   var useJson1 = true
 }
 
-private[frontend] object Util {
+private[frontend] object ToStringSupport {
   private val space = "  "
   private var level: Int = 0
 
@@ -25,8 +25,11 @@ private[frontend] object Util {
   }
 
   def indent: String = space * level
+
+  def requiresPreceedingBlankLine(member: MemberDecl): Boolean =
+    member.isInstanceOf[FunDecl] || member.isInstanceOf[ConstraintDecl]
 }
-import Util._
+import ToStringSupport._
 
 case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
                  annotations: List[AnnotationDecl],
@@ -188,9 +191,12 @@ case class EntityDecl(
     if (!members.isEmpty) {
       result += " {\n"
       moveIn
-      result += members.mkString("\n")
+      for (member <- members) {
+        if (requiresPreceedingBlankLine(member)) result += "\n"
+        result += indent + member + "\n"
+      }
       moveOut
-      result += "\n}"
+      result += "}"
     }
     result
   }
@@ -281,7 +287,7 @@ case class TypeDecl(ident: String,
                     ty: Option[Type]) extends MemberDecl {
 
   override def toString = {
-    var result: String = indent + s"type $ident"
+    var result: String = s"type $ident"
     if (!typeParams.isEmpty) {
       result += s"[${typeParams.mkString(",")}]"
     }
@@ -315,7 +321,7 @@ case class PropertyDecl(modifiers: List[PropertyModifier],
                         expr: Option[Exp]) extends MemberDecl {
 
   override def toString = {
-    var result = indent
+    var result = ""
     if (!modifiers.isEmpty) {
       result += modifiers.mkString(" ") + " "
     }
@@ -385,7 +391,7 @@ case object Target extends PropertyModifier {
 
 case class FunSpec(pre: Boolean, exp: Exp) {
   override def toString =
-    indent + (if (pre) s"pre $exp" else s"post $exp")
+    if (pre) s"pre $exp" else s"post $exp"
 
   def toJson = {
     val funspec = new JSONObject()
@@ -414,8 +420,7 @@ case class FunDecl(ident: String,
                    spec: List[FunSpec],
                    body: List[MemberDecl]) extends MemberDecl {
   override def toString = {
-    var result = "\n"
-    result += indent + s"fun $ident"
+    var result = s"fun $ident"
     if (typeParams.size > 0) {
       result += "[" + typeParams.mkString(",") + "]"
     }
@@ -429,15 +434,18 @@ case class FunDecl(ident: String,
     result += "\n"
     if (!spec.isEmpty) {
       moveIn
-      result += spec.mkString("\n") + "\n"
+      for (sp <- spec) {
+        result += indent + sp + "\n"
+      }
       moveOut
     }
     if (!body.isEmpty) {
       result += indent + "{\n"
       moveIn
-      result += body.mkString("\n")
+      for (member <- body) {
+        result += indent + member + "\n"
+      }
       moveOut
-      result += "\n"
       result += indent + "}"
     }
     result
@@ -467,12 +475,12 @@ case class FunDecl(ident: String,
 
 case class ConstraintDecl(name: Option[String], exp: Exp) extends MemberDecl {
   override def toString =
-    indent + (name match {
+    name match {
       case None =>
         s"req $exp"
       case Some(n) =>
         s"req $n: $exp"
-    })
+    }
 
   override def toJson1 = {
     val constraintdecl = new JSONObject
@@ -489,7 +497,7 @@ case class ConstraintDecl(name: Option[String], exp: Exp) extends MemberDecl {
 }
 
 case class ExpressionDecl(exp: Exp) extends MemberDecl {
-  override def toString = indent + exp
+  override def toString = exp.toString
 
   override def toJson1 = {
     val expressiondecl = new JSONObject()
@@ -576,8 +584,7 @@ case class DotExp(exp: Exp, ident: String) extends Exp {
 case class FunApplExp(exp1: Exp, args: List[Exp]) extends Exp {
 
   override def toString = {
-    var result = ""
-    result += exp1
+    var result = exp1.toString
     if (args != null)
       result += "(" + args.mkString(",") + ")"
     result
@@ -608,11 +615,19 @@ case class FunApplExp(exp1: Exp, args: List[Exp]) extends Exp {
 }
 
 case class IfExp(cond: Exp, trueBranch: Exp, falseBranch: Option[Exp]) extends Exp {
-  override def toString =
-    if (falseBranch.nonEmpty)
-      s"if $cond then {\n$trueBranch\n} \nelse {\n${falseBranch.get}\n}"
-    else
-      s"if $cond then {\n$trueBranch}\n"
+  override def toString = {
+    var result = s"if $cond then\n"
+    moveIn
+    result += indent + s"$trueBranch\n"
+    moveOut
+    if (falseBranch.nonEmpty) {
+      result += indent + "else\n"
+      moveIn
+      result += indent + falseBranch.get
+      moveOut
+    }
+    result
+  }
 
   override def toJson1 = {
     val expression = new JSONObject()
@@ -639,7 +654,17 @@ case class IfExp(cond: Exp, trueBranch: Exp, falseBranch: Option[Exp]) extends E
 }
 
 case class MatchExp(exp: Exp, m: List[MatchCase]) extends Exp {
-  override def toString = s"match $exp with {" + m.mkString("\n") + "}"
+  override def toString = {
+    var result = s"match $exp with\n"
+    moveIn
+    for (mtch <- m) {
+      result += indent + s"$mtch\n"
+    }
+    moveOut
+    result += indent + "}"
+    result
+  }
+
   override def toJson1 = {
     val matchexp = new JSONObject()
     val theCases = new JSONArray()
@@ -648,6 +673,7 @@ case class MatchExp(exp: Exp, m: List[MatchCase]) extends Exp {
     matchexp.put("exp", exp.toJson)
     matchexp.put("m", theCases)
   }
+
   override def toJson2 = {
     val expression = new JSONObject()
     val operand = new JSONArray()
@@ -666,6 +692,7 @@ case class MatchExp(exp: Exp, m: List[MatchCase]) extends Exp {
 case class MatchCase(patterns: List[Pattern], exp: Exp) extends Exp {
   override def toString =
     "case " + patterns.mkString("|") + " => " + exp
+
   override def toJson1 = {
     val matchcase = new JSONObject()
     val thePatterns = new JSONArray()
@@ -673,8 +700,8 @@ case class MatchCase(patterns: List[Pattern], exp: Exp) extends Exp {
     for (p <- patterns) thePatterns.put(p.toJson)
     matchcase.put("patterns", thePatterns)
     matchcase.put("exp", exp.toJson)
-
   }
+
   override def toJson2 = {
     val expression = new JSONObject()
     val operand = new JSONArray()
@@ -683,16 +710,26 @@ case class MatchCase(patterns: List[Pattern], exp: Exp) extends Exp {
     expression.put("operand", operand)
 
     operand.put(new JSONObject().put("type", "MatchCase").put("element", "ElementValue"))
-    for (pattern <- patterns) operand.put(pattern.toJson)
     operand.put(exp.toJson)
-
+    for (pattern <- patterns) operand.put(pattern.toJson)
     expression
   }
 }
 
 case class BlockExp(body: List[MemberDecl]) extends Exp {
-  override def toString =
-    s"{\n ${body.foldLeft("")((res, m) => res + s"  $m")}}"
+  //  override def toString =
+  //    s"{\n ${body.foldLeft("")((res, m) => res + s"  $m")}}"
+
+  override def toString = {
+    var result = "{\n"
+    moveIn
+    for (member <- body) {
+      result += indent + member + "\n"
+    }
+    moveOut
+    result += indent + "}"
+    result
+  }
 
   override def toJson1 = {
     val expression = new JSONObject()
@@ -718,9 +755,14 @@ case class BlockExp(body: List[MemberDecl]) extends Exp {
 }
 
 case class WhileExp(cond: Exp, body: Exp) extends Exp {
-  override def toString =
-    s"while ($cond) do $body "
-
+  override def toString = {
+    var result = s"while $cond do"
+    moveIn
+    result += indent + body
+    moveOut
+    result
+  }
+  
   override def toJson1 = {
     val whileexp = new JSONObject()
     whileexp.put("type", "WhileExp")
@@ -744,9 +786,14 @@ case class WhileExp(cond: Exp, body: Exp) extends Exp {
 }
 
 case class ForExp(pattern: Pattern, exp: Exp, body: Exp) extends Exp {
-  override def toString =
-    s"for ($pattern in $exp) do \n $body"
-
+  override def toString = {
+    var result = s"for ($pattern in $exp) do"
+    moveIn
+    result += indent + body
+    moveOut
+    result
+  }
+  
   override def toJson1 = {
     val forexp = new JSONObject()
     forexp.put("type", "ForExp")
@@ -803,7 +850,7 @@ case class UnaryExp(op: UnaryOp, exp: Exp) extends Exp {
     if (op == PREV)
       s"$exp$op"
     else
-      s"$op($exp)"
+      s"$op$exp"
 
   override def toJson1 = {
     val expression = new JSONObject()
@@ -831,6 +878,7 @@ case class UnaryExp(op: UnaryOp, exp: Exp) extends Exp {
 case class QuantifiedExp(quant: Quantifier,
                          bindings: List[RngBinding],
                          exp: Exp) extends Exp {
+
   override def toString = s"$quant ${bindings.mkString(",")} . $exp"
 
   override def toJson1 = {
@@ -908,12 +956,12 @@ case class CollectionEnumExp(kind: CollectionKind, exps: List[Exp]) extends Exp 
   override def toString = kind + "{" + exps.mkString(",") + "}"
 
   override def toJson1 = {
-    val setEnumExp = new JSONObject()
+    val enumExp = new JSONObject()
     val expressions = new JSONArray()
     for (exp <- exps) expressions.put(exp.toJson)
-    setEnumExp.put("type", "CollectionEnumExp")
-    setEnumExp.put("exps", expressions)
-    setEnumExp.put("kind", kind.toJson)
+    enumExp.put("type", "CollectionEnumExp")
+    enumExp.put("exps", expressions)
+    enumExp.put("kind", kind.toJson)
   }
 
   override def toJson2 = {
