@@ -63,26 +63,30 @@ object Frontend {
       case None => ()
     }
 
-    if (model != null) println(model.toString())
-    else println("Model was null!")
+    if (model != null) {
+      println(model.toString())
+      // Remember old value of option
+      val optionsUseJson1 = Options.useJson1
+      // MMS method using toJson1
+      Options.useJson1 = true
+      val modelJson = model.toJson
+      println("JSON1: " + modelJson)
+      val modelFromJson = visitJsonObject(modelJson).asInstanceOf[Model]
+      // MMS method using toJson2
+      Options.useJson1 = false
+      val modelJson2 = model.toJson
+      println("JSON2: " + modelJson2)
+      val modelFromJson2 = visitJsonObject2(modelJson2).asInstanceOf[Model]
+      // Reset old value of option
+      Options.useJson1 = Options.useJson1
+    } else
+      println("Model was null!")
 
-    // Standard JSON method using toJson1
-    Options.useJson1 = true
-    val modelJson = model.toJson
-    println("JSON1: " + modelJson)
-    val modelFromJson = visitJsonObject(modelJson).asInstanceOf[Model]
-
-    println("///////////////////////////")
-
-    // MMS method using toJson2
-    Options.useJson1 = false
-    val modelJson2 = model.toJson
-    println("JSON2: " + modelJson2)
-    val modelFromJson2 = visitJsonObject2(modelJson2).asInstanceOf[Model]
+    println("\n=====================================================\n")
   }
 
   def visitJsonObject(o: Any): AnyRef = {
-    val obj = o.asInstanceOf[JSONObject]
+    val obj = o.asInstanceOf[JSONObject] // why not make o of type JSONObject instead?
     obj.getString("type") match {
       // Expressions:
       case "ParenExp" =>

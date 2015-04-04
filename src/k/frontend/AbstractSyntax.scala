@@ -1557,9 +1557,9 @@ case object Forall extends Quantifier {
 
   override def toJson1 = {
     val o = new JSONObject()
-    // o.put("element", "Forall")  
-    // o.put("type", "Quantifier") 
-    o.put("type", "Forall")
+    o.put("element", "Forall")
+    o.put("type", "Quantifier")
+    // o.put("type", "Forall") -- should it not be this?
   }
 
   override def toJson2 = {
@@ -1576,9 +1576,9 @@ case object Exists extends Quantifier {
 
   override def toJson1 = {
     val o = new JSONObject()
-    //    o.put("element", "Exists")
-    //    o.put("type", "Quantifier")
-    o.put("type", "Exists")
+    o.put("element", "Exists")
+    o.put("type", "Quantifier")
+    // o.put("type", "Exists") -- should it not be this?
   }
 
   override def toJson2 = {
