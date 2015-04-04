@@ -1,8 +1,15 @@
 
 * Let's give the world a fold-left language construct that one can actually read and
-  remember to write.
+  remember to write.g
 
 * match expressions do not seem to be handled by the Java to Scala translator
+
+* Predicate subtypes do not seem to be handled by the Java to Scala translator
+
+* It does not seem to handle type declarations correctly in the translation
+from a Java tree to a Scala tree.
+
+* Json for Forall seems wrong.
 
 * Maybe a toJson1 and toJson2 in every class
 
@@ -31,10 +38,6 @@
     typedecl.array("params",typeParams)
     typedecl.optput("ty",ty)
   }
-
-* It does not seem to handle type declarations correctly in the translation
-from a Java tree to a Scala tree.
-
 
 
 ---------
