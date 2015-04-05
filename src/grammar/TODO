@@ -13,6 +13,8 @@
 * It does not seem to handle type declarations correctly in the translation
 from a Java tree to a Scala tree.
 
+* visitJSONObject2 for For expression is missing
+
 * Json for Forall seems wrong.
 
 * Maybe a toJson1 and toJson2 in every class
