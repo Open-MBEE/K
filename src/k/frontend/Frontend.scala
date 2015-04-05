@@ -70,12 +70,12 @@ object Frontend {
       // MMS method using toJson1
       Options.useJson1 = true
       val modelJson = model.toJson
-      println("JSON1: " + modelJson)
+      println("JSON1: " + modelJson.toString(0))
       val modelFromJson = visitJsonObject(modelJson).asInstanceOf[Model]
       // MMS method using toJson2
       Options.useJson1 = false
       val modelJson2 = model.toJson
-      println("JSON2: " + modelJson2)
+      println("JSON2: " + modelJson2.toString(0))
       val modelFromJson2 = visitJsonObject2(modelJson2).asInstanceOf[Model]
       // Reset old value of option
       Options.useJson1 = Options.useJson1
@@ -84,9 +84,9 @@ object Frontend {
 
     println("\n=====================================================\n")
   }
-
+  
   def visitJsonObject(o: Any): AnyRef = {
-    val obj = o.asInstanceOf[JSONObject] // why not make o of type JSONObject instead?
+    val obj = o.asInstanceOf[JSONObject]
     obj.getString("type") match {
       // Expressions:
       case "ParenExp" =>
@@ -111,9 +111,10 @@ object Frontend {
       case "ForExp" =>
         val pattern: Pattern = visitJsonObject(obj.get("pattern")).asInstanceOf[Pattern]
         val exp: Exp = visitJsonObject(obj.get("exp")).asInstanceOf[Exp]
-        val body = visitJsonArray(obj.get("body"), visitJsonObject).asInstanceOf[Exp]
+        // val body = visitJsonArray(obj.get("body"), visitJsonObject).asInstanceOf[Exp] -- body not an array
+        val body = visitJsonObject(obj.get("body")).asInstanceOf[Exp]
         ForExp(pattern, exp, body)
-      case "FunApplExp" =>
+      case "FunApplExp" => 
         val exp1: Exp = visitJsonObject(obj.get("exp1")).asInstanceOf[Exp]
         val args: List[Argument] = visitJsonArray(obj.get("args"), visitJsonObject).asInstanceOf[List[Argument]]
         FunApplExp(exp1, args)
@@ -267,7 +268,7 @@ object Frontend {
           if (obj.keySet().contains("bound")) Some(visitJsonObject(obj.get("bound")).asInstanceOf[TypeBound])
           else None
         TypeParam(ident, bound)
-      case "TypeBound" =>
+      case "TypeBound" => // should this be here?
         visitJsonArray(obj.get("types"), visitJsonObject).asInstanceOf[List[Type]]
       case "TypeDecl" =>
         var ident: String = obj.get("ident").toString()
@@ -291,7 +292,7 @@ object Frontend {
           if (obj.keySet().contains("expr")) Some(visitJsonObject(obj.get("expr")).asInstanceOf[Exp])
           else None
         PropertyDecl(modifiers, name, ty, multiplicity, assignment, expr)
-      case "FunDecl" =>
+      case "FunDecl" => 
         var ident: String = obj.get("ident").toString()
         var typeParams = visitJsonArray(obj.get("typeParams"), visitJsonObject).asInstanceOf[List[TypeParam]]
         var params = visitJsonArray(obj.get("params"), visitJsonObject).asInstanceOf[List[Param]]
@@ -385,11 +386,11 @@ object Frontend {
       case "ProductPattern" => ProductPattern(getPatternList(p.get("operand").asInstanceOf[JSONArray].get(1).asInstanceOf[JSONArray]))
     }
   }
-
+  
   def getPatternList(pl: JSONArray): List[Pattern] = {
     visitJsonArray(pl, getPattern).asInstanceOf[List[Pattern]]
   }
-
+ 
   def getCollection(o: JSONObject): Collection = {
     val operand = o.getJSONArray("operand")
     operand.getJSONObject(0).get("type") match {
@@ -466,7 +467,7 @@ object Frontend {
             val bindings = getRngBindingList(operand.getJSONObject(2)).asInstanceOf[List[RngBinding]]
             val exp = visitJsonObject2(operand.getJSONObject(3)).asInstanceOf[Exp]
             QuantifiedExp(quantifier, bindings, exp)
-          case "CollectionComprExp" =>
+          case "CollectionComprExp" => 
             var kind = getCollectionKind(operand.getString(1))
             var exp1 = visitJsonObject2(operand.get(2)).asInstanceOf[Exp]
             var exp2 = visitJsonObject2(operand.get(3)).asInstanceOf[Exp]
@@ -510,7 +511,7 @@ object Frontend {
           case "CharType"   => CharType
           case "IdentType" =>
             IdentType(visitJsonObject2(operand.get(1)).asInstanceOf[QualifiedName],
-              null)
+              null) // missing type parameters I think (null)
           case "Multiplicity" =>
             var exp1 = visitJsonObject2(operand.get(1)).asInstanceOf[Exp]
             var exp2 =
@@ -578,7 +579,7 @@ object Frontend {
       case "IdentExp" | "ElementValue" =>
         IdentExp(obj.get("element").asInstanceOf[String])
       // Non-Expr, similar to regular JSON
-      case "Model" =>
+      case "Model" => 
         var packageName: Option[PackageDecl] =
           if (obj.keySet().contains("packageName")) Some(visitJsonObject2(obj.getJSONObject("packageName"))).asInstanceOf[Option[PackageDecl]]
           else None
@@ -660,7 +661,7 @@ object Frontend {
         FunDecl(ident, typeParams, params, ty, spec, body)
       case "FunSpec" =>
         FunSpec(obj.getBoolean("pre"), visitJsonObject2(obj.get("exp")).asInstanceOf[Exp])
-      case "ConstraintDecl" =>
+      case "ConstraintDecl" => 
         var name: Option[String] =
           if (obj.keySet().contains("name")) Some(obj.get("name").toString())
           else None
@@ -739,7 +740,7 @@ object Frontend {
     Options.useJson1 = true
     var elements = exp.toJson
     var specialization = new JSONObject()
-    specialization = new JSONObject()
+    specialization = new JSONObject() // ??
     specialization.put("specialization", elements)
     array.put(specialization)
     var res: JSONObject = root.put("elements", array)
