@@ -145,9 +145,9 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   override def visitAppExp(ctx: ModelParser.AppExpContext): AnyRef = {
     var e0: Exp = visit(ctx.expression()).asInstanceOf[Exp]
     var argumentList =
-      if (ctx.argumentList() != null) 
+      if (ctx.argumentList() != null)
         visit(ctx.argumentList()).asInstanceOf[List[Exp]]
-      else 
+      else
         Nil
 
     FunApplExp(e0, argumentList)
@@ -376,11 +376,11 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
     if (ctx.entityDeclaration() != null) {
       var entity: EntityDecl = visit(ctx.entityDeclaration()).asInstanceOf[EntityDecl]
       entity.annotations = annotations
-      return entity.asInstanceOf[AnyRef]
+      return entity.asInstanceOf[AnyRef] // asInstanceOf not needed here
     } else if (ctx.memberDeclaration() != null) {
       var member: MemberDecl = visit(ctx.memberDeclaration()).asInstanceOf[MemberDecl]
       member.annotations = annotations
-      return member.asInstanceOf[AnyRef]
+      return member.asInstanceOf[AnyRef] // asInstanceOf not needed here
     } else return null
   }
 
@@ -456,7 +456,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
       if (ctx.functionSpecification() != null)
         ctx.functionSpecification().asScala.toList.map(visit(_)).asInstanceOf[List[FunSpec]]
       else
-        null
+        null // Nil ?
     var body: List[MemberDecl] =
       if (ctx.block() != null)
         visit(ctx.block()).asInstanceOf[List[MemberDecl]]
@@ -619,7 +619,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   }
 
   override def visitPrevExp(ctx: ModelParser.PrevExpContext): AnyRef = {
-    UnaryExp(PREV, IdentExp(ctx.qualifiedName().getText()))
+    UnaryExp(PREV, IdentExp(ctx.qualifiedName().getText())) // getText: is that correct?
   }
 
   override def visitPropertyModifier(ctx: ModelParser.PropertyModifierContext): AnyRef = {
