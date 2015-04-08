@@ -138,7 +138,7 @@ object Frontend {
             case "Union"   => SETUNION
             case "Inter"   => SETINTER
             case "And"     => AND
-            case "Or"      => OR
+            case "OR"      => OR
             case "Tuples"  => TUPLEINDEX
             case "Concat"  => LISTCONCAT
             case "Implies" => IMPL
@@ -367,9 +367,10 @@ object Frontend {
   def json2exp(expressionString: String): String = {
     var tokener: JSONTokener = new JSONTokener(expressionString)
     var jsonObject: JSONObject = new JSONObject(tokener)
-    var element: JSONArray = jsonObject.get("elements").asInstanceOf[JSONArray]
-    var specialization: JSONObject = element.get(0).asInstanceOf[JSONObject]
-    var exp: Exp = visitJsonObject(specialization.get("specialization").asInstanceOf[JSONObject]).asInstanceOf[Exp]
+    //var element: JSONArray = jsonObject.get("elements").asInstanceOf[JSONArray]
+    //var specialization: JSONObject = element.get(0).asInstanceOf[JSONObject]
+    //var exp: Exp = visitJsonObject(specialization.get("specialization").asInstanceOf[JSONObject]).asInstanceOf[Exp]
+    var exp = visitJsonObject(jsonObject)
     exp.toString()
   }
 
@@ -742,13 +743,7 @@ object Frontend {
     val operand = new JSONArray()
     val root = new JSONObject()
     Options.useJson1 = true
-    var elements = exp.toJson
-    var specialization = new JSONObject()
-    specialization = new JSONObject() // ??
-    specialization.put("specialization", elements)
-    array.put(specialization)
-    var res: JSONObject = root.put("elements", array)
-    res.toString(4)
+    exp.toJson.toString(4)
   }
 
   def exp2Json2(expressionString: String): String = {

@@ -1602,7 +1602,9 @@ trait Type {
 
 case class IdentType(ident: QualifiedName, args: List[Type]) extends Type {
   override def toString =
-    if (args.isEmpty) ident.toString else s"$ident[${args.mkString(",")}]"
+    if (args == null || args.isEmpty) 
+      ident.toString 
+    else s"$ident[${args.mkString(",")}]"
 
   override def toJson1 = {
     val identType = new JSONObject()

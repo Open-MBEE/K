@@ -17,16 +17,16 @@ public class Main {
 
 	public static void main(String[] args) throws Exception {
 		Frontend.scala_main(args);
-		String json, exp;
+		String json1, json2, exp;
 
 		// TEST Expressions
 		String[] exps = {
 				"a.b.c.f", // 0
 				"x < y + z", // 1
 				"1 + c + d * (-1) = 42", // 2
-				"q isin {f(x) | x : S . p(x)}", // 3
+				"q isin Set{f(x) | x : S . p(x)}", // 3
 				"x isin S.collect(x -> x + 1).select(x -> x > 4)", // 4
-				"do {val x : Int = 1 x + 1}", // 5
+				"{val x : Int = 1 x + 1}", // 5
 				"while (x > 0) do {x := x - 1}", // 6
 				"1 = 0", // 7
 				"x > y && x = 2*y", // 8
@@ -43,18 +43,21 @@ public class Main {
 				"forall i : Int . forall j : Int . ((i = 0) => (j = 42)) && (i = 0)", // 18
 				"exists i : Int . i > 10", // 19
 				"exists i : Int . ((i * i < 0))", // 20
-				"forall x, y:Int . x * y = 0" // 21
-		};
+				"forall x, y:Int . x * y = 0", // 21
+				"x.f(4) > 5", 
+				"f(4).x > 5" 
+				};
 
 		// Expression to JSON
-		json = Frontend.exp2Json(exps[15]);
-		System.out.println(json);
-		System.out.println();
+		for (int i = 0; i < exps.length; i++) {
+			json1 = Frontend.exp2Json(exps[i]);
+			json2 = Frontend.exp2Json2(exps[i]);
+			System.out.println("JSON1: " + json1);
+			System.out.println("JSON2: " + json2);
+			System.out.println("RJSON1: " + Frontend.json2exp(json1));
+			System.out.println("RJSON2: " + Frontend.json2exp2(json2));
+		}
 
-		// JSON to Expression from AST
-		// exp = Frontend.json2exp(json);
-		// System.out.println(exp);
-		// System.out.println("******************");
 
 		String expressionString = exps[1];
 		System.out.println("Checking expression: " + expressionString);
@@ -65,7 +68,7 @@ public class Main {
 
 		header("SOLVING EXPRESSIONS");
 
-		for (int i = 7; i < exps.length; i++) {
+		for (int i = 7; i < exps.length - 2; i++) {
 			K2Z3.reset();
 			String solvingExpression = exps[i];
 			Exp kexp = Frontend.exp2KExp(solvingExpression);
@@ -75,9 +78,9 @@ public class Main {
 			System.out.println("******************");
 		}
 
-		//Misc.wpTest();
+		// Misc.wpTest();
 
-		//Misc.wpTest2();
+		// Misc.wpTest2();
 
 	}
 }
