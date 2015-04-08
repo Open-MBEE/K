@@ -510,7 +510,7 @@ case class ExpressionDecl(exp: Exp) extends MemberDecl {
 }
 
 trait Exp {
-  def toJson = {
+  def toJson : JSONObject = {
     if (Options.useJson1) toJson1
     else toJson2
   }
@@ -787,7 +787,7 @@ case class WhileExp(cond: Exp, body: Exp) extends Exp {
 
 case class ForExp(pattern: Pattern, exp: Exp, body: Exp) extends Exp {
   override def toString = {
-    var result = s"for ($pattern in $exp) do"
+    var result = s"for $pattern in $exp do"
     moveIn
     result += indent + body
     moveOut
