@@ -166,9 +166,7 @@ expression:
   | 'if' expression 'then' expression ('else' expression)? #IfExp
   | 'match' expression 'with' match+  #MatchExp
   | 'while' expression 'do' expression  #WhileExp
-  | 'for' '(' pattern 'in' expression ')' 'do' expression # ForExp 
-  | 'forall' rngBindingList SUCHTHAT expression #ForallExp 
-  | 'exists' rngBindingList SUCHTHAT expression #ExistsExp 
+  | 'for' pattern 'in' expression 'do' expression # ForExp 
   | collectionKind '{' expressionList? '}' #SetEnumExp
   | collectionKind '{' expression '..' expression '}' #SetRngExp
   | collectionKind '{' expression '|' rngBindingList SUCHTHAT expression '}' #SetCompExp 
@@ -184,6 +182,8 @@ expression:
   | 'assert' '(' expression ')' #AssertExp 
   | '-' expression #NegExp
   | qualifiedName '~' #PrevExp
+  | 'forall' rngBindingList SUCHTHAT expression #ForallExp 
+  | 'exists' rngBindingList SUCHTHAT expression #ExistsExp 
   | pattern '->' expression #LambdaExp
   | 'continue' #ContinueExp
   | 'break' #BreakExp

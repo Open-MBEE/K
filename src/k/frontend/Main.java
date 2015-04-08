@@ -41,9 +41,9 @@ public class Main {
 				"forall x : Int . (forall y : Int . ((x = 0) => ((x = 0) || ((x != 1) && (y = 42)))))", // 16
 				"(x := 4) && x + 1 = z", // 17
 				"forall i : Int . forall j : Int . ((i = 0) => (j = 42)) && (i = 0)", // 18
-				"exists i : Int . (i > 10)", // 19
-				"(exists i : Int . ((i * i < 0)))", // 20
-				"forall x, y:Int . (x * y = 0)" // 21
+				"exists i : Int . i > 10", // 19
+				"exists i : Int . ((i * i < 0))", // 20
+				"forall x, y:Int . x * y = 0" // 21
 		};
 
 		// Expression to JSON
@@ -75,9 +75,9 @@ public class Main {
 			System.out.println("******************");
 		}
 
-		Misc.wpTest();
+		//Misc.wpTest();
 
-		Misc.wpTest2();
+		//Misc.wpTest2();
 
 	}
 }

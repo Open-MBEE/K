@@ -84,7 +84,7 @@ object Frontend {
 
     println("\n=====================================================\n")
   }
-  
+
   def visitJsonObject(o: Any): AnyRef = {
     val obj = o.asInstanceOf[JSONObject]
     obj.getString("type") match {
@@ -111,10 +111,9 @@ object Frontend {
       case "ForExp" =>
         val pattern: Pattern = visitJsonObject(obj.get("pattern")).asInstanceOf[Pattern]
         val exp: Exp = visitJsonObject(obj.get("exp")).asInstanceOf[Exp]
-        // val body = visitJsonArray(obj.get("body"), visitJsonObject).asInstanceOf[Exp] -- body not an array
         val body = visitJsonObject(obj.get("body")).asInstanceOf[Exp]
         ForExp(pattern, exp, body)
-      case "FunApplExp" => 
+      case "FunApplExp" =>
         val exp1: Exp = visitJsonObject(obj.get("exp1")).asInstanceOf[Exp]
         val args: List[Argument] = visitJsonArray(obj.get("args"), visitJsonObject).asInstanceOf[List[Argument]]
         FunApplExp(exp1, args)
@@ -292,7 +291,7 @@ object Frontend {
           if (obj.keySet().contains("expr")) Some(visitJsonObject(obj.get("expr")).asInstanceOf[Exp])
           else None
         PropertyDecl(modifiers, name, ty, multiplicity, assignment, expr)
-      case "FunDecl" => 
+      case "FunDecl" =>
         var ident: String = obj.get("ident").toString()
         var typeParams = visitJsonArray(obj.get("typeParams"), visitJsonObject).asInstanceOf[List[TypeParam]]
         var params = visitJsonArray(obj.get("params"), visitJsonObject).asInstanceOf[List[Param]]
@@ -386,11 +385,11 @@ object Frontend {
       case "ProductPattern" => ProductPattern(getPatternList(p.get("operand").asInstanceOf[JSONArray].get(1).asInstanceOf[JSONArray]))
     }
   }
-  
+
   def getPatternList(pl: JSONArray): List[Pattern] = {
     visitJsonArray(pl, getPattern).asInstanceOf[List[Pattern]]
   }
- 
+
   def getCollection(o: JSONObject): Collection = {
     val operand = o.getJSONArray("operand")
     operand.getJSONObject(0).get("type") match {
@@ -454,6 +453,11 @@ object Frontend {
             val cond: Exp = visitJsonObject2(operand.getJSONObject(1)).asInstanceOf[Exp]
             val body = visitJsonObject2(operand.getJSONObject(2)).asInstanceOf[Exp]
             WhileExp(cond, body)
+          case "ForExp" =>
+            val pattern: Pattern = visitJsonObject2(operand.getJSONObject(1)).asInstanceOf[Pattern]
+            val cond: Exp = visitJsonObject2(operand.getJSONObject(2)).asInstanceOf[Exp]
+            val body = visitJsonObject2(operand.getJSONObject(3)).asInstanceOf[Exp]
+            ForExp(pattern,cond, body)
           case "IfExp" =>
             val cond = visitJsonObject2(operand.getJSONObject(1)).asInstanceOf[Exp]
             val trueBranch = visitJsonObject2(operand.getJSONObject(2)).asInstanceOf[Exp]
@@ -467,7 +471,7 @@ object Frontend {
             val bindings = getRngBindingList(operand.getJSONObject(2)).asInstanceOf[List[RngBinding]]
             val exp = visitJsonObject2(operand.getJSONObject(3)).asInstanceOf[Exp]
             QuantifiedExp(quantifier, bindings, exp)
-          case "CollectionComprExp" => 
+          case "CollectionComprExp" =>
             var kind = getCollectionKind(operand.getString(1))
             var exp1 = visitJsonObject2(operand.get(2)).asInstanceOf[Exp]
             var exp2 = visitJsonObject2(operand.get(3)).asInstanceOf[Exp]
@@ -579,7 +583,7 @@ object Frontend {
       case "IdentExp" | "ElementValue" =>
         IdentExp(obj.get("element").asInstanceOf[String])
       // Non-Expr, similar to regular JSON
-      case "Model" => 
+      case "Model" =>
         var packageName: Option[PackageDecl] =
           if (obj.keySet().contains("packageName")) Some(visitJsonObject2(obj.getJSONObject("packageName"))).asInstanceOf[Option[PackageDecl]]
           else None
@@ -661,7 +665,7 @@ object Frontend {
         FunDecl(ident, typeParams, params, ty, spec, body)
       case "FunSpec" =>
         FunSpec(obj.getBoolean("pre"), visitJsonObject2(obj.get("exp")).asInstanceOf[Exp])
-      case "ConstraintDecl" => 
+      case "ConstraintDecl" =>
         var name: Option[String] =
           if (obj.keySet().contains("name")) Some(obj.get("name").toString())
           else None

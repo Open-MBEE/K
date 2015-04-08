@@ -1,10 +1,6 @@
 
-* Should we pull out the JSON conversion of the AST? We will have many other such
-  conversions. One could also argue that the conversion from JSON to K should be in
-  the same place as the conversion from K to JSON. 
 
-* Let's give the world a fold-left language construct that one can actually read and
-  remember to write.g
+* for (x,y) in set do smt does not work for json2
 
 * match expressions do not seem to be handled by the Java to Scala translator
 
@@ -13,9 +9,18 @@
 * It does not seem to handle type declarations correctly in the translation
 from a Java tree to a Scala tree.
 
-* visitJSONObject2 for For expression is missing
+-----------------------------------------------------------------------------------------
 
-* Json for Forall seems wrong.
+* Json1 for Forall and Exists seem wrong. No need for two entries in the Json object.
+
+-----------------------------------------------------------------------------------------
+
+* Should we pull out the JSON conversion of the AST? We will have many other such
+  conversions. One could also argue that the conversion from JSON to K should be in
+  the same place as the conversion from K to JSON. 
+
+* Let's give the world a fold-left language construct that one can actually read and
+  remember to write.g
 
 * Maybe a toJson1 and toJson2 in every class
 
