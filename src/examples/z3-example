@@ -1,0 +1,93 @@
+
+=============
+EXAMPLE IN K:
+=============
+
+class A {
+  a : Int
+
+  fun incr(x:Int):Int {
+    a + x
+  }
+}
+
+class MyInt {
+  x : Int
+  y : Int
+
+  fun abs : Int 
+    post $result >= 0
+  {
+    if x < 0 -x else x
+  }
+
+  fun checkSquare: Bool {
+    x * x = y
+  }
+
+  req checkSquare()
+
+  fun f(x:Int):A {
+    A(a=x)
+  }
+
+  req forall x : Int . f(x).a = x
+
+  req f(x).a = x
+}
+
+mi : MyInt = MyInt(x=1,y=2)
+
+==============
+EXAMPLE IN Z3:
+==============
+
+(declare-datatypes () ((A (mkA (a Int)))))
+
+(define-fun A.incr ((ma A) (x Int)) Int
+  (+ (a ma) x)
+)
+
+(declare-datatypes () ((MyInt (mkMyInt (x Int) (y Int)))))
+
+(define-fun MyInt.abs ((mi MyInt)) Int
+  (ite (< (x mi) 0) (- (x mi)) (x mi))
+)
+
+(define-fun MyInt.checkSquare ((mi MyInt)) Bool
+  (= (* (x mi) (x mi)) (y mi))
+)
+
+(define-fun MyInt.f((x Int)) A
+  (mkA x)
+)
+
+(declare-const intInit Int)
+
+(define-fun newMyInt ((k Int)) MyInt 
+  (mkMyInt intInit intInit)  
+)
+
+(assert (forall ((mi1 MyInt)) (>= (MyInt.abs mi1) 0)))
+
+(assert (exists ((mi2 MyInt)) (MyInt.checkSquare mi2)))
+
+(assert (forall ((x Int)) (= (a (MyInt.f x)) x)))
+
+(declare-const mi0 MyInt)
+(assert (MyInt.checkSquare mi0))
+
+(check-sat)
+(get-model)
+
+===================
+VERIFICATION TASKS:
+===================
+
+-  that function applications satisfy post conditions plus requirements
+   under assumption of preconditions and requirements
+
+- that the function definitions are satisfiable
+
+- that the requirements are satisfiable
+
