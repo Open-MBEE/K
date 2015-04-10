@@ -1,4 +1,5 @@
 
+* Should we require () in function definitions.
 
 * for (x,y) in set do smt does not work for json2
 
