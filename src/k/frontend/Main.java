@@ -44,11 +44,11 @@ public class Main {
 				"exists i : Int . i > 10", // 19
 				"exists i : Int . ((i * i < 0))", // 20
 				"forall x, y:Int . x * y = 0", // 21
-				"Tuple(1,true) # 2 = false" // 22
+				"Tuple(1,true) # 2 = true" // 22
 		// "x.f(4) > 5", // 22
 		// "f(4).x > 5"//, // 23
 		};
-
+/*
 		// Expression to JSON
 		for (int i = 0; i < exps.length; i++) {
 			System.out.println("\n---[" + i + "]-------------------------");
@@ -60,7 +60,7 @@ public class Main {
 			System.out.println("RJSON1: " + Frontend.json2exp(json1));
 			System.out.println("RJSON2: " + Frontend.json2exp2(json2));
 		}
-
+*/
 		// String expressionString = exps[1];
 		// System.out.println("Checking expression: " + expressionString);
 		// BoolExpr be = (BoolExpr) K2Z3.Expr2Z3(Frontend
