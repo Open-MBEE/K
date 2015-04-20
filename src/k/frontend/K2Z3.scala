@@ -1,15 +1,9 @@
 package k.frontend
 
+
 import java.util.HashMap
-import com.microsoft.z3.ArithExpr
-import com.microsoft.z3.BoolExpr
-import com.microsoft.z3.Context
-import com.microsoft.z3.IntExpr
-import com.microsoft.z3.Solver
-import com.microsoft.z3.Status
-import com.microsoft.z3.Z3Exception
+import com.microsoft.z3._
 import collection.JavaConversions._
-import com.microsoft.z3.Expr
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{ HashMap => MMap }
 
@@ -69,8 +63,25 @@ object K2Z3 {
     model
   }
 
+  def getZ3Function(exp : Exp) = {
+    // TODO
+    // have to ensure that all functions have been put into Z3
+    // 
+    null
+  }
+  
+  // create a function in Z3 with the given name
+  def createFunction(name : String, f : FunDecl) {
+   // TODO 
+  }
+  
   def Expr2Z3(e: Exp): com.microsoft.z3.Expr = {
     e match {
+      
+      case FunApplExp(exp, args) =>
+        var function = getZ3Function(exp).asInstanceOf[FuncDecl]
+        var argsZ3 : Array[Expr]= args.map(a => Expr2Z3(a)).toArray
+        ctx.mkApp(function, argsZ3:_*)
       case ParenExp(e) =>
         Expr2Z3(e)
       case BinExp(e1, o, e2) =>
