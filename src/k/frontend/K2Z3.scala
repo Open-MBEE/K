@@ -16,12 +16,31 @@ object K2Z3 {
   var idents: MMap[String, (Expr, com.microsoft.z3.StringSymbol)] = MMap()
   var model: com.microsoft.z3.Model = null
 
+  // types:
+
+  var int_type: Sort = null
+  var bool_type: Sort = null
+  var tuple2IntBoolConstr: FuncDecl = null
+  var firstIntBool: FuncDecl = null
+  var secondIntBool: FuncDecl = null
+
   def reset() {
     model = null
     idents = new MMap()
     ctx = new Context(cfg)
-    ctx.mkIntSort()
-
+    ctx.mkIntSort() // *** WARNING: Seems to have no effect.
+    // reset primitive types:
+    int_type = ctx.getIntSort();
+    bool_type = ctx.getBoolSort();
+    // reset tuple types:
+    val tuple: TupleSort =
+      ctx.mkTupleSort(
+        ctx.mkSymbol("mk_tuple"),
+        Array(ctx.mkSymbol("first"), ctx.mkSymbol("second")),
+        Array(int_type, bool_type))
+    tuple2IntBoolConstr = tuple.mkDecl()
+    firstIntBool = tuple.getFieldDecls()(0)
+    secondIntBool = tuple.getFieldDecls()(1)
   }
 
   def PrintModel() {
@@ -84,6 +103,21 @@ object K2Z3 {
         ctx.mkApp(function, argsZ3:_*)
       case ParenExp(e) =>
         Expr2Z3(e)
+      case TupleExp(es) =>
+        val vs = es map Expr2Z3
+        tuple2IntBoolConstr.apply(vs(0), vs(1))
+      case IdentExp(i) =>
+        idents.get(i) match {
+          case None =>
+            var s = ctx.mkSymbol(i)
+            var ie = ctx.mkIntConst(s)
+            idents.put(i, (ie, s))
+            ie
+          case Some(x) =>
+            x._1
+        }
+      //case DotExp(exp,ident) =>
+      //  ...
       case BinExp(e1, o, e2) =>
         o match {
           case LT =>
@@ -150,6 +184,13 @@ object K2Z3 {
             var v1: Expr = Expr2Z3(e1).asInstanceOf[Expr]
             var v2: Expr = Expr2Z3(e2).asInstanceOf[Expr]
             ctx.mkEq(v1, v2)
+          case TUPLEINDEX =>
+            var v1: Expr = Expr2Z3(e1).asInstanceOf[Expr]
+            var v2: Expr = Expr2Z3(e2).asInstanceOf[Expr]
+            if (v2 == ctx.mkInt(1))
+              firstIntBool.apply(v1)
+            else
+              secondIntBool.apply(v1)
         }
       case UnaryExp(o, e) =>
         o match {
@@ -159,16 +200,6 @@ object K2Z3 {
           case NEG =>
             var v: ArithExpr = Expr2Z3(e).asInstanceOf[ArithExpr]
             ctx.mkMul(ctx.mkInt(-1), v)
-        }
-      case IdentExp(i) =>
-        idents.get(i) match {
-          case None =>
-            var s = ctx.mkSymbol(i)
-            var ie = ctx.mkIntConst(s)
-            idents.put(i, (ie, s))
-            ie
-          case Some(x) =>
-            x._1
         }
       case IntegerLiteral(i) =>
         ctx.mkInt(i)
@@ -200,7 +231,7 @@ object K2Z3 {
                             qtypes.add(ctx.getIntSort())
                             val pattern = ctx.mkPattern(ie)
                             patterns.add(ctx.mkPattern(ie)) // use pattern, but not used anyway
-                          case RealType => qtypes.add(ctx.getRealSort()) 
+                          case RealType => qtypes.add(ctx.getRealSort())
                           case _ =>
                             Misc.error("Only bool, int, and real primitive types are supported for quantified expressions in Z3." + expression)
                         }
