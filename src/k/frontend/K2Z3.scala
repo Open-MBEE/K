@@ -7,6 +7,8 @@ import com.microsoft.z3.DatatypeExpr
 import com.microsoft.z3.FuncDecl
 import com.microsoft.z3.ArithExpr
 import com.microsoft.z3.BoolExpr
+import com.microsoft.z3.{ Symbol => Z3Symbol }
+import com.microsoft.z3.StringSymbol
 import com.microsoft.z3.Context
 import com.microsoft.z3.IntExpr
 import com.microsoft.z3.Solver
@@ -16,6 +18,42 @@ import collection.JavaConversions._
 import com.microsoft.z3.Expr
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{ HashMap => MMap }
+
+class DataTypes(ctx: Context) {
+  type TypeName = String
+  type FieldName = String
+
+  private var datatypes: Map[TypeName, Map[List[Sort], DataType]] = Map()
+
+  def addTupleType(fieldSorts: List[Sort]) {
+    val tupleSize: Int = fieldSorts.length
+    val constructorSymbol: StringSymbol = ctx.mkSymbol(s"mkTuple")
+    val fieldNames: Array[FieldName] = (for (i <- 1 to tupleSize) yield s"sel_$i").toArray
+    val fieldSymbols: Array[Z3Symbol] = fieldNames map (ctx.mkSymbol(_))
+    val tupleSort: TupleSort = ctx.mkTupleSort(constructorSymbol, fieldSymbols, fieldSorts.toArray)
+    val tupleConstructor: FuncDecl = tupleSort.mkDecl()
+    val fieldDecls: Map[FieldName, FuncDecl] = (fieldNames zip tupleSort.getFieldDecls).toMap
+    val dataType = DataType(tupleSort, tupleConstructor, fieldDecls)
+    insertDataType("Tuple", fieldSorts, dataType)
+  }
+
+  def addPrimitiveType(typeName: TypeName, sort: Sort) {
+    val primitiveDataType = DataType(sort, null, null)
+    val map: Map[List[Sort], DataType] = Map(Nil -> primitiveDataType)
+    datatypes += (typeName -> map)
+  }
+
+  def getDataType(typeName: TypeName, sorts: List[Sort]): DataType =
+    datatypes(typeName)(sorts)
+
+  private def insertDataType(typeName: TypeName, sorts: List[Sort], datatype: DataType) {
+    val map: Map[List[Sort], DataType] = datatypes.getOrElse(typeName, Map())
+    datatypes += (typeName -> (map + (sorts -> datatype)))
+  }
+
+}
+
+case class DataType(theType: Sort, constructor: FuncDecl, selectors: Map[String, FuncDecl])
 
 object K2Z3 {
 
@@ -30,27 +68,18 @@ object K2Z3 {
 
   var int_type: Sort = null
   var bool_type: Sort = null
-  var tuple2IntBoolConstr: FuncDecl = null
-  var firstIntBool: FuncDecl = null
-  var secondIntBool: FuncDecl = null
+  var datatypes: DataTypes = null
 
   def reset() {
     model = null
     idents = new MMap()
     ctx = new Context(cfg)
-    ctx.mkIntSort() // *** WARNING: Seems to have no effect.
-    // reset primitive types:
     int_type = ctx.getIntSort();
     bool_type = ctx.getBoolSort();
-    // reset tuple types:
-    val tuple: TupleSort =
-      ctx.mkTupleSort(
-        ctx.mkSymbol("mk_tuple"),
-        Array(ctx.mkSymbol("first"), ctx.mkSymbol("second")),
-        Array(int_type, bool_type))
-    tuple2IntBoolConstr = tuple.mkDecl()
-    firstIntBool = tuple.getFieldDecls()(0)
-    secondIntBool = tuple.getFieldDecls()(1)
+    datatypes = new DataTypes(ctx)
+    datatypes.addPrimitiveType("Int", int_type)
+    datatypes.addPrimitiveType("Bool", bool_type)
+    datatypes.addTupleType(List(int_type, bool_type))
   }
 
   def PrintModel() {
@@ -98,7 +127,10 @@ object K2Z3 {
         Expr2Z3(e)
       case TupleExp(es) =>
         val vs = es map Expr2Z3
-        tuple2IntBoolConstr.apply(vs(0), vs(1))
+        val intType = datatypes.getDataType("Int", Nil).theType
+        val boolType = datatypes.getDataType("Bool", Nil).theType
+        val mkTuple = datatypes.getDataType("Tuple", List(intType, boolType)).constructor
+        mkTuple(vs(0), vs(1))
       case IdentExp(i) =>
         idents.get(i) match {
           case None =>
@@ -180,10 +212,13 @@ object K2Z3 {
           case TUPLEINDEX =>
             var v1: Expr = Expr2Z3(e1).asInstanceOf[Expr]
             var v2: Expr = Expr2Z3(e2).asInstanceOf[Expr]
+            val intType = datatypes.getDataType("Int", Nil).theType
+            val boolType = datatypes.getDataType("Bool", Nil).theType
+            val datatype = datatypes.getDataType("Tuple", List(intType, boolType))
             if (v2 == ctx.mkInt(1))
-              firstIntBool.apply(v1)
+              datatype.selectors("sel_1").apply(v1)
             else
-              secondIntBool.apply(v1)
+              datatype.selectors("sel_2").apply(v1)
         }
       case UnaryExp(o, e) =>
         o match {
