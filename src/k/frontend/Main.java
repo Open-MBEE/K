@@ -44,7 +44,7 @@ public class Main {
 				"exists i : Int . i > 10", // 19
 				"exists i : Int . ((i * i < 0))", // 20
 				"forall x, y:Int . x * y = 0", // 21
-				"Tuple(1,true) # 1 = 1" // 22
+				"Tuple(1,false) # 2 = false" // 22
 		// "x.f(4) > 5", // 22
 		// "f(4).x > 5"//, // 23
 		};
