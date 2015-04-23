@@ -44,12 +44,15 @@ public class Main {
 				"exists i : Int . i > 10", // 19
 				"exists i : Int . ((i * i < 0))", // 20
 				"forall x, y:Int . x * y = 0", // 21
-				"x.f(4) > 5", 
-				"f(4).x > 5" 
-				};
-
+				"Tuple(1,false) # 2 = false" // 22
+		// "x.f(4) > 5", // 22
+		// "f(4).x > 5"//, // 23
+		};
+/*
 		// Expression to JSON
 		for (int i = 0; i < exps.length; i++) {
+			System.out.println("\n---[" + i + "]-------------------------");
+            System.out.println(exps[i]);
 			json1 = Frontend.exp2Json(exps[i]);
 			json2 = Frontend.exp2Json2(exps[i]);
 			System.out.println("JSON1: " + json1);
@@ -57,18 +60,17 @@ public class Main {
 			System.out.println("RJSON1: " + Frontend.json2exp(json1));
 			System.out.println("RJSON2: " + Frontend.json2exp2(json2));
 		}
-
-
-		String expressionString = exps[1];
-		System.out.println("Checking expression: " + expressionString);
-		BoolExpr be = (BoolExpr) K2Z3.Expr2Z3(Frontend
-				.exp2KExp(expressionString));
-		com.microsoft.z3.Model model = K2Z3.SolveExp(be);
-		System.out.println("******************");
+*/
+		// String expressionString = exps[1];
+		// System.out.println("Checking expression: " + expressionString);
+		// BoolExpr be = (BoolExpr) K2Z3.Expr2Z3(Frontend
+		// .exp2KExp(expressionString));
+		// com.microsoft.z3.Model model = K2Z3.SolveExp(be);
+		// System.out.println("******************")
 
 		header("SOLVING EXPRESSIONS");
 
-		for (int i = 7; i < exps.length - 2; i++) {
+		for (int i = 7; i < exps.length; i++) {
 			K2Z3.reset();
 			String solvingExpression = exps[i];
 			Exp kexp = Frontend.exp2KExp(solvingExpression);
