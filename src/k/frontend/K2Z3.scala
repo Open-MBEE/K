@@ -1,8 +1,14 @@
 package k.frontend
 
 import java.util.HashMap
+import com.microsoft.z3.Sort
+import com.microsoft.z3.TupleSort
+import com.microsoft.z3.DatatypeExpr
+import com.microsoft.z3.FuncDecl
 import com.microsoft.z3.ArithExpr
 import com.microsoft.z3.BoolExpr
+import com.microsoft.z3.{ Symbol => Z3Symbol }
+import com.microsoft.z3.StringSymbol
 import com.microsoft.z3.Context
 import com.microsoft.z3.IntExpr
 import com.microsoft.z3.Solver
@@ -13,6 +19,42 @@ import com.microsoft.z3.Expr
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{ HashMap => MMap }
 
+class DataTypes(ctx: Context) {
+  type TypeName = String
+  type FieldName = String
+
+  private var datatypes: Map[Type, DataType] = Map()
+
+  def addDataType(ty: Type, datatype: DataType) {
+    datatypes += (ty -> datatype)
+  }
+
+  def addTupleType(fieldTypes: List[Type]) {
+    val tupleSize: Int = fieldTypes.length
+    val constructorSymbol: StringSymbol = ctx.mkSymbol(s"mkTuple")
+    val fieldNames: Array[FieldName] = (for (i <- 1 to tupleSize) yield s"sel_$i").toArray
+    val fieldSymbols: Array[Z3Symbol] = fieldNames map (ctx.mkSymbol(_))
+    val fieldSorts: Array[Sort] = fieldTypes.toArray map (getDataType(_).theType)
+    val tupleSort: TupleSort = ctx.mkTupleSort(constructorSymbol, fieldSymbols, fieldSorts)
+    val tupleConstructor: FuncDecl = tupleSort.mkDecl()
+    val fieldDecls: Map[FieldName, FuncDecl] = (fieldNames zip tupleSort.getFieldDecls).toMap
+    val dataType = DataType(tupleSort, tupleConstructor, fieldDecls)
+    addDataType(CartesianType(fieldTypes), dataType)
+  }
+
+  def getDataType(ty: Type): DataType = datatypes(ty)
+
+  def getSort(ty: Type): Sort = getDataType(ty).theType
+
+  addDataType(IntType, DataType(ctx.getIntSort(), null, null))
+  addDataType(BoolType, DataType(ctx.getBoolSort(), null, null))
+  addDataType(RealType, DataType(ctx.getRealSort(), null, null))
+  
+  addTupleType(List(IntType, BoolType))
+}
+
+case class DataType(theType: Sort, constructor: FuncDecl, selectors: Map[String, FuncDecl])
+
 object K2Z3 {
 
   val debug: Boolean = false
@@ -22,12 +64,13 @@ object K2Z3 {
   var idents: MMap[String, (Expr, com.microsoft.z3.StringSymbol)] = MMap()
   var model: com.microsoft.z3.Model = null
 
+  var datatypes: DataTypes = null
+
   def reset() {
     model = null
     idents = new MMap()
     ctx = new Context(cfg)
-    ctx.mkIntSort()
-
+    datatypes = new DataTypes(ctx)
   }
 
   def PrintModel() {
@@ -73,6 +116,28 @@ object K2Z3 {
     e match {
       case ParenExp(e) =>
         Expr2Z3(e)
+      case TupleExp(es) =>
+        val vs = es map Expr2Z3
+        val tupleType = CartesianType(List(IntType, BoolType))
+        val mkTuple = datatypes.getDataType(tupleType).constructor
+        mkTuple(vs(0), vs(1))
+      case IdentExp(i) =>
+        idents.get(i) match {
+          case None =>
+            var s = ctx.mkSymbol(i)
+            var ie = ctx.mkIntConst(s)
+            idents.put(i, (ie, s))
+            ie
+          case Some(x) =>
+            x._1
+        }
+      // case DotExp(exp, ident) =>
+      //   var obj: Expr = Expr2Z3(exp)
+      //   val typeName: String = "Set"
+      //   val sorts: List[Sort] = List(datatypes.intType)
+      //   val datatype: DataType = datatypes.getDataType(typeName, sorts)
+      //   val selector: FuncDecl = datatype.selectors(ident)
+      //   selector(obj)
       case BinExp(e1, o, e2) =>
         o match {
           case LT =>
@@ -139,6 +204,15 @@ object K2Z3 {
             var v1: Expr = Expr2Z3(e1).asInstanceOf[Expr]
             var v2: Expr = Expr2Z3(e2).asInstanceOf[Expr]
             ctx.mkEq(v1, v2)
+          case TUPLEINDEX =>
+            var v1: Expr = Expr2Z3(e1).asInstanceOf[Expr]
+            var v2: Expr = Expr2Z3(e2).asInstanceOf[Expr]
+            val tupleType = CartesianType(List(IntType, BoolType))
+            val datatype = datatypes.getDataType(tupleType)
+            if (v2 == ctx.mkInt(1))
+              datatype.selectors("sel_1").apply(v1)
+            else
+              datatype.selectors("sel_2").apply(v1)
         }
       case UnaryExp(o, e) =>
         o match {
@@ -148,16 +222,6 @@ object K2Z3 {
           case NEG =>
             var v: ArithExpr = Expr2Z3(e).asInstanceOf[ArithExpr]
             ctx.mkMul(ctx.mkInt(-1), v)
-        }
-      case IdentExp(i) =>
-        idents.get(i) match {
-          case None =>
-            var s = ctx.mkSymbol(i)
-            var ie = ctx.mkIntConst(s)
-            idents.put(i, (ie, s))
-            ie
-          case Some(x) =>
-            x._1
         }
       case IntegerLiteral(i) =>
         ctx.mkInt(i)
@@ -189,7 +253,7 @@ object K2Z3 {
                             qtypes.add(ctx.getIntSort())
                             val pattern = ctx.mkPattern(ie)
                             patterns.add(ctx.mkPattern(ie)) // use pattern, but not used anyway
-                          case RealType => qtypes.add(ctx.getRealSort()) 
+                          case RealType => qtypes.add(ctx.getRealSort())
                           case _ =>
                             Misc.error("Only bool, int, and real primitive types are supported for quantified expressions in Z3." + expression)
                         }
