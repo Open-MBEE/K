@@ -23,34 +23,34 @@ class DataTypes(ctx: Context) {
   type TypeName = String
   type FieldName = String
 
-  private var datatypes: Map[TypeName, Map[List[Sort], DataType]] = Map()
+  private var datatypes: Map[Type, DataType] = Map()
 
-  def addTupleType(fieldSorts: List[Sort]) {
-    val tupleSize: Int = fieldSorts.length
+  def addDataType(ty: Type, datatype: DataType) {
+    datatypes += (ty -> datatype)
+  }
+
+  def addTupleType(fieldTypes: List[Type]) {
+    val tupleSize: Int = fieldTypes.length
     val constructorSymbol: StringSymbol = ctx.mkSymbol(s"mkTuple")
     val fieldNames: Array[FieldName] = (for (i <- 1 to tupleSize) yield s"sel_$i").toArray
     val fieldSymbols: Array[Z3Symbol] = fieldNames map (ctx.mkSymbol(_))
-    val tupleSort: TupleSort = ctx.mkTupleSort(constructorSymbol, fieldSymbols, fieldSorts.toArray)
+    val fieldSorts: Array[Sort] = fieldTypes.toArray map (getDataType(_).theType)
+    val tupleSort: TupleSort = ctx.mkTupleSort(constructorSymbol, fieldSymbols, fieldSorts)
     val tupleConstructor: FuncDecl = tupleSort.mkDecl()
     val fieldDecls: Map[FieldName, FuncDecl] = (fieldNames zip tupleSort.getFieldDecls).toMap
     val dataType = DataType(tupleSort, tupleConstructor, fieldDecls)
-    insertDataType("Tuple", fieldSorts, dataType)
+    addDataType(CartesianType(fieldTypes), dataType)
   }
 
-  def addPrimitiveType(typeName: TypeName, sort: Sort) {
-    val primitiveDataType = DataType(sort, null, null)
-    val map: Map[List[Sort], DataType] = Map(Nil -> primitiveDataType)
-    datatypes += (typeName -> map)
-  }
+  def getDataType(ty: Type): DataType = datatypes(ty)
 
-  def getDataType(typeName: TypeName, sorts: List[Sort]): DataType =
-    datatypes(typeName)(sorts)
+  def getSort(ty: Type): Sort = getDataType(ty).theType
 
-  private def insertDataType(typeName: TypeName, sorts: List[Sort], datatype: DataType) {
-    val map: Map[List[Sort], DataType] = datatypes.getOrElse(typeName, Map())
-    datatypes += (typeName -> (map + (sorts -> datatype)))
-  }
-
+  addDataType(IntType, DataType(ctx.getIntSort(), null, null))
+  addDataType(BoolType, DataType(ctx.getBoolSort(), null, null))
+  addDataType(RealType, DataType(ctx.getRealSort(), null, null))
+  
+  addTupleType(List(IntType, BoolType))
 }
 
 case class DataType(theType: Sort, constructor: FuncDecl, selectors: Map[String, FuncDecl])
@@ -64,22 +64,13 @@ object K2Z3 {
   var idents: MMap[String, (Expr, com.microsoft.z3.StringSymbol)] = MMap()
   var model: com.microsoft.z3.Model = null
 
-  // types:
-
-  var int_type: Sort = null
-  var bool_type: Sort = null
   var datatypes: DataTypes = null
 
   def reset() {
     model = null
     idents = new MMap()
     ctx = new Context(cfg)
-    int_type = ctx.getIntSort();
-    bool_type = ctx.getBoolSort();
     datatypes = new DataTypes(ctx)
-    datatypes.addPrimitiveType("Int", int_type)
-    datatypes.addPrimitiveType("Bool", bool_type)
-    datatypes.addTupleType(List(int_type, bool_type))
   }
 
   def PrintModel() {
@@ -127,9 +118,8 @@ object K2Z3 {
         Expr2Z3(e)
       case TupleExp(es) =>
         val vs = es map Expr2Z3
-        val intType = datatypes.getDataType("Int", Nil).theType
-        val boolType = datatypes.getDataType("Bool", Nil).theType
-        val mkTuple = datatypes.getDataType("Tuple", List(intType, boolType)).constructor
+        val tupleType = CartesianType(List(IntType, BoolType))
+        val mkTuple = datatypes.getDataType(tupleType).constructor
         mkTuple(vs(0), vs(1))
       case IdentExp(i) =>
         idents.get(i) match {
@@ -141,8 +131,13 @@ object K2Z3 {
           case Some(x) =>
             x._1
         }
-      //case DotExp(exp,ident) =>
-      //  ...
+      // case DotExp(exp, ident) =>
+      //   var obj: Expr = Expr2Z3(exp)
+      //   val typeName: String = "Set"
+      //   val sorts: List[Sort] = List(datatypes.intType)
+      //   val datatype: DataType = datatypes.getDataType(typeName, sorts)
+      //   val selector: FuncDecl = datatype.selectors(ident)
+      //   selector(obj)
       case BinExp(e1, o, e2) =>
         o match {
           case LT =>
@@ -212,9 +207,8 @@ object K2Z3 {
           case TUPLEINDEX =>
             var v1: Expr = Expr2Z3(e1).asInstanceOf[Expr]
             var v2: Expr = Expr2Z3(e2).asInstanceOf[Expr]
-            val intType = datatypes.getDataType("Int", Nil).theType
-            val boolType = datatypes.getDataType("Bool", Nil).theType
-            val datatype = datatypes.getDataType("Tuple", List(intType, boolType))
+            val tupleType = CartesianType(List(IntType, BoolType))
+            val datatype = datatypes.getDataType(tupleType)
             if (v2 == ctx.mkInt(1))
               datatype.selectors("sel_1").apply(v1)
             else
