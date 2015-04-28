@@ -2,7 +2,9 @@ package k.frontend
 
 import java.util.HashMap
 import com.microsoft.z3.Sort
+import com.microsoft.z3.Constructor
 import com.microsoft.z3.TupleSort
+import com.microsoft.z3.DatatypeSort
 import com.microsoft.z3.DatatypeExpr
 import com.microsoft.z3.FuncDecl
 import com.microsoft.z3.ArithExpr
@@ -19,6 +21,15 @@ import com.microsoft.z3.Expr
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{ HashMap => MMap }
 
+object TypeChecker {
+  /**
+   * Used to indicate where type inference is meant to take place.
+   * The identity function on second argument.
+   */
+  def inferTypeFrom(exp: String, ty: Type) = ty
+}
+import TypeChecker._
+
 class DataTypes(ctx: Context) {
   type TypeName = String
   type FieldName = String
@@ -28,6 +39,23 @@ class DataTypes(ctx: Context) {
   def addDataType(ty: Type, datatype: DataType) {
     datatypes += (ty -> datatype)
   }
+
+  def addDataType(name: String, argTypes: List[Type], fields: List[(String, Type)]) {
+    val fieldNames: Array[FieldName] = fields.toArray map { case (n, _) => n }
+    val fieldSorts: Array[Sort] = fields.toArray map { case (_, t) => getDataType(t).theType }
+    val mkDatatype: Constructor = ctx.mkConstructor(s"mk$name", s"is$name", fieldNames, fieldSorts, null)
+    val datatypeSort: DatatypeSort = ctx.mkDatatypeSort(name, Array(mkDatatype))
+    val constructor: FuncDecl = datatypeSort.getConstructors.apply(0)
+    val selectors : Array[FuncDecl] = datatypeSort.getAccessors.apply(0)
+    val fieldDecls: Map[FieldName, FuncDecl] = (fieldNames zip selectors).toMap
+    val dataType = DataType(datatypeSort, constructor, fieldDecls)
+    addDataType(IdentType(QualifiedName(List(name)), argTypes), dataType)
+  }
+
+  //  Array < String > argnames = new Array < String > ("first", "second");
+  //  Array < z3.Sort > argsorts = new Array < z3.Sort > (ctx.getIntSort(), ctx.getIntSort());
+  //  z3.Constructor mkpair = ctx.mkConstructor("mkpair", "ispair", argnames, argsorts, null);
+  //  z3.DatatypeSort pair = ctx.mkDatatypeSort("pair", new Array < z3.Constructor > (mkpair));
 
   def addTupleType(fieldTypes: List[Type]) {
     val tupleSize: Int = fieldTypes.length
@@ -49,8 +77,6 @@ class DataTypes(ctx: Context) {
   addDataType(IntType, DataType(ctx.getIntSort(), null, null))
   addDataType(BoolType, DataType(ctx.getBoolSort(), null, null))
   addDataType(RealType, DataType(ctx.getRealSort(), null, null))
-  
-  addTupleType(List(IntType, BoolType))
 }
 
 case class DataType(theType: Sort, constructor: FuncDecl, selectors: Map[String, FuncDecl])
@@ -66,11 +92,17 @@ object K2Z3 {
 
   var datatypes: DataTypes = null
 
+  def initializeDatatypes(ctx: Context) {
+    datatypes = new DataTypes(ctx)
+    datatypes.addTupleType(List(IntType, BoolType))
+    datatypes.addDataType("A", Nil, List("x" -> IntType, "y" -> BoolType))
+  }
+
   def reset() {
     model = null
     idents = new MMap()
     ctx = new Context(cfg)
-    datatypes = new DataTypes(ctx)
+    initializeDatatypes(ctx)
   }
 
   def PrintModel() {
@@ -118,7 +150,7 @@ object K2Z3 {
         Expr2Z3(e)
       case TupleExp(es) =>
         val vs = es map Expr2Z3
-        val tupleType = CartesianType(List(IntType, BoolType))
+        val tupleType = inferTypeFrom("es", CartesianType(List(IntType, BoolType)))
         val mkTuple = datatypes.getDataType(tupleType).constructor
         mkTuple(vs(0), vs(1))
       case IdentExp(i) =>
@@ -131,13 +163,12 @@ object K2Z3 {
           case Some(x) =>
             x._1
         }
-      // case DotExp(exp, ident) =>
-      //   var obj: Expr = Expr2Z3(exp)
-      //   val typeName: String = "Set"
-      //   val sorts: List[Sort] = List(datatypes.intType)
-      //   val datatype: DataType = datatypes.getDataType(typeName, sorts)
-      //   val selector: FuncDecl = datatype.selectors(ident)
-      //   selector(obj)
+      case DotExp(exp, ident) =>
+        var obj: Expr = Expr2Z3(exp)
+        val theType = inferTypeFrom("exp", IdentType(QualifiedName(List("A")), Nil))
+        val datatype: DataType = datatypes.getDataType(theType)
+        val selector: FuncDecl = datatype.selectors(ident)
+        selector(obj)
       case BinExp(e1, o, e2) =>
         o match {
           case LT =>
@@ -207,7 +238,7 @@ object K2Z3 {
           case TUPLEINDEX =>
             var v1: Expr = Expr2Z3(e1).asInstanceOf[Expr]
             var v2: Expr = Expr2Z3(e2).asInstanceOf[Expr]
-            val tupleType = CartesianType(List(IntType, BoolType))
+            val tupleType = inferTypeFrom("e1", CartesianType(List(IntType, BoolType)))
             val datatype = datatypes.getDataType(tupleType)
             if (v2 == ctx.mkInt(1))
               datatype.selectors("sel_1").apply(v1)
