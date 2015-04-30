@@ -371,11 +371,13 @@ class TestBed {
 		
 		apID : String
 		args : String[]
+		pause : PauseCMD
 		//args : data structure or array, where contents of file with the ID "apID" are stored 
 			
 			command{
 				TestBed.verifyDP(apID,args)
 			}
+			
 			
 			constraint fileExist:
 				apID.isEmpty() ==  false	
@@ -468,18 +470,53 @@ class TestBed {
 		//--SignOff(file)------------------------------------------------------------------------------------
 		
 		
+		event SignOff(outputFile){
 		
-		SignOff(outputFile).command{
-			if(!outputFile)
-				return true
-			else
-				return false
+		outputFile : String
+		setLogFile : SetLogFile
+		writeMessage : WriteMessageCMD
+		
+			command{
+				TestBed.SignOffFile()
+			}
+				
+				if(outputFile == null && !setLogFile)
+				{
+					console.writeMessage(outputFile)
+				}
+				else if(outputFile == null && setLogFile)
+				{
+					console.writeMessage(outputFile)
+					SetLogFile(fileName)
+				}
+				else if(outputFile != null)
+					SetLogFile(fileName)
 		}
-		
 			constraint fileExists:
 				outputFile != null
 
+				
+		//--SetTimeOut------------------------------------------------------------------------------------	
 
+		
+		event SetTimeOut(num){
+			
+			num : Int
+			verifyEVR : VerifyEVR
+			verifyEHA :	VerifyEHA
+			
+			command{
+				TestBed.SetTimeOut(num)
+			}
+			
+			
+			constraint WaitForEHA:
+				startTime = verifyEHA.endTime + incr	
+				
+			constraint WaitForEVR:
+				startTime = verifyEVR.endTime + incr
+		
+		}
 
 }
 
