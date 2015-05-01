@@ -47,9 +47,16 @@ class WSTS extends TestBed {
 //Exit() is a command -- no time constraints on Exit
 //Functioncall Exit() = Functioncall(object="TestBed",method="Exit")
 
+		class <constraint> constraint{
+		
+		}
+		
+		constraint StartCMD(){ = class StartCMD() extends constraint
+		
+		}
 
 		class <event> Event{
-			StartTime : Int
+			startTime : Int
 			EndTime : Int
 			duration : Int
 			
@@ -175,6 +182,9 @@ class TestBed {
 				TestBed.WriteMessageCMD(messageToBeSend, messageOutputFile)
 			}
 		
+				constraint duration:
+					duration = endTime - StartTime
+					
 				constraint WriteMessageCMDscheduleTimer:
 					startTime = startCommand.endTime
 		
@@ -192,7 +202,7 @@ class TestBed {
 			}
 		
 				constraint SendCMDscheduleTimer:
-					startTime = StartCMD.endTime		
+					startTime = WriteMessageCMD.endTime		
 		}
 		
 		//--SendSCMF(filePath)-------------------------------------------------------------------------------
@@ -223,6 +233,7 @@ class TestBed {
 		    
 		    command{
 				TestBed.VerifyEHA(channelID,BASE)
+			}
 				
 				if(channelID != null)
 					return channelID
@@ -231,7 +242,7 @@ class TestBed {
 			}
 			
 				constraint VerifyEHAscheduleTimer:
-					startTime = SendCommand.endTime
+					startTime = SendCMD.endTime
 		}
 		
 		
@@ -287,18 +298,13 @@ class TestBed {
 			command{
 				TestBed.VerifyEVRCritical(search_string,sclk)
 			}
-			
-			constraint emptySearchString:
-				search_string != null
-
-				
-			constraint VerifyEHAscheduleTimer:
+							
+			constraint VerifyEVRscheduleTimer:
 				startTime = SendCMD.endTime
 					
-			constraint VerifyEHAscheduleTimer2:
+			constraint VerifyEVRscheduleTimer2:
 				startTime = WriteMessageCMD.endTime
 				
-		
 		}
 		
 		
@@ -365,11 +371,13 @@ class TestBed {
 		
 		apID : String
 		args : String[]
+		pause : PauseCMD
 		//args : data structure or array, where contents of file with the ID "apID" are stored 
 			
 			command{
 				TestBed.verifyDP(apID,args)
 			}
+			
 			
 			constraint fileExist:
 				apID.isEmpty() ==  false	
@@ -462,24 +470,53 @@ class TestBed {
 		//--SignOff(file)------------------------------------------------------------------------------------
 		
 		
+		event SignOff(outputFile){
 		
-		SignOff(outputFile).command{
-			if(SignOff(outputFile))
-				return true
-			else
-				return false
+		outputFile : String
+		setLogFile : SetLogFile
+		writeMessage : WriteMessageCMD
+		
+			command{
+				TestBed.SignOffFile()
+			}
+				
+				if(outputFile == null && !setLogFile)
+				{
+					console.writeMessage(outputFile)
+				}
+				else if(outputFile == null && setLogFile)
+				{
+					console.writeMessage(outputFile)
+					SetLogFile(fileName)
+				}
+				else if(outputFile != null)
+					SetLogFile(fileName)
+		}
+			constraint fileExists:
+				outputFile != null
+
+				
+		//--SetTimeOut------------------------------------------------------------------------------------	
+
+		
+		event SetTimeOut(num){
+			
+			num : Int
+			verifyEVR : VerifyEVR
+			verifyEHA :	VerifyEHA
+			
+			command{
+				TestBed.SetTimeOut(num)
+			}
+			
+			
+			constraint WaitForEHA:
+				startTime = verifyEHA.endTime + incr	
+				
+			constraint WaitForEVR:
+				startTime = verifyEVR.endTime + incr
+		
 		}
 
-
-
 }
-
-
-	
-
-
-
-
-	
-	
 
