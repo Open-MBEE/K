@@ -21,6 +21,11 @@ import com.microsoft.z3.Expr
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{ HashMap => MMap }
 
+object Util {
+  def ??? : Nothing = null.asInstanceOf[Nothing]
+}
+import Util._
+
 object TypeChecker {
   /**
    * Used to indicate where type inference is meant to take place.
@@ -46,7 +51,7 @@ class DataTypes(ctx: Context) {
     val mkDatatype: Constructor = ctx.mkConstructor(s"mk$name", s"is$name", fieldNames, fieldSorts, null)
     val datatypeSort: DatatypeSort = ctx.mkDatatypeSort(name, Array(mkDatatype))
     val constructor: FuncDecl = datatypeSort.getConstructors.apply(0)
-    val selectors : Array[FuncDecl] = datatypeSort.getAccessors.apply(0)
+    val selectors: Array[FuncDecl] = datatypeSort.getAccessors.apply(0)
     val fieldDecls: Map[FieldName, FuncDecl] = (fieldNames zip selectors).toMap
     val dataType = DataType(datatypeSort, constructor, fieldDecls)
     addDataType(IdentType(QualifiedName(List(name)), argTypes), dataType)
@@ -169,6 +174,22 @@ object K2Z3 {
         val datatype: DataType = datatypes.getDataType(theType)
         val selector: FuncDecl = datatype.selectors(ident)
         selector(obj)
+      case FunApplExp(exp, args) =>
+        var obj: Expr = Expr2Z3(exp)
+        val theType = inferTypeFrom("exp", IdentType(QualifiedName(List("A")), Nil))
+        val isConstructor = true
+        if (isConstructor) {
+          // constructor application
+          val datatype: DataType = datatypes.getDataType(theType)
+          val constructor: FuncDecl = datatype.constructor
+          val arguments: List[Expr] = args map (Expr2Z3(_))
+          constructor(arguments: _*)
+        } else {
+          // normal function application
+          ???
+        }
+      case PositionalArgument(exp) =>
+        Expr2Z3(exp)      
       case BinExp(e1, o, e2) =>
         o match {
           case LT =>

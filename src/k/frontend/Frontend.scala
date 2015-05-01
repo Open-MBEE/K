@@ -194,6 +194,12 @@ object Frontend {
         val ident = visitJsonObject(obj.get("ident")).asInstanceOf[QualifiedName]
         val args = visitJsonArray(obj.get("args").asInstanceOf[JSONArray], visitJsonObject).asInstanceOf[List[Type]]
         IdentType(ident, args)
+      case "PositionalArgument" =>
+        PositionalArgument(visitJsonObject(obj.get("exp")).asInstanceOf[Exp])
+      case "NamedArgument" =>
+        val ident: String = obj.getString("ident")
+        val exp: Exp = visitJsonObject(obj.get("exp")).asInstanceOf[Exp]
+        NamedArgument(ident, exp)           
       case "CartesianType" =>
         CartesianType(visitJsonArray(obj.get("types"), visitJsonObject).asInstanceOf[List[Type]])
       case "IdentPattern" =>
@@ -443,9 +449,9 @@ object Frontend {
             val exp1 = visitJsonObject2(operand.getJSONObject(1)).asInstanceOf[Exp]
             val args =
               if (operand.length > 2) {
-                val argsList: MList[Exp] = MList()
+                val argsList: MList[Argument] = MList()
                 for (i <- Range(2, operand.length())) {
-                  argsList += visitJsonObject2(operand.get(i)).asInstanceOf[Exp]
+                  argsList += visitJsonObject2(operand.get(i)).asInstanceOf[Argument]
                 }
                 argsList.toList
               } else Nil
@@ -458,7 +464,7 @@ object Frontend {
             val pattern: Pattern = visitJsonObject2(operand.getJSONObject(1)).asInstanceOf[Pattern]
             val cond: Exp = visitJsonObject2(operand.getJSONObject(2)).asInstanceOf[Exp]
             val body = visitJsonObject2(operand.getJSONObject(3)).asInstanceOf[Exp]
-            ForExp(pattern,cond, body)
+            ForExp(pattern, cond, body)
           case "IfExp" =>
             val cond = visitJsonObject2(operand.getJSONObject(1)).asInstanceOf[Exp]
             val trueBranch = visitJsonObject2(operand.getJSONObject(2)).asInstanceOf[Exp]
@@ -569,6 +575,12 @@ object Frontend {
                   System.exit(-1).asInstanceOf[Nothing]
               }
             UnaryExp(operator, visitJsonObject2(operand.getJSONObject(2)).asInstanceOf[Exp])
+          case "PositionalArgument" =>
+            PositionalArgument(visitJsonObject2(operand.getJSONObject(1)).asInstanceOf[Exp])
+          case "NamedArgument" =>
+            val ident = operand.getString(1)
+            val exp = visitJsonObject2(operand.getJSONObject(2)).asInstanceOf[Exp]
+            NamedArgument(ident, exp)             
           case "RngBinding" =>
             val patterns: MList[Pattern] = MList()
             for (i <- Range(2, operand.length())) {
