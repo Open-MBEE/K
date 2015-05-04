@@ -47,7 +47,7 @@ class DataTypes(ctx: Context) {
 
   def addDataType(name: String, argTypes: List[Type], fields: List[(String, Type)]) {
     val fieldNames: Array[FieldName] = fields.toArray map { case (n, _) => n }
-    val fieldSorts: Array[Sort] = fields.toArray map { case (_, t) => getDataType(t).theType }
+    val fieldSorts: Array[Sort] = fields.toArray map { case (_, t) => getDataType(t).sort }
     val mkDatatype: Constructor = ctx.mkConstructor(s"mk$name", s"is$name", fieldNames, fieldSorts, null)
     val datatypeSort: DatatypeSort = ctx.mkDatatypeSort(name, Array(mkDatatype))
     val constructor: FuncDecl = datatypeSort.getConstructors.apply(0)
@@ -67,7 +67,7 @@ class DataTypes(ctx: Context) {
     val constructorSymbol: StringSymbol = ctx.mkSymbol(s"mkTuple")
     val fieldNames: Array[FieldName] = (for (i <- 1 to tupleSize) yield s"sel_$i").toArray
     val fieldSymbols: Array[Z3Symbol] = fieldNames map (ctx.mkSymbol(_))
-    val fieldSorts: Array[Sort] = fieldTypes.toArray map (getDataType(_).theType)
+    val fieldSorts: Array[Sort] = fieldTypes.toArray map (getDataType(_).sort)
     val tupleSort: TupleSort = ctx.mkTupleSort(constructorSymbol, fieldSymbols, fieldSorts)
     val tupleConstructor: FuncDecl = tupleSort.mkDecl()
     val fieldDecls: Map[FieldName, FuncDecl] = (fieldNames zip tupleSort.getFieldDecls).toMap
@@ -77,14 +77,14 @@ class DataTypes(ctx: Context) {
 
   def getDataType(ty: Type): DataType = datatypes(ty)
 
-  def getSort(ty: Type): Sort = getDataType(ty).theType
+  def getSort(ty: Type): Sort = getDataType(ty).sort
 
   addDataType(IntType, DataType(ctx.getIntSort(), null, null))
   addDataType(BoolType, DataType(ctx.getBoolSort(), null, null))
   addDataType(RealType, DataType(ctx.getRealSort(), null, null))
 }
 
-case class DataType(theType: Sort, constructor: FuncDecl, selectors: Map[String, FuncDecl])
+case class DataType(sort: Sort, constructor: FuncDecl, selectors: Map[String, FuncDecl])
 
 object K2Z3 {
 
@@ -97,17 +97,28 @@ object K2Z3 {
 
   var datatypes: DataTypes = null
 
-  def initializeDatatypes(ctx: Context) {
+  def declareDatatypes(ctx: Context) {
     datatypes = new DataTypes(ctx)
     datatypes.addTupleType(List(IntType, BoolType))
     datatypes.addDataType("A", Nil, List("x" -> IntType, "y" -> BoolType))
+  }
+
+  def declareFunctions(ctx: Context) {
+    // function f : Int -> Int inside A
+    val intType = datatypes.getSort(IntType)
+    val theAType = IdentType(QualifiedName(List("A")), Nil)
+    val theADatatype: DataType = datatypes.getDataType(theAType)
+    val theASort = theADatatype.sort
+    val fDecl: FuncDecl = ctx.mkFuncDecl("f", Array(theASort, intType), intType)
+    
   }
 
   def reset() {
     model = null
     idents = new MMap()
     ctx = new Context(cfg)
-    initializeDatatypes(ctx)
+    declareDatatypes(ctx)
+    declareFunctions(ctx)
   }
 
   def PrintModel() {
@@ -162,7 +173,7 @@ object K2Z3 {
         idents.get(i) match {
           case None =>
             var s = ctx.mkSymbol(i)
-            var ie = ctx.mkIntConst(s)
+            var ie = ctx.mkIntConst(s) // KH: this means all names must represent integers. Wonder whether only to use symbols
             idents.put(i, (ie, s))
             ie
           case Some(x) =>
@@ -189,7 +200,7 @@ object K2Z3 {
           ???
         }
       case PositionalArgument(exp) =>
-        Expr2Z3(exp)      
+        Expr2Z3(exp)
       case BinExp(e1, o, e2) =>
         o match {
           case LT =>
@@ -334,6 +345,10 @@ object K2Z3 {
         // and named constants for exists. 
         // This probably can be cleaned up, but it is the only way I got
         // it to work.
+        // KH: I think that it does not work as expected for existential quantification.
+        // since variables are all de-Brujin variables, and since symbols are used for
+        // existential, it does not work. It looks like it works, but I think it is
+        // not working the way it is intended to.
         quantifier match {
           case Forall =>
             ctx.mkForall(ies.toArray, body, 0, null,
