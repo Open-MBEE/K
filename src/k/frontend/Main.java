@@ -46,8 +46,8 @@ public class Main {
 				"forall x, y:Int . x * y = 0", // 21
 				"Tuple(1,false) # 2 = false", // 22
 				"A(1,true).y = true" // 23
-		// "x.f(4) > 5", // 22
-		// "f(4).x > 5"//, // 23
+		// "x.f(4) > 5", // 24
+		// "f(4).x > 5"//, // 25
 		};
 		/*
 		 * // Expression to JSON for (int i = 0; i < exps.length; i++) {
