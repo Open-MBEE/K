@@ -110,7 +110,7 @@ object K2Z3 {
     val theADatatype: DataType = datatypes.getDataType(theAType)
     val theASort = theADatatype.sort
     val fDecl: FuncDecl = ctx.mkFuncDecl("f", Array(theASort, intType), intType)
-    
+
   }
 
   def reset() {
@@ -354,8 +354,10 @@ object K2Z3 {
             ctx.mkForall(ies.toArray, body, 0, null,
               null, null, null)
           case Exists =>
-            ctx.mkExists(qtypes.toArray, names.toArray,
-              body, 1, null, null, null, null)
+            ctx.mkExists(ies.toArray, body, 0, null,
+              null, null, null)
+          //            ctx.mkExists(qtypes.toArray, names.toArray,
+          //              body, 1, null, null, null, null)
           //ctx.mkExists(ies.toArray, body, 0, null, null, null, null)
         }
     }

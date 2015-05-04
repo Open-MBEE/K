@@ -45,9 +45,11 @@ public class Main {
 				"exists i : Int . ((i * i < 0))", // 20
 				"forall x, y:Int . x * y = 0", // 21
 				"Tuple(1,false) # 2 = false", // 22
-				"A(1,true).y = true" // 23
-		// "x.f(4) > 5", // 24
-		// "f(4).x > 5"//, // 25
+				"A(1,true).y = true", // 23
+				"forall x : Int. exists y : Int . y > x", // 24 -- is UNSAT but should be SAT (de-Brujin vs. symbol issue)
+				"forall x : Int . y > x" // 25 -- is UNSAT and should be UNSAT
+		// "x.f(4) > 5", // 26
+		// "f(4).x > 5"//, // 27
 		};
 		/*
 		 * // Expression to JSON for (int i = 0; i < exps.length; i++) {
