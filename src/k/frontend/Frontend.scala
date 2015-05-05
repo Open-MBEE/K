@@ -44,6 +44,13 @@ object Frontend {
         case None            => null
       }
 
+    model.decls.forall { d =>
+      if (d.isInstanceOf[EntityDecl])
+        Misc.checkEntityConsistency(d.asInstanceOf[EntityDecl])
+      else
+        true
+    }
+    
     options.get('stats) match {
       case Some(_) => printStats(model)
       case None    => ()
@@ -458,7 +465,7 @@ object Frontend {
             val pattern: Pattern = visitJsonObject2(operand.getJSONObject(1)).asInstanceOf[Pattern]
             val cond: Exp = visitJsonObject2(operand.getJSONObject(2)).asInstanceOf[Exp]
             val body = visitJsonObject2(operand.getJSONObject(3)).asInstanceOf[Exp]
-            ForExp(pattern,cond, body)
+            ForExp(pattern, cond, body)
           case "IfExp" =>
             val cond = visitJsonObject2(operand.getJSONObject(1)).asInstanceOf[Exp]
             val trueBranch = visitJsonObject2(operand.getJSONObject(2)).asInstanceOf[Exp]

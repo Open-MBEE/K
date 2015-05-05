@@ -47,15 +47,6 @@ object Misc {
       })
   }
 
-  def functionWp(f: FunDecl, pred: Exp): Exp = {
-    f.body.foldLeft(pred)((r, d) =>
-      d match {
-        case ConstraintDecl(name, exp) => BinExp(r, AND, exp)
-        case ExpressionDecl(exp)       => wp(List(r), exp)
-        case _                         => r
-      })
-  }
-
   def functionBodyWp(b: List[MemberDecl], pred: Exp): Exp = {
     b.foldLeft(pred)((r, d) =>
       d match {
@@ -69,6 +60,7 @@ object Misc {
     println("+++++++++++++++++++++++++++++++")
 
     val input = "x : Int y : Int fun test pre(x = 0) post(y = 42) post(y > 100) {x:= 4 if x = 0 then y := 42 else y := 42}"
+    //val input = "x : Int y : Int z : Int t : Int fun test post (z >= x && z >= y)  { t := x - y if  t > 0 then z := x else z := y }"
     val model = Frontend.getModelFromString(input)
 
     val globals =
@@ -86,6 +78,7 @@ object Misc {
           val pre = spec.filter { s => s.pre }
           val preConjugated = pre.foldLeft(BooleanLiteral(true).asInstanceOf[Exp])((r, p) => BinExp(r, AND, p.exp))
           for (post <- posts) {
+            println("Checking postcondition " + post)
             val wpPost = functionBodyWp(body.reverse, post.exp)
             val check = BinExp(preConjugated, IMPL, wpPost)
             val rangeBindings =
@@ -122,6 +115,25 @@ object Misc {
       BinExp(preCondition, IMPL, result))
     K2Z3.SolveExp(finalCheck)
     K2Z3.PrintModel()
+  }
+
+  def checkEntityConsistency(e: EntityDecl): Boolean = {
+    K2Z3.reset()
+    val result = if (K2Z3.SolveExp(e.members.filter {
+      m => m.isInstanceOf[ConstraintDecl]
+    }.map { x => x.asInstanceOf[ConstraintDecl] }.
+      foldLeft(BooleanLiteral(true).asInstanceOf[Exp])((r, c) => BinExp(c.exp, AND, r))) == null)
+      false
+    else
+      true
+
+    if (result == false) {
+      println(s"Class ${e.ident} is NOT satisfiable!")
+    } else {
+      println(s"Class ${e.ident} IS satisfiable!")
+      K2Z3.PrintModel()
+    }
+    result
   }
 
   def error(message: String): Nothing = {

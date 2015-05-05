@@ -1,6 +1,5 @@
 package k.frontend
 
-
 import java.util.HashMap
 import com.microsoft.z3._
 import collection.JavaConversions._
@@ -57,8 +56,9 @@ object K2Z3 {
 
   def SolveExp(e: Exp): com.microsoft.z3.Model = {
     reset()
+    //println(s"Solving expression $e")
     val boolExpr = Expr2Z3(e).asInstanceOf[BoolExpr];
-    println(s"transforming to\n  $boolExpr")
+    //println(s"transforming to\n  $boolExpr")
     SolveExp(boolExpr)
   }
 
@@ -82,31 +82,33 @@ object K2Z3 {
     model
   }
 
-  def getZ3Function(exp : Exp) = {
+  def getZ3Function(exp: Exp) = {
     // TODO
     // have to ensure that all functions have been put into Z3
     // 
     null
   }
-  
+
   // create a function in Z3 with the given name
-  def createFunction(name : String, f : FunDecl) {
-   // TODO 
+  def createFunction(name: String, f: FunDecl) {
+    // TODO 
   }
-  
+
   def Expr2Z3(e: Exp): com.microsoft.z3.Expr = {
+    //println(s"Called for $e")
     e match {
-      
+
       case FunApplExp(exp, args) =>
         var function = getZ3Function(exp).asInstanceOf[FuncDecl]
-        var argsZ3 : Array[Expr]= args.map(a => Expr2Z3(a)).toArray
-        ctx.mkApp(function, argsZ3:_*)
+        var argsZ3: Array[Expr] = args.map(a => Expr2Z3(a)).toArray
+        ctx.mkApp(function, argsZ3: _*)
       case ParenExp(e) =>
         Expr2Z3(e)
       case TupleExp(es) =>
         val vs = es map Expr2Z3
         tuple2IntBoolConstr.apply(vs(0), vs(1))
       case IdentExp(i) =>
+        //println(s"IdentExp for $i")
         idents.get(i) match {
           case None =>
             var s = ctx.mkSymbol(i)
@@ -116,8 +118,18 @@ object K2Z3 {
           case Some(x) =>
             x._1
         }
-      //case DotExp(exp,ident) =>
-      //  ...
+      case DotExp(exp, ident) =>
+        // TODO: currently just expect variables, not functions
+        val i: String = exp.toString() + ident.toString()
+        idents.get(i) match {
+          case None =>
+            var s = ctx.mkSymbol(i)
+            var ie = ctx.mkIntConst(s)
+            idents.put(i, (ie, s))
+            ie
+          case Some(x) =>
+            x._1
+        }
       case BinExp(e1, o, e2) =>
         o match {
           case LT =>
@@ -137,6 +149,7 @@ object K2Z3 {
             var v2: ArithExpr = Expr2Z3(e2).asInstanceOf[ArithExpr]
             ctx.mkGe(v1, v2)
           case AND =>
+            //println(s"Doing and for $e1, $e2")
             var v1: BoolExpr = Expr2Z3(e1).asInstanceOf[BoolExpr]
             var v2: BoolExpr = Expr2Z3(e2).asInstanceOf[BoolExpr]
             ctx.mkAnd(v1, v2)
@@ -145,6 +158,7 @@ object K2Z3 {
             var v2: BoolExpr = Expr2Z3(e2).asInstanceOf[BoolExpr]
             ctx.mkOr(v1, v2)
           case IMPL =>
+            //println("impl is " + e)
             var v1: BoolExpr = Expr2Z3(e1).asInstanceOf[BoolExpr]
             var v2: BoolExpr = Expr2Z3(e2).asInstanceOf[BoolExpr]
             ctx.mkImplies(v1, v2)
@@ -187,6 +201,7 @@ object K2Z3 {
           case TUPLEINDEX =>
             var v1: Expr = Expr2Z3(e1).asInstanceOf[Expr]
             var v2: Expr = Expr2Z3(e2).asInstanceOf[Expr]
+
             if (v2 == ctx.mkInt(1))
               firstIntBool.apply(v1)
             else
@@ -195,7 +210,15 @@ object K2Z3 {
       case UnaryExp(o, e) =>
         o match {
           case NOT =>
-            var v: BoolExpr = Expr2Z3(e).asInstanceOf[BoolExpr]
+            var v: BoolExpr = {
+              val ev = Expr2Z3(e)
+              if (ev.isInstanceOf[IntExpr]) {
+                ctx.mkNot(ctx.mkEq(ev, ctx.mkInt(0)))
+              } else {
+                ev.asInstanceOf[BoolExpr]
+              }
+            }
+
             ctx.mkNot(v)
           case NEG =>
             var v: ArithExpr = Expr2Z3(e).asInstanceOf[ArithExpr]
@@ -237,7 +260,7 @@ object K2Z3 {
                         }
                       case _ =>
                         Misc.error("Only type collections are supported for quantified expressions in Z3." +
-                          "\nPlease check expression " + expression)
+                          "\nPlease check expression " + e)
                     }
                   case Some(x) => () // so you can't quantify over an existing variable?
                 }

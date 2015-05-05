@@ -625,7 +625,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   override def visitPropertyModifier(ctx: ModelParser.PropertyModifierContext): AnyRef = {
     ctx.children.get(0).getText match {
       case "part"    => Part
-      case "Var"     => Var
+      case "var"     => Var
       case "val"     => Val
       case "ordered" => Ordered
       case "unique"  => Unique
