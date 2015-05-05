@@ -224,7 +224,7 @@ object Frontend {
       case "LiteralInteger" =>
         IntegerLiteral(obj.getInt("i"))
       case "LiteralFloatingPoint" =>
-        RealLiteral(java.lang.Float.parseFloat(obj.get("f").asInstanceOf[String]))
+        RealLiteral(java.lang.Float.parseFloat(obj.get("f").toString)) // was: asInstanceOf[String]
       case "LiteralCharacter" =>
         CharacterLiteral(obj.get("c").asInstanceOf[Char])
       case "LiteralBoolean" =>
@@ -513,8 +513,8 @@ object Frontend {
           case "Exists" => Exists
           case "IntegerLiteral" =>
             IntegerLiteral(operand.getInt(1))
-          case "FloatingPointLiteral" =>
-            RealLiteral(java.lang.Float.parseFloat(operand.getString(1)))
+          case "RealLiteral" =>
+            RealLiteral(java.lang.Float.parseFloat(operand.get(1).toString)) // was: operand.getString(1)
           case "CharacterLiteral" =>
             CharacterLiteral(operand.get(1).asInstanceOf[Char])
           case "BooleanLiteral" =>
