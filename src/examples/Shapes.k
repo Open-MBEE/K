@@ -1,0 +1,76 @@
+package examples.Shapes
+
+class Shape {
+  fun area
+  fun sides 
+}
+
+class Triangle extends Shape {
+
+  a : Int
+  b : Int
+  c : Int
+  base : Int
+  height : Int
+    
+  req Angles: a + b + c = 180
+  
+  req Range: 
+    a < 180 && b < 180 && c < 180 && 
+    a > 0 && b > 0 && c > 0
+
+  --req Equilateral:
+    --  a = b && b = c => a = 60 && b = 60 && c = 60  
+  
+  req Isosceles: b = c
+  
+  -- following requirement makes the class unsatsifiable
+   req ObtuseAngle: a >= 90
+  
+  fun area : Int {
+    base * height / 2  
+  }
+  
+  req ValidArea: base * height > 0 && height > 10
+  
+  fun isIsosceles : Boolean {
+    a = b || b = c || a = c
+  }
+  
+  fun isEquilateral : Boolean {
+    a = b && b = c
+  }
+}
+
+class Rectangle extends Shape {
+
+  a : Int
+  b : Int
+  c : Int
+  d : Int
+  
+  req lengths: a = c && b = d
+  
+  req lengthsGTZero: a > 0 && b > 0
+  
+
+  -- The following two requirements make the class unsatisfiable
+  -- Commenting any one of them will make it satisfiable again
+  req assertRectangle: a != b
+  --req assertSquare: c = d
+  
+  fun area : Int {
+    a * b
+  }
+  
+  fun isSquare : Boolean {
+    -- using lengths Req to our advantage
+    a = b 
+  }
+
+  fun area : Int {
+    a * b
+  }
+
+}
+

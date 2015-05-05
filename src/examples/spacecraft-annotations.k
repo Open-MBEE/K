@@ -45,10 +45,13 @@ class Instrument {
         when it is turned off, or if it is on,
         it should be what the operating power is specified to be.")
   req OperatingPower: 
-    !operating => currentPowerConsumption = 0 &&
-      operating => currentPowerConsumption = powerConsumption
+    (!(operating = 1)=> currentPowerConsumption = 0) &&
+      ((operating = 1)=> currentPowerConsumption = powerConsumption)
 
   req idId: id >= 0
+  
+  req OperatingPower1:
+      currentPowerConsumption = powerConsumption
 }
 
 @name("BasicCameraInstrument")
@@ -85,11 +88,11 @@ class Spacecraft {
   weight : Real
   maxWeight : Real = 1000
 
-  req EarthSafeDistance:
-    attitude.distanceToEarth > 50000 &&
-    attitude.distanceToEarth < 350000
+  --req EarthSafeDistance:
+    --attitude.distanceToEarth > 50000 &&
+    --attitude.distanceToEarth < 350000
 
-  req notTooHeavy: totalWeight() <= maxWeight
+  --req notTooHeavy: totalWeight() <= maxWeight
 
   fun totalWeight : Real {
     instrument.collect(i -> i.weight).sum()

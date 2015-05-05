@@ -16,7 +16,11 @@ public class Main {
 	}
 
 	public static void main(String[] args) throws Exception {
+
+		Misc.wpTest2();
+
 		Frontend.scala_main(args);
+
 		String json1, json2, exp;
 
 		// TEST Expressions
@@ -48,19 +52,15 @@ public class Main {
 		// "x.f(4) > 5", // 22
 		// "f(4).x > 5"//, // 23
 		};
-/*
-		// Expression to JSON
-		for (int i = 0; i < exps.length; i++) {
-			System.out.println("\n---[" + i + "]-------------------------");
-            System.out.println(exps[i]);
-			json1 = Frontend.exp2Json(exps[i]);
-			json2 = Frontend.exp2Json2(exps[i]);
-			System.out.println("JSON1: " + json1);
-			System.out.println("JSON2: " + json2);
-			System.out.println("RJSON1: " + Frontend.json2exp(json1));
-			System.out.println("RJSON2: " + Frontend.json2exp2(json2));
-		}
-*/
+		/*
+		 * // Expression to JSON for (int i = 0; i < exps.length; i++) {
+		 * System.out.println("\n---[" + i + "]-------------------------");
+		 * System.out.println(exps[i]); json1 = Frontend.exp2Json(exps[i]);
+		 * json2 = Frontend.exp2Json2(exps[i]); System.out.println("JSON1: " +
+		 * json1); System.out.println("JSON2: " + json2);
+		 * System.out.println("RJSON1: " + Frontend.json2exp(json1));
+		 * System.out.println("RJSON2: " + Frontend.json2exp2(json2)); }
+		 */
 		// String expressionString = exps[1];
 		// System.out.println("Checking expression: " + expressionString);
 		// BoolExpr be = (BoolExpr) K2Z3.Expr2Z3(Frontend
@@ -79,10 +79,5 @@ public class Main {
 			K2Z3.PrintModel();
 			System.out.println("******************");
 		}
-
-		// Misc.wpTest();
-
-		// Misc.wpTest2();
-
 	}
 }
