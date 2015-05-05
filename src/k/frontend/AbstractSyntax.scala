@@ -581,7 +581,7 @@ case class DotExp(exp: Exp, ident: String) extends Exp {
   }
 }
 
-case class FunApplExp(exp1: Exp, args: List[Exp]) extends Exp {
+case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
 
   override def toString = {
     var result = exp1.toString

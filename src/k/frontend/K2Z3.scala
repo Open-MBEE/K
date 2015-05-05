@@ -6,6 +6,71 @@ import collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{ HashMap => MMap }
 
+object Util {
+  def ??? : Nothing = null.asInstanceOf[Nothing]
+}
+import Util._
+
+object TypeChecker {
+  /**
+   * Used to indicate where type inference is meant to take place.
+   * The identity function on second argument.
+   */
+  def inferTypeFrom(exp: String, ty: Type) = ty
+}
+import TypeChecker._
+
+class DataTypes(ctx: Context) {
+  type TypeName = String
+  type FieldName = String
+
+  private var datatypes: Map[Type, DataType] = Map()
+
+  def addDataType(ty: Type, datatype: DataType) {
+    datatypes += (ty -> datatype)
+  }
+
+  def addDataType(name: String, argTypes: List[Type], fields: List[(String, Type)]) {
+    val fieldNames: Array[FieldName] = fields.toArray map { case (n, _) => n }
+    val fieldSorts: Array[Sort] = fields.toArray map { case (_, t) => getDataType(t).sort }
+    val mkDatatype: Constructor = ctx.mkConstructor(s"mk$name", s"is$name", fieldNames, fieldSorts, null)
+    val datatypeSort: DatatypeSort = ctx.mkDatatypeSort(name, Array(mkDatatype))
+    val constructor: FuncDecl = datatypeSort.getConstructors.apply(0)
+    val selectors: Array[FuncDecl] = datatypeSort.getAccessors.apply(0)
+    val fieldDecls: Map[FieldName, FuncDecl] = (fieldNames zip selectors).toMap
+    val dataType = DataType(datatypeSort, constructor, fieldDecls)
+    addDataType(IdentType(QualifiedName(List(name)), argTypes), dataType)
+  }
+
+  //  Array < String > argnames = new Array < String > ("first", "second");
+  //  Array < z3.Sort > argsorts = new Array < z3.Sort > (ctx.getIntSort(), ctx.getIntSort());
+  //  z3.Constructor mkpair = ctx.mkConstructor("mkpair", "ispair", argnames, argsorts, null);
+  //  z3.DatatypeSort pair = ctx.mkDatatypeSort("pair", new Array < z3.Constructor > (mkpair));
+
+  def addTupleType(fieldTypes: List[Type]) {
+    val tupleSize: Int = fieldTypes.length
+    val constructorSymbol: StringSymbol = ctx.mkSymbol(s"mkTuple")
+    val fieldNames: Array[FieldName] = (for (i <- 1 to tupleSize) yield s"sel_$i").toArray
+    val fieldSymbols: Array[Z3Symbol] = fieldNames map (ctx.mkSymbol(_))
+    val fieldSorts: Array[Sort] = fieldTypes.toArray map (getDataType(_).sort)
+    val tupleSort: TupleSort = ctx.mkTupleSort(constructorSymbol, fieldSymbols, fieldSorts)
+    val tupleConstructor: FuncDecl = tupleSort.mkDecl()
+    val fieldDecls: Map[FieldName, FuncDecl] = (fieldNames zip tupleSort.getFieldDecls).toMap
+    val dataType = DataType(tupleSort, tupleConstructor, fieldDecls)
+    addDataType(CartesianType(fieldTypes), dataType)
+  }
+
+  def getDataType(ty: Type): DataType = datatypes(ty)
+
+  def getSort(ty: Type): Sort = getDataType(ty).sort
+
+  addDataType(IntType, DataType(ctx.getIntSort(), null, null))
+  addDataType(BoolType, DataType(ctx.getBoolSort(), null, null))
+  addDataType(RealType, DataType(ctx.getRealSort(), null, null))
+}
+
+case class DataType(sort: Sort, constructor: FuncDecl, selectors: Map[String, FuncDecl])
+
 object K2Z3 {
 
   val debug: Boolean = false
@@ -15,31 +80,30 @@ object K2Z3 {
   var idents: MMap[String, (Expr, com.microsoft.z3.StringSymbol)] = MMap()
   var model: com.microsoft.z3.Model = null
 
-  // types:
+  var datatypes: DataTypes = null
 
-  var int_type: Sort = null
-  var bool_type: Sort = null
-  var tuple2IntBoolConstr: FuncDecl = null
-  var firstIntBool: FuncDecl = null
-  var secondIntBool: FuncDecl = null
+  def declareDatatypes(ctx: Context) {
+    datatypes = new DataTypes(ctx)
+    datatypes.addTupleType(List(IntType, BoolType))
+    datatypes.addDataType("A", Nil, List("x" -> IntType, "y" -> BoolType))
+  }
+
+  def declareFunctions(ctx: Context) {
+    // function f : Int -> Int inside A
+    val intType = datatypes.getSort(IntType)
+    val theAType = IdentType(QualifiedName(List("A")), Nil)
+    val theADatatype: DataType = datatypes.getDataType(theAType)
+    val theASort = theADatatype.sort
+    val fDecl: FuncDecl = ctx.mkFuncDecl("f", Array(theASort, intType), intType)
+
+  }
 
   def reset() {
     model = null
     idents = new MMap()
     ctx = new Context(cfg)
-    ctx.mkIntSort() // *** WARNING: Seems to have no effect.
-    // reset primitive types:
-    int_type = ctx.getIntSort();
-    bool_type = ctx.getBoolSort();
-    // reset tuple types:
-    val tuple: TupleSort =
-      ctx.mkTupleSort(
-        ctx.mkSymbol("mk_tuple"),
-        Array(ctx.mkSymbol("first"), ctx.mkSymbol("second")),
-        Array(int_type, bool_type))
-    tuple2IntBoolConstr = tuple.mkDecl()
-    firstIntBool = tuple.getFieldDecls()(0)
-    secondIntBool = tuple.getFieldDecls()(1)
+    declareDatatypes(ctx)
+    declareFunctions(ctx)
   }
 
   def PrintModel() {
@@ -106,7 +170,9 @@ object K2Z3 {
         Expr2Z3(e)
       case TupleExp(es) =>
         val vs = es map Expr2Z3
-        tuple2IntBoolConstr.apply(vs(0), vs(1))
+        val tupleType = inferTypeFrom("es", CartesianType(List(IntType, BoolType)))
+        val mkTuple = datatypes.getDataType(tupleType).constructor
+        mkTuple(vs(0), vs(1))
       case IdentExp(i) =>
         //println(s"IdentExp for $i")
         idents.get(i) match {
@@ -119,17 +185,27 @@ object K2Z3 {
             x._1
         }
       case DotExp(exp, ident) =>
-        // TODO: currently just expect variables, not functions
-        val i: String = exp.toString() + ident.toString()
-        idents.get(i) match {
-          case None =>
-            var s = ctx.mkSymbol(i)
-            var ie = ctx.mkIntConst(s)
-            idents.put(i, (ie, s))
-            ie
-          case Some(x) =>
-            x._1
+        var obj: Expr = Expr2Z3(exp)
+        val theType = inferTypeFrom("exp", IdentType(QualifiedName(List("A")), Nil))
+        val datatype: DataType = datatypes.getDataType(theType)
+        val selector: FuncDecl = datatype.selectors(ident)
+        selector(obj)
+      case FunApplExp(exp, args) =>
+        var obj: Expr = Expr2Z3(exp)
+        val theType = inferTypeFrom("exp", IdentType(QualifiedName(List("A")), Nil))
+        val isConstructor = true
+        if (isConstructor) {
+          // constructor application
+          val datatype: DataType = datatypes.getDataType(theType)
+          val constructor: FuncDecl = datatype.constructor
+          val arguments: List[Expr] = args map (Expr2Z3(_))
+          constructor(arguments: _*)
+        } else {
+          // normal function application
+          ???
         }
+      case PositionalArgument(exp) =>
+        Expr2Z3(exp)
       case BinExp(e1, o, e2) =>
         o match {
           case LT =>
@@ -201,11 +277,12 @@ object K2Z3 {
           case TUPLEINDEX =>
             var v1: Expr = Expr2Z3(e1).asInstanceOf[Expr]
             var v2: Expr = Expr2Z3(e2).asInstanceOf[Expr]
-
+            val tupleType = inferTypeFrom("e1", CartesianType(List(IntType, BoolType)))
+            val datatype = datatypes.getDataType(tupleType)
             if (v2 == ctx.mkInt(1))
-              firstIntBool.apply(v1)
+              datatype.selectors("sel_1").apply(v1)
             else
-              secondIntBool.apply(v1)
+              datatype.selectors("sel_2").apply(v1)
         }
       case UnaryExp(o, e) =>
         o match {
@@ -283,13 +360,19 @@ object K2Z3 {
         // and named constants for exists. 
         // This probably can be cleaned up, but it is the only way I got
         // it to work.
+        // KH: I think that it does not work as expected for existential quantification.
+        // since variables are all de-Brujin variables, and since symbols are used for
+        // existential, it does not work. It looks like it works, but I think it is
+        // not working the way it is intended to.
         quantifier match {
           case Forall =>
             ctx.mkForall(ies.toArray, body, 0, null,
               null, null, null)
           case Exists =>
-            ctx.mkExists(qtypes.toArray, names.toArray,
-              body, 1, null, null, null, null)
+            ctx.mkExists(ies.toArray, body, 0, null,
+              null, null, null)
+          //            ctx.mkExists(qtypes.toArray, names.toArray,
+          //              body, 1, null, null, null, null)
           //ctx.mkExists(ies.toArray, body, 0, null, null, null, null)
         }
     }
