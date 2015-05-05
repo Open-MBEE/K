@@ -27,10 +27,10 @@ class Scheduler {
   req A1.t != B1.t && A1.t != B2.t
   req A3.t != B2.t
   
-  req A1B2C2: A1.t < B2.t && B2.t < C2.t
-  req B3A3: B3.t < A3.t
-  req C2A4: C2.t < A4.t
-  req B3A3: A3.t > B3.t
-  req C3A3B3: C3.t > A3.t && C3.t > B3.t
+  req A1B2C2 : A1.t < B2.t && B2.t < C2.t
+  req B3A3   : B3.t < A3.t
+  req C2A4   : C2.t < A4.t
+  req B3A3   : A3.t > B3.t
+  req C3A3B3 : C3.t > A3.t && C3.t > B3.t
   
 }

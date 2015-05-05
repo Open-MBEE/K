@@ -50,7 +50,10 @@ public class Main {
 				"forall x, y:Int . x * y = 0", // 21
 				"Tuple(1,false) # 2 = false", // 22
 				"A(1,true).y = true", // 23
-				"forall x : Int. exists y : Int . y > x", // 24 -- is UNSAT but should be SAT (de-Brujin vs. symbol issue)
+				"forall x : Int. exists y : Int . y > x", // 24 -- is UNSAT but
+															// should be SAT
+															// (de-Brujin vs.
+															// symbol issue)
 				"forall x : Int . y > x" // 25 -- is UNSAT and should be UNSAT
 		// "x.f(4) > 5", // 26
 		// "f(4).x > 5"//, // 27
@@ -71,7 +74,7 @@ public class Main {
 		// com.microsoft.z3.Model model = K2Z3.SolveExp(be);
 		// System.out.println("******************")
 
-		header("SOLVING EXPRESSIONS");
+		// header("SOLVING EXPRESSIONS");
 
 		for (int i = 7; i < exps.length; i++) {
 			K2Z3.reset();

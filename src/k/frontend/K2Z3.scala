@@ -2,6 +2,7 @@ package k.frontend
 
 import java.util.HashMap
 import com.microsoft.z3._
+import com.microsoft.z3.{Symbol => Z3Symbol}
 import collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{ HashMap => MMap }
@@ -162,10 +163,10 @@ object K2Z3 {
     //println(s"Called for $e")
     e match {
 
-      case FunApplExp(exp, args) =>
-        var function = getZ3Function(exp).asInstanceOf[FuncDecl]
-        var argsZ3: Array[Expr] = args.map(a => Expr2Z3(a)).toArray
-        ctx.mkApp(function, argsZ3: _*)
+      //case FunApplExp(exp, args) =>
+      //  var function = getZ3Function(exp).asInstanceOf[FuncDecl]
+      //  var argsZ3: Array[Expr] = args.map(a => Expr2Z3(a)).toArray
+      //  ctx.mkApp(function, argsZ3: _*)
       case ParenExp(e) =>
         Expr2Z3(e)
       case TupleExp(es) =>
@@ -185,11 +186,15 @@ object K2Z3 {
             x._1
         }
       case DotExp(exp, ident) =>
-        var obj: Expr = Expr2Z3(exp)
-        val theType = inferTypeFrom("exp", IdentType(QualifiedName(List("A")), Nil))
-        val datatype: DataType = datatypes.getDataType(theType)
-        val selector: FuncDecl = datatype.selectors(ident)
-        selector(obj)
+        exp match {
+          case IdentExp(id) => Expr2Z3(IdentExp(id + "." +ident)) 
+          case _ =>
+            var obj: Expr = Expr2Z3(exp)
+            val theType = inferTypeFrom("exp", IdentType(QualifiedName(List("A")), Nil))
+            val datatype: DataType = datatypes.getDataType(theType)
+            val selector: FuncDecl = datatype.selectors(ident)
+            selector(obj)
+        }
       case FunApplExp(exp, args) =>
         var obj: Expr = Expr2Z3(exp)
         val theType = inferTypeFrom("exp", IdentType(QualifiedName(List("A")), Nil))
