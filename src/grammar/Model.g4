@@ -209,7 +209,7 @@ namedArgumentList:
   ;
 
 namedArgument :
-    Identifier '=' expression
+    Identifier '::' expression
   ;
 
 collectionOrType:

@@ -146,7 +146,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
     var e0: Exp = visit(ctx.expression()).asInstanceOf[Exp]
     var argumentList =
       if (ctx.argumentList() != null)
-        visit(ctx.argumentList()).asInstanceOf[List[Exp]]
+        visit(ctx.argumentList()).asInstanceOf[List[Argument]]
       else
         Nil
 
@@ -423,9 +423,10 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   }
 
   override def visitPositionalArgumentList(ctx: ModelParser.PositionalArgumentListContext): AnyRef = {
-    ctx.expression().asScala.toList.map(visit(_)).asInstanceOf[List[Exp]]
+    val exps: List[Exp] = ctx.expression().asScala.toList.map(visit(_)).asInstanceOf[List[Exp]]
+    exps map (PositionalArgument(_))
   }
-
+ 
   override def visitNamedArgList(ctx: ModelParser.NamedArgListContext): AnyRef = {
     visit(ctx.namedArgumentList()).asInstanceOf[List[NamedArgument]]
   }

@@ -6,6 +6,7 @@ import nasa.jpl.europa.trajectory
 ==============
 Annotations
 ==============
+
 annotation name : String
 annotation id : String
 annotation doc : String
@@ -133,7 +134,7 @@ battery : Battery = Battery()
 
 clipper = Spacecraft(name="Clipper")
 
-SpacecraftInstrument(Spacecraft=clipper, instrument=camera1)
+SpacecraftInstrument(Spacecraft::clipper, instrument::camera1)
 SpacecraftInstrument(Spacecraft=clipper, instrument=camera2)
 SpacecraftInstrument(Spacecraft=clipper, instrument=solarPanel)
 SpacecraftInstrument(Spacecraft=clipper, instrument=magnetometer)
@@ -144,3 +145,4 @@ req CameraAlwaysOn:
 
 req CameraAlwaysOnOCL:
   Clipper.instrument.Exists(inst -> inst is Camera && inst.operating = true)
+
