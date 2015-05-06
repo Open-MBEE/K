@@ -87,7 +87,7 @@ object Misc {
                 rngBinding :: r
               }
             val checkWithQuantifiers = QuantifiedExp(Forall, rangeBindings, check)
-            println("Checking " + checkWithQuantifiers)
+            //println("Checking " + checkWithQuantifiers)
             K2Z3.SolveExp(checkWithQuantifiers)
           }
 
