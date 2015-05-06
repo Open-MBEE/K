@@ -2,7 +2,7 @@ package k.frontend
 
 import java.util.HashMap
 import com.microsoft.z3._
-import com.microsoft.z3.{Symbol => Z3Symbol}
+import com.microsoft.z3.{ Symbol => Z3Symbol }
 import collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{ HashMap => MMap }
@@ -108,22 +108,28 @@ object K2Z3 {
   }
 
   def PrintModel() {
-    if (model == null) {
-      //println("UNSATISFIABLE! No assignments could be found to satisfy the given expression.")
-      //not necessary to say ... again.
-    } else {
-      for ((i, (e, s)) <- idents) {
-        println(e.toString() + " = " + model.evaluate(e, true))
-      }
 
+    if (model != null) {
+      // New method of printing the model. Here we get all the 
+      // constants and the functions, and then print their 
+      // interpretations. The older method (commented out underneath)
+      // relies on the list of identifiers and symbols that we have 
+      // built up during translation of expressions. It does not 
+      // get existentially quantified variables at the highest level. 
+      // Note that in the new method, the value that is printed out for
+      // the decl is an "interpretation". 
+      model.getConstDecls.foreach { x => println(s"Const: ${x.getName.toString.split("!")(0)} ${model.getConstInterp(x)}") }
+      model.getFuncDecls.foreach { x => println(s"Func: ${x.getName.toString.split("!")(0)}  ${model.getFuncInterp(x)}") }
+
+      //for ((i, (e, s)) <- idents) {
+      //println(e.toString() + " = " + model.evaluate(e, false))
+      //}
     }
   }
 
   def SolveExp(e: Exp): com.microsoft.z3.Model = {
     reset()
-    //println(s"Solving expression $e")
     val boolExpr = Expr2Z3(e).asInstanceOf[BoolExpr];
-    //println(s"transforming to\n  $boolExpr")
     SolveExp(boolExpr)
   }
 
@@ -187,7 +193,7 @@ object K2Z3 {
         }
       case DotExp(exp, ident) =>
         exp match {
-          case IdentExp(id) => Expr2Z3(IdentExp(id + "." +ident)) 
+          case IdentExp(id) => Expr2Z3(IdentExp(id + "." + ident))
           case _ =>
             var obj: Expr = Expr2Z3(exp)
             val theType = inferTypeFrom("exp", IdentType(QualifiedName(List("A")), Nil))
@@ -198,7 +204,7 @@ object K2Z3 {
       case FunApplExp(exp, args) =>
         var obj: Expr = Expr2Z3(exp)
         val theType = inferTypeFrom("exp", IdentType(QualifiedName(List("A")), Nil))
-        val isConstructor = true
+        val isConstructor = false // TODO: for constructor make this true
         if (isConstructor) {
           // constructor application
           val datatype: DataType = datatypes.getDataType(theType)
@@ -207,7 +213,14 @@ object K2Z3 {
           constructor(arguments: _*)
         } else {
           // normal function application
-          ???
+
+          // 1. create an uninterpreted function
+
+          val functionDecl = ctx.mkFuncDecl(exp.toString, args.map(a => ctx.getIntSort).toArray[Sort], ctx.getIntSort)
+
+          // 2. apply the uninterpreted function
+          ctx.mkApp(functionDecl, args.map(Expr2Z3(_)): _*)
+
         }
       case PositionalArgument(exp) =>
         Expr2Z3(exp)

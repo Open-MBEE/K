@@ -19,13 +19,20 @@ class Triangle extends Shape {
     a < 180 && b < 180 && c < 180 && 
     a > 0 && b > 0 && c > 0
 
-  --req Equilateral:
-    --  a = b && b = c => a = 60 && b = 60 && c = 60  
+  ======================================================
+  req Equilateral: a = b && b = c => a = 60 && b = 60 && c = 60  
+  ======================================================
   
-  req Isosceles: b = c
+  ======================================================
+  req Isosceles: (b = c) || (a = b) || (a = c)
+  ======================================================
   
-  -- following requirement makes the class unsatsifiable
-   req ObtuseAngle: a >= 90
+  ======================================================
+  The following requirement makes the class unsatisfiable
+  if the triangle is Isosceles or Equilateral.  
+  
+  req ObtuseAngle: a >= 90
+  ======================================================
   
   fun area : Int {
     base * height / 2  
@@ -53,11 +60,13 @@ class Rectangle extends Shape {
   
   req lengthsGTZero: a > 0 && b > 0
   
+  ===========================================================
+  The following two requirements make the class unsatisfiable
+  Commenting any one of them will make it satisfiable again
 
-  -- The following two requirements make the class unsatisfiable
-  -- Commenting any one of them will make it satisfiable again
   req assertRectangle: a != b
-  --req assertSquare: c = d
+  req assertSquare: c = d
+  ===========================================================
   
   fun area : Int {
     a * b
@@ -73,4 +82,5 @@ class Rectangle extends Shape {
   }
 
 }
+
 
