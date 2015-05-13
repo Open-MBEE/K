@@ -3,7 +3,7 @@
     ))
 
 (defvar k-variables
-  '("var" "val" "part" "ordered" "unique"
+  '("var" "val" "part" "ordered" "unique" "ref"
     ))
 
 (defvar k-keywords
