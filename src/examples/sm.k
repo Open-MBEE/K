@@ -28,7 +28,7 @@ class RocketMachine {
   The following makes the state machine unsat because 
   it introduces non-determinism.
   
-  req move(ready, fire) = off
+  req move(ready, fire) = off  
   ====================================================
   
 
@@ -39,7 +39,7 @@ class RocketMachine {
   state. Again, the state machine becomes 
   non-deterministic, which is caught by K.
     
-  req move(firing, turn_off) = ready
+req move(firing, turn_off) = ready  
   ====================================================
 
 
