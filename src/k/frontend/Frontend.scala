@@ -513,7 +513,7 @@ object Frontend {
           case "Exists" => Exists
           case "IntegerLiteral" =>
             IntegerLiteral(operand.getInt(1))
-          case "RealLiteral" =>
+          case "RealLiteral" => // was FloatingPointLiteral
             RealLiteral(java.lang.Float.parseFloat(operand.get(1).toString)) // was: operand.getString(1)
           case "CharacterLiteral" =>
             CharacterLiteral(operand.get(1).asInstanceOf[Char])
