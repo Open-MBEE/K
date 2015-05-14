@@ -71,7 +71,7 @@ object Frontend {
     }
 
     if (model != null) {
-      println(model.toString())
+      //println(model.toString())
       // Remember old value of option
       val optionsUseJson1 = Options.useJson1
       // MMS method using toJson1
