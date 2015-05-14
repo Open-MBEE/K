@@ -4,33 +4,42 @@ class <event> Event {
   t : Real
 }
 
-event A
-event B
-event C
-
-A1 : A
-A2 : A
-A3 : A
-C1 : C
-C2 : C
-C3 : C
-B1 : B
-B2 : B
-B3 : B
+event power_on
+event pick_boot_image
+event establish_clock
+event boot
+event evr_service_start
+event init_evr
+event power_on_star_sensor
+event mount_flash
+event power_on_navigation
+event power_off_cameras
 
 class Scheduler {
+
+  req power_on.t < power_off_cameras.t
+  req power_off_cameras.t < pick_boot_image.t
+  req pick_boot_image.t < boot.t 
+  req pick_boot_image.t < power_on_star_sensor.t
+  req boot.t < establish_clock.t
+  req power_on_star_sensor.t < establish_clock.t
+  req establish_clock.t < init_evr.t 
+  req init_evr.t < evr_service_start.t
+  req establish_clock.t < mount_flash.t
+  req mount_flash.t < power_on_navigation.t  
   
-  req A1.t > 0 && A2.t > 0  && A3.t > 0  && 
-      B1.t > 0 && B2.t > 0  && B3.t > 0  && 
-      C1.t > 0 && C2.t > 0  && C3.t > 0 
-      
-  req A1.t != B1.t && A1.t != B2.t
-  req A3.t != B2.t
+  ======================================================
+  We cannot support mounting the flash and initializing 
+  the evr at the same time. So we disallow it.
   
-  req A1B2C2 : A1.t < B2.t && B2.t < C2.t
-  req B3A3   : B3.t < A3.t
-  req C2A4   : C2.t < A4.t
-  req B3A3   : A3.t > B3.t
-  req C3A3B3 : C3.t > A3.t && C3.t > B3.t
+  req init_evr.t != mount_flash.t
+  ======================================================
   
+  ======================================================
+  Jack thought that for some reason the star sensor and 
+  the navigation system should turn on at the same time. 
+  Turns out that in this case, the schedule is not possible.
+  
+  req power_on_navigation.t = power_on_star_sensor.t
+  ======================================================
 }
