@@ -35,6 +35,8 @@ class Schedule {
       RadioScience.t2 > RadioScience.t1 &&
       TargetSlew.t2 > TargetSlew.t1 &&
       A.t1 > 0 && B.t1 > 0 && Telecom.t1 > 0 && RadioScience.t1 > 0
-      && TargetSlew.t1 > 0
+      && TargetSlew.t1 > 1.1 && TargetSlew.t1 = 1.123
+      
+      req x*x = 2 && x > 0
     
 }

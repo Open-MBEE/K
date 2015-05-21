@@ -115,13 +115,13 @@ class Spacecraft {
   fun isInstrumentAdded(instr : Instrument) : Bool {
     instr isin instrument 
   }  
+  
 }
 
 assoc SpacecraftInstrument {
   source spacecraft : Spacecraft
   target part instrument: Instrument[1,10]
 }
-
 
 ==============
 Instances
@@ -132,7 +132,7 @@ solarPanel : Instrument = Instrument(name="SP1", id=2, powerConsumption=-1000)
 magnetometer : Instrument = Instrument(name="Magnetometer", id=5, powerConsumption=1500, operating=true)
 battery : Battery = Battery()
 
-clipper = Spacecraft(name="Clipper")
+clipper : Spacecraft = Spacecraft(name="Clipper")
 
 SpacecraftInstrument(Spacecraft::clipper, instrument::camera1)
 SpacecraftInstrument(Spacecraft=clipper, instrument=camera2)
