@@ -28,9 +28,9 @@ class RocketMachine {
   The following makes the state machine unsat because 
   it introduces non-determinism.
   
-  req move(ready, fire) = off  
+  req move(ready, fire) = off    
   ====================================================
-  
+
 
   ====================================================
   Due to a miscommunication between modelers, 
