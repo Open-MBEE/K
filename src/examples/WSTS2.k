@@ -1,11 +1,10 @@
 --WSTS modeling pattern
---simple Test script invoking STAKR
+--STAKR model
+--Written by Dang Le and Thirupathi Srinivasan
 
 //EHA = Engineering Housekeeping and Accountability Packet
 //EVR = Event Report
 
-//Inner classes
-package STAKR
 
 class SpacecraftTB {
 
@@ -79,7 +78,6 @@ class WSTS extends STAKR {
 
 
 
-//STAKR super-class?
 package STAKR {
 
 		spacecraft	 : SpacecraftTB
