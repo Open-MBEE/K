@@ -50,6 +50,7 @@ event Pause
 event Print
 event Exit
 
+
 		req incr = 5
 		req StartCMD.t1 = 0 
 		req WrteMsgCMD.t1 = StartCMD.t2 + incr
