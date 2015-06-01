@@ -510,7 +510,7 @@ case class ExpressionDecl(exp: Exp) extends MemberDecl {
 }
 
 trait Exp {
-  def toJson : JSONObject = {
+  def toJson: JSONObject = {
     if (Options.useJson1) toJson1
     else toJson2
   }
@@ -717,9 +717,6 @@ case class MatchCase(patterns: List[Pattern], exp: Exp) extends Exp {
 }
 
 case class BlockExp(body: List[MemberDecl]) extends Exp {
-  //  override def toString =
-  //    s"{\n ${body.foldLeft("")((res, m) => res + s"  $m")}}"
-
   override def toString = {
     var result = "{\n"
     moveIn
@@ -1159,7 +1156,7 @@ case object ContinueExp extends Exp {
 }
 
 case object ResultExp extends Exp {
-  override def toString = "$result"
+  override def toString = "result"
 
   override def toJson1 = {
     new JSONObject().put("type", "ResultExp")
@@ -1602,8 +1599,8 @@ trait Type {
 
 case class IdentType(ident: QualifiedName, args: List[Type]) extends Type {
   override def toString =
-    if (args == null || args.isEmpty) 
-      ident.toString 
+    if (args == null || args.isEmpty)
+      ident.toString
     else s"$ident[${args.mkString(",")}]"
 
   override def toJson1 = {

@@ -22,7 +22,7 @@ class RocketMachine {
   
   req move(off, turn_on) = ready
   req move(ready, fire) = firing
-  req move(firing, turn_off) = off
+
   
   ====================================================
   The following makes the state machine unsat because 
@@ -41,6 +41,6 @@ class RocketMachine {
     
 req move(firing, turn_off) = ready  
   ====================================================
-
+req move(firing, turn_off) = ready  
 
 }

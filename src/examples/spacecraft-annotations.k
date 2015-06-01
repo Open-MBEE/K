@@ -25,11 +25,11 @@ class Instrument {
   name : String
   id : Int
   @owner("Rahul")
-  powerConsumption : Real = 1000 
+  powerConsumption : Int = 1000 
   @owner("Bjorn")
   weight : Real
-  currentPowerConsumption : Real 
-  operating : Boolean = false 
+  currentPowerConsumption : Int 
+  operating : Bool = false 
     
   fun toggleOperating 
     post(operating = !operating~)

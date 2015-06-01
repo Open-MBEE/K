@@ -17,10 +17,14 @@ public class Main {
 
 	public static void main(String[] args) throws Exception {
 
-		Misc.wpTest2();
+		//K2Z3.parseTest();
+		
+		//Misc.wpTest2();
 
 		Frontend.scala_main(args);
 
+		System.exit(1);
+		
 		String json1, json2, exp;
 
 		// TEST Expressions
@@ -86,5 +90,7 @@ public class Main {
 			K2Z3.PrintModel();
 			System.out.println("******************");
 		}
+		
+		Misc.wpTest2();
 	}
 }

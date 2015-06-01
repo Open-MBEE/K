@@ -1,8 +1,8 @@
 package examples.Shapes
 
 class Shape {
-  fun area
-  fun sides 
+  fun sides : Int
+  fun area : Int
 }
 
 class Triangle extends Shape {
@@ -34,20 +34,22 @@ class Triangle extends Shape {
   The following requirement makes the class unsatisfiable
   if the triangle is Isosceles or Equilateral.  
   
-  req ObtuseAngle: a >= 90
+
   ======================================================
+  req ObtuseAngle: a >= 90
   
   fun area : Int {
     base * height / 2  
   }
   
   req ValidArea: base * height > 0 && height > 10
+  req ValidAreaFunction: area() > 10
   
-  fun isIsosceles : Boolean {
+  fun isIsosceles : Bool {
     a = b || b = c || a = c
   }
   
-  fun isEquilateral : Boolean {
+  fun isEquilateral : Bool {
     a = b && b = c
   }
 }
@@ -58,6 +60,7 @@ class Rectangle extends Shape {
   b : Int
   c : Int
   d : Int
+  ar : Int
   
   req lengths: a = c && b = d
   
@@ -75,15 +78,12 @@ class Rectangle extends Shape {
     a * b
   }
   
-  fun isSquare : Boolean {
+  fun isSquare : Bool {
     -- using lengths Req to our advantage
     a = b 
   }
 
-  fun area : Int {
-    a * b
-  }
-
+  ar = area()
 }
 
 
