@@ -5,13 +5,15 @@ class <event> Event {
   t2 : Real  
 }
 
-event A
-event B
+class A extends Event
+class B extends Event
 event Telecom
 event RadioScience
 event TargetSlew
 
 class Schedule {    
+
+  x : Int
 
   req Schedule1OrSchedule2: 
     (

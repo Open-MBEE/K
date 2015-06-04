@@ -72,9 +72,10 @@ object K2Z3 {
   var idents: MMap[String, (Expr, com.microsoft.z3.StringSymbol)] = MMap()
   var model: com.microsoft.z3.Model = null
   val tc: TypeChecker = new TypeChecker(null)
-
   var datatypes: DataTypes = null
 
+  def error(msg:String) = Misc.error("K2Z3", msg)
+  
   def declareDatatypes(ctx: Context) {
     datatypes = new DataTypes(ctx)
     datatypes.addTupleType(List(RealType, BoolType))
@@ -380,17 +381,17 @@ object K2Z3 {
                             val pattern = ctx.mkPattern(ie)
                             patterns.add(ctx.mkPattern(ie)) // use pattern, but not used anyway
                           case _ =>
-                            Misc.error("Only bool, int, and real primitive types are supported for quantified expressions in Z3." + expression)
+                            error("Only bool, int, and real primitive types are supported for quantified expressions in Z3." + expression)
                         }
                       case _ =>
-                        Misc.error("Only type collections are supported for quantified expressions in Z3." +
+                        error("Only type collections are supported for quantified expressions in Z3." +
                           "\nPlease check expression " + e)
                     }
                   case Some(x) => () // so you can't quantify over an existing variable?
                 }
 
               case _ =>
-                Misc.error("Only literal and ident patterns are supported for quantified expressions in Z3." +
+                error("Only literal and ident patterns are supported for quantified expressions in Z3." +
                   "Please check expression " + expression)
             }
           }

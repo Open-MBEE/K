@@ -44,11 +44,11 @@ class Garage {
     }
   }
 
-  fun garageCarsMakeModel (cs : Set[Car]) : (String*String) {
+  fun garageCarsMakeModel (cs : Set[Car]) : Seq[String*String] {
     cs.collect(c -> Tuple(c.make, c.model))
   }
 
-  fun garageCarsMakeModelDate (cs : Set[Car]) : String * Int {
+  fun garageCarsMakeModelDate (cs : Set[Car]) : Seq[String * Int] {
     cs.collect(c -> Tuple(c.make, c.mfdate))
   }
   

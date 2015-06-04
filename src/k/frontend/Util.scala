@@ -43,7 +43,7 @@ object Misc {
                 BinExp(p, AND, UnaryExp(NOT, cond)))
           }
         case _ =>
-          error("Unknown expression in wp: " + e)
+          error("Util", "Unknown expression in wp: " + e)
       })
   }
 
@@ -137,9 +137,11 @@ object Misc {
     result
   }
 
-  def error(message: String): Nothing = {
-    println(message)
+  def error(prefix : String, message: String): Nothing = {
+    println(s"[$prefix] $message")
     System.exit(-1).asInstanceOf[Nothing]
   }
+
+  def log(prefix : String, msg: String) = println(s"[$prefix] $msg")
 
 }
