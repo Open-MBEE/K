@@ -18,6 +18,8 @@ import scala.collection.mutable.{ ListBuffer => MList }
 object Frontend {
   type OptionMap = Map[Symbol, Any]
 
+  def log(msg:String) = Misc.log("main", msg)
+  
   def parseArgs(map: OptionMap, list: List[String]): OptionMap = {
     def isSwitch(s: String) = (s(0) == '-')
     list match {
@@ -49,6 +51,8 @@ object Frontend {
     // Class consistency checks
     if (model != null) {
       val tc: TypeChecker = new TypeChecker(model)
+      
+      log("Type checking completed. No errors found.")
 
       model.decls.forall { d =>
         if (d.isInstanceOf[EntityDecl]) {
@@ -60,35 +64,9 @@ object Frontend {
       }
     }
 
-    // DOT for class diagrams
-    val classFile = new FileWriter(filename + ".dot", false)
-    classFile.append("digraph G { node [shape=record,fontname=Courier,fontsize=10,color=\".7 .3 1.0\"];")
-    model.decls.foreach { d =>
-      if (d.isInstanceOf[EntityDecl]) {
-        val ed = d.asInstanceOf[EntityDecl]
-        val properties =
-          ed.members.filter { m => m.isInstanceOf[PropertyDecl] }
-            .map(m => m.asInstanceOf[PropertyDecl].name).asInstanceOf[List[String]].mkString("|")
-        val functions =
-          ed.members.filter { m => m.isInstanceOf[FunDecl] }
-            .map(m => m.asInstanceOf[FunDecl].ident).asInstanceOf[List[String]].mkString("|")
-        val label = s"${ed.ident} | {Properties | $properties} | {Functions | $functions}"
-        classFile.append(ed.ident + " [shape=record,label=\"" + label + "\"];\r\n")
-        ed.members.foreach { m =>
-          if (m.isInstanceOf[PropertyDecl]) {
-            classFile.append(s"${ed.ident} -> ${
-              m.asInstanceOf[PropertyDecl].ty.toString
-                .replace("[", "")
-                .replace("]", "")
-                .replace("Set", "")
-            };")
-          }
-        }
-      }
-    }
-    classFile.append("}")
-    classFile.close()
-
+    // print DOT format class diagram
+    if(model != null) printClassDOT(filename, model)
+    
     options.get('stats) match {
       case Some(_) => printStats(model)
       case None    => ()
@@ -130,6 +108,39 @@ object Frontend {
           println("Model was null!")
       case None => () 
     }
+  }
+  
+  def printClassDOT(filename:String, model:Model) = {
+    
+    // DOT for class diagrams
+    val classFile = new FileWriter(filename + ".dot", false)
+    classFile.append("digraph G { node [shape=record,fontname=Courier,fontsize=10,color=\".7 .3 1.0\"];")
+    model.decls.foreach { d =>
+      if (d.isInstanceOf[EntityDecl]) {
+        val ed = d.asInstanceOf[EntityDecl]
+        val properties =
+          ed.members.filter { m => m.isInstanceOf[PropertyDecl] }
+            .map(m => m.asInstanceOf[PropertyDecl].name).asInstanceOf[List[String]].mkString("|")
+        val functions =
+          ed.members.filter { m => m.isInstanceOf[FunDecl] }
+            .map(m => m.asInstanceOf[FunDecl].ident).asInstanceOf[List[String]].mkString("|")
+        val label = s"${ed.ident} | {Properties | $properties} | {Functions | $functions}"
+        classFile.append(ed.ident + " [shape=record,label=\"" + label + "\"];\r\n")
+        ed.members.foreach { m =>
+          if (m.isInstanceOf[PropertyDecl]) {
+            classFile.append(s"${ed.ident} -> ${
+              m.asInstanceOf[PropertyDecl].ty.toString
+                .replace("[", "")
+                .replace("]", "")
+                .replace("Set", "")
+            };")
+          }
+        }
+      }
+    }
+    classFile.append("}")
+    classFile.close()
+
   }
 
   def visitJsonObject(o: Any): AnyRef = {

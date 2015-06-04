@@ -173,7 +173,7 @@ Also require someone to be the activity that touches the end
 
 }
 
-act IntegratorActvity {
+act IntegratorActivity {
 	dutyCycle : Real
 	energyUsed : Real
 }
@@ -181,5 +181,6 @@ act IntegratorActvity {
 act TelecomActivity {
 	dutyCycle : Real
 	energyUsed : Real
+	dataDown : Real
 }
 
