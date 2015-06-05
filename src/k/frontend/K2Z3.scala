@@ -74,24 +74,13 @@ object K2Z3 {
   val tc: TypeChecker = new TypeChecker(null)
   var datatypes: DataTypes = null
 
-  def error(msg:String) = Misc.error("K2Z3", msg)
-  
+  def error(msg: String) = Misc.error("K2Z3", msg)
+  def log(msg: String) = Misc.log("K2Z3", msg)
+
   def declareDatatypes(ctx: Context) {
     datatypes = new DataTypes(ctx)
     datatypes.addTupleType(List(RealType, BoolType))
     datatypes.addDataType("A", Nil, List("x" -> RealType, "y" -> BoolType))
-  }
-
-  def parseTest() {
-    reset()
-    val result = ctx.parseSMTLIB2String(
-      """
-        (set-option :smt.mbqi true)(declare-fun f (Int) Int)(declare-fun p (Int) Bool)(declare-fun p2 (Int) Bool)(declare-const a Int)(declare-const b Int)(declare-const c Int)(assert (forall ((x Int))                 (=> (not (p x)) (= (f x) (+ x 1)))))(assert (forall ((x Int))                 (=> (and (p x) (not (p2 x))) (= (f x) x))))(assert (forall ((x Int))                 (=> (p2 x) (= (f x) (- x 1)))))(assert (p b))(assert (p c))(assert (p2 a))(assert (> (f a) b))(check-sat)
-        """, null, null, null, null)
-    println("Result is " + result)
-
-    SolveExp(result)
-    PrintModel()
   }
 
   def declareFunctions(ctx: Context) {
@@ -123,19 +112,27 @@ object K2Z3 {
       // get existentially quantified variables at the highest level. 
       // Note that in the new method, the value that is printed out for
       // the decl is an "interpretation".
-      println("<<++")
+      log("<<++")
       model.getConstDecls.foreach { x =>
-        println(s"\tConst: ${x.getName.toString.split("!")(0)} ${model.getConstInterp(x).toString}")
+        log(s"\tConst: ${x.getName.toString.split("!")(0)} ${model.getConstInterp(x).toString}")
       }
       model.getFuncDecls.foreach {
         x => println(s"\tFunc: ${x.getName.toString.split("!")(0)}  ${model.getFuncInterp(x)}")
       }
       //      model.getDecls.foreach { x => println(s"\tDecls: ${x.getName}  $x") }
-      println("-->>")
+      log("-->>")
+
       //for ((i, (e, s)) <- idents) {
       //println(e.toString() + " = " + model.evaluate(e, false))
       //}
     }
+  }
+
+  def solveSMT(smtModel: String) {
+    reset()
+    val boolExp = ctx.parseSMTLIB2String(smtModel, null, null, null, null)
+    model = SolveExp(boolExp)
+    PrintModel()
   }
 
   def SolveExp(e: Exp): com.microsoft.z3.Model = {
@@ -151,16 +148,15 @@ object K2Z3 {
     params.add("algebraic_number_evaluator", true)
     //params.add("pp.decimal", true)
     solver.setParameters(params)
-    if (debug) println("solving " + solver)
+    if (debug) log("solving " + solver)
 
     val status = solver.check()
     if (Status.SATISFIABLE == status) {
-      println("SAT")
       model = solver.getModel
     } else if (status == Status.UNSATISFIABLE) {
       println("UNSAT")
     } else {
-      //println("UNKNOWN")
+      log("UNKNOWN...Model could not be solved successfully.")
       model = null
     }
 
@@ -193,7 +189,6 @@ object K2Z3 {
   }
 
   def Expr2Z3(e: Exp): com.microsoft.z3.Expr = {
-    //println(s"Called for $e")
     e match {
 
       //case FunApplExp(exp, args) =>
@@ -208,7 +203,6 @@ object K2Z3 {
         val mkTuple = datatypes.getDataType(tupleType).constructor
         mkTuple(vs(0), vs(1))
       case IdentExp(i) =>
-        //println(s"IdentExp for $i")
         idents.get(i) match {
           case None =>
             var s = ctx.mkSymbol(i)
@@ -270,7 +264,6 @@ object K2Z3 {
             var v2: ArithExpr = Expr2Z3(e2).asInstanceOf[ArithExpr]
             ctx.mkGe(v1, v2)
           case AND =>
-            //println(s"Doing and for $e1, $e2")
             var v1: BoolExpr = Expr2Z3(e1).asInstanceOf[BoolExpr]
             var v2: BoolExpr = Expr2Z3(e2).asInstanceOf[BoolExpr]
             ctx.mkAnd(v1, v2)
@@ -279,7 +272,6 @@ object K2Z3 {
             var v2: BoolExpr = Expr2Z3(e2).asInstanceOf[BoolExpr]
             ctx.mkOr(v1, v2)
           case IMPL =>
-            //println("impl is " + e)
             var v1: BoolExpr = Expr2Z3(e1).asInstanceOf[BoolExpr]
             var v2: BoolExpr = Expr2Z3(e2).asInstanceOf[BoolExpr]
             ctx.mkImplies(v1, v2)

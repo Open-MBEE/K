@@ -29,7 +29,7 @@ class Person {
 
 class Garage { 
 
-  cars : Set[Car][0,42]
+  cars : Set[Car] [0,42]
 
   fun garageValue (cs : Set[Car]) : Int {
     x : Int
@@ -44,12 +44,12 @@ class Garage {
     }
   }
 
-  fun garageCarsMakeModel (cs : Set[Car]) : Seq[String*String] {
+  fun garageCarsMakeModel (cs : Set[Car]) : Set[(String*String)] {
     cs.collect(c -> Tuple(c.make, c.model))
   }
 
-  fun garageCarsMakeModelDate (cs : Set[Car]) : Seq[String * Int] {
-    cs.collect(c -> Tuple(c.make, c.mfdate))
+  fun garageCarsMakeModelDate (cs : Set[Car]) : Set[String * String * Int] {
+    cs.collect(c -> Tuple(c.make, c.model, c.mfdate))
   }
   
   garageCarsMakeModel(cs)
