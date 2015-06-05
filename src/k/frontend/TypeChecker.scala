@@ -311,21 +311,25 @@ class TypeChecker(model: Model) {
   }
 
   case class CollectType(ty: List[Type]) extends PrimitiveType {
+    override def toSMT = null
     override def toJson1 = null
     override def toJson2 = null
   }
 
   case class SumType(ty: List[Type]) extends PrimitiveType {
+    override def toSMT = null
     override def toJson1 = null
     override def toJson2 = null
   }
 
   case object AnyType extends Type {
+    override def toSMT = null
     override def toJson1 = null
     override def toJson2 = null
   }
 
   case object UnitType extends Type {
+    override def toSMT = null
     override def toJson1 = null
     override def toJson2 = null
   }
@@ -333,13 +337,12 @@ class TypeChecker(model: Model) {
   def isConstructorCall(te: TypeEnv, exp: Exp): Boolean = {
     exp match {
       case IdentExp(i) =>
-        if(te.map.keySet.contains(i)){
+        if (te.map.keySet.contains(i)) {
           te.map(i) match {
-            case ClassTypeInfo(_,_,_) => return true
-            case _ => return false
+            case ClassTypeInfo(_, _, _) => return true
+            case _                      => return false
           }
-        }
-        else return false
+        } else return false
       case _ => return false
     }
 
@@ -412,7 +415,7 @@ class TypeChecker(model: Model) {
               TypeChecker.error(s"$exp does not type check. $ty1 and $ty2 are not equivalent.")
             }
             BoolType
-          case  MUL | DIV | ADD | SUB | REM => 
+          case MUL | DIV | ADD | SUB | REM =>
             if (!areTypesEqual(ty1, ty2, false)) {
               TypeChecker.error(s"$exp does not type check. $ty1 and $ty2 are not equivalent.")
             }
@@ -425,6 +428,15 @@ class TypeChecker(model: Model) {
           case ISIN | NOTISIN =>
             //TODO
             BoolType
+          case TUPLEINDEX =>
+            // ensure that ty2 is Int and a literal
+            if (ty2 != IntType) {
+              TypeChecker.error("Tuple index is not an integer.")
+            }
+            ty1 match {
+              case CartesianType(types) => types(exp2.toString.toInt-1)
+              case _                    => TypeChecker.error(s"Non tuple type found with tuple indexing. $exp")
+            }
           case _ => ty1
         }
 

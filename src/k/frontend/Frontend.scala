@@ -18,8 +18,8 @@ import scala.collection.mutable.{ ListBuffer => MList }
 object Frontend {
   type OptionMap = Map[Symbol, Any]
 
-  def log(msg:String) = Misc.log("main", msg)
-  
+  def log(msg: String) = Misc.log("main", msg)
+
   def parseArgs(map: OptionMap, list: List[String]): OptionMap = {
     def isSwitch(s: String) = (s(0) == '-')
     list match {
@@ -48,36 +48,17 @@ object Frontend {
         case None => (null, null)
       }
 
-<<<<<<< HEAD
-    // ---\
-
-    val smtModel = model.toSMT
-    println(smtModel)
-    K2Z3.solveSMT(smtModel)
-
-    // ---/
-
-=======
-    // Class consistency checks
     if (model != null) {
       val tc: TypeChecker = new TypeChecker(model)
-      
       log("Type checking completed. No errors found.")
-
-      model.decls.forall { d =>
-        if (d.isInstanceOf[EntityDecl]) {
-          val ed = d.asInstanceOf[EntityDecl]
-          K2Z3.Class2Z3(d.asInstanceOf[EntityDecl])
-          Misc.checkEntityConsistency(ed)
-        } else
-          true
-      }
     }
 
+    val smtModel = model.toSMT
+    K2Z3.solveSMT(smtModel)
+
     // print DOT format class diagram
-    if(model != null) printClassDOT(filename, model)
-    
->>>>>>> 270fe3676919bce58ee5d982252fb7ecae02fbf9
+    if (model != null) printClassDOT(filename, model)
+
     options.get('stats) match {
       case Some(_) => printStats(model)
       case None    => ()
@@ -90,35 +71,6 @@ object Frontend {
       case None => ()
     }
 
-    options.get('json) match {
-      case Some(jsonString: String) => {
-        //json2exp(jsonString)
-        if (model != null) {
-          //println(model.toString())
-          // Remember old value of option
-          val optionsUseJson1 = Options.useJson1
-          // MMS method using toJson1
-          Options.useJson1 = true
-          val modelJson = model.toJson
-          println("JSON1: " + modelJson.toString(0))
-          val modelFromJson = visitJsonObject(modelJson).asInstanceOf[Model]
-          // MMS method using toJson2
-          Options.useJson1 = false
-          val modelJson2 = model.toJson
-          println("JSON2: " + modelJson2.toString(0))
-          val modelFromJson2 = visitJsonObject2(modelJson2).asInstanceOf[Model]
-          // Reset old value of option
-          Options.useJson1 = Options.useJson1
-        } else
-          println("Model was null!")
-
-      }
-      case None => ()
-    }
-
-<<<<<<< HEAD
-    println("\n=====================================================\n")
-=======
     options.get('printJson) match {
       case Some(_) =>
         if (model != null) {
@@ -139,13 +91,11 @@ object Frontend {
           Options.useJson1 = Options.useJson1
         } else
           println("Model was null!")
-      case None => () 
+      case None => ()
     }
   }
-  
-  def printClassDOT(filename:String, model:Model) = {
-    
-    // DOT for class diagrams
+
+  def printClassDOT(filename: String, model: Model) = {
     val classFile = new FileWriter(filename + ".dot", false)
     classFile.append("digraph G { node [shape=record,fontname=Courier,fontsize=10,color=\".7 .3 1.0\"];")
     model.decls.foreach { d =>
@@ -173,8 +123,6 @@ object Frontend {
     }
     classFile.append("}")
     classFile.close()
-
->>>>>>> 270fe3676919bce58ee5d982252fb7ecae02fbf9
   }
 
   def visitJsonObject(o: Any): AnyRef = {
