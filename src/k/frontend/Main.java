@@ -17,9 +17,11 @@ public class Main {
 
 	public static void main(String[] args) throws Exception {
 
-		Misc.wpTest2();
+		//Misc.wpTest2();
 
 		Frontend.scala_main(args);
+
+		System.exit(0);
 
 		String json1, json2, exp;
 

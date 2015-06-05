@@ -117,7 +117,7 @@ object K2Z3 {
       // built up during translation of expressions. It does not 
       // get existentially quantified variables at the highest level. 
       // Note that in the new method, the value that is printed out for
-      // the decl is an "interpretation". 
+      // the decl is an "interpretation".
       model.getConstDecls.foreach { x => println(s"Const: ${x.getName.toString.split("!")(0)} ${model.getConstInterp(x)}") }
       model.getFuncDecls.foreach { x => println(s"Func: ${x.getName.toString.split("!")(0)}  ${model.getFuncInterp(x)}") }
 
@@ -127,6 +127,13 @@ object K2Z3 {
     }
   }
 
+  def solveSMT(smtModel: String) {
+    reset()
+    val boolExp = ctx.parseSMTLIB2String(smtModel, null, null, null, null)
+    model = SolveExp(boolExp)
+    PrintModel()
+  }
+  
   def SolveExp(e: Exp): com.microsoft.z3.Model = {
     reset()
     val boolExpr = Expr2Z3(e).asInstanceOf[BoolExpr];
