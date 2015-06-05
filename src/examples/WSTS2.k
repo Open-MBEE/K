@@ -1,31 +1,22 @@
 --WSTS modeling pattern
---simple Test script invoking TestBed
-
+--STAKR model
+--Written by Dang Le and Thirupathi Srinivasan
 
 //EHA = Engineering Housekeeping and Accountability Packet
 //EVR = Event Report
 
-//Inner classes
-package TestBed
 
 class SpacecraftTB {
 
-	
 	curr_sclk : Int
 	lower_sclk : Int
-	//i.e TchannelID- temporal constraints
+	//i.e TchannelID- temporal reqs
 	DMX_ID : String[]
 	ChannelID : Int[]
 
-
 }
 
-
-	
-
-
-
-class MTAK extends TestBed {
+class MTAK extends STAKR {
 
 		session_key :	Int
 		user_name 	:	String
@@ -37,231 +28,153 @@ class MTAK extends TestBed {
 		
 }
 
-class WSTS extends TestBed {
+class WSTS extends STAKR {
 
 	
 
 }
 
-// make this a command?  event?
-//Exit() is a command -- no time constraints on Exit
-//Functioncall Exit() = Functioncall(object="TestBed",method="Exit")
-
-		class <constraint> constraint{
-		
-		}
-		
-		constraint StartCMD(){ = class StartCMD() extends constraint
-		
-		}
-
-		class <event> Event{
-			startTime : Int
-			EndTime : Int
-			duration : Int
-			
-			
-			
-			//only id if time is known
-			constraint durationTime:
-				duration = EndTime - StartTime
-				
-			fun execute ()
-		}		
-
-		class StartCMD extends Event{
-
-		
-		    command{ 
-		    	TestBed.START 
-			}
-		
-		//calling from STAKR
-		fun execute(){
-			command(TestBed.Start)
-		}
-			
-			constraint startTimeConstraints:
-				startTime = 2015-03-03T10:10:10.000-800
-			
-			
-			//make sure StartCMD schedule is on time	
-			duration = StartCMD.endTIme - StartCMD.StartTime
-		
-			@doc("")
-			constraint startCMDDurationConstraint:
-		    	duration <= 2
-		    	
-		
-		}
-		
 
 
-//STAKR class
-class TestBed {
+
+
+
+class <event> DurativeEvent{
+		StartTime : Int
+		EndTime : Int
+		duration : Int
+			
+		@doc("Duration will be inherited by any class that extends 'DurativeEvent'")	
+		req durationTime:
+			duration = EndTime - StartTime
+		
+}		
+
+
+
+package STAKR {
 
 		spacecraft	 : SpacecraftTB
-		host 		 :	String
-		port 		 :	Int
-		configString :	String
+		host 		 : String
+		port 		 : Int
+		configString : String
 		session_key  : Int
 		user_name 	 : String
 		sse_version  : Int
 		venue_type 	 : MTAK.venue_type
 		mtak_log 	 : MTAK.MTAK_log
 		outputFile 	 : String
-		chidlren	 : Seq[Int]
+		children	 : Seq[Int]
 		MTAK_pID	 : MTAK.MTAK_pID
 		channelID	 : spacecraft.channelID
 		
 		incr		 : Int
+		incr2		 : Int
 		output_mode	 : Seq[String]	//Verbose, Debug, or Quiet mode
 		timeOut		 : Int
 		send_sclk	 : Int
 		
 		curr_sclk	 : spacecraft.curr_sclk
-		
-		startTime 	 : Int
-		endTime		 : Int
-		duration 	 : Int
-		startcommand : StartCMD
 		cmd_name 	 : String
 		
-		//--call start command from STAKR-------------------------------------------------------------------
-		//--Start STAKR session
-
 		event StartCMD{
+
+			// TODO: Maybe unnecessary, since DurativeEvent.java might already have a startTime associated to the class?
+			@doc("starts at specific time")
+			//req startTimereqs:
+				//startTime = 2015-03-03T10:10:10.000-800
 		
-		
-		
-		    command{ 
-		    	TestBed.START 
-			}
-		
-		
-			constraint startTimeConstraints:
-				startTime = 2015-03-03T10:10:10.000-800
-			
-			
-			//make sure StartCMD schedule is on time	
-			duration = StartCMD.endTIme - StartCMD.StartTime
-		
-			@doc("")
-			constraint startCMDDurationConstraint:
-		    	duration <= 2
+			req startTime:
+				startTime = 0
 		    	
-		
 		}
+		
 		//--call SetLogFile---------------------------------------------------------------------------------
 		
-		event SetLogFile(fileName){
+		event SetLogFile{
 		
-		startCommand : StartCMD
-		fileName : String
+			startCommand : StartCMD
+			endTime : : StartCMD
+			fileName : String
 		
-			command {
-		    		TestBed.SetLogFile(fileName)
-			}
-		
-				constraint SetLogFile:
-					startTime = startCommand.endTime
+			req incrValue:
+				incr = 5
+			
+			req SetLogFileStartTime:
+				startTime = startCommand.endTime + incr //adding increment
 		
 		}
 		
 		//--Write message to console------------------------------------------------------------------------
 		
-		event WriteMessageCMD(messageToBeSend, messageOutputFile){
+		event WriteMessageCMD{
 		
-		//startCommand is an instance of the class StartCMD
-		startCommand : StartCMD
-		messageToBeSend : String
-		messageOutputFile : String
+			startCommand : StartCMD
+			endTime : StartCMD
+			messageToBeSent : String
+			messageOutputFile : String
 		
+			req incrValue:
+				incr = 6
 		
-			command {
-				TestBed.WriteMessageCMD(messageToBeSend, messageOutputFile)
-			}
-		
-				constraint duration:
-					duration = endTime - StartTime
-					
-				constraint WriteMessageCMDscheduleTimer:
-					startTime = startCommand.endTime
+			req WriteMessageCMDscheduleTimer:
+				startTime = startCommand.endTime + incr; 
 		
 		 }
 		    
 		//--Send(CMDmessage)-------------------------------------------------------------------------------
 		
+		event SendCMD{
 		
-		event SendCMD(CMDmessage){
+			CMDmessage : String
+			startCMD : StartCMD
+			endTime : StartCMD
 		
-		CMDmessage : String
-		
-			command {
-				TestBed.Send(CMDmessage)
-			}
-		
-				constraint SendCMDscheduleTimer:
-					startTime = WriteMessageCMD.endTime		
+			req incrval:
+				incr = 7
+				
+			req SendCMDscheduleTimer:
+				startTime = startCMD.endTime +incr //adding increment		
 		}
 		
 		//--SendSCMF(filePath)-------------------------------------------------------------------------------
-		// This is a command, no constraints are required
 		
-		filePath: String
+		event SendSCMF{
+			// This is a command, no reqs are required
+			// Need to wrap with Event class as all commands need these.
 			
-			SendSCMF(filePath).command{
-				TestBed.SendSCMF(filePath)
-			}
-			
+			filePath: String
+
+		}	
 		
 		//--EVR and EHA timelines
 		//--VerifyEHA()------------------------------------------------------------------------------------
 		    
-		event verifyEHA(channelID,BASE){
+		event verifyEHA{
 		
-		//set channelID as temporal constraint
-		//channelID(t) = y
-		
-		
-		SendCommand : Send
-		channelID : SpaceCraft
-		BASE = "10" //16 if HEX, default set to base 10
-		
+			//set channelID as temporal req
+			//channelID(t) = y
 			
-			//--verifyEHA("") --parameter should be ID of telemetry channel
-		    
-		    command{
-				TestBed.VerifyEHA(channelID,BASE)
-			}
-				
-				if(channelID != null)
-					return channelID
-				else
-					return 0		
-			}
+			sendCMD : SendCMD
+			endTime : SendCMD
 			
-				constraint VerifyEHAscheduleTimer:
-					startTime = SendCMD.endTime
+
+			
+			req VerifyEHAscheduleTimer:
+				startTime = sendCMD.endTime + incr
 		}
 		
 		
 		//--VerifyEHACritical()------------------------------------------------------------------------------------
-		
-		
-		event verifyEHACritical(channelID,SpacecraftTB.channelID,BASE){
+
+		event verifyEHACritical{
 			
-			command{
-				TestBed.verifyEHACritical(channelID,SpacecraftTB.channelID,BASE)
-				
-				if(channelID != null)
-					return channel
-				else
-					TestBed.Exit()
-			}
-			
-			constraint VerifyEHAscheduleTimer:
-					startTime = SendCommand.endTime
+			(channelID,SpacecraftTB.channelID,BASE)
+			sendCMD : SendCMD
+			endTime : SendCMD
+
+			req VerifyEHAscheduleTimer:
+					startTime = sendCMD.endTime
 			
 		}
 		
@@ -269,118 +182,240 @@ class TestBed {
 		//--VerifyEVR()------------------------------------------------------------------------------------
 		//VerifyEVR(search_string, lower_sclk)
 		
-		event verifyEVR(search_string,sclk){
+		event verifyEVR{
 		
+		
+		//TODO: of type SpacecraftTB (?) (since that is what the class is named as)
+		//lower_sclk : SpacecraftSTAKR
+		//it's actually inheriting the value from SpacecraftTB since it's the sclk on the spacecraft that we want to look at. 
+		
+		writeCommand : WriteMessageCMD
+		sendCMD : SendCMD
+		endTime : SendCMD
+		endTime : WriteMessageCMD
 		search_string : String
-		lower_sclk : SpacecraftTestBed
+		lower_sclk : SpacecraftTB
+		lower_sclk : SpacecraftTB
+		search_string : String
 		
-			command{
-				TestBed.VerifyEVR(search_string,sclk)
-			}
-		
-				constraint VerifyEHAscheduleTimer:
-					startTime = SendCMD.endTime
+			req VerifyEHAscheduleTimer:
+				startTime = sendCMD.endTime + incr
+				
+			req VerifyEHAscheduleTimer2:
+				startTime = writeCMD.endTime + incr
 					
-				constraint VerifyEHAscheduleTimer2:
-					startTime = WriteMessageCMD.endTime
+		}
+		
+		//--VerifyEVRBackground()------------------------------------------------------------------------------------
+		//VerifyEVRBackground(search_string, lower_sclk)
+		
+		event verifyEVRBackground{
+		
+		
+			writeCommand : WriteMessageCMD
+			sendCMD : SendCMD
+			endTime : SendCMD
+			endTime : WriteMessageCMD
+			search_string : String
+			lower_sclk : SpacecraftTB
+		
+			req VerifyEHAscheduleTimer:
+				startTime = sendCMD.endTime + incr
+				
+			req VerifyEHAscheduleTimer2:
+				startTime = writeCMD.endTime + incr2
+					
+		}
+		
+		//--VerifyEVRCount()------------------------------------------------------------------------------------
+		//VerifyEVRCount(search_string, lower_sclk)
+		
+		event VerifyEVRCount{
+		
+			(search_string,lower_sclk)
+			writeCommand : WriteMessageCMD
+			sendCMD : SendCMD
+			endTime : SendCMD
+			endTime : WriteMessageCMD
+			search_string : String
+			lower_sclk : SpacecraftSTAKR
+			search_string : String
+			lower_sclk : SpacecraftTB
+		
+			req incr = 5
+			req incr2 = 10	
+		
+			req VerifyEHAscheduleTimer:
+				startTime = sendCMD.endTime + incr
+				
+			req VerifyEHAscheduleTimer2:
+				startTime = writeCMD.endTime + incr2
 					
 		}
 		
 		//--VerifyEVRCritical()------------------------------------------------------------------------------------
 		
-		event verifyEVRCritical(search_string,sclk){
+		event verifyEVRCritical{
 		
+		(search_string,sclk)
 		//writeMessageCommand is an instance of the class WriteMessageCMD
-		writeMessageCommand : WriteMessageCMD
+		writeCommand : WriteMessageCMD
+		sendCMD : SendCMD
+		endTime : SendCMD
+		endTime : WriteMessageCMD
 		search_string : String
-		lower_sclk : SpacecraftTestBed
+		lower_sclk : SpacecraftSTAKR
 		
-			command{
-				TestBed.VerifyEVRCritical(search_string,sclk)
-			}
-							
-			constraint VerifyEVRscheduleTimer:
-				startTime = SendCMD.endTime
-					
-			constraint VerifyEVRscheduleTimer2:
-				startTime = WriteMessageCMD.endTime
+		
+			req incr = 5
+			req incr2 = 10	
 				
+			req VerifyEHAscheduleTimer:
+				startTime = SendCMD.endTime + incr
+					
+			req VerifyEHAscheduleTimer2:
+				startTime = writeCMD.endTime + incr2
+				
+		
 		}
 		
 		
 		
 		//--VerifyComplete(cmd_name, lower_sclk = send_sclk)-----------------------------------------------------------------
-		
-		event verifyComplete(cmd_name, lower_sclk = send_sclk){
+		// TODO: Why conditionals 
+		event verifyComplete{
+
+		 (cmd_name, lower_sclk = send_sclk)
+		 WriteCMD : verifyEVR
+		 endTime  : verifyEVR	
+		 cmd_name : String
+		 lower_sclk : Int
 			
-			command{
-				if(cmd_name == verifyEVR(cmd_name,send_sclk)){
-					TestBed.Pause()
-					return verifyEVR(cmd_name)
-				}
-				else 
-					return 0
-			}	
-			
-			constraint verifyCompleteBTimer:
+			req verifyCompleteBTimer:
 				startTime = verifyEVR.endTime + incr
 		}
 		
 		
 		//--VerifyCompleteBackground(cmd_name,lower_sclk = send_sclk)-----------------------------------------------------------------
 		
-		event verifyCompleteBackground(cmd_name,lower_sclk){
-		
-			command{
-				if(cmd_name == verifyEVR(cmd_name,send_sclk)){
-					return verifyEVR(cmd_name)
-				}
-				else 
-					return 0
-				
-			}
-			
-			constraint verifyCompleteBTimer:
+		event verifyCompleteBackground{
+
+			(cmd_name,lower_sclk)
+		 WriteCMD : verifyEVR
+		 endTime  : verifyEVR	
+		 cmd_name : String
+		 lower_sclk : Int
+		 
+			req verifyCompleteBTimer:
 				startTime = verifyEVR.endTime + incr
 		
 		}
 		
 		//--VerifyCompleteCritical(cmd_name,lower_sclk)-----------------------------------------------------------------
 		
-		event verifyCompleteCritical(cmd_name,lower_sclk){
-		
-			command{
-				if(cmd_name == verifyEVR(cmd_name,send_sclk)){
-					TestBed.Pause()
-					return verifyEVR(cmd_name)
-				}
-				else 
-					TestBed.Exit()
-				
-			}
+		event verifyCompleteCritical{
 			
-			constraint verifyCompleteCriticalTimer:
+		(cmd_name,lower_sclk)
+		 WriteCMD : verifyEVR
+		 endTime : verifyEVR	
+		 cmd_name : String
+		 lower_sclk : Int
+		 
+			req verifyCompleteCriticalTimer:
 				startTime = verifyEVR.endTime + incr
 		
 		}
 		
 		
+		//---VerifyRecordedEVR----------------------------------------------------------------------------------
+		 event VerifyRecordedEVR{
+		 
+		 (searchString,lower_sclk)
+		 WriteCMD : WriteMessageCMD
+		 endTime : WriteMessageCMD	
+		 cmd_name : String
+		 lower_sclk : Int
+		 
+		 req VREvr:
+		 		startTime = WriteCMD.endTime + incr
+		 
+		 }
+		
+		//---VerifyRecordedEVRbackground----------------------------------------------------------------------------------
+		
+		event VerifyRecordedEVRbackground{
+		 
+		 (searchString,lower_sclk)
+		 WriteCMD : WriteMessageCMD
+		 endTime : WriteMessageCMD	
+		 cmd_name : String
+		 lower_sclk : Int
+		 
+		 req EVRTimer:
+		 		startTime = WriteCMD.endTime + incr
+		 
+		 }
+		 
+		 //---VerifyDispatch------------------------------------------------------------------------------
+		 
+		 event VerifyDispatch{
+
+		 (cmd_name, lower_sclk)	
+		  WriteCMD : WriteMessageCMD
+		 endTime : WriteMessageCMD	
+		 cmd_name : String
+		 lower_sclk : Int
+		 
+		 req VPTimer:
+		 		startTime = WriteCMD.endTime + incr
+		 
+		 }
+		 
+		 
+		 //---VerifyDispatchBackground------------------------------------------------------------------------------
+		 
+		 event VerifyDispatchBackground{
+
+		 (cmd_name, lower_sclk)	
+		 WriteCMD : WriteMessageCMD
+		 endTime : WriteMessageCMD	
+		 cmd_name : String
+		 lower_sclk : Int
+		 
+		 req EVRexists:
+		 		startTime = WriteCMD.endTime + incr
+		 
+		 }
+		 
+		 
+		 //---VerifyDispatchCritical------------------------------------------------------------------------------
+		 //exit the testscript if no EVRs are found
+		 
+		 event VerifyDispatchCritical{
+		 	
+		 (cmd_name, lower_sclk)
+		 WriteCMD : WriteMessageCMD
+		 endTime : WriteMessageCMD	
+		 cmd_name : String
+		 lower_sclk : Int
+		 
+			 req VDPTimer:
+		 		startTime = WriteCMD.endTime + incr
+		 
+		 }
+		
 		//--VerifyDP()------------------------------------------------------------------------------------
 		
-		event verifyDP(apID,args){
+		event verifyDP{
 		
+		(apID,args)
+		sendCMD : SendCMD
 		apID : String
 		args : String[]
-		pause : PauseCMD
 		//args : data structure or array, where contents of file with the ID "apID" are stored 
 			
-			command{
-				TestBed.verifyDP(apID,args)
-			}
-			
-			
-			constraint fileExist:
-				apID.isEmpty() ==  false	
+			req verifyDPTimer:
+					startTime = sendCMD.endTime + incr
 	
 		}
 		
@@ -395,128 +430,105 @@ class TestBed {
 			
 			startCommand : StartCMD
 				
-				constraint DisplaySessionInfoTimer:
+				req DisplaySessionInfoTimer:
 					startTime = startCommand.endTime
 		
 		}
 		
 		//--SetMode(mode)------------------------------------------------------------------------------------
 		
-		event SetMode(output_mode){
+		event SetMode{
 		
+		(output_mode)
 		//output file type
 		mode : String[]
 		mode[0] := "Quiet"
 		mode[1] := "Q"
 		mode[2] := "Verbose"
 		mode[3] := "Debug"
-		
-			constraint ModeHasChanged:
-				output_mode = !output_mode~
+				
 			
 		}		
 		
 		
-		//--SetTimeOut(num)------------------------------------------------------------------------------------
 		
-		num : Int
-		
-			SetTimeOut(num).command{
-				TestBed.SetTimeOut(num)
-			}
-		
-			constraint EHATimeout:
-				startTime = VerifyEHA.endTime + num
+//--SetTimeOut------------------------------------------------------------------------------------	
+
+		event SetTimeOut{
 			
-			constraint EVRTimeout:
-				startTime = VerifyEVR.endTime + num
-		
-		
-		//--SetidityChecks(mode)------------------------------------------------------------------------------------	
-		
-		mode : String[]
-		//mode[0] := "ON"
-		//mode[1] := "OFF"
+			(num)
+			num : Int
+			verifyEVR : VerifyEVR
+			verifyEHA :	VerifyEHA
+			endTime : VerifyEVR
+			endTime : VerifyEHA
 			
-		event SetidityChecks(mode){
-			if(SetidityChecks(mode))
-				return true
-			else
-				return false
+			req WaitForEHA:
+				startTime = verifyEHA.endTime + incr	
+				
+			req WaitForEVR:
+				startTime = verifyEVR.endTime + incr
+		
+		}
+		
+		
+		//--Set ValidityChecks(mode)------------------------------------------------------------------------------------	
+				
+		event SetValidityChecks{
+		
+		(mode)
+			mode : String[]
+			//mode[0] := "ON"
+			//mode[1] := "OFF"
+
 		}
 		
 		//--Pause()------------------------------------------------------------------------------------	
 		
-		command{
-			TestBed.Pause()
-		}
-		
-			//needs work
-			constraint PauseUntilEnter:
-				Pause.endTime = KeyboardInput
-		
-		//--Print()------------------------------------------------------------------------------------
-		
-		msg : String
-	
-		Print(msg,outputFile).command{
-			
-			if(Print(msg,outputFile))
-				return true
-			else
-				return false
+		event Pause() {
+
 		}
 
 		//--SignOff(file)------------------------------------------------------------------------------------
 		
 		
-		event SignOff(outputFile){
+		event SignOff{
 		
-		outputFile : String
-		setLogFile : SetLogFile
-		writeMessage : WriteMessageCMD
-		
-			command{
-				TestBed.SignOffFile()
-			}
-				
-				if(outputFile == null && !setLogFile)
-				{
-					console.writeMessage(outputFile)
-				}
-				else if(outputFile == null && setLogFile)
-				{
-					console.writeMessage(outputFile)
-					SetLogFile(fileName)
-				}
-				else if(outputFile != null)
-					SetLogFile(fileName)
-		}
-			constraint fileExists:
-				outputFile != null
+			(outputFile)
+			outputFile : String
+			setLogFile : SetLogFile
+			writeMessage : WriteMessageCMD
 
+		}
 				
-		//--SetTimeOut------------------------------------------------------------------------------------	
 
 		
-		event SetTimeOut(num){
-			
-			num : Int
-			verifyEVR : VerifyEVR
-			verifyEHA :	VerifyEHA
-			
-			command{
-				TestBed.SetTimeOut(num)
-			}
-			
-			
-			constraint WaitForEHA:
-				startTime = verifyEHA.endTime + incr	
-				
-			constraint WaitForEVR:
-				startTime = verifyEVR.endTime + incr
 		
+		//--Print()------------------------------------------------------------------------------------
+		
+		event Print(){
+			msg : String
 		}
+		
+		//--Exit()------------------------------------------------------------------------------------
+		
+		event Exit(){
+
+		}
+		
+		
+		
+	}
+
 
 }
+
+
+	
+
+
+
+
+	
+	
 

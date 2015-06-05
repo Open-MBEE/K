@@ -7,13 +7,13 @@ functions being implemented using K.
 
 class Util {
 
-  fun binarySearch (l : Seq[Int], x:Int) : (Bool*String) 
+  fun binarySearch (l : Seq[Int], x:Int) : (Bool*Int) 
     pre forall i : Int . 
           forall j : Int .
             i >= 0 && j >= 0 && 
             i < l.size() && 
             j > i && j < l.size() => l.at(i) < l.at(j)
-    post $result.1 = true => x isin l
+    post $result # 1 = true => x isin l
   {
     mid : Int = l.size()/2
 
