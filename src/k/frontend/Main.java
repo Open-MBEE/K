@@ -16,7 +16,7 @@ public class Main {
 	}
 
 	public static void main(String[] args) throws Exception {
-
+		//K2Z3.parseTest();
 		//Misc.wpTest2();
 
 		Frontend.scala_main(args);
@@ -88,5 +88,7 @@ public class Main {
 			K2Z3.PrintModel();
 			System.out.println("******************");
 		}
+		
+		Misc.wpTest2();
 	}
 }

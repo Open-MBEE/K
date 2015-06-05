@@ -1,5 +1,10 @@
 package small
 
+-- class Set [T] {
+--  fun collect : Set[T]
+--  fun sum : Int
+-- }
+
 class Car {
   price : Int
   make : String
@@ -7,12 +12,36 @@ class Car {
   mfdate : Int
 }
 
+
+class Person {
+
+  primaryCar : Car
+  dob : Int
+  garages : Set[Garage] 
+
+  totalWorth  : Int = garages.collect(g -> g.garageValue(g.cars)).sum()
+
+  dob = 12345678
+  
+  primaryCar.price := 0
+  
+}
+
 class Garage { 
 
   cars : Set[Car] [0,42]
 
   fun garageValue (cs : Set[Car]) : Int {
-    cs.collect(c -> c.price).sum()
+    x : Int
+    
+    x := x + 1
+    
+    if x > 0 then {
+      cs.collect(c -> c.price).sum()
+    }
+    else {
+      0
+    }
   }
 
   fun garageCarsMakeModel (cs : Set[Car]) : Set[(String*String)] {
@@ -22,15 +51,8 @@ class Garage {
   fun garageCarsMakeModelDate (cs : Set[Car]) : Set[String * String * Int] {
     cs.collect(c -> Tuple(c.make, c.model, c.mfdate))
   }
-
+  
+  garageCarsMakeModel(cs)
+  
 }
 
-class Person {
-
-  dob : Int
-  garages : Set[Garage] 
-
-  totalWorth  : Int = garages.collect(g -> g.garageValue(g.cars)).sum()
-
-  dob = 12345678
-}

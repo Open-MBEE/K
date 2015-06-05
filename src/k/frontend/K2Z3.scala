@@ -12,15 +12,6 @@ object Util {
 }
 import Util._
 
-object TypeChecker {
-  /**
-   * Used to indicate where type inference is meant to take place.
-   * The identity function on second argument.
-   */
-  def inferTypeFrom(exp: String, ty: Type) = ty
-}
-import TypeChecker._
-
 class DataTypes(ctx: Context) {
   type TypeName = String
   type FieldName = String
@@ -65,7 +56,7 @@ class DataTypes(ctx: Context) {
 
   def getSort(ty: Type): Sort = getDataType(ty).sort
 
-  addDataType(IntType, DataType(ctx.getIntSort(), null, null))
+  addDataType(RealType, DataType(ctx.getRealSort(), null, null))
   addDataType(BoolType, DataType(ctx.getBoolSort(), null, null))
   addDataType(RealType, DataType(ctx.getRealSort(), null, null))
 }
@@ -76,22 +67,36 @@ object K2Z3 {
 
   val debug: Boolean = false
   var cfg: Map[String, String] = Map("model" -> "true",
-    "auto-config" -> "false")
+    "auto-config" -> "true")
   var ctx: Context = new Context(cfg)
   var idents: MMap[String, (Expr, com.microsoft.z3.StringSymbol)] = MMap()
   var model: com.microsoft.z3.Model = null
-
+  val tc: TypeChecker = new TypeChecker(null)
   var datatypes: DataTypes = null
 
+  def error(msg:String) = Misc.error("K2Z3", msg)
+  
   def declareDatatypes(ctx: Context) {
     datatypes = new DataTypes(ctx)
-    datatypes.addTupleType(List(IntType, BoolType))
-    datatypes.addDataType("A", Nil, List("x" -> IntType, "y" -> BoolType))
+    datatypes.addTupleType(List(RealType, BoolType))
+    datatypes.addDataType("A", Nil, List("x" -> RealType, "y" -> BoolType))
+  }
+
+  def parseTest() {
+    reset()
+    val result = ctx.parseSMTLIB2String(
+      """
+        (set-option :smt.mbqi true)(declare-fun f (Int) Int)(declare-fun p (Int) Bool)(declare-fun p2 (Int) Bool)(declare-const a Int)(declare-const b Int)(declare-const c Int)(assert (forall ((x Int))                 (=> (not (p x)) (= (f x) (+ x 1)))))(assert (forall ((x Int))                 (=> (and (p x) (not (p2 x))) (= (f x) x))))(assert (forall ((x Int))                 (=> (p2 x) (= (f x) (- x 1)))))(assert (p b))(assert (p c))(assert (p2 a))(assert (> (f a) b))(check-sat)
+        """, null, null, null, null)
+    println("Result is " + result)
+
+    SolveExp(result)
+    PrintModel()
   }
 
   def declareFunctions(ctx: Context) {
     // function f : Int -> Int inside A
-    val intType = datatypes.getSort(IntType)
+    val intType = datatypes.getSort(RealType)
     val theAType = IdentType(QualifiedName(List("A")), Nil)
     val theADatatype: DataType = datatypes.getDataType(theAType)
     val theASort = theADatatype.sort
@@ -118,8 +123,15 @@ object K2Z3 {
       // get existentially quantified variables at the highest level. 
       // Note that in the new method, the value that is printed out for
       // the decl is an "interpretation".
-      model.getConstDecls.foreach { x => println(s"Const: ${x.getName.toString.split("!")(0)} ${model.getConstInterp(x)}") }
-      model.getFuncDecls.foreach { x => println(s"Func: ${x.getName.toString.split("!")(0)}  ${model.getFuncInterp(x)}") }
+      println("<<++")
+      model.getConstDecls.foreach { x =>
+        println(s"\tConst: ${x.getName.toString.split("!")(0)} ${model.getConstInterp(x).toString}")
+      }
+      model.getFuncDecls.foreach {
+        x => println(s"\tFunc: ${x.getName.toString.split("!")(0)}  ${model.getFuncInterp(x)}")
+      }
+      //      model.getDecls.foreach { x => println(s"\tDecls: ${x.getName}  $x") }
+      println("-->>")
 
       //for ((i, (e, s)) <- idents) {
       //println(e.toString() + " = " + model.evaluate(e, false))
@@ -144,9 +156,11 @@ object K2Z3 {
     var solver: Solver = ctx.mkSolver()
     solver.add(e)
     val params = ctx.mkParams()
-    //params.add("mbqi", false)
+    params.add("algebraic_number_evaluator", true)
+    //params.add("pp.decimal", true)
     solver.setParameters(params)
     if (debug) println("solving " + solver)
+
     val status = solver.check()
     if (Status.SATISFIABLE == status) {
       println("SAT")
@@ -154,9 +168,10 @@ object K2Z3 {
     } else if (status == Status.UNSATISFIABLE) {
       println("UNSAT")
     } else {
-      println("UNKNOWN")
+      //println("UNKNOWN")
       model = null
     }
+
     model
   }
 
@@ -172,6 +187,19 @@ object K2Z3 {
     // TODO 
   }
 
+  def Class2Z3(e: EntityDecl): Sort = {
+    val (fields, types): (List[String], List[Sort]) =
+      e.members.foldLeft((List[String](), List[Sort]()))((r, f) =>
+        if (f.isInstanceOf[PropertyDecl])
+          //(r._1 ++ List(f.asInstanceOf[PropertyDecl].name), r._2 ++ List(f.asInstanceOf[PropertyDecl].ty.toString))
+          (r._1 ++ List(f.asInstanceOf[PropertyDecl].name), r._2 ++ List(ctx.getRealSort))
+        else
+          r)
+    ctx.mkDatatypeSort(e.ident,
+      List(ctx.mkConstructor(e.ident + "_cons", "is_" + e.ident + "_cons", fields.toArray, types.toArray, null)).toArray)
+
+  }
+
   def Expr2Z3(e: Exp): com.microsoft.z3.Expr = {
     //println(s"Called for $e")
     e match {
@@ -184,7 +212,7 @@ object K2Z3 {
         Expr2Z3(e)
       case TupleExp(es) =>
         val vs = es map Expr2Z3
-        val tupleType = inferTypeFrom("es", CartesianType(List(IntType, BoolType)))
+        val tupleType = tc.inferTypeFrom("es", CartesianType(List(RealType, BoolType)))
         val mkTuple = datatypes.getDataType(tupleType).constructor
         mkTuple(vs(0), vs(1))
       case IdentExp(i) =>
@@ -192,7 +220,7 @@ object K2Z3 {
         idents.get(i) match {
           case None =>
             var s = ctx.mkSymbol(i)
-            var ie = ctx.mkIntConst(s)
+            var ie = ctx.mkRealConst(s)
             idents.put(i, (ie, s))
             ie
           case Some(x) =>
@@ -203,14 +231,14 @@ object K2Z3 {
           case IdentExp(id) => Expr2Z3(IdentExp(id + "." + ident))
           case _ =>
             var obj: Expr = Expr2Z3(exp)
-            val theType = inferTypeFrom("exp", IdentType(QualifiedName(List("A")), Nil))
+            val theType = tc.inferTypeFrom("exp", IdentType(QualifiedName(List("A")), Nil))
             val datatype: DataType = datatypes.getDataType(theType)
             val selector: FuncDecl = datatype.selectors(ident)
             selector(obj)
         }
       case FunApplExp(exp, args) =>
         var obj: Expr = Expr2Z3(exp)
-        val theType = inferTypeFrom("exp", IdentType(QualifiedName(List("A")), Nil))
+        val theType = tc.inferTypeFrom("exp", IdentType(QualifiedName(List("A")), Nil))
         val isConstructor = false // TODO: for constructor make this true
         if (isConstructor) {
           // constructor application
@@ -223,7 +251,7 @@ object K2Z3 {
 
           // 1. create an uninterpreted function
 
-          val functionDecl = ctx.mkFuncDecl(exp.toString, args.map(a => ctx.getIntSort).toArray[Sort], ctx.getIntSort)
+          val functionDecl = ctx.mkFuncDecl(exp.toString, args.map(a => ctx.getRealSort).toArray[Sort], ctx.getRealSort)
 
           // 2. apply the uninterpreted function
           ctx.mkApp(functionDecl, args.map(Expr2Z3(_)): _*)
@@ -302,9 +330,9 @@ object K2Z3 {
           case TUPLEINDEX =>
             var v1: Expr = Expr2Z3(e1).asInstanceOf[Expr]
             var v2: Expr = Expr2Z3(e2).asInstanceOf[Expr]
-            val tupleType = inferTypeFrom("e1", CartesianType(List(IntType, BoolType)))
+            val tupleType = tc.inferTypeFrom("e1", CartesianType(List(RealType, BoolType)))
             val datatype = datatypes.getDataType(tupleType)
-            if (v2 == ctx.mkInt(1))
+            if (v2 == ctx.mkReal(1))
               datatype.selectors("sel_1").apply(v1)
             else
               datatype.selectors("sel_2").apply(v1)
@@ -314,8 +342,8 @@ object K2Z3 {
           case NOT =>
             var v: BoolExpr = {
               val ev = Expr2Z3(e)
-              if (ev.isInstanceOf[IntExpr]) {
-                ctx.mkNot(ctx.mkEq(ev, ctx.mkInt(0)))
+              if (ev.isInstanceOf[RealExpr]) {
+                ctx.mkNot(ctx.mkEq(ev, ctx.mkReal(0)))
               } else {
                 ev.asInstanceOf[BoolExpr]
               }
@@ -324,10 +352,10 @@ object K2Z3 {
             ctx.mkNot(v)
           case NEG =>
             var v: ArithExpr = Expr2Z3(e).asInstanceOf[ArithExpr]
-            ctx.mkMul(ctx.mkInt(-1), v)
+            ctx.mkMul(ctx.mkReal(-1), v)
         }
       case IntegerLiteral(i) =>
-        ctx.mkInt(i)
+        ctx.mkReal(i)
       case BooleanLiteral(b) =>
         ctx.mkBool(b)
       case RealLiteral(r) =>
@@ -344,7 +372,7 @@ object K2Z3 {
                 idents.get(x) match {
                   case None =>
                     val xSym = ctx.mkSymbol(x)
-                    var ie = ctx.mkConst(xSym, ctx.getIntSort)
+                    var ie = ctx.mkConst(xSym, ctx.getRealSort)
                     idents.put(x, (ie, xSym))
                     names.add(xSym)
                     ies.add(ie)
@@ -356,19 +384,22 @@ object K2Z3 {
                             qtypes.add(ctx.getIntSort())
                             val pattern = ctx.mkPattern(ie)
                             patterns.add(ctx.mkPattern(ie)) // use pattern, but not used anyway
-                          case RealType => qtypes.add(ctx.getRealSort())
+                          case RealType =>
+                            qtypes.add(ctx.getRealSort())
+                            val pattern = ctx.mkPattern(ie)
+                            patterns.add(ctx.mkPattern(ie)) // use pattern, but not used anyway
                           case _ =>
-                            Misc.error("Only bool, int, and real primitive types are supported for quantified expressions in Z3." + expression)
+                            error("Only bool, int, and real primitive types are supported for quantified expressions in Z3." + expression)
                         }
                       case _ =>
-                        Misc.error("Only type collections are supported for quantified expressions in Z3." +
+                        error("Only type collections are supported for quantified expressions in Z3." +
                           "\nPlease check expression " + e)
                     }
                   case Some(x) => () // so you can't quantify over an existing variable?
                 }
 
               case _ =>
-                Misc.error("Only literal and ident patterns are supported for quantified expressions in Z3." +
+                error("Only literal and ident patterns are supported for quantified expressions in Z3." +
                   "Please check expression " + expression)
             }
           }

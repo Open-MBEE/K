@@ -1117,9 +1117,6 @@ case class MatchCase(patterns: List[Pattern], exp: Exp) extends Exp {
 }
 
 case class BlockExp(body: List[MemberDecl]) extends Exp {
-  //  override def toString =
-  //    s"{\n ${body.foldLeft("")((res, m) => res + s"  $m")}}"
-
   override def toString = {
     var result = "{\n"
     moveIn
@@ -1597,7 +1594,7 @@ case object ContinueExp extends Exp {
 }
 
 case object ResultExp extends Exp {
-  override def toString = "$result"
+  override def toString = "result"
 
   override def toJson1 = {
     new JSONObject().put("type", "ResultExp")

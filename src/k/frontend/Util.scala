@@ -43,7 +43,7 @@ object Misc {
                 BinExp(p, AND, UnaryExp(NOT, cond)))
           }
         case _ =>
-          error("Unknown expression in wp: " + e)
+          error("Util", "Unknown expression in wp: " + e)
       })
   }
 
@@ -59,7 +59,7 @@ object Misc {
   def wpTest2() {
     println("+++++++++++++++++++++++++++++++")
 
-    val input = "x : Int y : Int fun test pre(x = 0) post(y = 42) post(y > 100) {x:= 4 if x = 0 then y := 42 else y := 42}"
+    val input = "x : Int y : Int fun test pre(x = 0) post(y = 42) post(y > 10) {x:= 4 if x = 0 then y := 2 else y := 42}"
     //val input = "x : Int y : Int z : Int t : Int fun test post (z >= x && z >= y)  { t := x - y if  t > 0 then z := x else z := y }"
     val model = Frontend.getModelFromString(input)
 
@@ -131,14 +131,17 @@ object Misc {
       println(s"Class ${e.ident} is NOT satisfiable!")
     } else {
       println(s"Class ${e.ident} IS satisfiable!")
+      println("Possible instance:")
       K2Z3.PrintModel()
     }
     result
   }
 
-  def error(message: String): Nothing = {
-    println(message)
+  def error(prefix : String, message: String): Nothing = {
+    println(s"[$prefix] $message")
     System.exit(-1).asInstanceOf[Nothing]
   }
+
+  def log(prefix : String, msg: String) = println(s"[$prefix] $msg")
 
 }
