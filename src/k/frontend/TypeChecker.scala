@@ -62,13 +62,16 @@ class TypeChecker(model: Model) {
       case (ParenType(pt1), pt2 @ _)                => return areTypesEqual(pt1, pt2, compatibility)
       case (pt1 @ _, ParenType(pt2))                => return areTypesEqual(pt1, pt2, compatibility)
       case (CartesianType(ct1), CartesianType(ct2)) => return (ct1 zip ct2).forall { t => areTypesEqual(t._1, t._2, compatibility) }
-      case (CollectType(ct1), CollectType(ct2))     => return (ct1 zip ct2).forall { t => areTypesEqual(t._1, t._2, compatibility) }
-      case (AnyType, _)                             => return true
-      case (_, AnyType)                             => return true
-      case (RealType, IntType) if compatibility     => return true
-      case (IntType, RealType) if compatibility     => return true
+      case (IdentType(it1, it2), IdentType(it3, it4)) =>
+        return it1.equals(it3) && (it2 zip it4).forall { t => areTypesEqual(t._1, t._2, compatibility) }
+      case (CollectType(ct1), CollectType(ct2)) =>
+        return (ct1 zip ct2).forall { t => areTypesEqual(t._1, t._2, compatibility) }
+      case (AnyType, _)                         => return true
+      case (_, AnyType)                         => return true
+      case (RealType, IntType) if compatibility => return true
+      case (IntType, RealType) if compatibility => return true
       case _ =>
-        return t1 == t2
+        return t1.equals(t2)
     }
     return false
   }
@@ -158,6 +161,23 @@ class TypeChecker(model: Model) {
       }
     }
 
+    // pass: process functions at top level
+    globalTypeEnv = model.decls.foldLeft(globalTypeEnv) { (res, d) =>
+      d match {
+        case fd @ FunDecl(_, _, _, _, _, _) =>
+          // check if the type exists
+          fd.ty match {
+            case Some(t) =>
+              if (!doesTypeExist(res, t)) {
+                TypeChecker.error(s"Specified type $t does not exist. Please check. Exiting.")
+              }
+            case None => ()
+          }
+          res + (fd.ident -> FunctionTypeInfo(fd))
+        case _ => res
+      }
+    }
+
     // pass: do inheritance for each class
     model.decls.foreach { d =>
       d match {
@@ -214,12 +234,22 @@ class TypeChecker(model: Model) {
     val result =
       model.decls.foldLeft((tes, expTes)) { (res, d) =>
         d match {
+          case cd @ ConstraintDecl(name, exp) =>
+            val ty = getExpType(globalTypeEnv, exp)
+            if (ty != BoolType) {
+              TypeChecker.error(s"Condition $exp is not of type Bool.")
+            }
+            (res._1, res._2 + (exp -> ty))
           case ed @ EntityDecl(_, ClassToken, _, ident, _, _, _) =>
             val entityTypeEnv = tes(ed)
             ed.members.foldLeft(res) { (res1, m) =>
               m match {
                 case cd @ ConstraintDecl(name, exp) =>
-                  (res._1, res._2 + (exp -> getExpType(entityTypeEnv, exp)))
+                  val ty = getExpType(entityTypeEnv, exp)
+                  if (ty != BoolType) {
+                    TypeChecker.error(s"Condition $exp is not of type Bool.")
+                  }
+                  (res._1, res._2 + (exp -> ty))
                 case fd @ FunDecl(_, _, _, _, _, _) =>
                   // check if return type exists 
                   fd.ty match {
@@ -258,9 +288,9 @@ class TypeChecker(model: Model) {
                       case Some(t) =>
                         if (!areTypesEqual(t, lastT, false)) {
                           val errorMsg: StringBuilder = new StringBuilder
-                          errorMsg.append("Return type does not match application: " + fd.ident)
+                          errorMsg.append("Return type does not match body: " + fd.ident)
                           errorMsg.append("\n")
-                          errorMsg.append(s"\tExpected $t, Found $lastT")
+                          errorMsg.append(s"\tExpected $t, Found $lastT.")
                           TypeChecker.error(errorMsg.toString)
                         }
                       case None => ()
@@ -434,7 +464,7 @@ class TypeChecker(model: Model) {
               TypeChecker.error("Tuple index is not an integer.")
             }
             ty1 match {
-              case CartesianType(types) => types(exp2.toString.toInt-1)
+              case CartesianType(types) => types(exp2.toString.toInt - 1)
               case _                    => TypeChecker.error(s"Non tuple type found with tuple indexing. $exp")
             }
           case _ => ty1
@@ -445,6 +475,7 @@ class TypeChecker(model: Model) {
           return IdentType(QualifiedName(List(exp.toString)), List())
         } else {
           var functionType = getExpType(te, exp)
+
           // TODO ensure arguments match up
 
           functionType match {
