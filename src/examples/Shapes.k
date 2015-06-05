@@ -38,8 +38,8 @@ class Triangle extends Shape {
   ======================================================
   req ObtuseAngle: a >= 90
   
-  fun area : Int {
-    base * height * 0.5  
+  fun area : Real {
+    base * height / 2  
   }
   
   req ValidArea: base * height > 0 && height > 10
@@ -74,7 +74,7 @@ class Rectangle extends Shape {
   req assertSquare: c = d
   ===========================================================
   
-  fun area : Int {
+  fun areaRectangle : Int {
     a * b
   }
   

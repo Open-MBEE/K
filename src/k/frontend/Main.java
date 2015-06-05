@@ -16,15 +16,13 @@ public class Main {
 	}
 
 	public static void main(String[] args) throws Exception {
-
 		//K2Z3.parseTest();
-		
 		//Misc.wpTest2();
 
 		Frontend.scala_main(args);
 
-		System.exit(1);
-		
+		System.exit(0);
+
 		String json1, json2, exp;
 
 		// TEST Expressions
