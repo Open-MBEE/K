@@ -34,17 +34,17 @@ class Triangle extends Shape {
   req ObtuseAngle: a >= 90
   ======================================================
   
-  fun area : Int {
+  fun area : Real {
     base * height / 2  
   }
   
   req ValidArea: base * height > 0 && height > 10
   
-  fun isIsosceles : Boolean {
+  fun isIsosceles : Bool {
     a = b || b = c || a = c
   }
   
-  fun isEquilateral : Boolean {
+  fun isEquilateral : Bool {
     a = b && b = c
   }
 }
@@ -68,11 +68,11 @@ class Rectangle extends Shape {
   req assertSquare: c = d
   ===========================================================
   
-  fun area : Int {
+  fun areaRectangle : Int {
     a * b
   }
   
-  fun isSquare : Boolean {
+  fun isSquare : Bool {
     -- using lengths Req to our advantage
     a = b 
   }

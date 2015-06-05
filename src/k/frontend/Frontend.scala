@@ -44,13 +44,14 @@ object Frontend {
         case None            => null
       }
 
-    model.decls.forall { d =>
-      if (d.isInstanceOf[EntityDecl])
-        Misc.checkEntityConsistency(d.asInstanceOf[EntityDecl])
-      else
-        true
-    }
-    
+    // ---\
+
+    val smtModel = model.toSMT
+    println(smtModel)
+    K2Z3.solveSMT(smtModel)
+
+    // ---/
+
     options.get('stats) match {
       case Some(_) => printStats(model)
       case None    => ()
@@ -66,28 +67,28 @@ object Frontend {
     options.get('json) match {
       case Some(jsonString: String) => {
         //json2exp(jsonString)
+        if (model != null) {
+          //println(model.toString())
+          // Remember old value of option
+          val optionsUseJson1 = Options.useJson1
+          // MMS method using toJson1
+          Options.useJson1 = true
+          val modelJson = model.toJson
+          println("JSON1: " + modelJson.toString(0))
+          val modelFromJson = visitJsonObject(modelJson).asInstanceOf[Model]
+          // MMS method using toJson2
+          Options.useJson1 = false
+          val modelJson2 = model.toJson
+          println("JSON2: " + modelJson2.toString(0))
+          val modelFromJson2 = visitJsonObject2(modelJson2).asInstanceOf[Model]
+          // Reset old value of option
+          Options.useJson1 = Options.useJson1
+        } else
+          println("Model was null!")
+
       }
       case None => ()
     }
-
-    if (model != null) {
-      //println(model.toString())
-      // Remember old value of option
-      val optionsUseJson1 = Options.useJson1
-      // MMS method using toJson1
-      Options.useJson1 = true
-      val modelJson = model.toJson
-      println("JSON1: " + modelJson.toString(0))
-      val modelFromJson = visitJsonObject(modelJson).asInstanceOf[Model]
-      // MMS method using toJson2
-      Options.useJson1 = false
-      val modelJson2 = model.toJson
-      println("JSON2: " + modelJson2.toString(0))
-      val modelFromJson2 = visitJsonObject2(modelJson2).asInstanceOf[Model]
-      // Reset old value of option
-      Options.useJson1 = Options.useJson1
-    } else
-      println("Model was null!")
 
     println("\n=====================================================\n")
   }
@@ -206,7 +207,7 @@ object Frontend {
       case "NamedArgument" =>
         val ident: String = obj.getString("ident")
         val exp: Exp = visitJsonObject(obj.get("exp")).asInstanceOf[Exp]
-        NamedArgument(ident, exp)           
+        NamedArgument(ident, exp)
       case "CartesianType" =>
         CartesianType(visitJsonArray(obj.get("types"), visitJsonObject).asInstanceOf[List[Type]])
       case "IdentPattern" =>
@@ -587,7 +588,7 @@ object Frontend {
           case "NamedArgument" =>
             val ident = operand.getString(1)
             val exp = visitJsonObject2(operand.getJSONObject(2)).asInstanceOf[Exp]
-            NamedArgument(ident, exp)             
+            NamedArgument(ident, exp)
           case "RngBinding" =>
             val patterns: MList[Pattern] = MList()
             for (i <- Range(2, operand.length())) {
