@@ -201,7 +201,7 @@ object ToSMTSupport {
     val Model(packageName, imports, annotations, decls) = model
     var memberDecls: List[MemberDecl] =
       for (decl <- decls if decl.isInstanceOf[MemberDecl]) yield decl.asInstanceOf[MemberDecl]
-    val mainClass = EntityDecl(Nil, ClassToken, None, "Main", Nil, Nil, memberDecls)
+    val mainClass = EntityDecl(Nil, ClassToken, None, "TopLevelDeclarations", Nil, Nil, memberDecls)
     var newDecls: List[EntityDecl] =
       for (decl <- decls if decl.isInstanceOf[EntityDecl]) yield decl.asInstanceOf[EntityDecl]
     newDecls ++= List(mainClass)
@@ -448,10 +448,14 @@ case class EntityDecl(
 
   override def toSMT = {
     var result: String = ""
-    val constr = s"mk-$ident"
-    val propertyDecls = for (m <- members if m.isInstanceOf[PropertyDecl]) yield m.asInstanceOf[PropertyDecl]
-    val fields = propertyDecls.map(_.toSMT(ident)).mkString
-    result += s"(declare-datatypes () (($ident ($constr $fields))))\n\n"
+    if (!members.exists(_.isInstanceOf[PropertyDecl])) {
+      result += s"(declare-sort $ident)\n\n"
+    } else {
+      val constr = s"mk-$ident"
+      val propertyDecls = for (m <- members if m.isInstanceOf[PropertyDecl]) yield m.asInstanceOf[PropertyDecl]
+      val fields = propertyDecls.map(_.toSMT(ident)).mkString
+      result += s"(declare-datatypes () (($ident ($constr $fields))))\n\n"
+    }
     val funDecls = for (m <- members if m.isInstanceOf[FunDecl]) yield m.asInstanceOf[FunDecl]
     result += funDecls.map(_.toSMT(ident)).mkString("\n")
     val assertion = s"(assert (exists ((this $ident)) ($ident.inv this)))"
@@ -699,6 +703,8 @@ case class FunSpec(pre: Boolean, exp: Exp) {
 case class Param(name: String, ty: Type) {
   def toSMT: String = s"($name ${ty.toSMT})"
 
+  def toSMTType: String = ty.toSMT
+
   override def toString = s"$name:$ty"
 
   def toJson = {
@@ -741,7 +747,8 @@ case class FunDecl(ident: String,
     val result: String =
       body match {
         case Nil =>
-          s"(declare-fun $className.$ident () $resultType)" // TODO: fix argument types
+          val parameterTypes: String = s"$className " + params.map(_.toSMTType).mkString(" ")
+          s"(declare-fun $className.$ident ($parameterTypes) $resultType)"
         case ExpressionDecl(exp) :: _ =>
           val parameters: String = s"(this $className)" + params.map(_.toSMT).mkString
           val expSMT = exp.toSMT(className)
