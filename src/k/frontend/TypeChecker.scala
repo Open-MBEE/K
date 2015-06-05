@@ -333,7 +333,13 @@ class TypeChecker(model: Model) {
   def isConstructorCall(te: TypeEnv, exp: Exp): Boolean = {
     exp match {
       case IdentExp(i) =>
-        return te.map.keySet.contains(i)
+        if(te.map.keySet.contains(i)){
+          te.map(i) match {
+            case ClassTypeInfo(_,_,_) => return true
+            case _ => return false
+          }
+        }
+        else return false
       case _ => return false
     }
 
@@ -401,13 +407,17 @@ class TypeChecker(model: Model) {
 
         op match {
           case LT | LTE | GT | GTE | AND | IMPL |
-            OR | IFF | NEQ | EQ | MUL | DIV | ADD | SUB | REM =>
+            OR | IFF | NEQ | EQ =>
             if (!areTypesEqual(ty1, ty2, true)) {
               TypeChecker.error(s"$exp does not type check. $ty1 and $ty2 are not equivalent.")
             }
             BoolType
+          case  MUL | DIV | ADD | SUB | REM => 
+            if (!areTypesEqual(ty1, ty2, false)) {
+              TypeChecker.error(s"$exp does not type check. $ty1 and $ty2 are not equivalent.")
+            }
+            ty1
           case ASSIGN =>
-            println("comparing "+ ty1 + " " + ty2)
             if (!areTypesEqual(ty1, ty2, false)) {
               TypeChecker.error(s"$exp does not type check. $ty1 and $ty2 are not equivalent.")
             }

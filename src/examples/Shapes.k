@@ -13,7 +13,7 @@ class Triangle extends Shape {
   base : Int
   height : Int
     
-  req Angles: a + b + c = 180
+  req Angles: (a + b + c) = 180
   
   req Range: 
     a < 180 && b < 180 && c < 180 && 
@@ -39,7 +39,7 @@ class Triangle extends Shape {
   req ObtuseAngle: a >= 90
   
   fun area : Int {
-    base * height / 2  
+    base * height * 0.5  
   }
   
   req ValidArea: base * height > 0 && height > 10
