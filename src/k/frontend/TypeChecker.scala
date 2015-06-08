@@ -144,6 +144,8 @@ class TypeChecker(model: Model) {
         case _ => res
       }
     }
+    
+    // where do we process associations? I think right here... 
 
     // pass: build information about properties/functions in classes
     // store it in the global type env, but also one for each class
@@ -215,6 +217,7 @@ class TypeChecker(model: Model) {
       }
     }
 
+    
     // pass: build the information for expressions 
     // except expressions that are in functions (bodies)
     expTes = model.decls.foldLeft(Map[Exp, Type]()) {
