@@ -137,11 +137,31 @@ object Misc {
     result
   }
 
-  def error(prefix : String, message: String): Nothing = {
+  def error(prefix: String, message: String): Nothing = {
     println(s"[$prefix] $message")
     System.exit(-1).asInstanceOf[Nothing]
   }
 
-  def log(prefix : String, msg: String) = println(s"[$prefix] $msg")
+  def log(prefix: String, msg: String) = println(s"[$prefix] $msg")
+
+  def areTypesEqual(t1: Type, t2: Type, compatibility: Boolean): Boolean = {
+    (t1, t2) match {
+      case (ParenType(pt1), ParenType(pt2))         => return areTypesEqual(pt1, pt2, compatibility)
+      case (ParenType(pt1), pt2 @ _)                => return areTypesEqual(pt1, pt2, compatibility)
+      case (pt1 @ _, ParenType(pt2))                => return areTypesEqual(pt1, pt2, compatibility)
+      case (CartesianType(ct1), CartesianType(ct2)) => return (ct1 zip ct2).forall { t => areTypesEqual(t._1, t._2, compatibility) }
+      case (IdentType(it1, it2), IdentType(it3, it4)) =>
+        return it1.equals(it3) && (it2 zip it4).forall { t => areTypesEqual(t._1, t._2, compatibility) }
+      case (CollectType(ct1), CollectType(ct2)) =>
+        return (ct1 zip ct2).forall { t => areTypesEqual(t._1, t._2, compatibility) }
+      case (AnyType, _)                         => return true
+      case (_, AnyType)                         => return true
+      case (RealType, IntType) if compatibility => return true
+      case (IntType, RealType) if compatibility => return true
+      case _ =>
+        return t1.equals(t2)
+    }
+    return false
+  }
 
 }
