@@ -16,6 +16,30 @@ case class TypeEnv(map: Map[String, TypeInfo]) {
       TypeEnv(map + kv)
     }
   }
+  def ++(te: TypeEnv): TypeEnv = {
+    // check functions
+    if (!map.forall(kv =>
+      (kv._1, kv._2) match {
+        case (fi, FunctionTypeInfo(fd)) =>
+          if (te.map.contains(fi)) {
+            val ofd = te.map(fi).asInstanceOf[FunctionTypeInfo].decl
+            if (!Misc.areTypesEqual(fd.ty.getOrElse(AnyType), ofd.ty.getOrElse(AnyType), false)) {
+              TypeChecker.error(s"${fd.ident} redefined with different type.")
+            } else {
+              if (!(fd.params zip ofd.params).forall { p => Misc.areTypesEqual(p._1.ty, p._2.ty, false) })
+                TypeChecker.error(s"${fd.ident} redefined with different parameter types.")
+              else true
+            }
+          } else true
+        case (pi, PropertyTypeInfo(pd,false)) =>
+          if (te.map.contains(pi)) {
+            TypeChecker.error(s"${pi} declared more than once.")
+          } else true
+        case _ => true
+      })) {
+    }
+    TypeEnv(map ++ te.map)
+  }
   def apply(k: String): TypeInfo = {
     if (!map.contains(k)) TypeChecker.error(s"Could not find declaration for $k")
     else map(k)
@@ -41,7 +65,7 @@ case class ClassTypeInfo(decl: EntityDecl,
       properties.map(k => k._1).mkString(",") +
       functions.map(k => k._1).mkString(",") + "}"
 }
-case class PropertyTypeInfo(decl: PropertyDecl) extends TypeInfo {
+case class PropertyTypeInfo(decl: PropertyDecl, global : Boolean) extends TypeInfo {
   override def toString =
     s"Property: ${decl.name} : ${decl.ty}"
 }
@@ -55,26 +79,6 @@ class TypeChecker(model: Model) {
   val collectionNames = Set("Set", "Bag", "Seq")
 
   private def isCollection(it: IdentType): Boolean = collectionNames(it.ident.toString)
-
-  def areTypesEqual(t1: Type, t2: Type, compatibility: Boolean): Boolean = {
-    (t1, t2) match {
-      case (ParenType(pt1), ParenType(pt2))         => return areTypesEqual(pt1, pt2, compatibility)
-      case (ParenType(pt1), pt2 @ _)                => return areTypesEqual(pt1, pt2, compatibility)
-      case (pt1 @ _, ParenType(pt2))                => return areTypesEqual(pt1, pt2, compatibility)
-      case (CartesianType(ct1), CartesianType(ct2)) => return (ct1 zip ct2).forall { t => areTypesEqual(t._1, t._2, compatibility) }
-      case (IdentType(it1, it2), IdentType(it3, it4)) =>
-        return it1.equals(it3) && (it2 zip it4).forall { t => areTypesEqual(t._1, t._2, compatibility) }
-      case (CollectType(ct1), CollectType(ct2)) =>
-        return (ct1 zip ct2).forall { t => areTypesEqual(t._1, t._2, compatibility) }
-      case (AnyType, _)                         => return true
-      case (_, AnyType)                         => return true
-      case (RealType, IntType) if compatibility => return true
-      case (IntType, RealType) if compatibility => return true
-      case _ =>
-        return t1.equals(t2)
-    }
-    return false
-  }
 
   private def doesTypeExist(te: TypeEnv, ty: Type): Boolean = {
     ty match {
@@ -136,12 +140,12 @@ class TypeChecker(model: Model) {
           if (!doesTypeExist(res, ty)) {
             TypeChecker.error(s"Specified type $ty does not exist. Please check. Exiting.")
           }
-          res + (name -> PropertyTypeInfo(p))
+          res + (name -> PropertyTypeInfo(p, true))
         case _ => res
       }
     }
 
-    // pass: build information about properties in classes
+    // pass: build information about properties/functions in classes
     // store it in the global type env, but also one for each class
     model.decls.foreach { d =>
       d match {
@@ -150,7 +154,7 @@ class TypeChecker(model: Model) {
             (res, m) =>
               m match {
                 case pd @ PropertyDecl(_, _, _, _, _, _) =>
-                  res + (pd.name -> PropertyTypeInfo(pd))
+                  res + (pd.name -> PropertyTypeInfo(pd, false))
                 case fd @ FunDecl(_, _, _, _, _, _) =>
                   res + (fd.ident -> FunctionTypeInfo(fd))
                 case _ => res
@@ -189,9 +193,10 @@ class TypeChecker(model: Model) {
                 List(keywords(t.asInstanceOf[IdentifierToken].name))
             else ed.extending
           }
-          val newClassTypeEnv = TypeEnv(classTypeEnv.map ++
-
-            extending.foldLeft(classTypeEnv) {
+          println(ident + " extending list is " + extending.mkString(","))
+          println("cte " + classTypeEnv)
+          val newClassTypeEnv = classTypeEnv ++
+            extending.foldLeft(TypeEnv(Map[String,TypeInfo]())) {
               (res, ex) =>
                 val extendingTypeEnv = tes.find(
                   de =>
@@ -200,8 +205,11 @@ class TypeChecker(model: Model) {
                         ed.ident.toString.equals(ex.asInstanceOf[IdentType].ident.toString)
                       case _ => false
                     }).get
+                    println("ete " + extendingTypeEnv._2)
                 extendingTypeEnv._2
-            }.map)
+            }
+          println(s"$ident old: $classTypeEnv")
+          println(s"$ident new: $newClassTypeEnv")
           tes += (d -> newClassTypeEnv)
         case _ => ()
       }
@@ -236,7 +244,7 @@ class TypeChecker(model: Model) {
         d match {
           case cd @ ConstraintDecl(name, exp) =>
             val ty = getExpType(globalTypeEnv, exp)
-            if (ty != BoolType) {
+            if (ty != BoolType && ty != AnyType) {
               TypeChecker.error(s"Condition $exp is not of type Bool.")
             }
             (res._1, res._2 + (exp -> ty))
@@ -246,7 +254,7 @@ class TypeChecker(model: Model) {
               m match {
                 case cd @ ConstraintDecl(name, exp) =>
                   val ty = getExpType(entityTypeEnv, exp)
-                  if (ty != BoolType) {
+                  if (ty != BoolType && ty != AnyType) {
                     TypeChecker.error(s"Condition $exp is not of type Bool.")
                   }
                   (res._1, res._2 + (exp -> ty))
@@ -274,7 +282,7 @@ class TypeChecker(model: Model) {
                   val expTes1 = fd.body.foldLeft(functionTypeEnv, res1._2) { (fres1, m) =>
                     m match {
                       case pd @ PropertyDecl(_, _, _, _, _, _) =>
-                        (fres1._1 + (pd.name -> PropertyTypeInfo(pd)), fres1._2)
+                        (fres1._1 + (pd.name -> PropertyTypeInfo(pd, false)), fres1._2)
                       case ExpressionDecl(exp) =>
                         lastT = getExpType(fres1._1, exp)
                         (fres1._1, fres1._2 + (exp -> lastT))
@@ -286,7 +294,7 @@ class TypeChecker(model: Model) {
                   if (fd.body.length > 0) {
                     fd.ty match {
                       case Some(t) =>
-                        if (!areTypesEqual(t, lastT, false)) {
+                        if (!Misc.areTypesEqual(t, lastT, true)) {
                           val errorMsg: StringBuilder = new StringBuilder
                           errorMsg.append("Return type does not match body: " + fd.ident)
                           errorMsg.append("\n")
@@ -297,12 +305,14 @@ class TypeChecker(model: Model) {
                     }
                   }
 
+                  // 
+
                   (res1._1 + (fd -> functionTypeEnv), res1._2)
                 case pd @ PropertyDecl(_, _, _, _, _, _) =>
                   pd.expr match {
                     case Some(e) =>
                       val exprType = getExpType(entityTypeEnv, e)
-                      if (!areTypesEqual(exprType, pd.ty, true)) {
+                      if (!Misc.areTypesEqual(exprType, pd.ty, true)) {
                         val errorMsg: StringBuilder = new StringBuilder
                         errorMsg.append("Type does not match: " + pd.name)
                         errorMsg.append("\n")
@@ -321,7 +331,7 @@ class TypeChecker(model: Model) {
             pd.expr match {
               case Some(e) =>
                 val exprType = getExpType(globalTypeEnv, e)
-                if (!areTypesEqual(exprType, pd.ty, true)) {
+                if (!Misc.areTypesEqual(exprType, pd.ty, true)) {
                   val errorMsg: StringBuilder = new StringBuilder
                   errorMsg.append("Type does not match: " + pd.name)
                   errorMsg.append("\n")
@@ -338,30 +348,6 @@ class TypeChecker(model: Model) {
     expTes = result._2
 
     true
-  }
-
-  case class CollectType(ty: List[Type]) extends PrimitiveType {
-    override def toSMT = null
-    override def toJson1 = null
-    override def toJson2 = null
-  }
-
-  case class SumType(ty: List[Type]) extends PrimitiveType {
-    override def toSMT = null
-    override def toJson1 = null
-    override def toJson2 = null
-  }
-
-  case object AnyType extends Type {
-    override def toSMT = null
-    override def toJson1 = null
-    override def toJson2 = null
-  }
-
-  case object UnitType extends Type {
-    override def toSMT = null
-    override def toJson1 = null
-    override def toJson2 = null
   }
 
   def isConstructorCall(te: TypeEnv, exp: Exp): Boolean = {
@@ -388,9 +374,13 @@ class TypeChecker(model: Model) {
           TypeChecker.error(s"$i not found in scope. Please check. Exiting.")
         }
         te(i) match {
-          case pti @ PropertyTypeInfo(decl)    => pti.decl.ty
-          case pti @ ParamTypeInfo(p)          => p.ty
-          case pti @ FunctionTypeInfo(decl)    => decl.ty.get
+          case pti @ PropertyTypeInfo(decl,_) => pti.decl.ty
+          case pti @ ParamTypeInfo(p)       => p.ty
+          case pti @ FunctionTypeInfo(decl) =>
+            decl.ty match {
+              case Some(t) => t
+              case None    => AnyType
+            }
           case cti @ ClassTypeInfo(decl, p, f) => IdentType(QualifiedName(List(decl.ident)), null)
           case tt @ _ =>
             TypeChecker.error(s"Type could not be found for $exp." + tt.getClass)
@@ -419,7 +409,7 @@ class TypeChecker(model: Model) {
                       }).get._2
 
                   classTypeEnv(i) match {
-                    case pti @ PropertyTypeInfo(decl) => return pti.decl.ty
+                    case pti @ PropertyTypeInfo(decl,_) => return pti.decl.ty
                     case pti @ ParamTypeInfo(p)       => return p.ty
                     case pti @ FunctionTypeInfo(decl) => return decl.ty.get
                   }
@@ -441,17 +431,17 @@ class TypeChecker(model: Model) {
         op match {
           case LT | LTE | GT | GTE | AND | IMPL |
             OR | IFF | NEQ | EQ =>
-            if (!areTypesEqual(ty1, ty2, true)) {
+            if (!Misc.areTypesEqual(ty1, ty2, true)) {
               TypeChecker.error(s"$exp does not type check. $ty1 and $ty2 are not equivalent.")
             }
             BoolType
           case MUL | DIV | ADD | SUB | REM =>
-            if (!areTypesEqual(ty1, ty2, false)) {
+            if (!Misc.areTypesEqual(ty1, ty2, false)) {
               TypeChecker.error(s"$exp does not type check. $ty1 and $ty2 are not equivalent.")
             }
             ty1
           case ASSIGN =>
-            if (!areTypesEqual(ty1, ty2, false)) {
+            if (!Misc.areTypesEqual(ty1, ty2, false)) {
               TypeChecker.error(s"$exp does not type check. $ty1 and $ty2 are not equivalent.")
             }
             UnitType
@@ -502,7 +492,7 @@ class TypeChecker(model: Model) {
         }
         val tbType = getExpType(te, tb)
         val ebType = eb match { case Some(ebb) => getExpType(te, ebb) case None => tbType }
-        if (!areTypesEqual(tbType, ebType, true)) {
+        if (!Misc.areTypesEqual(tbType, ebType, true)) {
           TypeChecker.error("Then and Else branch types are different.")
         }
         tbType
