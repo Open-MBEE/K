@@ -1,15 +1,8 @@
 
-class A {
-  fun f(x:Int):Int {
-    x + 1
-  }
+class Person {
+  father : Person
+  child  : Person
+
+  req this = father.child
 }
 
-class B {
-  a1 : A
-  a2 : A
-  a3 : A
-
-  req a1 != a2
-  req a2 != a3
-}
