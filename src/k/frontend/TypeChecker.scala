@@ -72,11 +72,65 @@ case class PropertyTypeInfo(decl: PropertyDecl, global: Boolean) extends TypeInf
 case class TypeTypeInfo(decl: TypeDecl) extends TypeInfo
 case class ParamTypeInfo(p: Param) extends TypeInfo
 
+object ClassHierarchy {
+  var parents = Map[EntityDecl, Set[Type]]()
+  val children = Map[EntityDecl, Set[Type]]()
+  var types: Map[Type, TopDecl] = null
+
+  def buildHierarchy(model: Model) {
+    model.decls.foreach { d =>
+      d match {
+        case ed @ EntityDecl(_, t, _, _, _, _, _) if t == ClassToken =>
+          val edParents = buildHierarchy(ed, types, Set())
+          parents = parents + (ed -> edParents)
+        case ed @ EntityDecl(_, t, keyword, _, _, _, _) if !keyword.isEmpty =>
+          val edParents = buildHierarchy(ed, types, Set())
+          parents = parents + (ed -> (edParents)) // TODO add keyword
+        case _ => ()
+      }
+    }
+
+    //check()
+  }
+
+  def parentsTransitive(visited: Set[Type]): Set[Type] = {
+    visited.foldLeft(visited) { (res, v) =>
+      //if(visited.)
+      res ++ parentsTransitive(parents(types(v).asInstanceOf[EntityDecl]))
+    }
+  }
+
+  def check() {
+    // ensure that one cannot reach itself
+    parents.foreach { kv =>
+      println(parentsTransitive(parents(kv._1)))
+    }
+  }
+
+  def buildHierarchy(d: EntityDecl, types: Map[Type, TopDecl], visited: Set[EntityDecl]): Set[Type] = {
+    d.extending.foldLeft(Set[Type]()) { (res, e) =>
+      // ensure e is a class
+      require(types(e).isInstanceOf[EntityDecl])
+
+      // ensure e is not found in visited
+      require(!visited.contains(types(e).asInstanceOf[EntityDecl]))
+
+      res + e
+    }
+  }
+
+  override def toString: String = {
+    parents.mkString(",") + children.mkString(",")
+  }
+
+}
+
 class TypeChecker(model: Model) {
   var tes: Map[TopDecl, TypeEnv] = Map()
   var expTes: Map[Exp, Type] = Map()
   var keywords: Map[String, Type] = Map[String, Type]()
   val collectionNames = Set("Set", "Bag", "Seq")
+  var types = Map[Type, TopDecl]()
 
   private def isCollection(it: IdentType): Boolean = collectionNames(it.ident.toString)
 
@@ -121,16 +175,23 @@ class TypeChecker(model: Model) {
               if (keywords.contains(kw)) {
                 TypeChecker.error(s"Keywords $kw is already being used.")
               } else {
-                keywords + (kw -> IdentType(QualifiedName(List(ed.ident)), List()))
+                keywords + (kw -> IdentType(QualifiedName(List(ident)), List()))
               }
             case _ => keywords
           }
+          types = types + (IdentType(QualifiedName(List(ident)), List()) -> ed)
           res + (ident -> ClassTypeInfo(ed, Map(), Map()))
         case td @ TypeDecl(ident, _, _) =>
+          types = types + (IdentType(QualifiedName(List(ident)), List()) -> td)
           res + (ident -> TypeTypeInfo(td))
         case _ => res
       }
     }
+
+    // check inheritance structure
+    ClassHierarchy.types = types
+    ClassHierarchy.buildHierarchy(model)
+    println(ClassHierarchy.toString())
 
     // pass: get property info on global level and check if types exist
     globalTypeEnv = model.decls.foldLeft(globalTypeEnv) { (res, d) =>
@@ -430,7 +491,7 @@ class TypeChecker(model: Model) {
       case ParenExp(e) => getExpType(te, e)
       case IdentExp(i) =>
         if (!te.contains(i)) {
-          TypeChecker.error(s"$i not found in scope. Please check. Exiting.")
+          TypeChecker.error(s"$i not found in scope for $exp. Please check. Exiting.")
         }
         te(i) match {
           case pti @ PropertyTypeInfo(decl, _) => pti.decl.ty
@@ -570,6 +631,7 @@ class TypeChecker(model: Model) {
       case CharacterLiteral(_)    => CharType
       case StringLiteral(_)       => StringType
       case RealLiteral(_)         => RealType
+      case ThisLiteral            => AnyType // TODO
       case _                      => TypeChecker.error(s"Type checking for ${exp.getClass} not implemented yet!")
     }
     println(s"getExpType: $exp $result")
