@@ -13,7 +13,8 @@
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="Klang/lib"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="export/k2.jar"/>
-	<classpathentry kind="lib" path="export/scala-library.jar"/>
+	<classpathentry kind="lib" path="lib/com.microsoft.z3.jar"/>
+    <classpathentry kind="lib" path="export/k2.jar"/>
+    <classpathentry kind="lib" path="export/scala-library.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

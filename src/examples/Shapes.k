@@ -1,8 +1,9 @@
 package examples.Shapes
 
 class Shape {
-  fun area
-  fun sides 
+  height : Int
+  fun sides : Int
+  fun area : Real
 }
 
 class Triangle extends Shape {
@@ -11,40 +12,44 @@ class Triangle extends Shape {
   b : Int
   c : Int
   base : Int
-  height : Int
     
-  req Angles: a + b + c = 180
+  req Angles: (a + b + c) = 180
   
   req Range: 
     a < 180 && b < 180 && c < 180 && 
     a > 0 && b > 0 && c > 0
 
   ======================================================
+  
+  ======================================================
+
+  req a = b && b = c
   req Equilateral: a = b && b = c => a = 60 && b = 60 && c = 60  
+
   ======================================================
   
   ======================================================
   req Isosceles: (b = c) || (a = b) || (a = c)
   ======================================================
-  
-  ======================================================
   The following requirement makes the class unsatisfiable
   if the triangle is Isosceles or Equilateral.  
   
-  req ObtuseAngle: a >= 90
+
   ======================================================
+  req ObtuseAngle: a >= 90
   
-  fun area : Int {
+  fun area : Real {
     base * height / 2  
   }
   
   req ValidArea: base * height > 0 && height > 10
+  req ValidAreaFunction: area() > 10
   
-  fun isIsosceles : Boolean {
+  fun isIsosceles : Bool {
     a = b || b = c || a = c
   }
   
-  fun isEquilateral : Boolean {
+  fun isEquilateral : Bool {
     a = b && b = c
   }
 }
@@ -55,6 +60,7 @@ class Rectangle extends Shape {
   b : Int
   c : Int
   d : Int
+  ar : Int
   
   req lengths: a = c && b = d
   
@@ -68,19 +74,16 @@ class Rectangle extends Shape {
   req assertSquare: c = d
   ===========================================================
   
-  fun area : Int {
+  fun areaRectangle : Int {
     a * b
   }
   
-  fun isSquare : Boolean {
+  fun isSquare : Bool {
     -- using lengths Req to our advantage
     a = b 
   }
 
-  fun area : Int {
-    a * b
-  }
-
+  ar = area()
 }
 
 

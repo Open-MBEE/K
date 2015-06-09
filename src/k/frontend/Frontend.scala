@@ -2,6 +2,7 @@ package k.frontend
 
 import org.antlr.runtime.tree.ParseTree
 import k.frontend
+import java.io._
 import java.nio
 import java.nio.file.Paths
 import java.nio.file.Files
@@ -16,6 +17,8 @@ import scala.collection.mutable.{ ListBuffer => MList }
 
 object Frontend {
   type OptionMap = Map[Symbol, Any]
+
+  def log(msg: String) = Misc.log("main", msg)
 
   def parseArgs(map: OptionMap, list: List[String]): OptionMap = {
     def isSwitch(s: String) = (s(0) == '-')
@@ -38,19 +41,29 @@ object Frontend {
   def scala_main(args: Array[String]) {
     val options = parseArgs(Map(), args.toList)
 
-    val model: Model =
+    val (model: Model, filename: String) =
       options.get('modelFile) match {
-        case Some(f: String) => getModelFromFile(f)
-        case None            => null
+        case Some(f: String) =>
+          (getModelFromFile(f), Paths.get(f).getFileName.toString)
+        case None => (null, null)
       }
 
-    model.decls.forall { d =>
-      if (d.isInstanceOf[EntityDecl])
-        Misc.checkEntityConsistency(d.asInstanceOf[EntityDecl])
-      else
-        true
+    if (model != null) {
+      val tc: TypeChecker = new TypeChecker(model)
+      log("Type checking completed. No errors found.")
     }
-    
+
+    val smtModel = model.toSMT
+
+    // println("--- SMT Model ---")
+    // println(smtModel)
+    // println("-----------------")
+ 
+    K2Z3.solveSMT(smtModel)
+
+    // print DOT format class diagram
+    if (model != null) printClassDOT(filename, model)
+
     options.get('stats) match {
       case Some(_) => printStats(model)
       case None    => ()
@@ -63,33 +76,58 @@ object Frontend {
       case None => ()
     }
 
-    options.get('json) match {
-      case Some(jsonString: String) => {
-        //json2exp(jsonString)
-      }
+    options.get('printJson) match {
+      case Some(_) =>
+        if (model != null) {
+          //println(model.toString())
+          // Remember old value of option
+          val optionsUseJson1 = Options.useJson1
+          // MMS method using toJson1
+          Options.useJson1 = true
+          val modelJson = model.toJson
+          println("JSON1: " + modelJson.toString(0))
+          val modelFromJson = visitJsonObject(modelJson).asInstanceOf[Model]
+          // MMS method using toJson2
+          Options.useJson1 = false
+          val modelJson2 = model.toJson
+          println("JSON2: " + modelJson2.toString(0))
+          val modelFromJson2 = visitJsonObject2(modelJson2).asInstanceOf[Model]
+          // Reset old value of option
+          Options.useJson1 = Options.useJson1
+        } else
+          println("Model was null!")
       case None => ()
     }
+  }
 
-    if (model != null) {
-      //println(model.toString())
-      // Remember old value of option
-      val optionsUseJson1 = Options.useJson1
-      // MMS method using toJson1
-      Options.useJson1 = true
-      val modelJson = model.toJson
-      println("JSON1: " + modelJson.toString(0))
-      val modelFromJson = visitJsonObject(modelJson).asInstanceOf[Model]
-      // MMS method using toJson2
-      Options.useJson1 = false
-      val modelJson2 = model.toJson
-      println("JSON2: " + modelJson2.toString(0))
-      val modelFromJson2 = visitJsonObject2(modelJson2).asInstanceOf[Model]
-      // Reset old value of option
-      Options.useJson1 = Options.useJson1
-    } else
-      println("Model was null!")
-
-    println("\n=====================================================\n")
+  def printClassDOT(filename: String, model: Model) = {
+    val classFile = new FileWriter(filename + ".dot", false)
+    classFile.append("digraph G { node [shape=record,fontname=Courier,fontsize=10,color=\".7 .3 1.0\"];")
+    model.decls.foreach { d =>
+      if (d.isInstanceOf[EntityDecl]) {
+        val ed = d.asInstanceOf[EntityDecl]
+        val properties =
+          ed.members.filter { m => m.isInstanceOf[PropertyDecl] }
+            .map(m => m.asInstanceOf[PropertyDecl].name).asInstanceOf[List[String]].mkString("|")
+        val functions =
+          ed.members.filter { m => m.isInstanceOf[FunDecl] }
+            .map(m => m.asInstanceOf[FunDecl].ident).asInstanceOf[List[String]].mkString("|")
+        val label = s"${ed.ident} | {Properties | $properties} | {Functions | $functions}"
+        classFile.append(ed.ident + " [shape=record,label=\"" + label + "\"];\r\n")
+        ed.members.foreach { m =>
+          if (m.isInstanceOf[PropertyDecl]) {
+            classFile.append(s"${ed.ident} -> ${
+              m.asInstanceOf[PropertyDecl].ty.toString
+                .replace("[", "")
+                .replace("]", "")
+                .replace("Set", "")
+            };")
+          }
+        }
+      }
+    }
+    classFile.append("}")
+    classFile.close()
   }
 
   def visitJsonObject(o: Any): AnyRef = {
@@ -206,7 +244,7 @@ object Frontend {
       case "NamedArgument" =>
         val ident: String = obj.getString("ident")
         val exp: Exp = visitJsonObject(obj.get("exp")).asInstanceOf[Exp]
-        NamedArgument(ident, exp)           
+        NamedArgument(ident, exp)
       case "CartesianType" =>
         CartesianType(visitJsonArray(obj.get("types"), visitJsonObject).asInstanceOf[List[Type]])
       case "IdentPattern" =>
@@ -587,7 +625,7 @@ object Frontend {
           case "NamedArgument" =>
             val ident = operand.getString(1)
             val exp = visitJsonObject2(operand.getJSONObject(2)).asInstanceOf[Exp]
-            NamedArgument(ident, exp)             
+            NamedArgument(ident, exp)
           case "RngBinding" =>
             val patterns: MList[Pattern] = MList()
             for (i <- Range(2, operand.length())) {

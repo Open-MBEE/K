@@ -390,7 +390,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
       else if (ctx.children.get(0).getText() == "assoc") AssocToken
       else IdentifierToken(ctx.children.get(0).getText())
     val keyword: Option[String] =
-      if (ctx.Keyword() != null) Some(ctx.Keyword().getText)
+      if (ctx.Keyword() != null) Some(ctx.Keyword.getText.replaceAll("<", "").replaceAll(">",""))
       else None
     var ident: String =
       if (entityToken.isInstanceOf[IdentifierToken])

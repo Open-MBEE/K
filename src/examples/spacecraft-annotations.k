@@ -25,11 +25,11 @@ class Instrument {
   name : String
   id : Int
   @owner("Rahul")
-  powerConsumption : Real = 1000 
+  powerConsumption : Int = 1000 
   @owner("Bjorn")
   weight : Real
-  currentPowerConsumption : Real 
-  operating : Boolean = false 
+  currentPowerConsumption : Int 
+  operating : Bool = false 
     
   fun toggleOperating 
     post(operating = !operating~)
@@ -46,8 +46,8 @@ class Instrument {
         when it is turned off, or if it is on,
         it should be what the operating power is specified to be.")
   req OperatingPower: 
-    (!(operating = 1)=> currentPowerConsumption = 0) &&
-      ((operating = 1)=> currentPowerConsumption = powerConsumption)
+    (!operating=> currentPowerConsumption = 0) &&
+      (operating => currentPowerConsumption = powerConsumption)
 
   req idId: id >= 0
   
@@ -115,13 +115,13 @@ class Spacecraft {
   fun isInstrumentAdded(instr : Instrument) : Bool {
     instr isin instrument 
   }  
+  
 }
 
 assoc SpacecraftInstrument {
   source spacecraft : Spacecraft
   target part instrument: Instrument[1,10]
 }
-
 
 ==============
 Instances
@@ -132,17 +132,17 @@ solarPanel : Instrument = Instrument(name="SP1", id=2, powerConsumption=-1000)
 magnetometer : Instrument = Instrument(name="Magnetometer", id=5, powerConsumption=1500, operating=true)
 battery : Battery = Battery()
 
-clipper = Spacecraft(name="Clipper")
+clipper : Spacecraft = Spacecraft(name="Clipper")
 
 SpacecraftInstrument(Spacecraft::clipper, instrument::camera1)
-SpacecraftInstrument(Spacecraft=clipper, instrument=camera2)
-SpacecraftInstrument(Spacecraft=clipper, instrument=solarPanel)
-SpacecraftInstrument(Spacecraft=clipper, instrument=magnetometer)
-SpacecraftInstrument(Spacecraft=clipper, instrument=battery)
+SpacecraftInstrument(Spacecraft::clipper, instrument::camera2)
+SpacecraftInstrument(Spacecraft::clipper, instrument::solarPanel)
+SpacecraftInstrument(Spacecraft::clipper, instrument::magnetometer)
+SpacecraftInstrument(Spacecraft::clipper, instrument::battery)
 
 req CameraAlwaysOn: 
-  exists inst : Clipper.instrument . inst is Camera && inst.operating = true
+  exists inst : clipper.instrument . inst is Camera && inst.operating = true
 
-req CameraAlwaysOnOCL:
-  Clipper.instrument.Exists(inst -> inst is Camera && inst.operating = true)
+--req CameraAlwaysOnOCL:
+--  clipper.instrument.Exists(inst -> inst is Camera && inst.operating = true)
 
