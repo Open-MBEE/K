@@ -90,12 +90,11 @@ object ClassHierarchy {
       }
     }
 
-    //check()
+    check()
   }
 
   def parentsTransitive(visited: Set[Type]): Set[Type] = {
     visited.foldLeft(visited) { (res, v) =>
-      //if(visited.)
       res ++ parentsTransitive(parents(types(v).asInstanceOf[EntityDecl]))
     }
   }
@@ -189,9 +188,9 @@ class TypeChecker(model: Model) {
     }
 
     // check inheritance structure
-    ClassHierarchy.types = types
-    ClassHierarchy.buildHierarchy(model)
-    println(ClassHierarchy.toString())
+//    ClassHierarchy.types = types
+//    ClassHierarchy.buildHierarchy(model)
+//    println(ClassHierarchy.toString())
 
     // pass: get property info on global level and check if types exist
     globalTypeEnv = model.decls.foldLeft(globalTypeEnv) { (res, d) =>
