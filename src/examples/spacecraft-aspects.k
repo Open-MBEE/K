@@ -7,27 +7,19 @@ import nasa.jpl.europa.trajectory
 Annotations
 ==============
 
--- As it is now:
-
-annotation name : String 
-annotation id : String 
-annotation doc : String 
-annotation owner : String 
-annotation url : String 
-annotation navigable : Bool 
-
--- Option 1: add meta information to annotation declarations:
-
-annotation name : String with "ModelElement"
-annotation id : String with "ModelElement" 
-annotation doc : String with "ModelElement" 
-annotation owner : String with "ModelElement" 
-annotation url : String with "ModelElement" 
-annotation navigable : Bool with "Property" 
-
--- Option 2: define annotations as fields in a ``special'' class
+// Requirements:
+// 1. Be able to define them in named groups
+//    - Define them as classes extending a class Annnotation.
+// 2. Benefit from inheritance
+//    - We get that for free if doing the above
+// 3. Be able to associate them with certain positions in models
+//    - Defining a field  (perhaps different keyword than req) axiom? 
+// 4. Be able to redefine names of positions (keywords such as val and fun).
+//    - This one is harder.
 
 annotation ModelElement {
+  axiom location = Set("class","val","fun")
+
   name : String 
   id : String 
   doc : String 
