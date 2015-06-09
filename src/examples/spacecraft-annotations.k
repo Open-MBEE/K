@@ -102,7 +102,7 @@ class Spacecraft {
   fun getInstrumentsNameWeight : Seq[String * Real] 
     post $result.length() = instrument.size()
   {
-    instrument.collect(i -> Tuple(i.name, i.weight)).toSeq()
+    instrument.collect(i -> Tuple(i.name, i.weight))
   }
 
   fun addInstruments(insts : Set[Instrument]) 
