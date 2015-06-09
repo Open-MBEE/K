@@ -1,8 +1,9 @@
 package examples.Shapes
 
 class Shape {
+  height : Int
   fun sides : Int
-  fun area : Int
+  fun area : Real
 }
 
 class Triangle extends Shape {
@@ -11,7 +12,6 @@ class Triangle extends Shape {
   b : Int
   c : Int
   base : Int
-  height : Int
     
   req Angles: (a + b + c) = 180
   

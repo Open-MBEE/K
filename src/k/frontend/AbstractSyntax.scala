@@ -2116,6 +2116,24 @@ trait Type {
   def toJson2: JSONObject
 }
 
+case class CollectType(ty: List[Type]) extends PrimitiveType {
+  override def toSMT = null
+  override def toJson1 = null
+  override def toJson2 = null
+}
+
+case class SumType(ty: List[Type]) extends PrimitiveType {
+  override def toSMT = null
+  override def toJson1 = null
+  override def toJson2 = null
+}
+
+case object AnyType extends Type {
+  override def toSMT = null
+  override def toJson1 = null
+  override def toJson2 = null
+}
+
 case class IdentType(ident: QualifiedName, args: List[Type]) extends Type {
   def toSMT: String = {
     val QualifiedName(names) = ident

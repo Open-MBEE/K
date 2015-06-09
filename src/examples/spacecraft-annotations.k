@@ -46,8 +46,8 @@ class Instrument {
         when it is turned off, or if it is on,
         it should be what the operating power is specified to be.")
   req OperatingPower: 
-    (!(operating = 1)=> currentPowerConsumption = 0) &&
-      ((operating = 1)=> currentPowerConsumption = powerConsumption)
+    (!operating=> currentPowerConsumption = 0) &&
+      (operating => currentPowerConsumption = powerConsumption)
 
   req idId: id >= 0
   
@@ -102,7 +102,7 @@ class Spacecraft {
   fun getInstrumentsNameWeight : Seq[String * Real] 
     post $result.length() = instrument.size()
   {
-    instrument.collect(i -> Tuple(i.name, i.weight)).toSeq()
+    instrument.collect(i -> Tuple(i.name, i.weight))
   }
 
   fun addInstruments(insts : Set[Instrument]) 
@@ -135,14 +135,14 @@ battery : Battery = Battery()
 clipper : Spacecraft = Spacecraft(name="Clipper")
 
 SpacecraftInstrument(Spacecraft::clipper, instrument::camera1)
-SpacecraftInstrument(Spacecraft=clipper, instrument=camera2)
-SpacecraftInstrument(Spacecraft=clipper, instrument=solarPanel)
-SpacecraftInstrument(Spacecraft=clipper, instrument=magnetometer)
-SpacecraftInstrument(Spacecraft=clipper, instrument=battery)
+SpacecraftInstrument(Spacecraft::clipper, instrument::camera2)
+SpacecraftInstrument(Spacecraft::clipper, instrument::solarPanel)
+SpacecraftInstrument(Spacecraft::clipper, instrument::magnetometer)
+SpacecraftInstrument(Spacecraft::clipper, instrument::battery)
 
 req CameraAlwaysOn: 
-  exists inst : Clipper.instrument . inst is Camera && inst.operating = true
+  exists inst : clipper.instrument . inst is Camera && inst.operating = true
 
-req CameraAlwaysOnOCL:
-  Clipper.instrument.Exists(inst -> inst is Camera && inst.operating = true)
+--req CameraAlwaysOnOCL:
+--  clipper.instrument.Exists(inst -> inst is Camera && inst.operating = true)
 
