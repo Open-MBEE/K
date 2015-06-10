@@ -74,7 +74,7 @@ case class ParamTypeInfo(p: Param) extends TypeInfo
 
 object ClassHierarchy {
   var parents = Map[EntityDecl, Set[Type]]()
-  val children = Map[EntityDecl, Set[Type]]()
+  var children = Map[EntityDecl, Set[Type]]()
   var types: Map[Type, TopDecl] = null
 
   def buildHierarchy(model: Model) {
@@ -83,26 +83,41 @@ object ClassHierarchy {
         case ed @ EntityDecl(_, t, _, _, _, _, _) if t == ClassToken =>
           val edParents = buildHierarchy(ed, types, Set())
           parents = parents + (ed -> edParents)
+          edParents.foreach { p =>
+            val parent = types(p).asInstanceOf[EntityDecl]
+            if (!children.contains(parent)) children = children + (parent -> Set())
+            children = children +
+              (parent ->
+                (children(parent) +
+                  (types.map(_.swap).asInstanceOf[Map[TopDecl, Type]](ed))))
+          }
         case ed @ EntityDecl(_, t, keyword, _, _, _, _) if !keyword.isEmpty =>
           val edParents = buildHierarchy(ed, types, Set())
           parents = parents + (ed -> (edParents)) // TODO add keyword
         case _ => ()
       }
     }
-
-    check()
-  }
-
-  def parentsTransitive(visited: Set[Type]): Set[Type] = {
-    visited.foldLeft(visited) { (res, v) =>
-      res ++ parentsTransitive(parents(types(v).asInstanceOf[EntityDecl]))
-    }
-  }
-
-  def check() {
     // ensure that one cannot reach itself
     parents.foreach { kv =>
-      println(parentsTransitive(parents(kv._1)))
+      if (parentsTransitive(kv._1).contains(IdentType(QualifiedName(List(kv._1.ident)), List())))
+        TypeChecker.error(s"${kv._1.ident} has a cyclic inheritance structure.")
+    }
+
+  }
+
+  def childrenTransitive(e: EntityDecl, visited: Set[Type] = Set()): Set[Type] = {
+    if (children.contains(e))
+      children(e).foldLeft(visited) { (res, v) =>
+        if (visited.contains(v)) res
+        else res ++ childrenTransitive(types(v).asInstanceOf[EntityDecl], visited + v)
+      }
+    else Set()
+  }
+
+  def parentsTransitive(e: EntityDecl, visited: Set[Type] = Set()): Set[Type] = {
+    parents(e).foldLeft(visited) { (res, v) =>
+      if (visited.contains(v)) res
+      else res ++ parentsTransitive(types(v).asInstanceOf[EntityDecl], visited + v)
     }
   }
 
@@ -118,14 +133,11 @@ object ClassHierarchy {
     }
   }
 
-  override def toString: String = {
-    parents.mkString(",") + children.mkString(",")
-  }
-
 }
 
 class TypeChecker(model: Model) {
   var tes: Map[TopDecl, TypeEnv] = Map()
+  var origtes: Map[TopDecl, TypeEnv] = Map()
   var expTes: Map[Exp, Type] = Map()
   var keywords: Map[String, Type] = Map[String, Type]()
   val collectionNames = Set("Set", "Bag", "Seq")
@@ -188,9 +200,8 @@ class TypeChecker(model: Model) {
     }
 
     // check inheritance structure
-//    ClassHierarchy.types = types
-//    ClassHierarchy.buildHierarchy(model)
-//    println(ClassHierarchy.toString())
+    ClassHierarchy.types = types
+    ClassHierarchy.buildHierarchy(model)
 
     // pass: get property info on global level and check if types exist
     globalTypeEnv = model.decls.foldLeft(globalTypeEnv) { (res, d) =>
@@ -223,6 +234,7 @@ class TypeChecker(model: Model) {
               }
           }
           tes += (d -> classTypeEnv)
+          origtes += (d -> classTypeEnv)
         case ed @ EntityDecl(_, AssocToken, _, ident, _, _, _) =>
 
           // only support 2 members in associations
@@ -251,8 +263,6 @@ class TypeChecker(model: Model) {
               }
           }
 
-          println(s"members length ${ed.members.length} ${ed.members(0)}")
-
           // also insert the source/target in respective class
           val m1 = ed.members(0).asInstanceOf[PropertyDecl]
           val m2 = ed.members(1).asInstanceOf[PropertyDecl]
@@ -277,9 +287,12 @@ class TypeChecker(model: Model) {
               }).get
 
           tes += (cte1._1 -> (cte1._2 + ((m2.name) -> PropertyTypeInfo(m2, false))))
+          origtes += (cte1._1 -> (cte1._2 + ((m2.name) -> PropertyTypeInfo(m2, false))))
           tes += (cte2._1 -> (cte2._2 + ((m1.name) -> PropertyTypeInfo(m1, false))))
+          origtes += (cte2._1 -> (cte2._2 + ((m1.name) -> PropertyTypeInfo(m1, false))))
 
           tes += (d -> classTypeEnv)
+          origtes += (d -> classTypeEnv)
 
         case _ => ()
       }
@@ -307,29 +320,19 @@ class TypeChecker(model: Model) {
       d match {
         case ed @ EntityDecl(_, t, _, ident, _, _, _) if t != AssocToken =>
           val classTypeEnv = tes(d)
-          val extending = {
-            if (t != ClassToken)
-              ed.extending ++
-                List(keywords(t.asInstanceOf[IdentifierToken].name))
-            else ed.extending
-          }
-          println(ident + " extending list is " + extending.mkString(","))
-          println("cte " + classTypeEnv)
+          val extending = ClassHierarchy.parentsTransitive(ed)
           val newClassTypeEnv = classTypeEnv ++
             extending.foldLeft(TypeEnv(Map[String, TypeInfo]())) {
               (res, ex) =>
-                val extendingTypeEnv = tes.find(
+                val extendingTypeEnv = origtes.find(
                   de =>
                     de._1 match {
                       case ed @ EntityDecl(_, _, _, _, _, _, _) =>
                         ed.ident.toString.equals(ex.asInstanceOf[IdentType].ident.toString)
                       case _ => false
                     }).get
-                println("ete " + extendingTypeEnv._2)
-                extendingTypeEnv._2
+                res ++ extendingTypeEnv._2
             }
-          println(s"$ident old: $classTypeEnv")
-          println(s"$ident new: $newClassTypeEnv")
           tes += (d -> newClassTypeEnv)
         case _ => ()
       }
@@ -633,7 +636,7 @@ class TypeChecker(model: Model) {
       case ThisLiteral            => AnyType // TODO
       case _                      => TypeChecker.error(s"Type checking for ${exp.getClass} not implemented yet!")
     }
-    println(s"getExpType: $exp $result")
+//    println(s"getExpType: $exp $result")
     return result
   }
 
