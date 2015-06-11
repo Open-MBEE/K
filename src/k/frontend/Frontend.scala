@@ -54,11 +54,11 @@ object Frontend {
     }
 
     val smtModel = model.toSMT
-       
+
     println("--- SMT Model ---")
     println(smtModel)
     println("-----------------")
-     
+
     K2Z3.solveSMT(smtModel)
 
     // print DOT format class diagram
