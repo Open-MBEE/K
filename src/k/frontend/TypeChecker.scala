@@ -152,11 +152,13 @@ object ClassHierarchy {
 }
 
 class TypeChecker(model: Model) {
+  var globalTypeEnv: TypeEnv = TypeEnv(Map())
   var tes: Map[TopDecl, TypeEnv] = Map()
   var origtes: Map[TopDecl, TypeEnv] = Map()
   var expTes: Map[Exp, Type] = Map()
   var keywords: Map[String, Type] = Map[String, Type]()
   var types = Map[Type, TopDecl]()
+  var annotations = Map[String, AnnotationDecl]()
 
   private def doesTypeExist(te: TypeEnv, ty: Type): Boolean = {
     ty match {
@@ -191,7 +193,12 @@ class TypeChecker(model: Model) {
     if (model == null) return true
 
     // pass: get class and type information 
-    var globalTypeEnv = model.decls.foldLeft(TypeEnv(Map[String, TypeInfo]())) { (res, d) =>
+    model.annotations.foreach { d =>
+      val ad = d.asInstanceOf[AnnotationDecl]
+      if (annotations.contains(ad.name)) TypeChecker.error(s"Redefining annotation ${ad.name}.")
+      annotations = annotations + (ad.name -> ad)
+    }
+    model.decls.foreach { d =>
       d match {
         case ed @ EntityDecl(_, _, _, ident, _, _, _) =>
           keywords = ed.keyword match {
@@ -204,11 +211,11 @@ class TypeChecker(model: Model) {
             case _ => keywords
           }
           types = types + (IdentType(QualifiedName(List(ident)), List()) -> ed)
-          res + (ident -> ClassTypeInfo(ed, Map(), Map()))
+          globalTypeEnv = globalTypeEnv + (ident -> ClassTypeInfo(ed, Map(), Map()))
         case td @ TypeDecl(ident, _, _) =>
           types = types + (IdentType(QualifiedName(List(ident)), List()) -> td)
-          res + (ident -> TypeTypeInfo(td))
-        case _ => res
+          globalTypeEnv = globalTypeEnv + (ident -> TypeTypeInfo(td))
+        case _ => ()
       }
     }
 
@@ -379,6 +386,14 @@ class TypeChecker(model: Model) {
           processFunction(fd, globalTypeEnv)
         case ed @ EntityDecl(_, token, _, ident, _, _, _) =>
           val entityTypeEnv = tes(ed)
+
+          ed.annotations.foreach { a =>
+            val annotationExpType = getExpType(entityTypeEnv, a.exp)
+            val annotationType = annotations(a.name).ty
+            require(Misc.areTypesEqual(annotationExpType, annotationType, false),
+              s"Annotation $a does not type check.")
+          }
+
           ed.members.foreach { m =>
             m match {
               case cd @ ConstraintDecl(name, exp) =>
