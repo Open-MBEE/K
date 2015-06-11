@@ -218,15 +218,12 @@ class TypeChecker(model: Model) {
     ClassHierarchy.buildHierarchy(model)
 
     // pass: get property info on global level and check if types exist
-    globalTypeEnv = model.decls.foldLeft(globalTypeEnv) { (res, d) =>
+    model.decls.foreach { d =>
       d match {
         case p @ PropertyDecl(_, name, ty, _, _, _) =>
-          // check if the type exists
-          if (!doesTypeExist(res, ty)) {
-            TypeChecker.error(s"Specified type $ty does not exist. Please check. Exiting.")
-          }
-          res + (name -> PropertyTypeInfo(p, true))
-        case _ => res
+          if (!doesTypeExist(globalTypeEnv, ty)) TypeChecker.error(s"Specified type $ty does not exist. Please check. Exiting.")
+          globalTypeEnv = globalTypeEnv + (name -> PropertyTypeInfo(p, true))
+        case _ => ()
       }
     }
 
@@ -280,7 +277,7 @@ class TypeChecker(model: Model) {
           // also insert the source/target in respective class
           val m1 = ed.members(0).asInstanceOf[PropertyDecl]
           val m2 = ed.members(1).asInstanceOf[PropertyDecl]
-          val cte1 =
+          val cte0 =
             tes.find(p =>
               p._1 match {
                 case ed1 @ EntityDecl(_, t, _, ident, _, _, _) if t != AssocToken =>
@@ -290,7 +287,7 @@ class TypeChecker(model: Model) {
                   false
               }).get
 
-          val cte2 =
+          val cte1 =
             tes.find(p =>
               p._1 match {
                 case ed1 @ EntityDecl(_, t, _, ident, _, _, _) if t != AssocToken =>
@@ -300,10 +297,10 @@ class TypeChecker(model: Model) {
                   false
               }).get
 
-          tes += (cte1._1 -> (cte1._2 + ((m2.name) -> PropertyTypeInfo(m2, false))))
-          origtes += (cte1._1 -> (cte1._2 + ((m2.name) -> PropertyTypeInfo(m2, false))))
-          tes += (cte2._1 -> (cte2._2 + ((m1.name) -> PropertyTypeInfo(m1, false))))
-          origtes += (cte2._1 -> (cte2._2 + ((m1.name) -> PropertyTypeInfo(m1, false))))
+          tes += (cte0._1 -> (cte0._2 + ((m2.name) -> PropertyTypeInfo(m2, false))))
+          origtes += (cte0._1 -> (cte0._2 + ((m2.name) -> PropertyTypeInfo(m2, false))))
+          tes += (cte1._1 -> (cte1._2 + ((m1.name) -> PropertyTypeInfo(m1, false))))
+          origtes += (cte1._1 -> (cte1._2 + ((m1.name) -> PropertyTypeInfo(m1, false))))
 
           tes += (d -> classTypeEnv)
           origtes += (d -> classTypeEnv)
@@ -354,137 +351,125 @@ class TypeChecker(model: Model) {
 
     // pass: build the information for expressions 
     // except expressions that are in functions (bodies)
-    expTes = model.decls.foldLeft(Map[Exp, Type]()) {
-      (res, d) =>
-        d match {
-          case ExpressionDecl(exp) =>
-            val ty = getExpType(globalTypeEnv, exp)
-            res + (exp -> ty)
-          case ed @ EntityDecl(_, _, _, ident, _, _, _) =>
-            res ++ ed.members.foldLeft(res) { (res1, m) =>
-              m match {
-                case ExpressionDecl(exp) =>
-                  val ty = getExpType(tes(ed), exp)
-                  res1 + (exp -> ty)
-                case _ => res1
-              }
+    model.decls.foreach { d =>
+      d match {
+        case ExpressionDecl(exp) => expTes = expTes + (exp -> getExpType(globalTypeEnv, exp))
+        case ed @ EntityDecl(_, _, _, ident, _, _, _) =>
+          ed.members.foreach { m =>
+            m match {
+              case ExpressionDecl(exp) => expTes = expTes + (exp -> getExpType(tes(ed), exp))
+              case _                   => ()
             }
-          case cd @ ConstraintDecl(name, exp) =>
-            res + (exp -> getExpType(globalTypeEnv, exp))
-          case _ => res
-        }
+          }
+        case cd @ ConstraintDecl(name, exp) => expTes = expTes + (exp -> getExpType(globalTypeEnv, exp))
+        case _                              => ()
+      }
     }
 
     // pass: now process function bodies, property initializations etc. etc.
-    val result =
-      model.decls.foldLeft((tes, expTes)) { (res, d) =>
-        d match {
-          case cd @ ConstraintDecl(name, exp) =>
-            val ty = getExpType(globalTypeEnv, exp)
-            if (ty != BoolType && ty != AnyType) {
-              TypeChecker.error(s"Condition $exp is not of type Bool.")
-            }
-            (res._1, res._2 + (exp -> ty))
-          case ed @ EntityDecl(_, ClassToken, _, ident, _, _, _) =>
-            val entityTypeEnv = tes(ed)
-            ed.members.foldLeft(res) { (res1, m) =>
-              m match {
-                case cd @ ConstraintDecl(name, exp) =>
-                  val ty = getExpType(entityTypeEnv, exp)
-                  if (ty != BoolType && ty != AnyType) {
-                    TypeChecker.error(s"Condition $exp is not of type Bool.")
-                  }
-                  (res._1, res._2 + (exp -> ty))
-                case fd @ FunDecl(_, _, _, _, _, _) =>
-                  // check if return type exists 
-                  fd.ty match {
-                    case Some(t) =>
-                      if (!doesTypeExist(entityTypeEnv, t)) {
-                        TypeChecker.error(s"Type $t not found. Exiting.")
-                      }
-                    case _ => ()
-                  }
-
-                  // parameters, properties
-                  val functionTypeEnv = fd.params.foldLeft(entityTypeEnv) {
-                    (fres, p) =>
-                      if (!doesTypeExist(fres, p.ty)) {
-                        TypeChecker.error(s"Type ${p.ty} not found. Exiting.")
-                      }
-                      fres + (p.name -> ParamTypeInfo(p))
-                  }
-
-                  // process body
-                  var lastT: Type = null
-                  val expTes1 = fd.body.foldLeft(functionTypeEnv, res1._2) { (fres1, m) =>
-                    m match {
-                      case pd @ PropertyDecl(_, _, _, _, _, _) =>
-                        (fres1._1 + (pd.name -> PropertyTypeInfo(pd, false)), fres1._2)
-                      case ExpressionDecl(exp) =>
-                        lastT = getExpType(fres1._1, exp)
-                        (fres1._1, fres1._2 + (exp -> lastT))
-                      case _ => fres1
-                    }
-                  }
-
-                  // check return matches last expression type
-                  if (fd.body.length > 0) {
-                    fd.ty match {
-                      case Some(t) =>
-                        if (!Misc.areTypesEqual(t, lastT, true)) {
-                          val errorMsg: StringBuilder = new StringBuilder
-                          errorMsg.append("Return type does not match body: " + fd.ident)
-                          errorMsg.append("\n")
-                          errorMsg.append(s"\tExpected $t, Found $lastT.")
-                          TypeChecker.error(errorMsg.toString)
-                        }
-                      case None => ()
-                    }
-                  }
-
-                  // 
-
-                  (res1._1 + (fd -> functionTypeEnv), res1._2)
-                case pd @ PropertyDecl(_, _, _, _, _, _) =>
-                  pd.expr match {
-                    case Some(e) =>
-                      val exprType = getExpType(entityTypeEnv, e)
-                      if (!Misc.areTypesEqual(exprType, pd.ty, true)) {
-                        val errorMsg: StringBuilder = new StringBuilder
-                        errorMsg.append("Type does not match: " + pd.name)
-                        errorMsg.append("\n")
-                        errorMsg.append(s"\tExpected ${pd.ty}, Found $exprType")
-                        TypeChecker.error(errorMsg.toString)
-                      }
-                      (res1._1, res1._2 + (e -> exprType))
-                    case None => res1
-                  }
-
-                case _ => res1
-              }
-            }
-            res
-          case pd @ PropertyDecl(_, _, _, _, _, _) =>
-            pd.expr match {
-              case Some(e) =>
-                val exprType = getExpType(globalTypeEnv, e)
-                if (!Misc.areTypesEqual(exprType, pd.ty, true)) {
-                  val errorMsg: StringBuilder = new StringBuilder
-                  errorMsg.append("Type does not match: " + pd.name)
-                  errorMsg.append("\n")
-                  errorMsg.append(s"\tExpected ${pd.ty}, Found $exprType")
-                  TypeChecker.error(errorMsg.toString)
+    model.decls.foreach { d =>
+      d match {
+        case cd @ ConstraintDecl(name, exp) =>
+          val ty = getExpType(globalTypeEnv, exp)
+          if (ty != BoolType) {
+            TypeChecker.error(s"Condition $exp is not of type Bool.")
+          }
+          expTes = expTes + (exp -> ty)
+        case fd @ FunDecl(_, _, _, _, _, _) =>
+          processFunction(fd, globalTypeEnv)
+        case ed @ EntityDecl(_, token, _, ident, _, _, _) =>
+          val entityTypeEnv = tes(ed)
+          ed.members.foreach { m =>
+            m match {
+              case cd @ ConstraintDecl(name, exp) =>
+                val ty = getExpType(entityTypeEnv, exp)
+                if (ty != BoolType && ty != AnyType) {
+                  TypeChecker.error(s"Condition $exp is not of type Bool.")
                 }
-                (res._1, res._2 + (e -> exprType))
-              case None => res
+                expTes = expTes + (exp -> ty)
+              case fd @ FunDecl(_, _, _, _, _, _) =>
+                processFunction(fd, entityTypeEnv)
+              case pd @ PropertyDecl(_, _, _, _, _, _) =>
+                pd.expr match {
+                  case Some(e) =>
+                    val exprType = getExpType(entityTypeEnv, e)
+                    if (!Misc.areTypesEqual(exprType, pd.ty, true)) {
+                      TypeChecker.error(s"Type does not match: ${pd.name}. Expected ${pd.ty}, Found $exprType")
+                    }
+                    expTes = expTes + (e -> exprType)
+                  case None => ()
+                }
+              case _ => ()
             }
-          case _ => res
-        }
+          }
+        case pd @ PropertyDecl(_, _, _, _, _, _) =>
+          if (!pd.expr.isEmpty) {
+            val exprType = getExpType(globalTypeEnv, pd.expr.get)
+            if (!Misc.areTypesEqual(exprType, pd.ty, true)) {
+              TypeChecker.error(s"Type does not match: ${pd.name}. + Expected ${pd.ty}, Found $exprType")
+            }
+            expTes += (pd.expr.get -> exprType)
+          }
+        case _ => ()
       }
-    tes = result._1
-    expTes = result._2
-
+    }
     true
+  }
+
+  def processFunction(fd: FunDecl, entityTypeEnv: TypeEnv) {
+    // check if return type exists 
+    if (!fd.ty.isEmpty) {
+      if (!doesTypeExist(entityTypeEnv, fd.ty.get)) {
+        TypeChecker.error(s"Type ${fd.ty.get} not found. Exiting.")
+      }
+    }
+
+    // parameters, properties
+    var functionTypeEnv = fd.params.foldLeft(entityTypeEnv) {
+      (fres, p) =>
+        if (!doesTypeExist(fres, p.ty)) {
+          TypeChecker.error(s"Type ${p.ty} not found. Exiting.")
+        }
+        fres.overwrite(p.name -> ParamTypeInfo(p))
+    }
+
+    var lastT: Type = null
+
+    // process body for properties in function
+    fd.body.foreach { m =>
+      m match {
+        case pd @ PropertyDecl(_, _, _, _, _, _) =>
+          println(fd.ident + " " + pd)
+          if (!doesTypeExist(functionTypeEnv, pd.ty)) {
+            TypeChecker.error(s"Type ${pd.ty} not found. Exiting.")
+          }
+          functionTypeEnv = functionTypeEnv.overwrite(pd.name -> PropertyTypeInfo(pd, false))
+        case _ => ()
+      }
+    }
+
+    // process expressions in function
+    fd.body.foreach { m =>
+      m match {
+        case ExpressionDecl(exp) =>
+          lastT = getExpType(functionTypeEnv, exp)
+          if (exp.isInstanceOf[ReturnExp] && !fd.ty.isEmpty) {
+            require(Misc.areTypesEqual(lastT, fd.ty.get, true), s"Return type does not match for $exp in function ${fd.ident}")
+          }
+          expTes = expTes + (exp -> lastT)
+        case _ => ()
+      }
+    }
+
+    // check return matches last expression type
+    if (lastT != null && !fd.ty.isEmpty) {
+      if (!Misc.areTypesEqual(fd.ty.get, lastT, true)) {
+        TypeChecker.error(s"Return type does not match body: ${fd.ident}. Expected ${fd.ty.get}, Found $lastT.")
+      }
+    }
+
+    tes = tes + (fd -> functionTypeEnv)
+
   }
 
   def isConstructorCall(te: TypeEnv, exp: Exp): Boolean = {
@@ -567,8 +552,7 @@ class TypeChecker(model: Model) {
         val ty1 = getExpType(te, exp1)
         val ty2 = getExpType(te, exp2)
         op match {
-          case LT | LTE | GT | GTE | AND | IMPL |
-            OR | IFF | NEQ | EQ =>
+          case LT | LTE | GT | GTE | AND | IMPL | OR | IFF | NEQ | EQ =>
             if (!Misc.areTypesEqual(ty1, ty2, true)) TypeChecker.error(s"$exp does not type check. $ty1 and $ty2 are not equivalent.")
             BoolType
           case MUL | DIV | ADD | SUB | REM =>
@@ -592,7 +576,6 @@ class TypeChecker(model: Model) {
               case _                    => TypeChecker.error(s"Non tuple type found with tuple indexing. $exp")
             }
         }
-
       case FunApplExp(exp, args) =>
         if (isConstructorCall(te, exp)) {
           IdentType(QualifiedName(List(exp.toString)), List())
@@ -638,9 +621,9 @@ class TypeChecker(model: Model) {
       case ReturnExp(exp)      => getExpType(te, exp)
       case ForExp(pattern, exp, body) =>
         val newTe = pattern match {
-          case TypedPattern(ident, ty)  if ident.isInstanceOf[IdentPattern]    => 
+          case TypedPattern(ident, ty) if ident.isInstanceOf[IdentPattern] =>
             te.overwrite(ident.asInstanceOf[IdentPattern].ident -> PatternTypeInfo(pattern, ty))
-          case _                        => TypeChecker.error(s"Must use a typed pattern in for expressions: $exp")
+          case _ => TypeChecker.error(s"Must use a typed pattern in for expressions: $exp")
         }
         require(getExpType(newTe, exp) == BoolType, s"$exp is not of type Bool")
         getExpType(newTe, body)
@@ -672,7 +655,7 @@ class TypeChecker(model: Model) {
       case ThisLiteral         => AnyType // TODO
       case _                   => TypeChecker.error(s"Type checking for ${exp.getClass} not implemented yet!")
     }
-    //    println(s"getExpType: $exp $result")
+    println(s"getExpType: $exp $result")
     return result
   }
 
