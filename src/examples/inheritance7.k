@@ -5,8 +5,16 @@ class A {
   req j.y > 10
 }
 
-class B extends A {
+class <b> B extends A {
   y : Int
   i : A
   req i.x > 10
 }
+
+b C {
+  z : Int
+}
+
+bobj : C
+
+req bobj.z = 1
