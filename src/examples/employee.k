@@ -1,3 +1,5 @@
+class Car
+
 class Person {
   age : Int
   
@@ -13,6 +15,7 @@ class Employee extends Person {
 
   boss : Person
   officemate : Employee
+  car : Car
 
   fun avoid(p : Person) : Bool {
     officemate != p
@@ -21,5 +24,5 @@ class Employee extends Person {
   req boss.age > 30
  
   req this = officemate.officemate
-  
+    
 }
