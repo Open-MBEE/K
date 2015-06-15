@@ -169,7 +169,7 @@ object Misc {
 
   def typeTypeCollection(t1: Type, t2: Type): (Boolean, Type) = {
     (t1, t2) match {
-      case (IdentType(id, ct1), IdentType(id2, ct2)) if isCollection(t1.asInstanceOf[IdentType])  && isCollection(t2.asInstanceOf[IdentType])=>
+      case (IdentType(id, ct1), IdentType(id2, ct2)) if isCollection(t1.asInstanceOf[IdentType]) && isCollection(t2.asInstanceOf[IdentType]) =>
         return (areTypesEqual(t1, t2, false), t1)
       case (IdentType(id, ct1), _) if isCollection(t1.asInstanceOf[IdentType]) =>
         require(ct1.length == 1, s"Collection type mismatch.")
@@ -180,10 +180,10 @@ object Misc {
       case _ => return (false, null)
     }
   }
-  
-  def removeCollection(t : Type) : Type = {
+
+  def removeCollection(t: Type): Type = {
     t match {
-      case IdentType(id,ty) if isCollection(t.asInstanceOf[IdentType]) => ty(0)
+      case IdentType(id, ty) if isCollection(t.asInstanceOf[IdentType]) => ty(0)
       case _ => t
     }
   }
