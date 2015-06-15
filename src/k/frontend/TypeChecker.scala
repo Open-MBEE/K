@@ -13,12 +13,11 @@ case object TypeChecker {
 
   def areTypesEqual(ty1: Type, ty2: Type, compatibility: Boolean): Boolean = {
     (ty1, ty2) match {
-      case (IdentType(it1, it2), IdentType(it3, it4)) =>
-        val it1Parents = ClassHierarchy.parentsTransitive(types(ty1).asInstanceOf[EntityDecl])
-        val it2Parents = ClassHierarchy.parentsTransitive(types(ty1).asInstanceOf[EntityDecl])
+      case (IdentType(it1, it2), IdentType(it3, it4)) 
+        val it1Parents = ClassHierarchy.parentsTransitive(types(ty1).asInstanceOf[EntityDecl], Set())
+        val it2Parents = ClassHierarchy.parentsTransitive(types(ty2).asInstanceOf[EntityDecl], Set())
         val same = (it1.equals(it3) && (it2 zip it4).forall { t => areTypesEqual(t._1, t._2, compatibility) })
-        val inheritanceSame =  ((it1Parents.intersect(it2Parents)).isEmpty)
-        println(same + " " + inheritanceSame)
+        val inheritanceSame =  !((it1Parents.intersect(it2Parents)).isEmpty) || it1Parents.contains(ty2) || it2Parents.contains(ty1)
         return same || inheritanceSame
       case _ => Misc.areTypesEqual(ty1, ty2, compatibility)
     }
@@ -232,6 +231,8 @@ class TypeChecker(model: Model) {
       }
     }
 
+    ClassHierarchy.buildHierarchy(model)
+    
     // pass: get property info on global level and check if types exist
     model.decls.foreach { d =>
       d match {
@@ -462,7 +463,6 @@ class TypeChecker(model: Model) {
     fd.body.foreach { m =>
       m match {
         case pd @ PropertyDecl(_, _, _, _, _, _) =>
-          println(fd.ident + " " + pd)
           if (!doesTypeExist(functionTypeEnv, pd.ty)) {
             TypeChecker.error(s"Type ${pd.ty} not found. Exiting.")
           }
@@ -678,7 +678,7 @@ class TypeChecker(model: Model) {
       case ThisLiteral         => AnyType // TODO
       case _                   => TypeChecker.error(s"Type checking for ${exp.getClass} not implemented yet!")
     }
-    println(s"getExpType: $exp $result")
+    //println(s"getExpType: $exp $result")
     return result
   }
 
