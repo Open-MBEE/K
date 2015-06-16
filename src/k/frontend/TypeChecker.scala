@@ -13,16 +13,15 @@ case object TypeChecker {
 
   def areTypesEqual(ty1: Type, ty2: Type, compatibility: Boolean): Boolean = {
     (ty1, ty2) match {
-      case (IdentType(it1, it2), IdentType(it3, it4)) 
-        val it1Parents = ClassHierarchy.parentsTransitive(types(ty1).asInstanceOf[EntityDecl], Set())
-        val it2Parents = ClassHierarchy.parentsTransitive(types(ty2).asInstanceOf[EntityDecl], Set())
+      case (IdentType(it1, it2), IdentType(it3, it4)) => 
+        val it1Parents = ClassHierarchy.parentsTransitive(types(ty1).asInstanceOf[EntityDecl])
+        val it2Parents = ClassHierarchy.parentsTransitive(types(ty2).asInstanceOf[EntityDecl])
         val same = (it1.equals(it3) && (it2 zip it4).forall { t => areTypesEqual(t._1, t._2, compatibility) })
         val inheritanceSame =  !((it1Parents.intersect(it2Parents)).isEmpty) || it1Parents.contains(ty2) || it2Parents.contains(ty1)
         return same || inheritanceSame
       case _ => Misc.areTypesEqual(ty1, ty2, compatibility)
     }
   }
-
 }
 
 case class TypeEnv(map: Map[String, TypeInfo]) {
@@ -250,14 +249,15 @@ class TypeChecker(model: Model) {
     model.decls.foreach { d =>
       d match {
         case ed @ EntityDecl(_, token, _, ident, _, _, _) if token != AssocToken =>
-          val classTypeEnv = ed.members.foldLeft(globalTypeEnv) {
-            (res, m) =>
+          // add 'this' to the type env
+          var classTypeEnv = globalTypeEnv + ("this" -> ClassTypeInfo(ed, Map(), Map()))
+          ed.members.foreach { m =>
               m match {
                 case pd @ PropertyDecl(_, _, _, _, _, _) =>
-                  res + (pd.name -> PropertyTypeInfo(pd, false))
+                  classTypeEnv += (pd.name -> PropertyTypeInfo(pd, false))
                 case fd @ FunDecl(_, _, _, _, _, _) =>
-                  res + (fd.ident -> FunctionTypeInfo(fd))
-                case _ => res
+                  classTypeEnv += (fd.ident -> FunctionTypeInfo(fd))
+                case _ => ()
               }
           }
           tes += (d -> classTypeEnv)
@@ -675,7 +675,8 @@ class TypeChecker(model: Model) {
       case CharacterLiteral(_) => CharType
       case StringLiteral(_)    => StringType
       case RealLiteral(_)      => RealType
-      case ThisLiteral         => AnyType // TODO
+      case ThisLiteral         =>
+        TypeChecker.types.map(_.swap).asInstanceOf[Map[TopDecl, Type]](te("this").asInstanceOf[ClassTypeInfo].decl)
       case _                   => TypeChecker.error(s"Type checking for ${exp.getClass} not implemented yet!")
     }
     //println(s"getExpType: $exp $result")
