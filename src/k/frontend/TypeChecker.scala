@@ -13,7 +13,7 @@ case object TypeChecker {
 
   def areTypesEqual(ty1: Type, ty2: Type, compatibility: Boolean): Boolean = {
     (ty1, ty2) match {
-      case (IdentType(it1, it2), IdentType(it3, it4)) => 
+      case (i1@IdentType(it1, it2), i2@IdentType(it3, it4)) if !Misc.isCollection(i1) && !Misc.isCollection(i2) => 
         val it1Parents = ClassHierarchy.parentsTransitive(types(ty1).asInstanceOf[EntityDecl])
         val it2Parents = ClassHierarchy.parentsTransitive(types(ty2).asInstanceOf[EntityDecl])
         val same = (it1.equals(it3) && (it2 zip it4).forall { t => areTypesEqual(t._1, t._2, compatibility) })
@@ -147,7 +147,7 @@ object ClassHierarchy {
         else res ++ parentsTransitive(TypeChecker.types(v).asInstanceOf[EntityDecl], visited + v)
       }
     } catch {
-      case _ => Set[Type]()
+      case _ : Throwable => Set[Type]()
     }
   }
 
