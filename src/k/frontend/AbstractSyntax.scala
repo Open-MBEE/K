@@ -21,8 +21,8 @@ object UtilAST {
 
   def ??? : Nothing = ???("")
 
-  def error(text: String = "bug in code!"): Nothing = {
-    println("*** error: " + text)
+  def error(text: String = "bug translation!"): Nothing = {
+    println("*** SMT error: " + text)
     null.asInstanceOf[Nothing]
   }
 }
@@ -31,6 +31,7 @@ import UtilAST._
 object TypeInference {
   type ClassName = String
   type MemberName = String // property and function names
+  type PropertyName = String // property names
   type LocalName = String // function parameters for example
 
   // The symbol table:
@@ -40,10 +41,35 @@ object TypeInference {
   object FunctionKind extends MemberKind
 
   var symbolTable: Map[ClassName, Map[MemberName, MemberKind]] = Map()
+  var classMap: Map[ClassName, EntityDecl] = Map()
+  var superClasses: Map[ClassName, List[ClassName]] = Map()
+  var subClasses: Map[ClassName, List[ClassName]] = Map()
 
-  def update(className: String, memberName: String, kind: MemberKind) {
+  def updateSymbolTable(className: String, memberName: String, kind: MemberKind) {
     val subMap = symbolTable.getOrElse(className, Map())
     symbolTable += (className -> (subMap + (memberName -> kind)))
+  }
+
+  def recordInheritance(superClass: ClassName, subClass: ClassName) {
+    val superOfSub = superClasses.getOrElse(subClass, Nil)
+    superClasses += (subClass -> (superOfSub ++ List(superClass)))
+    val subOfSuper = subClasses.getOrElse(superClass, Nil)
+    subClasses += (superClass -> (subOfSuper ++ List(subClass)))
+  }
+
+  def getDirectSuperClasses(className: String): List[ClassName] = 
+    superClasses.getOrElse(className, Nil)
+  
+  def getSuperClasses(className: String): List[ClassName] = {
+    val directSuperClasses = getDirectSuperClasses(className)
+    val indirectSuperClasses = (for (superClass <- directSuperClasses) yield getSuperClasses(superClass)).flatten
+    indirectSuperClasses ++ directSuperClasses
+  }
+
+  def getSubClasses(className: String): List[ClassName] = {
+    val directSubClasses = subClasses.getOrElse(className, Nil)
+    val indirectSubClasses = (for (subClass <- directSubClasses) yield getSubClasses(subClass)).flatten
+    directSubClasses ++ indirectSubClasses
   }
 
   def lookUp(className: ClassName, memberName: MemberName): MemberKind = {
@@ -62,8 +88,10 @@ object TypeInference {
       case DotExp(expBeforeDot, ident) =>
         classNameUsed = lookUpClass(className, expBeforeDot)
         identUsed = ident
+      case _ =>
+        error(s"Error in looking up class name of $exp within $className")
     }
-    assert(symbolTable contains classNameUsed)
+    assert(symbolTable contains classNameUsed,s"Symbol table does not contain: [$classNameUsed]")
     assert(symbolTable(classNameUsed) contains identUsed)
     symbolTable(classNameUsed)(identUsed) match {
       case FieldKind(resultingClassName) =>
@@ -94,12 +122,20 @@ object TypeInference {
               case pd: PropertyDecl =>
                 pd.ty match {
                   case IdentType(QualifiedName(ident :: Nil), Nil) =>
-                    update(className, pd.name, FieldKind(ident))
+                    updateSymbolTable(className, pd.name, FieldKind(ident))
                   case _ =>
                 }
               case fd: FunDecl =>
-                update(className, fd.ident, FunctionKind)
+                updateSymbolTable(className, fd.ident, FunctionKind)
               case _ =>
+            }
+          }
+          classMap += (className -> ed)
+          for (ty <- ed.extending) {
+            ty match {
+              case IdentType(QualifiedName(classNameSuper :: Nil), _) =>
+                recordInheritance(classNameSuper, className)
+              case _ => error(s"K solver only handles extension of non-qualified names: $className extending $ty")
             }
           }
         case _ =>
@@ -156,13 +192,6 @@ object ToSMTSupport {
     constant
   }
 
-  def utilSMT: String = {
-    var result = ""
-    result += "(declare-datatypes (T1 T2) ((Tuple2 (mk-Tuple2 (_1 T1)(_2 T2)))))\n"
-    result += "(declare-datatypes (T1 T2 T3) ((Tuple3 (mk-Tuple3 (_1 T1)(_2 T2)(_3 T3)))))"
-    result
-  }
-
   def primitiveConstantsSMT: String = {
     var result = ""
     for ((id, ty) <- constantsToDeclare) {
@@ -197,6 +226,16 @@ object ToSMTSupport {
     }
   }
 
+  def derefField(field: String, classes: List[String], level: Int = 0): String = {
+    classes match {
+      case className :: Nil =>
+        s"  ($field (deref-$className this))" + (")" * level) + "\n"
+      case className :: rest =>
+        s"  (ite (deref-is-$className this) ($field (deref-$className this))\n" +
+          derefField(field, rest, level + 1)
+    }
+  }
+
   def transformModel(model: Model): Model = {
     val Model(packageName, imports, annotations, decls) = model
     var memberDecls: List[MemberDecl] =
@@ -212,37 +251,8 @@ object ToSMTSupport {
     newModel
   }
 
-  def transformEntityDecl(e: EntityDecl): EntityDecl = {
-    var constraints: List[Exp] = Nil
-    // constraints for property definitions of the form: x : T = e
-    for (PropertyDecl(_, propertyName, _, _, Some(false), Some(exp)) <- e.members) {
-      constraints ::= BinExp(IdentExp(propertyName), EQ, exp)
-    }
-    // constraints for embedded references/parts:
-    for (PropertyDecl(_, propertyName, IdentType(QualifiedName(typeName :: Nil), _), _, _, _) <- e.members) {
-      constraints ::= FunApplExp(DotExp(IdentExp(propertyName), "inv"), Nil)
-    }
-    // constraints for constraint decls:
-    for (ConstraintDecl(name, exp) <- e.members) {
-      constraints ::= exp
-    }
-    // define inv-function enforcing all constraints:
-    var conjunction: Exp = null
-    if (constraints.isEmpty)
-      conjunction = BooleanLiteral(true)
-    else {
-      for (exp <- constraints.reverse) {
-        if (conjunction == null)
-          conjunction = ParenExp(exp)
-        else
-          conjunction = BinExp(conjunction, AND, ParenExp(exp))
-      }
-    }
-    val invFunBody: List[MemberDecl] = List(ExpressionDecl(conjunction))
-    val invFunDecl: FunDecl =
-      FunDecl(s"inv", Nil, Nil, Some(BoolType), Nil, invFunBody)
-    val newMembers = e.members ++ List(invFunDecl)
-    EntityDecl(e.annotations, e.entityToken, e.keyword, e.ident, e.typeParams, e.extending, newMembers)
+  def transformEntityDecl(ed: EntityDecl): EntityDecl = {
+    ed
   }
 }
 import ToSMTSupport._
@@ -273,34 +283,167 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
   def toSMT: String = {
     val model: Model = transformModel(this)
     initializeSymbolTable(model)
-    val entityDeclsSMTList1: List[(String, String)] = for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) yield (ed.ident, ed.toSMT)
-    val entityDeclsSMTList2: List[String] = for ((className, textSMT) <- entityDeclsSMTList1) yield {
-      val constants = classConstantsSMT(className)
-      if (constants == "")
-        textSMT
-      else
-        textSMT + "\n\n" + constants
-    }
-    val entityDeclsSMT = entityDeclsSMTList2.mkString("\n\n\n")
-    utilSMT +
-      "\n\n" +
-      primitiveConstantsSMT +
-      "\n\n" +
-      entityDeclsSMT
-  }
+    var result: String = ""
 
-  //  def toSMTOld: String = {
+    // Generate options
+
+    result += "; ---------- options: ----------\n"
+    result += "\n"
+    result += "(set-option :smt.macro-finder true)\n"
+    result += "\n"
+
+    // Generate datatypes:
+
+    result += "; ---------- datatypes: ----------\n"
+    result += "\n"
+    result += "(define-sort Ref () Int)\n"
+    result += "\n"
+    result += "(declare-datatypes (T1 T2) ((Tuple2 (mk-Tuple2 (_1 T1)(_2 T2)))))\n"
+    result += "(declare-datatypes (T1 T2 T3) ((Tuple3 (mk-Tuple3 (_1 T1)(_2 T2)(_3 T3)))))\n"
+    result += "\n"
+    for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
+      result += ed.toSMTDatatype + "\n"
+    }
+    result += "\n"
+
+    // Generate heap:
+
+    result += "; ---------- heap: ----------\n"
+    result += "\n"
+    result += "(declare-datatypes () ((Any\n"
+    for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
+      val className = ed.ident
+      result += s"  (lift-$className (sel-$className $className))\n"
+    }
+    result += "  null))\n"
+    result += ")\n"
+    result += "\n"
+    result += "(declare-const heap (Array Int Any))\n"
+    result += "\n"
+    result += "(define-fun deref ((ref Ref)) Any\n"
+    result += "  (select heap ref)\n"
+    result += ")\n"
+    result += "\n"
+
+    // Generate class specific deref/is-functions:
+
+    result += "; ---------- class specific deref/is-functions: ----------\n"
+    result += "\n"
+    for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
+      val className = ed.ident
+      result += s"(define-fun deref-is-$className ((this Ref)) Bool\n"
+      result += s"  (is-lift-$className (deref this))\n"
+      result += s")\n"
+      result += "\n"
+      result += s"(define-fun deref-$className ((this Ref)) $className\n"
+      result += s"  (sel-$className (deref this))\n"
+      result += ")\n"
+      result += "\n"
+    }
+
+    // Generate isa-functions:    
+
+    result += "; ---------- isa-functions: ----------\n"
+    result += "\n"
+    for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
+      val className = ed.ident
+      val subClasses = getSubClasses(className)
+      result += s"(define-fun deref-isa-$className ((this Ref)) Bool\n"
+      if (subClasses.isEmpty) {
+        result += s"  (deref-is-$className this)\n"
+      } else {
+        result += "  (or\n"
+        for (cn <- className :: getSubClasses(className)) {
+          result += s"    (deref-is-$cn this)\n"
+        }
+        result += "  )\n"
+      }
+      result += ")\n"
+      result += "\n"
+    }
+
+    // Generate selectors:    
+
+    result += "; ---------- selectors: ----------\n"
+    result += "\n"
+    for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
+      val propertyDecls = ed.getPropertyDecls
+      if (!propertyDecls.isEmpty) {
+        val className = ed.ident
+        val subClasses = getSubClasses(className)
+        result += s"; --- $className:\n"
+        result += "\n"
+        for (pd <- propertyDecls) {
+          val field = pd.name
+          val tySMT = pd.ty.toSMT
+          result += s"(define-fun $className.$field ((this Ref)) $tySMT\n"
+          result += derefField(field, className :: subClasses)
+          result += ")\n"
+          result += "\n"
+        }
+      }
+    }
+
+    // Generate methods:
+
+    result += s"; ---------- methods: ----------\n"
+    result += "\n"
+    for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
+      val funDecls = ed.getFunDecls
+      if (!funDecls.isEmpty) {
+        val className = ed.ident
+        result += s"; --- $className:\n"
+        result += "\n"
+        result += funDecls.map(_.toSMT(className)).mkString("\n")
+        result += "\n"
+      }
+    }
+
+    // Generate invariants:
+
+    result += s"; ---------- invariants: ----------\n"
+    result += "\n"       
+    for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
+      result += s"(declare-fun ${ed.ident}.inv (Ref) Bool)\n"
+    }
+    result += "\n"
+    for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
+      result += s"; --- ${ed.ident}:\n"
+      result += "\n"
+      result += s"${ed.toSMTInvariant}\n"
+      result += "\n"
+    }    
+    result += "\n"
+    
+    // Generate assertions:
+
+    result += s"; ---------- assertions: ----------\n"
+    result += "\n"
+    for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
+      result += s"(assert (exists ((this Ref)) (${ed.ident}.inv this)))\n"
+    }
+    result += "\n"
+    result += "(apply quasi-macros)"
+    result
+  }
+   
+  //  def toSMT: String = {
   //    val model: Model = transformModel(this)
   //    initializeSymbolTable(model)
-  //    val entityDecls: List[EntityDecl] = model.decls.asInstanceOf[List[EntityDecl]]
-  //    val entityDeclsSMT = entityDecls.map(_.toSMT).mkString("\n\n\n")
+  //    val entityDeclsSMTList1: List[(String, String)] = for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) yield (ed.ident, ed.toSMT)
+  //    val entityDeclsSMTList2: List[String] = for ((className, textSMT) <- entityDeclsSMTList1) yield {
+  //      val constants = classConstantsSMT(className)
+  //      if (constants == "")
+  //        textSMT
+  //      else
+  //        textSMT + "\n\n" + constants
+  //    }
+  //    val entityDeclsSMT = entityDeclsSMTList2.mkString("\n\n\n")
   //    utilSMT +
   //      "\n\n" +
   //      primitiveConstantsSMT +
   //      "\n\n" +
-  //      entityDeclsSMT +
-  //      "\n\n" +
-  //      "(check-sat)\n(get-model)"
+  //      entityDeclsSMT
   //  }
 
   override def toString = {
@@ -395,6 +538,7 @@ case class Annotation(name: String, exp: Exp) {
 
 case class QualifiedName(names: List[String]) {
   def toSMT: String = {
+    assert(false, "we should never reach here")
     def dot2Lisp(names: List[String]): String =
       names match {
         case Nil          => "this"
@@ -446,16 +590,68 @@ case class EntityDecl(
   extending: List[Type],
   members: List[MemberDecl]) extends TopDecl {
 
-  override def toSMT = {
-    var result: String = ""
-    if (!members.exists(_.isInstanceOf[PropertyDecl])) {
-      result += s"(declare-sort $ident)\n\n"
+  def toSMTDatatype: String = {
+    val propertyDeclsOfSuperClasses: List[PropertyDecl] =
+      (for (superClass <- getSuperClasses(ident)) yield classMap(superClass).getPropertyDecls).flatten
+    val propertyDecls = propertyDeclsOfSuperClasses ++ getPropertyDecls
+    if (propertyDecls.isEmpty) {
+      s"(declare-sort $ident)"
     } else {
       val constr = s"mk-$ident"
-      val propertyDecls = for (m <- members if m.isInstanceOf[PropertyDecl]) yield m.asInstanceOf[PropertyDecl]
       val fields = propertyDecls.map(_.toSMT(ident)).mkString
-      result += s"(declare-datatypes () (($ident ($constr $fields))))\n\n"
+      s"(declare-datatypes () (($ident ($constr $fields))))"
     }
+  }
+
+  def toSMTInvariant: String = {
+    var constraints: List[String] = Nil
+    // constraints for property definitions of the form: x : T = e
+    for (PropertyDecl(_, propertyName, _, _, Some(false), Some(exp)) <- members) {
+      constraints ::= s"(= ($ident.$propertyName this) ${exp.toSMT(ident)})"
+    }
+    // constraints for embedded references/parts:
+    for (PropertyDecl(_, propertyName, IdentType(QualifiedName(typeName :: Nil), _), _, _, _) <- members) {
+      constraints ::= s"($typeName.inv ($ident.$propertyName this))"
+    }
+    // constraints for constraint decls:
+    for (ConstraintDecl(name, exp) <- members) {
+      constraints ::= exp.toSMT(ident)
+    }
+    // enforce all constraints
+    var result: String = ""
+    result += s"(assert (forall ((this Ref))\n"
+    result += s"  (=\n"
+    result += s"    ($ident.inv this)\n"
+    result += s"    (and\n"
+    result += s"      (deref-isa-$ident this)\n"
+    for (directSuperClass <- getDirectSuperClasses(ident)) {
+      result += s"      ($directSuperClass.inv this)\n"
+    }
+    for (constraint <- constraints.reverse) {
+      result += s"      $constraint\n"
+    }
+    result += s"    )\n"
+    result += s"  )\n"
+    result += s"))"
+    result
+  }
+ 
+  def getPropertyDecls: List[PropertyDecl] =
+    for (m <- members if m.isInstanceOf[PropertyDecl]) yield m.asInstanceOf[PropertyDecl]
+
+  def getFunDecls: List[FunDecl] =
+    for (m <- members if m.isInstanceOf[FunDecl]) yield m.asInstanceOf[FunDecl]
+
+  override def toSMT = {
+    var result: String = ""
+    // if (!members.exists(_.isInstanceOf[PropertyDecl])) {
+    //   result += s"(declare-sort $ident)\n\n"
+    // } else {
+    //   val constr = s"mk-$ident"
+    //   val propertyDecls = for (m <- members if m.isInstanceOf[PropertyDecl]) yield m.asInstanceOf[PropertyDecl]
+    //   val fields = propertyDecls.map(_.toSMT(ident)).mkString
+    //   result += s"(declare-datatypes () (($ident ($constr $fields))))\n\n"
+    // }
     val funDecls = for (m <- members if m.isInstanceOf[FunDecl]) yield m.asInstanceOf[FunDecl]
     result += funDecls.map(_.toSMT(ident)).mkString("\n")
     val assertion = s"(assert (exists ((this $ident)) ($ident.inv this)))"
@@ -739,24 +935,37 @@ case class FunDecl(ident: String,
                    body: List[MemberDecl]) extends MemberDecl {
 
   override def toSMT(className: String): String = {
+    var result: String = ""
     pushLocals(params.map(_.name).toSet)
     val resultType: String = ty match {
       case None    => "Int"
       case Some(t) => t.toSMT
     }
-    val result: String =
-      body match {
-        case Nil =>
-          val parameterTypes: String = s"$className " + params.map(_.toSMTType).mkString(" ")
-          s"(declare-fun $className.$ident ($parameterTypes) $resultType)"
-        case ExpressionDecl(exp) :: _ =>
-          val parameters: String = s"(this $className)" + params.map(_.toSMT).mkString
-          val expSMT = exp.toSMT(className)
-          s"(define-fun $className.$ident ($parameters) $resultType\n  $expSMT\n)\n"
-      }
+    body match {
+      case Nil =>
+        val parameterTypes: String = s"Ref " + params.map(_.toSMTType).mkString(" ")
+        result += s"(declare-fun $className.$ident ($parameterTypes) $resultType)"
+      case ExpressionDecl(exp) :: Nil =>
+        val parameters: String = s"(this Ref)" + params.map(_.toSMT).mkString
+        val expSMT = exp.toSMT(className)
+        result += s"(define-fun $className.$ident ($parameters) $resultType\n"
+        result += s"  $expSMT\n"
+        result += ")\n"
+        result += "\n"
+      case _ =>
+        error(s"Body of function $className.$ident contains more than one expression")
+    }
     popLocals()
     result
   }
+
+  // (define-fun Person.getAge ((this Ref)) Int
+  //   (Person.age this)
+  // )
+  // 
+  // (define-fun Employee.avoid ((this Ref)(p Ref)) Bool
+  //   (not (= (Employee.officemate this) p))
+  // ) 
 
   override def toString = {
     var result = s"fun $ident"
@@ -888,7 +1097,7 @@ case class IdentExp(ident: String) extends Exp {
     if (isLocal(ident))
       ident
     else
-      s"($ident this) "
+      s"($className.$ident this) "
 
   override def toString = ident
 
@@ -908,7 +1117,11 @@ case class IdentExp(ident: String) extends Exp {
 }
 
 case class DotExp(exp: Exp, ident: String) extends Exp {
-  override def toSMT(className: String): String = s"($ident ${exp.toSMT(className)})"
+  override def toSMT(className: String): String = {
+    val classNameOfExp = lookUpClass(className, exp)
+    val expSMT = exp.toSMT(className)
+    s"($classNameOfExp.$ident $expSMT)"
+  }
 
   override def toString = s"$exp.$ident"
 
@@ -2036,6 +2249,8 @@ case object NullLiteral extends Literal {
 }
 
 case object ThisLiteral extends Literal {
+  override def toSMT(className: String) = "this"
+
   override def toString = "this"
 
   override def toJson1 = {
@@ -2106,7 +2321,7 @@ case object Exists extends Quantifier {
 }
 
 trait Type {
-  def toSMT: String
+  def toSMT: String = ???
   def toJson: JSONObject = {
     if (Options.useJson1 == true) toJson1
     else toJson2
@@ -2117,28 +2332,22 @@ trait Type {
 }
 
 case class CollectType(ty: List[Type]) extends PrimitiveType {
-  override def toSMT = null
   override def toJson1 = null
   override def toJson2 = null
 }
 
 case class SumType(ty: List[Type]) extends PrimitiveType {
-  override def toSMT = null
   override def toJson1 = null
   override def toJson2 = null
 }
 
 case object AnyType extends Type {
-  override def toSMT = null
   override def toJson1 = null
   override def toJson2 = null
 }
 
 case class IdentType(ident: QualifiedName, args: List[Type]) extends Type {
-  def toSMT: String = {
-    val QualifiedName(names) = ident
-    names(0)
-  }
+  override def toSMT: String = "Ref"
 
   override def toString =
     if (args == null || args.isEmpty)
@@ -2166,7 +2375,8 @@ case class IdentType(ident: QualifiedName, args: List[Type]) extends Type {
 }
 
 case class CartesianType(types: List[Type]) extends Type {
-  def toSMT: String = {
+  // Probably needs to be a Ref.
+  override def toSMT: String = {
     val typesSMT = types.map(_.toSMT).mkString(" ")
     val typeSMT = s"Tuple${types.length}"
     s"($typeSMT $typesSMT)"
@@ -2194,8 +2404,6 @@ case class CartesianType(types: List[Type]) extends Type {
 }
 
 case class FunctionType(from: Type, to: Type) extends Type {
-  def toSMT: String = ???
-
   override def toString = s"$from -> $to"
 
   override def toJson1 = {
@@ -2217,7 +2425,7 @@ case class FunctionType(from: Type, to: Type) extends Type {
 }
 
 case class ParenType(ty: Type) extends Type {
-  def toSMT: String = (ty.toSMT)
+  override def toSMT: String = (ty.toSMT)
 
   override def toString = s"($ty)"
 
@@ -2238,8 +2446,6 @@ case class ParenType(ty: Type) extends Type {
 }
 
 case class SubType(ident: String, ty: Type, exp: Exp) extends Type {
-  def toSMT: String = ???
-
   override def toString = s"{| $ident : $ty . $exp |}"
 
   override def toJson1 = {
@@ -2266,7 +2472,7 @@ case class SubType(ident: String, ty: Type, exp: Exp) extends Type {
 trait PrimitiveType extends Type
 
 case object BoolType extends PrimitiveType {
-  def toSMT: String = "Bool"
+  override def toSMT: String = "Bool"
 
   override def toString = "Bool"
 
@@ -2284,8 +2490,6 @@ case object BoolType extends PrimitiveType {
 }
 
 case object CharType extends PrimitiveType {
-  def toSMT: String = ???
-
   override def toString = "Char"
 
   override def toJson1 = {
@@ -2302,7 +2506,7 @@ case object CharType extends PrimitiveType {
 }
 
 case object IntType extends PrimitiveType {
-  def toSMT: String = "Int"
+  override def toSMT: String = "Int"
 
   override def toString = "Int"
 
@@ -2320,7 +2524,7 @@ case object IntType extends PrimitiveType {
 }
 
 case object RealType extends PrimitiveType {
-  def toSMT: String = "Real"
+  override def toSMT: String = "Real"
 
   override def toString = "Real"
 
@@ -2338,8 +2542,6 @@ case object RealType extends PrimitiveType {
 }
 
 case object StringType extends PrimitiveType {
-  def toSMT: String = ???
-
   override def toString = "String"
 
   override def toJson1 = {
@@ -2356,8 +2558,6 @@ case object StringType extends PrimitiveType {
 }
 
 case object UnitType extends PrimitiveType {
-  def toSMT: String = ???
-
   override def toString = "Unit"
 
   override def toJson1 = {
