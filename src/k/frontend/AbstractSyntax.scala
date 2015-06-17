@@ -30,27 +30,6 @@ import UtilAST._
 import ClassHierarchy._
 import TypeChecker._
 
-object TypeInference {
-
-  // The locals stack:
-
-  var locals: Stack[Set[String]] = new Stack()
-
-  def pushLocals(localNames: Set[String]) {
-    locals.push(localNames)
-  }
-
-  def popLocals() {
-    locals.pop()
-  }
-
-  //def isLocal(name: String): Boolean = {
-    //locals.indexWhere(_.contains(name)) >= 0
-    //false
-  //}
-}
-import TypeInference._
-
 object ToSMTSupport {
   var storedModel: Model = null
   var constantsToDeclare: List[(String, Type)] = Nil
@@ -806,7 +785,6 @@ case class FunDecl(ident: String,
 
   override def toSMT(className: String): String = {
     var result: String = ""
-    pushLocals(params.map(_.name).toSet)
     val resultType: String = ty match {
       case None    => "Int"
       case Some(t) => t.toSMT
@@ -825,7 +803,6 @@ case class FunDecl(ident: String,
       case _ =>
         UtilAST.error(s"Body of function $className.$ident contains more than one expression")
     }
-    popLocals()
     result
   }
 
@@ -1389,12 +1366,10 @@ case class QuantifiedExp(quant: Quantifier,
                          exp: Exp) extends Exp {
 
   override def toSMT(className: String): String = {
-    pushLocals(bindings.map(_.boundNames).toSet.flatten)
     val quantSMT = quant.toSMT
     val bindingsSMT = bindings.map(_.toSMT).mkString
     val expSMT = exp.toSMT(className)
     val result = s"($quantSMT ($bindingsSMT) $expSMT)"
-    popLocals()
     result
   }
 
