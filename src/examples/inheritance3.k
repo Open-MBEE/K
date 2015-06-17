@@ -6,7 +6,7 @@ class A {
 class B extends A {
   y : Int
   fun sum(k : Int) : Int {
-    x + y + k
+    y + k
   }
 }
 

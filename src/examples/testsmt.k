@@ -10,7 +10,7 @@ class Person {
   req getAge() > 18 
 }
 
-===
+
 class Employee extends Person {
   boss : Person
   officemate : Employee
@@ -20,8 +20,9 @@ class Employee extends Person {
   }
 
   req boss.age > 30
+  req boss.getAge < 99
   req this =  officemate.officemate
   req avoid(boss)
 }
-===
 
+p : Person := Person(age :: 31)
