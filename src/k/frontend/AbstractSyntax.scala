@@ -156,6 +156,7 @@ object TypeInference {
   }
 
   def isLocal(name: String): Boolean = {
+    // println(s"*** test is local of $name = ${locals.indexWhere(_.contains(name)) >= 0}")
     locals.indexWhere(_.contains(name)) >= 0
   }
 
