@@ -27,6 +27,7 @@ object UtilAST {
   }
 }
 import UtilAST._
+<<<<<<< HEAD
 
 object TypeInference {
   type ClassName = String
@@ -180,6 +181,10 @@ object TypeInference {
     }
 }
 import TypeInference._
+=======
+import ClassHierarchy._
+import TypeChecker._
+>>>>>>> 052caa234823e6369105a82a46d5877d0b079940
 
 object ToSMTSupport {
   var storedModel: Model = null
@@ -223,7 +228,7 @@ object ToSMTSupport {
       case _                                         => false
     } match {
       case Some(e: EntityDecl) => e
-      case None                => error(s"Class should exist: $className")
+      case None                => UtilAST.error(s"Class should exist: $className")
     }
   }
 
@@ -278,8 +283,11 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
 
   def toSMT: String = {
     val model: Model = transformModel(this)
+<<<<<<< HEAD
     val entityDecls: List[EntityDecl] = model.decls.asInstanceOf[List[EntityDecl]]
     initializeSymbolTable(model)
+=======
+>>>>>>> 052caa234823e6369105a82a46d5877d0b079940
     var result: String = ""
 
     // Generate options
@@ -361,8 +369,13 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
 
     result += s"; ---------- invariants: ----------\n"
     result += "\n"
+<<<<<<< HEAD
     for (ed <- entityDecls) {
       result += ed.toSMTInvariantDecl + "\n"
+=======
+    for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
+      result += s"(declare-fun ${ed.ident}.inv (Ref) Bool)\n"
+>>>>>>> 052caa234823e6369105a82a46d5877d0b079940
     }
     result += "\n"
     for (ed <- entityDecls) {
@@ -385,9 +398,12 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
     result
   }
 
+<<<<<<< HEAD
   // ==========
   // Constants:
   // ==========
+=======
+>>>>>>> 052caa234823e6369105a82a46d5877d0b079940
   //  def toSMT: String = {
   //    val model: Model = transformModel(this)
   //    initializeSymbolTable(model)
@@ -553,7 +569,7 @@ case class EntityDecl(
 
   def toSMTDatatype: String = {
     val propertyDeclsOfSuperClasses: List[PropertyDecl] =
-      (for (superClass <- getSuperClasses(ident)) yield classMap(superClass).getPropertyDecls).flatten
+      (for (superClass <- getSuperClasses(ident)) yield classes(superClass).getPropertyDecls).flatten
     val propertyDecls = propertyDeclsOfSuperClasses ++ getPropertyDecls
     if (propertyDecls.isEmpty) {
       s"(declare-sort $ident)"
@@ -666,9 +682,12 @@ case class EntityDecl(
     result
   }
 
+<<<<<<< HEAD
   def toSMTAssert: String =
     s"(assert (exists ((instanceOf$ident Ref)) (${ident}.inv instanceOf$ident)))\n"
   
+=======
+>>>>>>> 052caa234823e6369105a82a46d5877d0b079940
   def getPropertyDecls: List[PropertyDecl] =
     for (m <- members if m.isInstanceOf[PropertyDecl]) yield m.asInstanceOf[PropertyDecl]
 
@@ -969,7 +988,6 @@ case class FunDecl(ident: String,
 
   override def toSMT(className: String): String = {
     var result: String = ""
-    pushLocals(params.map(_.name).toSet)
     val resultType: String = ty match {
       case None    => "Int"
       case Some(t) => t.toSMT
@@ -985,9 +1003,8 @@ case class FunDecl(ident: String,
         result += s"  $expSMT\n"
         result += ")"
       case _ =>
-        error(s"Body of function $className.$ident contains more than one expression")
+        UtilAST.error(s"Body of function $className.$ident contains more than one expression")
     }
-    popLocals()
     result
   }
 
@@ -1126,7 +1143,7 @@ case class ParenExp(exp: Exp) extends Exp {
 
 case class IdentExp(ident: String) extends Exp {
   override def toSMT(className: String): String =
-    if (isLocal(ident))
+    if (isLocal(this))
       ident
     else
       s"($className.$ident this) "
@@ -1150,7 +1167,7 @@ case class IdentExp(ident: String) extends Exp {
 
 case class DotExp(exp: Exp, ident: String) extends Exp {
   override def toSMT(className: String): String = {
-    val classNameOfExp = lookUpClass(className, exp)
+    val classNameOfExp = exp2Type(exp).toString
     val expSMT = exp.toSMT(className)
     s"($classNameOfExp.$ident $expSMT)"
   }
@@ -1199,7 +1216,7 @@ case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
         exp1 match {
           case IdentExp(ident) => s"$className.$ident this"
           case DotExp(expBeforDot, ident) =>
-            val classOfFunction = lookUpClass(className, expBeforDot)
+            val classOfFunction = exp2Type(expBeforDot).toString
             s"$classOfFunction.$ident ${expBeforDot.toSMT(className)}"
         }
       val argsSMT: String = args.map(_.toSMT(className)).mkString(" ")
@@ -1549,12 +1566,10 @@ case class QuantifiedExp(quant: Quantifier,
                          exp: Exp) extends Exp {
 
   override def toSMT(className: String): String = {
-    pushLocals(bindings.map(_.boundNames).toSet.flatten)
     val quantSMT = quant.toSMT
     val bindingsSMT = bindings.map(_.toSMT).mkString
     val expSMT = exp.toSMT(className)
     val result = s"($quantSMT ($bindingsSMT) $expSMT)"
-    popLocals()
     result
   }
 
