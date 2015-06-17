@@ -30,20 +30,20 @@ case object TypeChecker {
     }
   }
 
-  def isConstructorCall(te: TypeEnv, exp: Exp): Boolean = {
+  def isConstructorCall(te: TypeEnv, exp: Exp): Option[Type] = {
     return exp match {
       case IdentExp(i) =>
         if (te.map.keySet.contains(i)) {
           te.map(i) match {
-            case ClassTypeInfo(_) => true
-            case _                => false
+            case ClassTypeInfo(d) => Some(type2Decl.map(_.swap).asInstanceOf[Map[EntityDecl,Type]](d))
+            case _                => None
           }
-        } else false
-      case _ => false
+        } else None
+      case _ => None
     }
   }
 
-  def isConstructor(className: String, exp: Exp): Boolean = isConstructorCall(globalTypeEnv, exp)
+  def isConstructor(className: String, exp: Exp): Boolean = isConstructorCall(globalTypeEnv, exp).isEmpty
 
   def getDirectSuperClasses(className: String): List[String] =
     if (className == "TopLevelDeclarations") Nil
@@ -352,7 +352,6 @@ class TypeChecker(model: Model) {
           origTypeEnvironments += (cte0._1 -> (cte0._2 + ((m2.name) -> PropertyTypeInfo(m2, false))))
           decl2TypeEnvironment += (cte1._1 -> (cte1._2 + ((m1.name) -> PropertyTypeInfo(m1, false))))
           origTypeEnvironments += (cte1._1 -> (cte1._2 + ((m1.name) -> PropertyTypeInfo(m1, false))))
-
           decl2TypeEnvironment += (d -> classTypeEnv)
           origTypeEnvironments += (d -> classTypeEnv)
 
@@ -532,7 +531,7 @@ class TypeChecker(model: Model) {
 
   def getExpType(te: TypeEnv, exp: Exp): Type = {
     val result: Type = exp match {
-      case ResultExp   => AnyType
+      case ResultExp   => AnyType //TODO
       case ParenExp(e) => getExpType(te, e)
       case IdentExp(i) =>
         if (!te.contains(i)) {
@@ -544,7 +543,7 @@ class TypeChecker(model: Model) {
           case pti @ FunctionTypeInfo(decl) =>
             decl.ty match {
               case Some(t) => t
-              case None    => AnyType
+              case None    => UnitType
             }
           case cti @ ClassTypeInfo(decl)   => IdentType(QualifiedName(List(decl.ident)), null)
           case pti @ PatternTypeInfo(p, t) => t
@@ -621,12 +620,12 @@ class TypeChecker(model: Model) {
             }
         }
       case FunApplExp(exp, args) =>
-        if (isConstructorCall(te, exp)) {
-          IdentType(QualifiedName(List(exp.toString)), List())
-        } else {
-          var functionType = getExpType(te, exp)
+        val callToConstructor = isConstructorCall(te, exp)
+        if (!callToConstructor.isEmpty) callToConstructor.get
+        else {
+          var functionReturnType = getExpType(te, exp)
           // TODO ensure arguments match up
-          functionType match {
+          functionReturnType match {
             case CollectType(t) =>
               assert(args.length <= 1)
               // assuming lambda expression as only argument
@@ -636,7 +635,7 @@ class TypeChecker(model: Model) {
               // CollectType(List(getExpType(lambdaTe, lambdaExp)))
               IdentType(QualifiedName(List("Seq")), List(getExpType(lambdaTe, lambdaExp)))
             case SumType(t) => IntType
-            case _          => functionType
+            case _          => functionReturnType
           }
         }
       case WhileExp(cond, body) =>
