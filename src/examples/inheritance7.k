@@ -25,7 +25,7 @@ bobj : C
 
 req bobj.z = 1
 
-y : String
+y : Int
 
 fun foo(x : Int) : Int {
     
