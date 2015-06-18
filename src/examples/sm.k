@@ -1,12 +1,7 @@
 package examples.sm
 
 class <event> Event
-
-event turn_on
-event fire
-event turn_off
-
-class State
+class <state> State
 
 
 class RocketMachine {
@@ -14,8 +9,12 @@ class RocketMachine {
   off : State
   ready : State
   firing : State
+  turn_on : Event
+  fire : Event
+  turn_off : Event
   
-  fun move(s: State, e: Event)
+  
+  fun move(s: State, e: Event) : State
   
   req off != ready && off != firing && firing != ready
   

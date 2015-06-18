@@ -18,6 +18,15 @@ case object TypeChecker {
   var annotations = Map[String, AnnotationDecl]()
   var classes = Map[String, EntityDecl]()
 
+  def getPropertyDeclType(decl: PropertyDecl): Type = {
+    if (!decl.multiplicity.isEmpty) {
+      if (decl.modifiers.contains(Unique)) IdentType(QualifiedName(List("Set")), List(decl.ty))
+      else if (decl.modifiers.contains(Ordered)) IdentType(QualifiedName(List("Seq")), List(decl.ty))
+      else IdentType(QualifiedName(List("Bag")), List(decl.ty))
+    } else decl.ty
+
+  }
+
   def areTypesEqual(ty1: Type, ty2: Type, compatibility: Boolean): Boolean = {
     (ty1, ty2) match {
       case (i1 @ IdentType(it1, it2), i2 @ IdentType(it3, it4)) if !Misc.isCollection(i1) && !Misc.isCollection(i2) =>
@@ -35,7 +44,7 @@ case object TypeChecker {
       case IdentExp(i) =>
         if (te.map.keySet.contains(i)) {
           te.map(i) match {
-            case ClassTypeInfo(d) => Some(type2Decl.map(_.swap).asInstanceOf[Map[EntityDecl,Type]](d))
+            case ClassTypeInfo(d) => Some(type2Decl.map(_.swap).asInstanceOf[Map[EntityDecl, Type]](d))
             case _                => None
           }
         } else None
@@ -193,8 +202,8 @@ object ClassHierarchy {
 
   def buildHierarchy(d: EntityDecl, types: Map[Type, TopDecl], visited: Set[EntityDecl]): Set[Type] = {
     d.extending.foldLeft(Set[Type]()) { (res, e) =>
-      require(types(e).isInstanceOf[EntityDecl])
-      require(!visited.contains(types(e).asInstanceOf[EntityDecl]))
+      assert(types(e).isInstanceOf[EntityDecl])
+      assert(!visited.contains(types(e).asInstanceOf[EntityDecl]))
       res + e
     }
   }
@@ -271,13 +280,17 @@ class TypeChecker(model: Model) {
     model.decls.foreach { d =>
       d match {
         case p @ PropertyDecl(_, name, ty, _, _, _) =>
+          if ((p.modifiers.contains(Var) && p.modifiers.contains(Val)) ||
+            ((p.modifiers.contains(Var) || p.modifiers.contains(Val)) &&
+              (p.modifiers.contains(Ordered) || p.modifiers.contains(Unique) ||
+                p.modifiers.contains(Source) || p.modifiers.contains(Target))))
+            error(s"Property $name has conflicting modifiers.")
+
           if (!doesTypeExist(globalTypeEnv, ty)) error(s"Specified type $ty does not exist. Please check. Exiting.")
           globalTypeEnv = globalTypeEnv + (name -> PropertyTypeInfo(p, true))
         case _ => ()
       }
     }
-
-    // where do we process associations? I think right here... 
 
     // pass: build information about properties/functions in classes
     // store it in the global type env, but also one for each class
@@ -300,20 +313,21 @@ class TypeChecker(model: Model) {
         case ed @ EntityDecl(_, AssocToken, _, ident, _, _, _) =>
 
           // only support 2 members in associations
-          require(ed.members.length == 2,
-            error(s"$ident contains more than two associations.\n\tCurrently only a source and target are supported for associations."))
+          if (ed.members.length != 2)
+            error(s"$ident contains more than two associations.\n\tCurrently only a source and target are supported for associations.")
 
           // members must be source and target 
-          require(ed.members.forall { m =>
+          if (!ed.members.forall { m =>
             m.asInstanceOf[PropertyDecl].modifiers != null &&
               (m.asInstanceOf[PropertyDecl].modifiers.contains(Source) ||
                 m.asInstanceOf[PropertyDecl].modifiers.contains(Target))
-          }, s"$ident does not define a source or target correctly.")
+          })
+            error(s"$ident does not define a source or target correctly.")
 
           // members must be of ident type that is a user defined class
-          require(ed.members.forall { m =>
+          if (!(ed.members.forall { m =>
             m.asInstanceOf[PropertyDecl].ty.isInstanceOf[IdentType]
-          }, s"$ident association uses a non user defined type as source/target.")
+          })) error(s"$ident association uses a non user defined type as source/target.")
 
           val classTypeEnv = ed.members.foldLeft(globalTypeEnv) {
             (res, m) =>
@@ -433,8 +447,8 @@ class TypeChecker(model: Model) {
           ed.annotations.foreach { a =>
             val annotationExpType = getExpType(entityTypeEnv, a.exp)
             val annotationType = annotations(a.name).ty
-            require(areTypesEqual(annotationExpType, annotationType, false),
-              s"Annotation $a does not type check.")
+            if (!areTypesEqual(annotationExpType, annotationType, false))
+              error(s"Annotation $a does not type check.")
           }
 
           ed.members.foreach { m =>
@@ -511,7 +525,8 @@ class TypeChecker(model: Model) {
         case ExpressionDecl(exp) =>
           lastT = getExpType(functionTypeEnv, exp)
           if (exp.isInstanceOf[ReturnExp] && !fd.ty.isEmpty) {
-            require(areTypesEqual(lastT, fd.ty.get, true), s"Return type does not match for $exp in function ${fd.ident}")
+            if (!areTypesEqual(lastT, fd.ty.get, true))
+              error(s"Return type does not match for $exp in function ${fd.ident}")
           }
           exp2Type = exp2Type + (exp -> lastT)
         case _ => ()
@@ -529,6 +544,41 @@ class TypeChecker(model: Model) {
 
   }
 
+  def getFunDecl(te: TypeEnv, exp: Exp): (Boolean, FunDecl) = {
+    val result: (Boolean, FunDecl) = exp match {
+      case ParenExp(e) => getFunDecl(te, e)
+      case IdentExp(i) =>
+        if (!te.contains(i)) {
+          error(s"$i not found in scope for $exp. Please check. Exiting.")
+        }
+        te(i) match {
+          case pti @ FunctionTypeInfo(decl) => (false, decl)
+          case _                            => error(s"Unexpected type found for expression during function application. $exp")
+        }
+      case DotExp(e, i) =>
+        val ti = getExpType(te, e)
+        ti match {
+          case it @ IdentType(_, _) =>
+            if (Misc.isCollection(it)) {
+              (true, null)
+            } else {
+              te(it.toString) match {
+                case cti @ ClassTypeInfo(d) =>
+                  val classTypeEnv = decl2TypeEnvironment(d)
+                  classTypeEnv(i) match {
+                    case pti @ FunctionTypeInfo(decl) => (false, decl)
+                    case _                            => error(s"Unknown type info received for expression when discovering function type. $exp")
+                  }
+              }
+            }
+          case _ => error(s"Unexpected expression type found in function application. $exp")
+        }
+
+      case _ => error(s"Unexpected expression found in function application. $exp")
+    }
+    return result
+  }
+
   def getExpType(te: TypeEnv, exp: Exp): Type = {
     val result: Type = exp match {
       case ResultExp   => AnyType //TODO
@@ -538,7 +588,7 @@ class TypeChecker(model: Model) {
           error(s"$i not found in scope for $exp. Please check. Exiting.")
         }
         te(i) match {
-          case pti @ PropertyTypeInfo(decl, _) => pti.decl.ty
+          case pti @ PropertyTypeInfo(decl, _) => getPropertyDeclType(decl)
           case pti @ ParamTypeInfo(p)          => p.ty
           case pti @ FunctionTypeInfo(decl) =>
             decl.ty match {
@@ -578,7 +628,7 @@ class TypeChecker(model: Model) {
                         }).get._2
 
                     classTypeEnv(i) match {
-                      case pti @ PropertyTypeInfo(decl, _) => pti.decl.ty
+                      case pti @ PropertyTypeInfo(decl, _) => getPropertyDeclType(decl)
                       case pti @ ParamTypeInfo(p)          => p.ty
                       case pti @ FunctionTypeInfo(decl)    => decl.ty.get
                     }
@@ -619,12 +669,54 @@ class TypeChecker(model: Model) {
               case _                    => error(s"Non tuple type found with tuple indexing. $exp")
             }
         }
-      case FunApplExp(exp, args) =>
-        val callToConstructor = isConstructorCall(te, exp)
-        if (!callToConstructor.isEmpty) callToConstructor.get
-        else {
-          var functionReturnType = getExpType(te, exp)
-          // TODO ensure arguments match up
+      case FunApplExp(fexp, args) =>
+        val callToConstructor = isConstructorCall(te, fexp)
+        if (!callToConstructor.isEmpty) {
+          val ty = callToConstructor.get
+          val decl = type2Decl(ty)
+
+          assert(decl.isInstanceOf[EntityDecl])
+
+          val declTypeEnvironment = decl2TypeEnvironment(decl)
+
+          if (!args.forall { a => a.isInstanceOf[NamedArgument] })
+            error(s"Have to use named arguments in a constructor function call: $exp")
+
+          if (!args.forall {
+            a =>
+              val namedArg = a.asInstanceOf[NamedArgument]
+              val lhsType =
+                {
+                  declTypeEnvironment(namedArg.ident) match {
+                    case PropertyTypeInfo(pd, _) => pd.ty
+                    case _                       => error(s"Property ${namedArg.ident} could not be found for ${decl.asInstanceOf[EntityDecl].ident}")
+                  }
+                }
+              val rhsType = getExpType(te, namedArg.exp)
+              val res = areTypesEqual(lhsType, rhsType, false)
+              if (!res) {
+                log(s"Types are $lhsType $rhsType.")
+              }
+              res
+          })
+            error(s"Incorrect arguments to constructor call: $exp")
+
+          ty
+        } else {
+          var functionReturnType = getExpType(te, fexp)
+          var (collectionFunction, functionDecl) = getFunDecl(te, fexp)
+
+          // ensure arguments match param types (unless collection function)
+          if (!args.forall { a => a.isInstanceOf[PositionalArgument] })
+            error(s"Cannot use named arguments to a non-constructor function call: $exp")
+
+          if (!collectionFunction &&
+            !((functionDecl.params zip args).forall { pa =>
+              val p2Type = getExpType(te, pa._2.asInstanceOf[PositionalArgument].exp)
+              areTypesEqual(pa._1.ty, p2Type, false)
+            }))
+            error(s"Arguments to function seem incorrect: $exp")
+
           functionReturnType match {
             case CollectType(t) =>
               assert(args.length <= 1)
@@ -668,7 +760,8 @@ class TypeChecker(model: Model) {
             te.overwrite(ident.asInstanceOf[IdentPattern].ident -> PatternTypeInfo(pattern, ty))
           case _ => error(s"Must use a typed pattern in for expressions: $exp")
         }
-        require(getExpType(newTe, exp) == BoolType, s"$exp is not of type Bool")
+        if (getExpType(newTe, exp) != BoolType)
+          error(s"$exp is not of type Bool")
         getExpType(newTe, body)
       case TypeCastCheckExp(cast, e, ty) => if (cast) ty else BoolType
       case QuantifiedExp(q, b, e) =>
@@ -688,7 +781,8 @@ class TypeChecker(model: Model) {
             }
           }
         }
-        require(getExpType(newTe, e).equals(BoolType), s"$exp does not evaluate to Bool")
+        if (getExpType(newTe, e) != BoolType)
+          error(s"$exp does not evaluate to Bool")
         BoolType
       case IntegerLiteral(_)   => IntType
       case BooleanLiteral(_)   => BoolType
