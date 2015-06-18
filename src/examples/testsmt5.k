@@ -1,4 +1,6 @@
 
+-- Test 5: --
+
 class Event {
   t1: Int
   t2: Int
@@ -29,3 +31,18 @@ class Schedule {
   req b.before(c)
   req c.contains(d)
 }
+
+=== MODEL:
+
+[
+  event:       2 -> (lift-Event (mk-Event 0 11)), 
+  schedule:    4 -> (lift-Schedule (mk-Schedule 14 15 16 17)), 
+  top:        13 -> (lift-TopLevelDeclarations TopLevelDeclarations!val!0), 
+  schedule.a: 14 -> (lift-Event (mk-Event 2414 2425)), 
+  schedule.b: 15 -> (lift-Event (mk-Event 2425 2436)), 
+  schedule.c: 16 -> (lift-Event (mk-Event 2437 2450)), 
+  schedule.d: 17 -> (lift-Event (mk-Event 2438 2449)), 
+            else -> (lift-Event (mk-Event 2425 2436))
+  ]
+
+===

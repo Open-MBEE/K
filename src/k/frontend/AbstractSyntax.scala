@@ -27,164 +27,8 @@ object UtilAST {
   }
 }
 import UtilAST._
-<<<<<<< HEAD
-
-object TypeInference {
-  type ClassName = String
-  type MemberName = String // property and function names
-  type PropertyName = String // property names
-  type LocalName = String // function parameters for example
-
-  // The symbol table:
-
-  trait MemberKind
-  case class FieldKind(className: String) extends MemberKind
-  object FunctionKind extends MemberKind
-
-  var symbolTable: Map[ClassName, Map[MemberName, MemberKind]] = Map()
-  var classMap: Map[ClassName, EntityDecl] = Map()
-  var superClasses: Map[ClassName, List[ClassName]] = Map()
-  var subClasses: Map[ClassName, List[ClassName]] = Map()
-
-  def updateSymbolTable(className: String, memberName: String, kind: MemberKind) {
-    val subMap = symbolTable.getOrElse(className, Map())
-    symbolTable += (className -> (subMap + (memberName -> kind)))
-  }
-
-  def recordInheritance(superClass: ClassName, subClass: ClassName) {
-    val superOfSub = superClasses.getOrElse(subClass, Nil)
-    superClasses += (subClass -> (superOfSub ++ List(superClass)))
-    val subOfSuper = subClasses.getOrElse(superClass, Nil)
-    subClasses += (superClass -> (subOfSuper ++ List(subClass)))
-  }
-
-  def getDirectSuperClasses(className: String): List[ClassName] =
-    superClasses.getOrElse(className, Nil)
-
-  def getSuperClasses(className: String): List[ClassName] = {
-    val directSuperClasses = getDirectSuperClasses(className)
-    val indirectSuperClasses = (for (superClass <- directSuperClasses) yield getSuperClasses(superClass)).flatten
-    indirectSuperClasses ++ directSuperClasses
-  }
-
-  def getSubClasses(className: String): List[ClassName] = {
-    val directSubClasses = subClasses.getOrElse(className, Nil)
-    val indirectSubClasses = (for (subClass <- directSubClasses) yield getSubClasses(subClass)).flatten
-    directSubClasses ++ indirectSubClasses
-  }
-
-  def lookUp(className: ClassName, memberName: MemberName): MemberKind = {
-    assert(symbolTable contains className)
-    assert(symbolTable(className) contains memberName)
-    symbolTable(className)(memberName)
-  }
-
-  def lookUpClass(className: ClassName, exp: Exp): String = {
-    var classNameUsed: String = null
-    var identUsed: String = null
-    exp match {
-      case IdentExp(ident) =>
-        classNameUsed = className
-        identUsed = ident
-      case DotExp(expBeforeDot, ident) =>
-        classNameUsed = lookUpClass(className, expBeforeDot)
-        identUsed = ident
-      case _ =>
-        error(s"Error in looking up class name of $exp within $className")
-    }
-    assert(symbolTable contains classNameUsed, s"Symbol table does not contain: [$classNameUsed]")
-    assert(symbolTable(classNameUsed) contains identUsed, s"Symbol table of $classNameUsed does not contain $identUsed")
-    symbolTable(classNameUsed)(identUsed) match {
-      case FieldKind(resultingClassName) =>
-        resultingClassName
-      case _ =>
-        error("Symbol table entry is suppposed to exist!")
-    }
-  }
-
-  // This needs to also check for whether it is a function local to class 
-  // with name className. This likely requires a change in the lookup function.
-
-  def isConstructor(className: String, exp: Exp): Boolean = {
-    exp match {
-      case IdentExp(ident) =>
-        symbolTable contains ident
-      case _ => false
-    }
-  }
-
-  def initializeSymbolTable(model: Model) {
-    for (topDecl <- model.decls) {
-      topDecl match {
-        case ed: EntityDecl =>
-          val className = ed.ident
-          for (memberDecl <- ed.members) {
-            memberDecl match {
-              case pd: PropertyDecl =>
-                pd.ty match {
-                  case IdentType(QualifiedName(ident :: Nil), Nil) =>
-                    updateSymbolTable(className, pd.name, FieldKind(ident))
-                  case _ =>
-                }
-              case fd: FunDecl =>
-                updateSymbolTable(className, fd.ident, FunctionKind)
-              case _ =>
-            }
-          }
-          classMap += (className -> ed)
-          for (ty <- ed.extending) {
-            ty match {
-              case IdentType(QualifiedName(classNameSuper :: Nil), _) =>
-                recordInheritance(classNameSuper, className)
-              case _ => error(s"K solver only handles extension of non-qualified names: $className extending $ty")
-            }
-          }
-        case _ =>
-      }
-    }
-  }
-
-  // The locals stack:
-
-  var locals: Stack[Set[LocalName]] = new Stack()
-
-  def pushLocals(localNames: Set[LocalName]) {
-    locals.push(localNames)
-  }
-
-  def popLocals() {
-    locals.pop()
-  }
-
-  def isLocal(name: String): Boolean = {
-    // println(s"*** test is local of $name = ${locals.indexWhere(_.contains(name)) >= 0}")
-    locals.indexWhere(_.contains(name)) >= 0
-  }
-
-  def smtName_(className: String)(memberName: String): String =
-    lookUp(className, memberName) match {
-      case FieldKind(_) => s"($memberName this)"
-      case FunctionKind => s"$className.$memberName"
-      case _            => memberName
-    }
-
-  def localMethod(className: String, function: String) =
-    function.startsWith(s"$className.")
-
-  // Used for tuple expressions:  
-
-  def getTypes(exps: List[Exp]): List[Type] =
-    exps.length match {
-      case 2 => List(IntType, BoolType)
-      case 3 => List(IntType, BoolType, RealType)
-      case _ => ???
-    }
-}
-import TypeInference._
-=======
 import ClassHierarchy._
 import TypeChecker._
->>>>>>> 052caa234823e6369105a82a46d5877d0b079940
 
 object ToSMTSupport {
   var storedModel: Model = null
@@ -283,11 +127,7 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
 
   def toSMT: String = {
     val model: Model = transformModel(this)
-<<<<<<< HEAD
     val entityDecls: List[EntityDecl] = model.decls.asInstanceOf[List[EntityDecl]]
-    initializeSymbolTable(model)
-=======
->>>>>>> 052caa234823e6369105a82a46d5877d0b079940
     var result: String = ""
 
     // Generate options
@@ -352,8 +192,11 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
     result += "; ---------- getters: ----------\n"
     result += "\n"
     for (ed <- entityDecls) {
-      result += ed.toSMTGetterFunctions + "\n"
-      result += "\n"
+      val gettersSMT: String = ed.toSMTGetterFunctions
+      if (gettersSMT != "") {
+        result += gettersSMT + "\n"
+        result += "\n"
+      }
     }
 
     // Generate methods:
@@ -361,21 +204,19 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
     result += s"; ---------- methods: ----------\n"
     result += "\n"
     for (ed <- entityDecls) {
-      result += ed.toSMTMethods + "\n"
-      result += "\n"
+      val methodsSMT: String = ed.toSMTMethods
+      if (methodsSMT != "") {
+        result += methodsSMT + "\n"
+        result += "\n"
+      }
     }
 
     // Generate invariants:
 
     result += s"; ---------- invariants: ----------\n"
     result += "\n"
-<<<<<<< HEAD
     for (ed <- entityDecls) {
       result += ed.toSMTInvariantDecl + "\n"
-=======
-    for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
-      result += s"(declare-fun ${ed.ident}.inv (Ref) Bool)\n"
->>>>>>> 052caa234823e6369105a82a46d5877d0b079940
     }
     result += "\n"
     for (ed <- entityDecls) {
@@ -398,12 +239,10 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
     result
   }
 
-<<<<<<< HEAD
   // ==========
   // Constants:
   // ==========
-=======
->>>>>>> 052caa234823e6369105a82a46d5877d0b079940
+
   //  def toSMT: String = {
   //    val model: Model = transformModel(this)
   //    initializeSymbolTable(model)
@@ -648,7 +487,7 @@ case class EntityDecl(
 
   def toSMTInvariantDecl: String =
     s"(declare-fun ${ident}.inv (Ref) Bool)"
-  
+
   def toSMTInvariant: String = {
     var constraints: List[String] = Nil
     // constraints for property definitions of the form: x : T = e
@@ -682,12 +521,9 @@ case class EntityDecl(
     result
   }
 
-<<<<<<< HEAD
   def toSMTAssert: String =
-    s"(assert (exists ((instanceOf$ident Ref)) (${ident}.inv instanceOf$ident)))\n"
-  
-=======
->>>>>>> 052caa234823e6369105a82a46d5877d0b079940
+    s"(assert (exists ((instanceOf$ident Ref)) (${ident}.inv instanceOf$ident)))"
+
   def getPropertyDecls: List[PropertyDecl] =
     for (m <- members if m.isInstanceOf[PropertyDecl]) yield m.asInstanceOf[PropertyDecl]
 
