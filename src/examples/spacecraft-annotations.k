@@ -102,12 +102,12 @@ class Spacecraft {
   fun getInstrumentsNameWeight : Seq[String * Real] 
     post $result.length() = instrument.size()
   {
-    instrument.collect(i -> Tuple(i.name, i.weight)).toSeq()
+    instrument.collect(i -> Tuple(i.name, i.weight))
   }
 
   fun addInstruments(insts : Set[Instrument]) 
     pre insts.size() <= 10
-    pre forall i : insts . i !isin instrument
+    pre forall i : insts :- i !isin instrument
   {
     instrument := instrument union insts
   }
@@ -120,7 +120,7 @@ class Spacecraft {
 
 assoc SpacecraftInstrument {
   source spacecraft : Spacecraft
-  target part instrument: Instrument[1,10]
+  target part instrument: Set[Instrument] [1,10]
 }
 
 ==============
@@ -141,8 +141,7 @@ SpacecraftInstrument(Spacecraft::clipper, instrument::magnetometer)
 SpacecraftInstrument(Spacecraft::clipper, instrument::battery)
 
 req CameraAlwaysOn: 
-  exists inst : clipper.instrument . inst is Camera && inst.operating = true
+  exists inst : clipper.instrument :- inst is Camera && inst.operating = true
 
 --req CameraAlwaysOnOCL:
 --  clipper.instrument.Exists(inst -> inst is Camera && inst.operating = true)
-

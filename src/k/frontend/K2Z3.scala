@@ -114,7 +114,11 @@ object K2Z3 {
       // the decl is an "interpretation".
       log("<<++")
       model.getConstDecls.foreach { x =>
-        log(s"\tConst: ${x.getName.toString.split("!")(0)} ${model.getConstInterp(x).toString}")
+        try {
+          log(s"\tConst: ${x.getName.toString.split("!")(0)} ${model.getConstInterp(x).toString}")
+        } catch {
+          case _: Throwable => log(s"\tConst: ${x.getName.toString.split("!")(0)} ${model.getFuncInterp(x)}")
+        }
       }
       model.getFuncDecls.foreach {
         x => println(s"\tFunc: ${x.getName.toString.split("!")(0)}  ${model.getFuncInterp(x)}")
