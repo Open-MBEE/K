@@ -1,3 +1,6 @@
+
+-- Test 3: --
+
 class A {
   x : Int = 1
   y : Int
@@ -12,5 +15,5 @@ class B {
   req a1.y < z
 }
 
-a : A = A(y :: 2)
-b : B = B(a1 :: a)
+-- a : A = A(y :: 2)
+-- b : B = B(a1 :: a)
