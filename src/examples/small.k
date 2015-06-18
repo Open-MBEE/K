@@ -29,7 +29,7 @@ class Person {
 
 class Garage { 
 
-  cars : Set[Car] [0,42]
+  unique cars : Car [0,42]
   
   fun garageValue (cs : Set[Car]) : Int {
     x : Int
@@ -52,7 +52,7 @@ class Garage {
     cs.collect(c -> Tuple(c.make, c.mfdate))
   }
   
-  garageCarsMakeModel(cs)
+  garageCarsMakeModel(cars)
 
   
 }
