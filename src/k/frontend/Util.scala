@@ -151,7 +151,7 @@ object Misc {
       case (pt1 @ _, ParenType(pt2))                => return areTypesEqual(pt1, pt2, compatibility)
       case (CartesianType(ct1), CartesianType(ct2)) => return (ct1 zip ct2).forall { t => areTypesEqual(t._1, t._2, compatibility) }
       case (IdentType(it1, it2), IdentType(it3, it4)) =>
-        return it1.equals(it3) && (it2 zip it4).forall { t => areTypesEqual(t._1, t._2, compatibility) }
+        return it1.equals(it3) // TODO 
       case (CollectType(ct1), CollectType(ct2)) =>
         return (ct1 zip ct2).forall { t => areTypesEqual(t._1, t._2, compatibility) }
       case (AnyType, _)                         => return true

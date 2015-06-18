@@ -80,7 +80,7 @@ class Attitude {
 
 assoc BatteryInstrument {
   source bat : Battery
-  target inst : Instrument [*] -- Set[Instrument] ? 
+  target inst : Instrument [*]
 }
 
 class Spacecraft {
@@ -105,7 +105,7 @@ class Spacecraft {
     instrument.collect(i -> Tuple(i.name, i.weight))
   }
 
-  fun addInstruments(insts : Set[Instrument]) 
+  fun addInstruments(insts : Bag[Instrument]) 
     pre insts.size() <= 10
     pre forall i : insts :- i !isin instrument
   {
@@ -120,25 +120,25 @@ class Spacecraft {
 
 assoc SpacecraftInstrument {
   source spacecraft : Spacecraft
-  target part instrument: Set[Instrument] [1,10]
+  target part instrument: Instrument [1,10]
 }
 
 ==============
 Instances
 ==============
-camera1 : Camera = Camera(name="HighPixel", id=42, powerConsumption=2000, operating=true, fps=2)
-camera2 : Camera = Camera(name="SharpShooter", id=3, powerConsumptino=10000, operating=false, fps=1000)
-solarPanel : Instrument = Instrument(name="SP1", id=2, powerConsumption=-1000)
-magnetometer : Instrument = Instrument(name="Magnetometer", id=5, powerConsumption=1500, operating=true)
+camera1 : Camera = Camera(name::"HighPixel", id::42, powerConsumption::2000, operating::true, fps::2)
+camera2 : Camera = Camera(name::"SharpShooter", id::3, powerConsumption::10000, operating::false, fps::1000)
+solarPanel : Instrument = Instrument(name::"SP1", id::2, powerConsumption::-1000)
+magnetometer : Instrument = Instrument(name::"Magnetometer", id::5, powerConsumption::1500, operating::true)
 battery : Battery = Battery()
 
-clipper : Spacecraft = Spacecraft(name="Clipper")
+clipper : Spacecraft = Spacecraft(name::"Clipper")
 
-SpacecraftInstrument(Spacecraft::clipper, instrument::camera1)
-SpacecraftInstrument(Spacecraft::clipper, instrument::camera2)
-SpacecraftInstrument(Spacecraft::clipper, instrument::solarPanel)
-SpacecraftInstrument(Spacecraft::clipper, instrument::magnetometer)
-SpacecraftInstrument(Spacecraft::clipper, instrument::battery)
+SpacecraftInstrument(spacecraft::clipper, instrument::camera1)
+SpacecraftInstrument(spacecraft::clipper, instrument::camera2)
+SpacecraftInstrument(spacecraft::clipper, instrument::solarPanel)
+SpacecraftInstrument(spacecraft::clipper, instrument::magnetometer)
+--SpacecraftInstrument(spacecraft::clipper, instrument::battery)
 
 req CameraAlwaysOn: 
   exists inst : clipper.instrument :- inst is Camera && inst.operating = true
