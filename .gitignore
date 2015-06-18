@@ -5,3 +5,4 @@ RemoteSystemsTempFiles
 .DS_Store
 *~
 *.class
+lib/com.microsoft.z3.jar

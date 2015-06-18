@@ -260,7 +260,7 @@ literal:
   ;
 
 SUCHTHAT :
-    '.' 
+    ':-' 
   ;
 
 IntegerLiteral:

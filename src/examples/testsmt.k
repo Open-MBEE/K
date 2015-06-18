@@ -1,15 +1,28 @@
 
-class A {
-  fun f(x:Int):Int {
-    x + 1
+
+class Person {
+  age : Int
+
+  fun getAge: Int {
+    age
   }
+
+  req getAge() > 18 
 }
 
-class B {
-  a1 : A
-  a2 : A
-  a3 : A
 
-  req a1 != a2
-  req a2 != a3
+class Employee extends Person {
+  boss : Person
+  officemate : Employee
+
+  fun avoid(p : Employee): Bool {
+     officemate != p
+  }
+
+  req boss.age > 30
+  req boss.getAge < 99
+  req this =  officemate.officemate
+  req avoid(boss)
 }
+
+p : Person := Person(age :: 31)
