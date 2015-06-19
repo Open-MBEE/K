@@ -524,7 +524,6 @@ class TypeChecker(model: Model) {
       m match {
         case ExpressionDecl(exp) =>
           lastT = getExpType(functionTypeEnv, exp)
-          println(exp.isInstanceOf[ReturnExp])
           if (exp.isInstanceOf[ReturnExp] && !fd.ty.isEmpty) {
             if (!areTypesEqual(lastT, fd.ty.get, true))
               error(s"Return type does not match for $exp in function ${fd.ident}")
@@ -639,7 +638,6 @@ class TypeChecker(model: Model) {
                 }
             }
           case tt @ _ =>
-            println(tt)
             if (i == "collect") CollectType(List(tt))
             else if (i == "sum") SumType(List(tt))
             else if (i == "size") SumType(List(tt))
@@ -812,7 +810,7 @@ class TypeChecker(model: Model) {
     }
     exp2Type = exp2Type + (exp -> result)
     exp2TypeEnv = exp2TypeEnv + (exp -> te)
-    println(s"getExpType: $exp $result")
+    //println(s"getExpType: $exp $result")
     return result
   }
 
