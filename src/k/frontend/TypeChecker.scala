@@ -7,7 +7,7 @@ case object TypeChecker {
   def error(msg: String) = Misc.error("TC", msg)
   def log(msg: String) = Misc.log("TC", msg)
 
-  var globalTypeEnv: TypeEnv = TypeEnv(Map())
+  var globalTypeEnv: TypeEnv = TypeEnv(null, Map())
   var decl2TypeEnvironment: Map[TopDecl, TypeEnv] = Map()
   var origTypeEnvironments: Map[TopDecl, TypeEnv] = Map()
   var exp2Type: Map[Exp, Type] = Map()
@@ -81,13 +81,13 @@ case object TypeChecker {
 
 import TypeChecker._
 
-case class TypeEnv(map: Map[String, TypeInfo]) {
-  def overwrite(kv: (String, TypeInfo)) = TypeEnv(map + kv)
+case class TypeEnv(decl : TopDecl, map: Map[String, TypeInfo]) {
+  def overwrite(kv: (String, TypeInfo)) = TypeEnv(decl, map + kv)
   def +(kv: (String, TypeInfo)): TypeEnv = {
     if (map.contains(kv._1)) {
       error(s"${kv._1} already defined. Please check. Exiting.")
     } else {
-      TypeEnv(map + kv)
+      TypeEnv(decl, map + kv)
     }
   }
   def ++(te: TypeEnv): TypeEnv = {
@@ -111,7 +111,7 @@ case class TypeEnv(map: Map[String, TypeInfo]) {
         case _ => true
       })) {
     }
-    TypeEnv(map ++ te.map)
+    TypeEnv(decl, map ++ te.map)
   }
   def apply(k: String): TypeInfo = {
     if (!map.contains(k)) error(s"Could not find declaration for $k")
@@ -397,7 +397,7 @@ class TypeChecker(model: Model) {
           val classTypeEnv = decl2TypeEnvironment(d)
           val extending = ClassHierarchy.parentsTransitive(ed)
           val newClassTypeEnv = classTypeEnv ++
-            extending.foldLeft(TypeEnv(Map[String, TypeInfo]())) {
+            extending.foldLeft(TypeEnv(ed, Map[String, TypeInfo]())) {
               (res, ex) =>
                 val extendingTypeEnv = origTypeEnvironments.find(
                   de =>
@@ -524,6 +524,7 @@ class TypeChecker(model: Model) {
       m match {
         case ExpressionDecl(exp) =>
           lastT = getExpType(functionTypeEnv, exp)
+          println(exp.isInstanceOf[ReturnExp])
           if (exp.isInstanceOf[ReturnExp] && !fd.ty.isEmpty) {
             if (!areTypesEqual(lastT, fd.ty.get, true))
               error(s"Return type does not match for $exp in function ${fd.ident}")
@@ -557,7 +558,8 @@ class TypeChecker(model: Model) {
         }
       case DotExp(e, i) =>
         val ti = getExpType(te, e)
-        ti match {
+        if(i == "toString") (true, null)
+        else ti match {
           case it @ IdentType(_, _) =>
             if (Misc.isCollection(it)) {
               (true, null)
@@ -571,7 +573,7 @@ class TypeChecker(model: Model) {
                   }
               }
             }
-          case _ => error(s"Unexpected expression type found in function application. $exp")
+          case _ => error(s"Unexpected expression type found in function application. $exp $ti")
         }
 
       case _ => error(s"Unexpected expression found in function application. $exp")
@@ -610,12 +612,14 @@ class TypeChecker(model: Model) {
               else if (i == "sum") SumType(it.args)
               else if (i == "size") SumType(it.args)
               else if (i == "at") SumType(it.args)
+              else if (i == "subList") CollectType(it.args)
               else error(s"getExpType: error, type could not be discovered for $exp.")
             } else {
               if (i == "collect") CollectType(List(it))
               else if (i == "sum") SumType(it.args)
               else if (i == "size") SumType(it.args)
               else if (i == "at") SumType(it.args)
+              else if (i == "toString") StringType
               else
                 te(it.toString) match {
                   case cti @ ClassTypeInfo(d) =>
@@ -635,10 +639,12 @@ class TypeChecker(model: Model) {
                 }
             }
           case tt @ _ =>
+            println(tt)
             if (i == "collect") CollectType(List(tt))
             else if (i == "sum") SumType(List(tt))
             else if (i == "size") SumType(List(tt))
             else if (i == "at") SumType(List(tt))
+            else if (i == "toString") StringType
             else tt
         }
       case BinExp(exp1, op, exp2) =>
@@ -719,6 +725,9 @@ class TypeChecker(model: Model) {
 
           functionReturnType match {
             case CollectType(t) =>
+              if(args.length > 1)
+                IdentType(QualifiedName(List("Seq")), t)
+                else{
               assert(args.length <= 1)
               // assuming lambda expression as only argument
               // assuming ident pattern in lambda expression
@@ -726,6 +735,7 @@ class TypeChecker(model: Model) {
               val lambdaTe = te + (lambdaExp.pat.asInstanceOf[IdentPattern].ident -> te(t.last.toString))
               // CollectType(List(getExpType(lambdaTe, lambdaExp)))
               IdentType(QualifiedName(List("Seq")), List(getExpType(lambdaTe, lambdaExp)))
+                }
             case SumType(t) => IntType
             case _          => functionReturnType
           }
@@ -746,10 +756,17 @@ class TypeChecker(model: Model) {
         }
         tbType
       case BlockExp(body) =>
-        body.last match {
-          case ExpressionDecl(e) => getExpType(te, e)
-          case _                 => error("Other than expression found in block. Not supported yet.")
+        var newTypeEnv = te
+        var lastType : Type = UnitType
+        val bodyTypes = body.foreach{
+          b => 
+            b match {
+              case ExpressionDecl(e) => 
+                lastType = getExpType(te, e)
+              case _ => error(s"Unsupported member in if block: $b")
+            }
         }
+        lastType
       case UnaryExp(op, exp)   => getExpType(te, exp)
       case TupleExp(exps)      => CartesianType(exps.map { e => getExpType(te, e) })
       case LambdaExp(pat, exp) => getExpType(te, exp)
@@ -795,7 +812,7 @@ class TypeChecker(model: Model) {
     }
     exp2Type = exp2Type + (exp -> result)
     exp2TypeEnv = exp2TypeEnv + (exp -> te)
-    //println(s"getExpType: $exp $result")
+    println(s"getExpType: $exp $result")
     return result
   }
 
