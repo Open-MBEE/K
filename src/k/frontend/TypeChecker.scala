@@ -111,7 +111,7 @@ case class TypeEnv(decl : TopDecl, map: Map[String, TypeInfo]) {
         case _ => true
       })) {
     }
-    TypeEnv(decl, map ++ te.map)
+    TypeEnv(te.decl, map ++ te.map)
   }
   def apply(k: String): TypeInfo = {
     if (!map.contains(k)) error(s"Could not find declaration for $k")
@@ -810,7 +810,7 @@ class TypeChecker(model: Model) {
     }
     exp2Type = exp2Type + (exp -> result)
     exp2TypeEnv = exp2TypeEnv + (exp -> te)
-    //println(s"getExpType: $exp $result")
+    println(s"getExpType: $exp $result ${exp2TypeEnv(exp).decl}")
     return result
   }
 
