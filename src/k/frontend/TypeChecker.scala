@@ -389,7 +389,7 @@ class TypeChecker(model: Model) {
         case ed @ EntityDecl(_, t, _, ident, _, _, _) if t != AssocToken =>
           val classTypeEnv = decl2TypeEnvironment(d)
           val extending = ClassHierarchy.parentsTransitive(ed)
-          val newClassTypeEnv = classTypeEnv ++
+          val newClassTypeEnv =
             extending.foldLeft(TypeEnv(ed, Map[String, TypeInfo]())) {
               (res, ex) =>
                 val extendingTypeEnv = origTypeEnvironments.find(
@@ -400,7 +400,7 @@ class TypeChecker(model: Model) {
                       case _ => false
                     }).get
                 res ++ extendingTypeEnv._2
-            }
+            } ++ classTypeEnv
           decl2TypeEnvironment += (d -> newClassTypeEnv)
         case _ => ()
       }
