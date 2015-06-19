@@ -94,15 +94,10 @@ object ToSMTSupport {
     var newDecls: List[EntityDecl] =
       for (decl <- decls if decl.isInstanceOf[EntityDecl]) yield decl.asInstanceOf[EntityDecl]
     newDecls ++= List(mainClass)
-    newDecls = newDecls.map(transformEntityDecl(_))
     val newModel = Model(packageName, imports, annotations, newDecls)
     //println(s"---\n$model\n---\n$newModel\n---")
     storedModel = newModel
     newModel
-  }
-
-  def transformEntityDecl(ed: EntityDecl): EntityDecl = {
-    ed
   }
 }
 import ToSMTSupport._
@@ -132,6 +127,7 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
 
   def toSMT: String = {
     val model: Model = transformModel(this)
+    val entityDecls: List[EntityDecl] = model.decls.asInstanceOf[List[EntityDecl]]
     var result: String = ""
 
     // Generate options
@@ -150,7 +146,7 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
     result += "(declare-datatypes (T1 T2) ((Tuple2 (mk-Tuple2 (_1 T1)(_2 T2)))))\n"
     result += "(declare-datatypes (T1 T2 T3) ((Tuple3 (mk-Tuple3 (_1 T1)(_2 T2)(_3 T3)))))\n"
     result += "\n"
-    for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
+    for (ed <- entityDecls) {
       result += ed.toSMTDatatype + "\n"
     }
     result += "\n"
@@ -160,9 +156,8 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
     result += "; ---------- heap: ----------\n"
     result += "\n"
     result += "(declare-datatypes () ((Any\n"
-    for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
-      val className = ed.ident
-      result += s"  (lift-$className (sel-$className $className))\n"
+    for (ed <- entityDecls) {
+      result += ed.toSMTAnyEntry + "\n"
     }
     result += "  null))\n"
     result += ")\n"
@@ -174,19 +169,12 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
     result += ")\n"
     result += "\n"
 
-    // Generate class specific deref/is-functions:
+    // Generate class specific is/deref-functions:
 
-    result += "; ---------- class specific deref/is-functions: ----------\n"
+    result += "; ---------- class specific is/deref-functions: ----------\n"
     result += "\n"
-    for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
-      val className = ed.ident
-      result += s"(define-fun deref-is-$className ((this Ref)) Bool\n"
-      result += s"  (is-lift-$className (deref this))\n"
-      result += s")\n"
-      result += "\n"
-      result += s"(define-fun deref-$className ((this Ref)) $className\n"
-      result += s"  (sel-$className (deref this))\n"
-      result += ")\n"
+    for (ed <- entityDecls) {
+      result += ed.toSMTIsAndDerefFunctions + "\n"
       result += "\n"
     }
 
@@ -194,42 +182,20 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
 
     result += "; ---------- isa-functions: ----------\n"
     result += "\n"
-    for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
-      val className = ed.ident
-      val subClasses = getSubClasses(className)
-      result += s"(define-fun deref-isa-$className ((this Ref)) Bool\n"
-      if (subClasses.isEmpty) {
-        result += s"  (deref-is-$className this)\n"
-      } else {
-        result += "  (or\n"
-        for (cn <- className :: getSubClasses(className)) {
-          result += s"    (deref-is-$cn this)\n"
-        }
-        result += "  )\n"
-      }
-      result += ")\n"
+    for (ed <- entityDecls) {
+      result += ed.toSMTIsAFunction + "\n"
       result += "\n"
     }
 
-    // Generate selectors:    
+    // Generate getters:    
 
-    result += "; ---------- selectors: ----------\n"
+    result += "; ---------- getters: ----------\n"
     result += "\n"
-    for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
-      val propertyDecls = ed.getPropertyDecls
-      if (!propertyDecls.isEmpty) {
-        val className = ed.ident
-        val subClasses = getSubClasses(className)
-        result += s"; --- $className:\n"
+    for (ed <- entityDecls) {
+      val gettersSMT: String = ed.toSMTGetterFunctions
+      if (gettersSMT != "") {
+        result += gettersSMT + "\n"
         result += "\n"
-        for (pd <- propertyDecls) {
-          val field = pd.name
-          val tySMT = pd.ty.toSMT
-          result += s"(define-fun $className.$field ((this Ref)) $tySMT\n"
-          result += derefField(field, className :: subClasses)
-          result += ")\n"
-          result += "\n"
-        }
       }
     }
 
@@ -237,13 +203,10 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
 
     result += s"; ---------- methods: ----------\n"
     result += "\n"
-    for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
-      val funDecls = ed.getFunDecls
-      if (!funDecls.isEmpty) {
-        val className = ed.ident
-        result += s"; --- $className:\n"
-        result += "\n"
-        result += funDecls.map(_.toSMT(className)).mkString("\n")
+    for (ed <- entityDecls) {
+      val methodsSMT: String = ed.toSMTMethods
+      if (methodsSMT != "") {
+        result += methodsSMT + "\n"
         result += "\n"
       }
     }
@@ -252,11 +215,11 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
 
     result += s"; ---------- invariants: ----------\n"
     result += "\n"
-    for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
-      result += s"(declare-fun ${ed.ident}.inv (Ref) Bool)\n"
+    for (ed <- entityDecls) {
+      result += ed.toSMTInvariantDecl + "\n"
     }
     result += "\n"
-    for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
+    for (ed <- entityDecls) {
       result += s"; --- ${ed.ident}:\n"
       result += "\n"
       result += s"${ed.toSMTInvariant}\n"
@@ -268,13 +231,17 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
 
     result += s"; ---------- assertions: ----------\n"
     result += "\n"
-    for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
-      result += s"(assert (exists ((this Ref)) (${ed.ident}.inv this)))\n"
+    for (ed <- entityDecls) {
+      result += ed.toSMTAssert + "\n"
     }
     result += "\n"
     result += "(apply quasi-macros)"
     result
   }
+
+  // ==========
+  // Constants:
+  // ==========
 
   //  def toSMT: String = {
   //    val model: Model = transformModel(this)
@@ -452,6 +419,75 @@ case class EntityDecl(
     }
   }
 
+  def toSMTAnyEntry: String =
+    s"  (lift-$ident (sel-$ident $ident))"
+
+  def toSMTIsAndDerefFunctions: String = {
+    var result: String = ""
+    result += s"(define-fun deref-is-$ident ((this Ref)) Bool\n"
+    result += s"  (is-lift-$ident (deref this))\n"
+    result += s")\n"
+    result += "\n"
+    result += s"(define-fun deref-$ident ((this Ref)) $ident\n"
+    result += s"  (sel-$ident (deref this))\n"
+    result += ")"
+    result
+  }
+
+  def toSMTIsAFunction: String = {
+    var result: String = ""
+    val subClasses = getSubClasses(ident)
+    result += s"(define-fun deref-isa-$ident ((this Ref)) Bool\n"
+    if (subClasses.isEmpty) {
+      result += s"  (deref-is-$ident this)\n"
+    } else {
+      result += "  (or\n"
+      for (cn <- ident :: getSubClasses(ident)) {
+        result += s"    (deref-is-$cn this)\n"
+      }
+      result += "  )\n"
+    }
+    result += ")"
+    result
+  }
+
+  def toSMTGetterFunctions: String = {
+    var result: String = ""
+    val propertyDecls: List[PropertyDecl] = getPropertyDecls
+    if (!propertyDecls.isEmpty) {
+      result += s"; --- $ident:\n"
+      result += "\n"
+      val subClasses = getSubClasses(ident)
+      var firstTime = true
+      for (pd <- propertyDecls) {
+        if (firstTime)
+          firstTime = false
+        else
+          result += "\n\n"
+        val field = pd.name
+        val tySMT = pd.ty.toSMT
+        result += s"(define-fun $ident.$field ((this Ref)) $tySMT\n"
+        result += derefField(field, ident :: subClasses)
+        result += ")"
+      }
+    }
+    result
+  }
+
+  def toSMTMethods: String = {
+    var result: String = ""
+    val funDecls = getFunDecls
+    if (!funDecls.isEmpty) {
+      result += s"; --- $ident:\n"
+      result += "\n"
+      result += funDecls.map(_.toSMT(ident)).mkString("\n\n")
+    }
+    result
+  }
+
+  def toSMTInvariantDecl: String =
+    s"(declare-fun ${ident}.inv (Ref) Bool)"
+
   def toSMTInvariant: String = {
     var constraints: List[String] = Nil
     // constraints for property definitions of the form: x : T = e
@@ -484,6 +520,9 @@ case class EntityDecl(
     result += s"))"
     result
   }
+
+  def toSMTAssert: String =
+    s"(assert (exists ((instanceOf$ident Ref)) (${ident}.inv instanceOf$ident)))"
 
   def getPropertyDecls: List[PropertyDecl] =
     for (m <- members if m.isInstanceOf[PropertyDecl]) yield m.asInstanceOf[PropertyDecl]
@@ -798,8 +837,7 @@ case class FunDecl(ident: String,
         val expSMT = exp.toSMT(className)
         result += s"(define-fun $className.$ident ($parameters) $resultType\n"
         result += s"  $expSMT\n"
-        result += ")\n"
-        result += "\n"
+        result += ")"
       case _ =>
         UtilAST.error(s"Body of function $className.$ident contains more than one expression")
     }
@@ -997,31 +1035,29 @@ case class DotExp(exp: Exp, ident: String) extends Exp {
 
 case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
   override def toSMT(className: String): String = {
-    var expSMT: String = null
-    var argsSMT: String = null
     if (isConstructor(className, exp1)) {
       // constructor application:
       val IdentExp(ident) = exp1
-      expSMT = s"mk-$ident"
-      argsSMT = {
+      val argsSMT: String = {
         var argMap: Map[String, Exp] =
           (for (NamedArgument(x, exp) <- args) yield (x -> exp)).toMap
         (for (PropertyDecl(_, id, ty, _, _, _) <- getEntityDecl(ident).members) yield {
           if (argMap contains id) argMap(id).toSMT(className) else getNewConstant(ty)
         }).mkString(" ")
       }
+      s"(lift-$ident (mk-$ident $argsSMT))"
     } else {
       // function application:
-      expSMT =
+      val expSMT: String =
         exp1 match {
           case IdentExp(ident) => s"$className.$ident this"
           case DotExp(expBeforDot, ident) =>
             val classOfFunction = exp2Type(expBeforDot).toString
             s"$classOfFunction.$ident ${expBeforDot.toSMT(className)}"
         }
-      argsSMT = args.map(_.toSMT(className)).mkString(" ")
+      val argsSMT: String = args.map(_.toSMT(className)).mkString(" ")
+      s"($expSMT $argsSMT)"
     }
-    s"($expSMT $argsSMT)"
   }
 
   //  override def toSMTOLD(className: String): String = {
