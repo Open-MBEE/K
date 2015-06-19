@@ -1,30 +1,38 @@
 
+-- Test 7: --
+
 class A {
-  a : Int
+  a : Int = 1
   fun f(k:Int):Int { a + k }
 }
 
 class B {
-  iA : A
-  b : Int
+  iA : A 
+  b : Int = 2
   fun g(k:Int):Int { iA.f(iA.a+b+k)}
 }
 
 class C {
   iA : A
-  c : Int
+  c : Int = 3
   fun h(k:Int):Int { iA.f(iA.a+c+k)}
 }
 
 class D {
   iB : B
   iC : C
-  d  : Int
+  d  : Int = 4
   req iB.iA = iC.iA
   fun i(k:Int): Int { iB.iA.a + iB.b + iC.c + d + k}
 }
 
 class Master {
   d : D
-  fun main: Int {  d.iB.iA.f(1) + d.iB.g(1) + d.i(1) }
+
+  fun main: Int {  d.iB.iA.f(1) + d.iB.g(2) + d.i(3) }
+
+  r : Int = main
+
+  req r = 21
 }
+

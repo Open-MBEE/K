@@ -1,4 +1,6 @@
 
+-- Test 1: --
+
 class A {
   x : Int
   y : Int
