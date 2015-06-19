@@ -12,7 +12,6 @@ case object TypeChecker {
   var origTypeEnvironments: Map[TopDecl, TypeEnv] = Map()
   var exp2Type: Map[Exp, Type] = Map()
   var exp2TypeEnv: Map[Exp, TypeEnv] = Map()
-
   var keywords: Map[String, Type] = Map[String, Type]()
   var type2Decl = Map[Type, TopDecl]()
   var annotations = Map[String, AnnotationDecl]()
@@ -81,7 +80,7 @@ case object TypeChecker {
 
 import TypeChecker._
 
-case class TypeEnv(decl : TopDecl, map: Map[String, TypeInfo]) {
+case class TypeEnv(decl: TopDecl, map: Map[String, TypeInfo]) {
   def overwrite(kv: (String, TypeInfo)) = TypeEnv(decl, map + kv)
   def +(kv: (String, TypeInfo)): TypeEnv = {
     if (map.contains(kv._1)) {
@@ -215,11 +214,8 @@ class TypeChecker(model: Model) {
   private def doesTypeExist(te: TypeEnv, ty: Type): Boolean = {
     ty match {
       case it @ IdentType(_, _) =>
-        if (Misc.isCollection(it)) {
-          return it.args.forall { t => doesTypeExist(te, t) }
-        } else {
-          return te.contains(it.toString)
-        }
+        if (Misc.isCollection(it)) return it.args.forall { t => doesTypeExist(te, t) }
+        else return te.contains(it.toString)
       case ct @ CartesianType(_) =>
         return ct.types.forall { x => doesTypeExist(te, x) }
       case ft @ FunctionType(_, _) =>
@@ -229,7 +225,6 @@ class TypeChecker(model: Model) {
         return doesTypeExist(te, pt.ty)
       case st @ SubType(_, _, _) =>
         return te.contains(st.ident.toString)
-
       case BoolType   => return true
       case IntType    => return true
       case CharType   => return true
@@ -256,11 +251,8 @@ class TypeChecker(model: Model) {
           val dED = d.asInstanceOf[EntityDecl]
           keywords = ed.keyword match {
             case Some(kw) =>
-              if (keywords.contains(kw)) {
-                error(s"Keywords $kw is already being used.")
-              } else {
-                keywords + (kw -> IdentType(QualifiedName(List(ident)), List()))
-              }
+              if (keywords.contains(kw)) error(s"Keywords $kw is already being used.")
+              else keywords + (kw -> IdentType(QualifiedName(List(ident)), List()))
             case _ => keywords
           }
           type2Decl = type2Decl + (IdentType(QualifiedName(List(ident)), List()) -> dED)
@@ -557,7 +549,7 @@ class TypeChecker(model: Model) {
         }
       case DotExp(e, i) =>
         val ti = getExpType(te, e)
-        if(i == "toString") (true, null)
+        if (i == "toString") (true, null)
         else ti match {
           case it @ IdentType(_, _) =>
             if (Misc.isCollection(it)) {
@@ -723,17 +715,17 @@ class TypeChecker(model: Model) {
 
           functionReturnType match {
             case CollectType(t) =>
-              if(args.length > 1)
+              if (args.length > 1)
                 IdentType(QualifiedName(List("Seq")), t)
-                else{
-              assert(args.length <= 1)
-              // assuming lambda expression as only argument
-              // assuming ident pattern in lambda expression
-              val lambdaExp = args.last.asInstanceOf[PositionalArgument].exp.asInstanceOf[LambdaExp]
-              val lambdaTe = te + (lambdaExp.pat.asInstanceOf[IdentPattern].ident -> te(t.last.toString))
-              // CollectType(List(getExpType(lambdaTe, lambdaExp)))
-              IdentType(QualifiedName(List("Seq")), List(getExpType(lambdaTe, lambdaExp)))
-                }
+              else {
+                assert(args.length <= 1)
+                // assuming lambda expression as only argument
+                // assuming ident pattern in lambda expression
+                val lambdaExp = args.last.asInstanceOf[PositionalArgument].exp.asInstanceOf[LambdaExp]
+                val lambdaTe = te + (lambdaExp.pat.asInstanceOf[IdentPattern].ident -> te(t.last.toString))
+                // CollectType(List(getExpType(lambdaTe, lambdaExp)))
+                IdentType(QualifiedName(List("Seq")), List(getExpType(lambdaTe, lambdaExp)))
+              }
             case SumType(t) => IntType
             case _          => functionReturnType
           }
@@ -755,11 +747,11 @@ class TypeChecker(model: Model) {
         tbType
       case BlockExp(body) =>
         var newTypeEnv = te
-        var lastType : Type = UnitType
-        val bodyTypes = body.foreach{
-          b => 
+        var lastType: Type = UnitType
+        val bodyTypes = body.foreach {
+          b =>
             b match {
-              case ExpressionDecl(e) => 
+              case ExpressionDecl(e) =>
                 lastType = getExpType(te, e)
               case _ => error(s"Unsupported member in if block: $b")
             }
@@ -810,7 +802,7 @@ class TypeChecker(model: Model) {
     }
     exp2Type = exp2Type + (exp -> result)
     exp2TypeEnv = exp2TypeEnv + (exp -> te)
-   // println(s"getExpType: $exp $result ${exp2TypeEnv(exp).decl}")
+    // println(s"getExpType: $exp $result ${exp2TypeEnv(exp).decl}")
     return result
   }
 
