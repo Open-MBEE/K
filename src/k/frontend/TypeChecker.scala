@@ -810,7 +810,7 @@ class TypeChecker(model: Model) {
     }
     exp2Type = exp2Type + (exp -> result)
     exp2TypeEnv = exp2TypeEnv + (exp -> te)
-    println(s"getExpType: $exp $result ${exp2TypeEnv(exp).decl}")
+   // println(s"getExpType: $exp $result ${exp2TypeEnv(exp).decl}")
     return result
   }
 
