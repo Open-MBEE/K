@@ -298,7 +298,8 @@ class TypeChecker(model: Model) {
       d match {
         case ed @ EntityDecl(_, token, _, ident, _, _, _) if token != AssocToken =>
           // add 'this' to the type env
-          var classTypeEnv = globalTypeEnv + ("this" -> ClassTypeInfo(ed))
+          var classTypeEnv = globalTypeEnv ++ TypeEnv(ed, Map())
+          classTypeEnv = classTypeEnv + ("this" -> ClassTypeInfo(ed))
           ed.members.foreach { m =>
             m match {
               case pd @ PropertyDecl(_, _, _, _, _, _) =>
@@ -329,7 +330,8 @@ class TypeChecker(model: Model) {
             m.asInstanceOf[PropertyDecl].ty.isInstanceOf[IdentType]
           })) error(s"$ident association uses a non user defined type as source/target.")
 
-          val classTypeEnv = ed.members.foldLeft(globalTypeEnv) {
+          var classTypeEnv = globalTypeEnv + ("this" -> ClassTypeInfo(ed))
+          classTypeEnv = ed.members.foldLeft(classTypeEnv) {
             (res, m) =>
               m match {
                 case pd @ PropertyDecl(_, _, _, _, _, _) =>
