@@ -977,12 +977,25 @@ case class ParenExp(exp: Exp) extends Exp {
   }
 }
 
+//  override def toSMT(className: String): String = {
+//    val classNameOfExp = exp2Type(exp).toString
+//    val expSMT = exp.toSMT(className)
+//    s"($classNameOfExp.$ident $expSMT)"
+//  }
+
 case class IdentExp(ident: String) extends Exp {
   override def toSMT(className: String): String =
     if (isLocal(this))
       ident
-    else
-      s"($className.$ident this) "
+    else {
+      // s"($className.$ident this) "
+      println(s"ident is: $ident")
+      val typeEnvOfIdent: TypeEnv = exp2TypeEnv(this)
+      val decl = typeEnvOfIdent.decl
+      println(s"decl is ${decl}")
+      val classNameOfIdent = decl.asInstanceOf[EntityDecl].ident
+      s"($classNameOfIdent.$ident this) "
+    }
 
   override def toString = ident
 
