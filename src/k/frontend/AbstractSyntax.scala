@@ -108,13 +108,11 @@ object UtilSMT {
   }
 
   def isConstructorPredicate(exp: Exp): Boolean = {
-    debug(s"TESTING $exp WHETHER IT IS A CONST. PREDICATE")
     val result = exp match {
       case BinExp(exp1, EQ, FunApplExp(exp2, args)) =>
         isConstructor(exp2)
       case _ => false
     }
-    debug(s"  RESULT: $result")
     result
   }
 
@@ -1082,7 +1080,6 @@ case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
   override def toSMT(className: String): String = {
     if (isConstructor(exp1)) {
       // constructor application:
-      debug(s"CONSTRUCTOR: $this")
       val IdentExp(ident) = exp1
       val argsSMT: String = {
         var argMap: Map[String, Exp] =
@@ -1094,7 +1091,6 @@ case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
       s"(lift-$ident (mk-$ident $argsSMT))"
     } else {
       // function application:
-      debug(s"FUNCTION: $this")
       val expSMT: String =
         exp1 match {
           case IdentExp(ident) => s"$className.$ident this"
@@ -1369,9 +1365,7 @@ case class BinExp(exp1: Exp, op: BinaryOp, exp2: Exp) extends Exp {
   override def toSMT(className: String): String = {
     val exp1SMT = exp1.toSMT(className)
     val exp2SMT = exp2.toSMT(className)
-    debug(s"IS THIS A CONSTRUCTOR PREDICATE: $this")
     if (UtilSMT.isConstructorPredicate(this)) {
-      debug(s"  YES, IT IS A CONSTRUCTOR PREDICATE: $this")
       s"(= (deref $exp1SMT) $exp2SMT)"
     } else {
       op match {

@@ -3,7 +3,7 @@
 
 class A {
   x : Int = 1
-  y : Int = 1
+  y : Int
 
   fun sum: Int {
     x + y
@@ -18,9 +18,8 @@ class B extends A {
   a2 : A
   req a1.y < z
   req y < z
-  -- req sum > 10
+  req sum > 10
 }
 
--- a : A = A(y :: 2)
+a : A = A(x :: 1,y :: 2)
 -- b : B = B(a1 :: a)
-
