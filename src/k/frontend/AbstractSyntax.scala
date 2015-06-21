@@ -102,6 +102,13 @@ object UtilSMT {
     result
   }
 
+  def isClassName(ty: Type): Boolean = {
+    ty match {
+      case IdentType(QualifiedName(_ :: Nil), _) => true
+      case _                                     => false
+    }
+  }
+
   def transformModel(model: Model): Model = {
     val Model(packageName, imports, annotations, decls) = model
     var memberDecls: List[MemberDecl] =
@@ -147,7 +154,9 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
 
     var result1: String = "" // text before omitted constructor parameter constants
     var result2: String = "" // text after omitted constructor parameter constants
-    // result will eventually contain result1 ++ constants ++ result2
+    // result will eventually contain result1 ++ constants ++ result2.
+    // This approach is needed since constants need to go before result2 but 
+    // in part are computed based on result2.
 
     // Generate options
 
@@ -499,9 +508,11 @@ case class EntityDecl(
   def toSMTInvariant: String = {
     var constraints: List[String] = Nil
     // constraints for property definitions of the form: x : T = e
-    for (PropertyDecl(_, propertyName, _, _, Some(false), Some(exp)) <- members) {
-      // constraints ::= s"(= ($ident.$propertyName this) ${exp.toSMT(ident)})"
-      constraints ::= BinExp(IdentExp(propertyName), EQ, exp).toSMT(ident)
+    for (PropertyDecl(_, propertyName, ty, _, Some(false), Some(exp)) <- members) {
+      if (UtilSMT.isClassName(ty))
+        constraints ::= s"(= (deref ($ident.$propertyName this)) ${exp.toSMT(ident)})"
+      else
+        constraints ::= s"(= ($ident.$propertyName this) ${exp.toSMT(ident)})"
     }
     // constraints for embedded references/parts:
     for (PropertyDecl(_, propertyName, IdentType(QualifiedName(typeName :: Nil), _), _, _, _) <- members) {
@@ -1050,8 +1061,7 @@ case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
       val IdentExp(ident) = exp1
       val entityDecl = getEntityDecl(ident)
       val argsSMTList: List[String] =
-        for (PropertyDecl(_, id, ty, _, _, _) <- entityDecl.getAllPropertyDecls) yield
-          if (argMap contains id) argMap(id).toSMT(className) else UtilSMT.getNewConstant(ty)
+        for (PropertyDecl(_, id, ty, _, _, _) <- entityDecl.getAllPropertyDecls) yield if (argMap contains id) argMap(id).toSMT(className) else UtilSMT.getNewConstant(ty)
       val argsSMT = argsSMTList.mkString(" ")
       s"(lift-$ident (mk-$ident $argsSMT))"
     } else {

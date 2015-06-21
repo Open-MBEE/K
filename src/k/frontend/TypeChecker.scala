@@ -68,8 +68,13 @@ case object TypeChecker {
     }
   }
 
-  // def isConstructor(className: String, exp: Exp): Boolean = isConstructorCall(globalTypeEnv, exp).isEmpty
   def isConstructor(exp: Exp): Boolean = !isConstructorCall(globalTypeEnv, exp).isEmpty
+
+  def isConstructorAppl(exp: Exp): Boolean =
+    exp match {
+      case FunApplExp(exp1, _) => isConstructor(exp1)
+      case _                   => false
+    }
 
   def getDirectSuperClasses(className: String): List[String] =
     if (className == "TopLevelDeclarations") Nil
