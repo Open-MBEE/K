@@ -17,6 +17,11 @@ case object TypeChecker {
   var annotations = Map[String, AnnotationDecl]()
   var classes = Map[String, EntityDecl]()
 
+  def getEntityDecl(className: String): EntityDecl = {
+    assert(classes contains className, s"$className does not exist in 'classes'")
+    classes(className)
+  }
+
   def getPropertyDeclType(decl: PropertyDecl): Type = {
     if (!decl.multiplicity.isEmpty) {
       if (decl.modifiers.contains(Unique)) IdentType(QualifiedName(List("Set")), List(decl.ty))
