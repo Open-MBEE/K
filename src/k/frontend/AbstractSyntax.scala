@@ -51,26 +51,12 @@ object UtilSMT {
     constant
   }
 
-  //  def primitiveConstantsSMT : String = {
-  //    var result = ""
-  //    for ((id, ty) <- constantsToDeclare) {
-  //      ty match {
-  //        case BoolType | IntType | RealType =>
-  //          result += s"(declare-const $id ${ty.toSMT})\n"
-  //        case _ =>
-  //      }
-  //    }
-  //    result
-  //  }
+  def constantsIsEmpty: Boolean = constantsToDeclare.isEmpty
 
-  def classConstantsSMT(className: String): String = {
+  def generateOmittedConstructorParameters: String = {
     var result = ""
     for ((id, ty) <- constantsToDeclare) {
-      ty match {
-        case IdentType(QualifiedName(`className` :: Nil), _) =>
-          result += s"(declare-const $id ${ty.toSMT})\n"
-        case _ =>
-      }
+      result += s"(declare-const $id ${ty.toSMT})\n"
     }
     result
   }
@@ -158,139 +144,133 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
   def toSMT: String = {
     val model: Model = UtilSMT.transformModel(this)
     val entityDecls: List[EntityDecl] = model.decls.asInstanceOf[List[EntityDecl]]
-    var result: String = ""
+
+    var result1: String = "" // text before omitted constructor parameter constants
+    var result2: String = "" // text after omitted constructor parameter constants
+    // result will eventually contain result1 ++ constants ++ result2
 
     // Generate options
 
-    result += "; ---------- options: ----------\n"
-    result += "\n"
-    result += "(set-option :smt.macro-finder true)\n"
-    result += "\n"
+    result1 += "; ---------- options: ----------\n"
+    result1 += "\n"
+    result1 += "(set-option :smt.macro-finder true)\n"
+    result1 += "\n"
 
     // Generate datatypes:
 
-    result += "; ---------- datatypes: ----------\n"
-    result += "\n"
-    result += "(define-sort Ref () Int)\n"
-    result += "\n"
-    result += "(declare-datatypes (T1 T2) ((Tuple2 (mk-Tuple2 (_1 T1)(_2 T2)))))\n"
-    result += "(declare-datatypes (T1 T2 T3) ((Tuple3 (mk-Tuple3 (_1 T1)(_2 T2)(_3 T3)))))\n"
-    result += "\n"
+    result1 += "; ---------- datatypes: ----------\n"
+    result1 += "\n"
+    result1 += "(define-sort Ref () Int)\n"
+    result1 += "\n"
+    result1 += "(declare-datatypes (T1 T2) ((Tuple2 (mk-Tuple2 (_1 T1)(_2 T2)))))\n"
+    result1 += "(declare-datatypes (T1 T2 T3) ((Tuple3 (mk-Tuple3 (_1 T1)(_2 T2)(_3 T3)))))\n"
+    result1 += "\n"
     for (ed <- entityDecls) {
-      result += ed.toSMTDatatype + "\n"
+      result1 += ed.toSMTDatatype + "\n"
     }
-    result += "\n"
+    result1 += "\n"
 
     // Generate heap:
 
-    result += "; ---------- heap: ----------\n"
-    result += "\n"
-    result += "(declare-datatypes () ((Any\n"
+    result1 += "; ---------- heap: ----------\n"
+    result1 += "\n"
+    result1 += "(declare-datatypes () ((Any\n"
     for (ed <- entityDecls) {
-      result += ed.toSMTAnyEntry + "\n"
+      result1 += ed.toSMTAnyEntry + "\n"
     }
-    result += "  null))\n"
-    result += ")\n"
-    result += "\n"
-    result += "(declare-const heap (Array Ref Any))\n"
-    result += "\n"
-    result += "(define-fun deref ((ref Ref)) Any\n"
-    result += "  (select heap ref)\n"
-    result += ")\n"
-    result += "\n"
+    result1 += "  null))\n"
+    result1 += ")\n"
+    result1 += "\n"
+    result1 += "(declare-const heap (Array Ref Any))\n"
+    result1 += "\n"
+    result1 += "(define-fun deref ((ref Ref)) Any\n"
+    result1 += "  (select heap ref)\n"
+    result1 += ")\n"
+    result1 += "\n"
 
     // Generate class specific is/deref-functions:
 
-    result += "; ---------- class specific is/deref-functions: ----------\n"
-    result += "\n"
+    result1 += "; ---------- class specific is/deref-functions: ----------\n"
+    result1 += "\n"
     for (ed <- entityDecls) {
-      result += ed.toSMTIsAndDerefFunctions + "\n"
-      result += "\n"
+      result1 += ed.toSMTIsAndDerefFunctions + "\n"
+      result1 += "\n"
     }
 
     // Generate isa-functions:    
 
-    result += "; ---------- isa-functions: ----------\n"
-    result += "\n"
+    result1 += "; ---------- isa-functions: ----------\n"
+    result1 += "\n"
     for (ed <- entityDecls) {
-      result += ed.toSMTIsAFunction + "\n"
-      result += "\n"
+      result1 += ed.toSMTIsAFunction + "\n"
+      result1 += "\n"
     }
 
     // Generate getters:    
 
-    result += "; ---------- getters: ----------\n"
-    result += "\n"
+    result1 += "; ---------- getters: ----------\n"
+    result1 += "\n"
     for (ed <- entityDecls) {
       val gettersSMT: String = ed.toSMTGetterFunctions
       if (gettersSMT != "") {
-        result += gettersSMT + "\n"
-        result += "\n"
+        result1 += gettersSMT + "\n"
+        result1 += "\n"
       }
     }
 
+    // ---------------------------------
+    // --- Here switching to result2 ---
+    // ---------------------------------
+
     // Generate methods:
 
-    result += s"; ---------- methods: ----------\n"
-    result += "\n"
+    result2 += s"; ---------- methods: ----------\n"
+    result2 += "\n"
     for (ed <- entityDecls) {
       val methodsSMT: String = ed.toSMTMethods
       if (methodsSMT != "") {
-        result += methodsSMT + "\n"
-        result += "\n"
+        result2 += methodsSMT + "\n"
+        result2 += "\n"
       }
     }
 
     // Generate invariants:
 
-    result += s"; ---------- invariants: ----------\n"
-    result += "\n"
+    result2 += s"; ---------- invariants: ----------\n"
+    result2 += "\n"
     for (ed <- entityDecls) {
-      result += ed.toSMTInvariantDecl + "\n"
+      result2 += ed.toSMTInvariantDecl + "\n"
     }
-    result += "\n"
+    result2 += "\n"
     for (ed <- entityDecls) {
-      result += s"; --- ${ed.ident}:\n"
-      result += "\n"
-      result += s"${ed.toSMTInvariant}\n"
-      result += "\n"
+      result2 += s"; --- ${ed.ident}:\n"
+      result2 += "\n"
+      result2 += s"${ed.toSMTInvariant}\n"
+      result2 += "\n"
     }
-    result += "\n"
+    result2 += "\n"
 
     // Generate assertions:
 
-    result += s"; ---------- assertions: ----------\n"
-    result += "\n"
+    result2 += s"; ---------- assertions: ----------\n"
+    result2 += "\n"
     for (ed <- entityDecls) {
-      result += ed.toSMTAssert + "\n"
+      result2 += ed.toSMTAssert + "\n"
     }
-    result += "\n"
-    result += "(apply quasi-macros)"
-    result
+    result2 += "\n"
+    result2 += "(apply quasi-macros)"
+
+    // Add constants for omitted constructor parameters:
+
+    var constants: String = ""
+    if (!UtilSMT.constantsIsEmpty) {
+      constants += s"; ---------- constructor parameter constants: ----------\n"
+      constants += "\n"
+      constants += UtilSMT.generateOmittedConstructorParameters + "\n"
+      constants += "\n"
+    }
+    result1 + constants + result2
   }
-
-  // ==========
-  // Constants:
-  // ==========
-
-  //  def toSMT: String = {
-  //    val model: Model = transformModel(this)
-  //    initializeSymbolTable(model)
-  //    val entityDeclsSMTList1: List[(String, String)] = for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) yield (ed.ident, ed.toSMT)
-  //    val entityDeclsSMTList2: List[String] = for ((className, textSMT) <- entityDeclsSMTList1) yield {
-  //      val constants = classConstantsSMT(className)
-  //      if (constants == "")
-  //        textSMT
-  //      else
-  //        textSMT + "\n\n" + constants
-  //    }
-  //    val entityDeclsSMT = entityDeclsSMTList2.mkString("\n\n\n")
-  //    utilSMT +
-  //      "\n\n" +
-  //      primitiveConstantsSMT +
-  //      "\n\n" +
-  //      entityDeclsSMT
-  //  }
 
   override def toString = {
     var result =
@@ -437,9 +417,7 @@ case class EntityDecl(
   members: List[MemberDecl]) extends TopDecl {
 
   def toSMTDatatype: String = {
-    val propertyDeclsOfSuperClasses: List[PropertyDecl] =
-      (for (superClass <- getSuperClasses(ident)) yield classes(superClass).getPropertyDecls).flatten
-    val propertyDecls = propertyDeclsOfSuperClasses ++ getPropertyDecls
+    val propertyDecls = getAllPropertyDecls
     if (propertyDecls.isEmpty) {
       s"(declare-sort $ident)"
     } else {
@@ -523,7 +501,7 @@ case class EntityDecl(
     // constraints for property definitions of the form: x : T = e
     for (PropertyDecl(_, propertyName, _, _, Some(false), Some(exp)) <- members) {
       // constraints ::= s"(= ($ident.$propertyName this) ${exp.toSMT(ident)})"
-      constraints ::= BinExp(IdentExp(propertyName),EQ,exp).toSMT(ident)
+      constraints ::= BinExp(IdentExp(propertyName), EQ, exp).toSMT(ident)
     }
     // constraints for embedded references/parts:
     for (PropertyDecl(_, propertyName, IdentType(QualifiedName(typeName :: Nil), _), _, _, _) <- members) {
@@ -558,26 +536,14 @@ case class EntityDecl(
   def getPropertyDecls: List[PropertyDecl] =
     for (m <- members if m.isInstanceOf[PropertyDecl]) yield m.asInstanceOf[PropertyDecl]
 
+  def getAllPropertyDecls: List[PropertyDecl] = {
+    val propertyDeclsOfSuperClasses: List[PropertyDecl] =
+      (for (superClass <- getSuperClasses(ident)) yield classes(superClass).getPropertyDecls).flatten
+    propertyDeclsOfSuperClasses ++ getPropertyDecls
+  }
+
   def getFunDecls: List[FunDecl] =
     for (m <- members if m.isInstanceOf[FunDecl]) yield m.asInstanceOf[FunDecl]
-
-  override def toSMT = {
-    var result: String = ""
-    // if (!members.exists(_.isInstanceOf[PropertyDecl])) {
-    //   result += s"(declare-sort $ident)\n\n"
-    // } else {
-    //   val constr = s"mk-$ident"
-    //   val propertyDecls = for (m <- members if m.isInstanceOf[PropertyDecl]) yield m.asInstanceOf[PropertyDecl]
-    //   val fields = propertyDecls.map(_.toSMT(ident)).mkString
-    //   result += s"(declare-datatypes () (($ident ($constr $fields))))\n\n"
-    // }
-    val funDecls = for (m <- members if m.isInstanceOf[FunDecl]) yield m.asInstanceOf[FunDecl]
-    result += funDecls.map(_.toSMT(ident)).mkString("\n")
-    val assertion = s"(assert (exists ((this $ident)) ($ident.inv this)))"
-    result += s"\n$assertion"
-    result += UtilSMT.classConstantsSMT(ident)
-    result
-  }
 
   override def toString = {
     var result = ""
@@ -1080,14 +1046,13 @@ case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
   override def toSMT(className: String): String = {
     if (isConstructor(exp1)) {
       // constructor application:
+      val argMap: Map[String, Exp] = (for (NamedArgument(x, exp) <- args) yield (x -> exp)).toMap
       val IdentExp(ident) = exp1
-      val argsSMT: String = {
-        var argMap: Map[String, Exp] =
-          (for (NamedArgument(x, exp) <- args) yield (x -> exp)).toMap
-        (for (PropertyDecl(_, id, ty, _, _, _) <- UtilSMT.getEntityDecl(ident).members) yield {
+      val entityDecl = getEntityDecl(ident)
+      val argsSMTList: List[String] =
+        for (PropertyDecl(_, id, ty, _, _, _) <- entityDecl.getAllPropertyDecls) yield
           if (argMap contains id) argMap(id).toSMT(className) else UtilSMT.getNewConstant(ty)
-        }).mkString(" ")
-      }
+      val argsSMT = argsSMTList.mkString(" ")
       s"(lift-$ident (mk-$ident $argsSMT))"
     } else {
       // function application:
