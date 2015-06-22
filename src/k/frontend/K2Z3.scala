@@ -101,7 +101,7 @@ object K2Z3 {
     declareFunctions(ctx)
   }
 
-  def printObjectValue(name:String, heap: Map[String,String], v: String): List[List[String]] = {
+  def printObjectValue(name: String, heap: Map[String, String], v: String): List[List[String]] = {
     val value = v.trim.replace("- ", "-")
     val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
     val objectValues = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
@@ -111,16 +111,13 @@ object K2Z3 {
     var toPrint = List[String]()
     val printList = (properties zip objectValues).map {
       x =>
-        println(TypeChecker.isPrimitiveType(x._1.ty))
         if (!TypeChecker.isPrimitiveType(x._1.ty)) {
-          println("nonprimitive " + x._2)
           toPrint = x._2 :: toPrint
           (x._1.name + ":: Ref " + x._2)
-          }
-        else (x._1.name + "::" + x._2)
+        } else (x._1.name + "::" + x._2)
     }.toList
     var all = List(name, s"$className(" + printList.mkString(", ") + ")")
-    toPrint.foldLeft (List(all)) { (res,x) => printObjectValue("Ref " + x, heap, heap(x)) ++ res }
+    toPrint.foldLeft(List(all)) { (res, x) => printObjectValue("Ref " + x, heap, heap(x)) ++ res }
   }
 
   def PrintModel(model: Model) {
@@ -142,40 +139,42 @@ object K2Z3 {
         val value = kv._2.replace("- ", "-")
         if (key != "else") {
           val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
-          val objectValues = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
-            .split(' ').map(_.trim).filterNot { _.isEmpty }
+          if (value.contains("mk-")) {
+            val objectValues = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
+              .split(' ').map(_.trim).filterNot { _.isEmpty }
 
-          className == "TopLevelDeclarations" match {
-            case true =>
-              var topLevelVariables =
-                model.decls.foldLeft(List[(String, Boolean)]()) { (res, d) =>
-                  d match {
-                    case pd @ PropertyDecl(_, _, _, _, _, _) =>
-                      (new Tuple2(pd.name, TypeChecker.isPrimitiveType(pd.ty))) :: res
-                    case _ => res
+            className == "TopLevelDeclarations" match {
+              case true =>
+                var topLevelVariables =
+                  model.decls.foldLeft(List[(String, Boolean)]()) { (res, d) =>
+                    d match {
+                      case pd @ PropertyDecl(_, _, _, _, _, _) =>
+                        (new Tuple2(pd.name, TypeChecker.isPrimitiveType(pd.ty))) :: res
+                      case _ => res
+                    }
                   }
+                var i = 1
+                topLevelVariables.reverse.foreach { k =>
+                  if (k._2) {
+                    // primitive
+                    rows = (List(k._1, objectValues(i))) :: rows
+                  } else {
+                    // object
+                    rows = printObjectValue(k._1, heapMap, heapMap(objectValues(i))) ++ rows
+                  }
+                  i = i + 1
                 }
-              var i = 1
-              topLevelVariables.reverse.foreach { k =>
-                if (k._2) {
-                  // primitive
-                  rows = (List(k._1, objectValues(i))) :: rows
-                } else {
-                  // object
-                  rows = printObjectValue(k._1, heapMap, heapMap(objectValues(i))) ++ rows
-                }
-                i = i + 1
-              }
-            case _ =>
-              val entityDecl = TypeChecker.classes(className)
-              val properties = entityDecl.getAllPropertyDecls
-              val printList = (properties zip objectValues).map { x => (x._1.name + " = " + x._2) }.toList
-            //println(s"\t(extra) $className(" + printList.mkString(", ") + ")")
+              case _ =>
+                val entityDecl = TypeChecker.classes(className)
+                val properties = entityDecl.getAllPropertyDecls
+                val printList = (properties zip objectValues).map { x => (x._1.name + " = " + x._2) }.toList
+              //println(s"\t(extra) $className(" + printList.mkString(", ") + ")")
+            }
           }
         }
       }
-      println(rows)
-      println(Tabulator.format(rows.reverse))
+      if (rows.length > 1) println(Tabulator.format(rows.reverse))
+      else println("\tSeems like no instance variables were declared at the top level.")
 
       log("-->>")
     }
