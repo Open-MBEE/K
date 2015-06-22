@@ -1,6 +1,7 @@
 package k.frontend
 
 import org.json.JSONObject
+import java.text._
 import org.json.JSONArray
 import scala.collection.mutable.Stack
 
@@ -2035,7 +2036,10 @@ case object PREV extends UnaryOp {
 trait Literal extends Exp
 
 case class IntegerLiteral(i: Int) extends Literal {
-  override def toSMT(className: String): String = i.toString
+  override def toSMT(className: String): String = {
+    println("IntegerLiteral is " + i)
+    i.toString
+  }
 
   override def toString = i.toString
 
@@ -2055,14 +2059,16 @@ case class IntegerLiteral(i: Int) extends Literal {
   }
 }
 
-case class RealLiteral(f: Float) extends Literal {
-  override def toSMT(className: String): String = f.toString
+case class RealLiteral(f : java.math.BigDecimal) extends Literal {
+  override def toSMT(className: String): String = {
+    f.formatted("%.16f")
+  }
 
   override def toString = f.toString
 
   override def toJson1 = {
     val o = new JSONObject()
-    o.put("f", f)
+    o.put("f", f.formatted("%.16f"))
     o.put("type", "LiteralFloatingPoint")
   }
 
@@ -2070,7 +2076,7 @@ case class RealLiteral(f: Float) extends Literal {
     val expression = new JSONObject()
     val operand = new JSONArray()
     operand.put(new JSONObject().put("type", "RealLiteral").put("element", "ElementValue"))
-    operand.put(f)
+    operand.put(f.formatted("%.16f"))
     expression.put("type", "Expression")
     expression.put("operand", operand)
   }
