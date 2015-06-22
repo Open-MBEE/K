@@ -83,7 +83,7 @@ class Rectangle extends Shape {
     a = b 
   }
 
-  ar = area()
+  -- ar = area()
 }
 
 

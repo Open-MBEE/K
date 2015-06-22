@@ -70,7 +70,7 @@ object K2Z3 {
     "auto-config" -> "true")
   var ctx: Context = new Context(cfg)
   var idents: MMap[String, (Expr, com.microsoft.z3.StringSymbol)] = MMap()
-  var model: com.microsoft.z3.Model = null
+  var z3Model: com.microsoft.z3.Model = null
   val tc: TypeChecker = new TypeChecker(null)
   var datatypes: DataTypes = null
 
@@ -94,49 +94,117 @@ object K2Z3 {
   }
 
   def reset() {
-    model = null
+    z3Model = null
     idents = new MMap()
     ctx = new Context(cfg)
     declareDatatypes(ctx)
     declareFunctions(ctx)
   }
 
-  def PrintModel() {
-
-    if (model != null) {
-      // New method of printing the model. Here we get all the 
-      // constants and the functions, and then print their 
-      // interpretations. The older method (commented out underneath)
-      // relies on the list of identifiers and symbols that we have 
-      // built up during translation of expressions. It does not 
-      // get existentially quantified variables at the highest level. 
-      // Note that in the new method, the value that is printed out for
-      // the decl is an "interpretation".
-      log("<<++")
-      model.getConstDecls.foreach { x =>
-        try {
-          log(s"\tConst: ${x.getName.toString.split("!")(0)} ${model.getConstInterp(x).toString}")
-        } catch {
-          case _: Throwable => log(s"\tConst: ${x.getName.toString.split("!")(0)} ${model.getFuncInterp(x)}")
-        }
-      }
-      model.getFuncDecls.foreach {
-        x => println(s"\tFunc: ${x.getName.toString.split("!")(0)}  ${model.getFuncInterp(x)}")
-      }
-      //      model.getDecls.foreach { x => println(s"\tDecls: ${x.getName}  $x") }
-      log("-->>")
-
-      //for ((i, (e, s)) <- idents) {
-      //println(e.toString() + " = " + model.evaluate(e, false))
-      //}
-    }
+  def printObjectValue(v: String) : String = {
+    val value = v.trim.replace("- ", "-")
+    val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
+    val objectValues = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
+      .split(' ').map(_.trim).filterNot { _.isEmpty }.drop(1)
+    val entityDecl = TypeChecker.classes(className)
+    val properties = entityDecl.getAllPropertyDecls
+    val printList = (properties zip objectValues).map { x => (x._1.name + "::" + x._2) }.toList
+    s"$className(" + printList.mkString(", ") + ")"
   }
 
-  def solveSMT(smtModel: String) {
+  def PrintModel(model: Model) {
+
+    if (z3Model != null) {
+      log("<<++")
+
+      var rows : List[List[String]]  = List(List("Variable", "Value"))
+      
+      val heapDecl = z3Model.getConstDecls.find { x => x.getName.toString.split("!")(0).equals("heap") }
+      val heapMap =
+        z3Model.getFuncInterp(heapDecl.get).getEntries.foldLeft(Map[String, String]()) { (res, x) =>
+          res + (x.getArgs.last.toString -> x.getValue.toString)
+        }
+
+      // walk through heap
+      heapMap.foreach { kv =>
+        val key = kv._1
+        val value = kv._2.replace("- ", "-")
+        if (key != "else") {
+          val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
+          val objectValues = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
+            .split(' ').map(_.trim).filterNot { _.isEmpty }
+
+          className == "TopLevelDeclarations" match {
+            case true =>
+              var topLevelVariables =
+                model.decls.foldLeft(List[(String, Boolean)]()) { (res, d) =>
+                  d match {
+                    case pd @ PropertyDecl(_, _, _, _, _, _) =>
+                      (new Tuple2(pd.name, TypeChecker.isPrimitiveType(pd.ty))) :: res
+                    case _ => res
+                  }
+                }
+              var i = 1
+              topLevelVariables.reverse.foreach { k =>
+                if (k._2) {
+                  // primitive
+                  // println(s"\t${k._1} =\t\t${objectValues(i)}")
+                  
+                  rows = rows.+:(List(k._1, objectValues(i)))
+                } else {
+                  // object
+//                  print(s"\t${k._1} =\t\t")
+//                  printObjectValue(heapMap(objectValues(i)))
+                  rows = rows.+:(List(k._1,  printObjectValue(heapMap(objectValues(i)))))
+                }
+                i = i + 1
+              }
+            case _ =>
+              val entityDecl = TypeChecker.classes(className)
+              val properties = entityDecl.getAllPropertyDecls
+              val printList = (properties zip objectValues).map { x => (x._1.name + " = " + x._2) }.toList
+            //println(s"\t(extra) $className(" + printList.mkString(", ") + ")")
+          }
+        }
+      }
+      println(Tabulator.format(rows.reverse))
+
+      log("-->>")
+    }
+  }
+  
+  object Tabulator {
+  def format(table: Seq[Seq[Any]]) = table match {
+    case Seq() => ""
+    case _ => 
+      val sizes = for (row <- table) yield (for (cell <- row) yield if (cell == null) 0 else cell.toString.length)
+      val colSizes = for (col <- sizes.transpose) yield col.max
+      val rows = for (row <- table) yield formatRow(row, colSizes)
+      formatRows(rowSeparator(colSizes), rows)
+  }
+
+  def formatRows(rowSeparator: String, rows: Seq[String]): String = (
+    rowSeparator :: 
+    rows.head :: 
+    rowSeparator :: 
+    rows.tail.toList ::: 
+    rowSeparator :: 
+    List()).mkString("\n")
+
+  def formatRow(row: Seq[Any], colSizes: Seq[Int]) = {
+    val cells = (for ((item, size) <- row.zip(colSizes)) yield if (size == 0) "" else ("%" + size + "s").format(item))
+    cells.mkString("|", "|", "|")
+  }
+
+  def rowSeparator(colSizes: Seq[Int]) = colSizes map { "-" * _ } mkString("+", "+", "+")
+}
+
+
+  def solveSMT(model: Model, smtModel: String) {
     reset()
     val boolExp = ctx.parseSMTLIB2String(smtModel, null, null, null, null)
-    model = SolveExp(boolExp)
-    PrintModel()
+    z3Model = SolveExp(boolExp)
+    PrintModel(model)
   }
 
   def SolveExp(e: Exp): com.microsoft.z3.Model = {
@@ -156,15 +224,15 @@ object K2Z3 {
 
     val status = solver.check()
     if (Status.SATISFIABLE == status) {
-      model = solver.getModel
+      z3Model = solver.getModel
     } else if (status == Status.UNSATISFIABLE) {
       println("UNSAT")
     } else {
       log("UNKNOWN...Model could not be solved successfully.")
-      model = null
+      z3Model = null
     }
 
-    model
+    z3Model
   }
 
   def getZ3Function(exp: Exp) = {

@@ -85,7 +85,7 @@ public class Main {
 			Exp kexp = Frontend.exp2KExp(solvingExpression);
 			System.out.println("Solving expression: " + kexp);
 			K2Z3.SolveExp(kexp);
-			K2Z3.PrintModel();
+			//K2Z3.PrintModel();
 			System.out.println("******************");
 		}
 		
