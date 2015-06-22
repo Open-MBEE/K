@@ -114,7 +114,7 @@ object Misc {
           TypeCollection(IntType))),
       BinExp(preCondition, IMPL, result))
     K2Z3.SolveExp(finalCheck)
-    K2Z3.PrintModel()
+//    K2Z3.PrintModel()
   }
 
   def checkEntityConsistency(e: EntityDecl): Boolean = {
@@ -132,7 +132,7 @@ object Misc {
     } else {
       println(s"Class ${e.ident} IS satisfiable!")
       println("Possible instance:")
-      K2Z3.PrintModel()
+//      K2Z3.PrintModel()
     }
     result
   }

@@ -31,6 +31,10 @@ case object TypeChecker {
 
   }
 
+  def isPrimitiveType(t: Type) : Boolean = {
+    t.isInstanceOf[PrimitiveType]
+  }
+
   // assming that exp is an ident exp...
   def getOwningEntityDecl(exp: Exp): EntityDecl = {
     if (exp2TypeEnv contains exp) {
@@ -38,7 +42,7 @@ case object TypeChecker {
       te(exp.toString) match {
         case PropertyTypeInfo(_, _, o) => o
         case FunctionTypeInfo(_, o)    => o
-        case _                         => error(s"Unexpected type info for given expression. Cannot retrieve owning decl for $exp")
+        case i@_                         => error(s"Unexpected type info for given expression. Cannot retrieve owning decl for $exp ${i.getClass}")
       }
     } else null
   }

@@ -28,6 +28,7 @@ object Frontend {
         parseArgs(map ++ Map('modelFile -> value), tail)
       case "-v" :: tail     => parseArgs(map ++ Map('verbose -> true), tail)
       case "-stats" :: tail => parseArgs(map ++ Map('stats -> true), tail)
+      case "-json" :: tail  => parseArgs(map ++ Map('printJson -> true), tail)
       case "-expressionToJson" :: value :: tail =>
         parseArgs(map ++ Map('expression -> value), tail)
       case "-jsonToExpression" :: value :: tail =>
@@ -53,13 +54,35 @@ object Frontend {
       log("Type checking completed. No errors found.")
     }
 
+    //if (model != null) K2Latex.convert(filename, model)
+
+    options.get('printJson) match {
+      case Some(_) =>
+        if (model != null) {
+          // Remember old value of option
+          val optionsUseJson1 = Options.useJson1
+          // MMS method using toJson1
+          Options.useJson1 = true
+          println("JSON1: " + model.toJson)
+          val modelFromJson = visitJsonObject(model.toJson).asInstanceOf[Model]
+          // MMS method using toJson2
+          Options.useJson1 = false
+          println("JSON2: " + model.toJson)
+          val modelFromJson2 = visitJsonObject2(model.toJson).asInstanceOf[Model]
+          // Reset old value of option
+          Options.useJson1 = optionsUseJson1
+        } else
+          println("Model was null!")
+      case None => ()
+    }
+
     val smtModel = model.toSMT
 
     println("--- SMT Model ---")
     println(smtModel)
     println("-----------------")
 
-    K2Z3.solveSMT(smtModel)
+    K2Z3.solveSMT(model, smtModel)
 
     // print DOT format class diagram
     if (model != null) printClassDOT(filename, model)
@@ -76,28 +99,6 @@ object Frontend {
       case None => ()
     }
 
-    options.get('printJson) match {
-      case Some(_) =>
-        if (model != null) {
-          //println(model.toString())
-          // Remember old value of option
-          val optionsUseJson1 = Options.useJson1
-          // MMS method using toJson1
-          Options.useJson1 = true
-          val modelJson = model.toJson
-          println("JSON1: " + modelJson.toString(0))
-          val modelFromJson = visitJsonObject(modelJson).asInstanceOf[Model]
-          // MMS method using toJson2
-          Options.useJson1 = false
-          val modelJson2 = model.toJson
-          println("JSON2: " + modelJson2.toString(0))
-          val modelFromJson2 = visitJsonObject2(modelJson2).asInstanceOf[Model]
-          // Reset old value of option
-          Options.useJson1 = Options.useJson1
-        } else
-          println("Model was null!")
-      case None => ()
-    }
   }
 
   def printClassDOT(filename: String, model: Model) = {
@@ -262,7 +263,9 @@ object Frontend {
       case "LiteralInteger" =>
         IntegerLiteral(obj.getInt("i"))
       case "LiteralFloatingPoint" =>
-        RealLiteral(java.lang.Float.parseFloat(obj.get("f").toString)) // was: asInstanceOf[String]
+        //RealLiteral(java.lang.Float.parseFloat(obj.get("f").toString)) // was: asInstanceOf[String]
+        val bd = new java.math.BigDecimal(obj.get("f").toString).setScale(8, java.math.BigDecimal.ROUND_UNNECESSARY)
+        RealLiteral(bd)
       case "LiteralCharacter" =>
         CharacterLiteral(obj.get("c").asInstanceOf[Char])
       case "LiteralBoolean" =>
@@ -552,7 +555,11 @@ object Frontend {
           case "IntegerLiteral" =>
             IntegerLiteral(operand.getInt(1))
           case "RealLiteral" => // was FloatingPointLiteral
-            RealLiteral(java.lang.Float.parseFloat(operand.get(1).toString)) // was: operand.getString(1)
+            //RealLiteral(java.lang.Float.parseFloat(operand.get(1).toString)) // was: operand.getString(1)
+            val bd = new java.math.BigDecimal(operand.get(1).toString).setScale(8, java.math.BigDecimal.ROUND_UNNECESSARY)
+            //println(bd.formatted("%f"))
+            RealLiteral(bd)
+
           case "CharacterLiteral" =>
             CharacterLiteral(operand.get(1).asInstanceOf[Char])
           case "BooleanLiteral" =>
