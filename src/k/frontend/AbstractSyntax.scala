@@ -2037,7 +2037,6 @@ trait Literal extends Exp
 
 case class IntegerLiteral(i: Int) extends Literal {
   override def toSMT(className: String): String = {
-    println("IntegerLiteral is " + i)
     i.toString
   }
 
