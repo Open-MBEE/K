@@ -487,6 +487,12 @@ class TypeChecker(model: Model) {
                     exp2Type = exp2Type + (e -> exprType)
                   case None => ()
                 }
+              case ExpressionDecl(e) =>
+                val exprType = getExpType(entityTypeEnv, e)
+                if (exprType != UnitType) {
+                  error(s"Expression in class does not have unit type: $e")
+                }
+                exp2Type = exp2Type + (e -> exprType)
               case _ => ()
             }
           }
@@ -777,7 +783,7 @@ class TypeChecker(model: Model) {
             b match {
               case ExpressionDecl(e) =>
                 lastType = getExpType(te, e)
-              case _ => error(s"Unsupported member in if block: $b")
+              case _ => error(s"Unsupported member in block: $b")
             }
         }
         lastType

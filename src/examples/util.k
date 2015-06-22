@@ -8,8 +8,8 @@ functions being implemented using K.
 class Util {
 
   fun binarySearch (l : Seq[Int], x:Int) : (Bool*Int) 
-    pre forall i : Int . 
-          forall j : Int .
+    pre forall i : Int :-
+          forall j : Int :-
             i >= 0 && j >= 0 && 
             i < l.size() && 
             j > i && j < l.size() => l.at(i) < l.at(j)
@@ -21,7 +21,7 @@ class Util {
 
     if l.at(mid) = x then {
       println("I found it!")
-      return Tuple(true, x.toString())
+      return Tuple(true, x)
     }
     else {
       if l.at(mid) < x then 
