@@ -74,15 +74,25 @@ object UtilSMT {
     }
   }
 
-  def getEntityDecl(className: String): EntityDecl = {
-    storedModel.decls.find {
-      case EntityDecl(_, _, _, `className`, _, _, _) => true
-      case _                                         => false
-    } match {
-      case Some(e: EntityDecl) => e
-      case None                => UtilAST.errorSMT(s"Class should exist: $className")
+  def getDeclaringClass(className: String, ident: String): String = {
+    val typeInfo = decl2TypeEnvironment(classes(className)).map(ident)
+    val declaringEntityDecl = typeInfo match {
+      case PropertyTypeInfo(_, _, owning) => owning
+      case FunctionTypeInfo(_, owning)    => owning
+      case _                              => errorSMT(s"property type or function type expected: $typeInfo")
     }
+    declaringEntityDecl.ident
   }
+
+  //  def getEntityDecl_(className: String): EntityDecl = {
+  //    storedModel.decls.find {
+  //      case EntityDecl(_, _, _, `className`, _, _, _) => true
+  //      case _                                         => false
+  //    } match {
+  //      case Some(e: EntityDecl) => e
+  //      case None                => UtilAST.errorSMT(s"Class should exist: $className")
+  //    }
+  //  }
 
   def derefField(field: String, classes: List[String], level: Int = 0): String = {
     classes match {
@@ -538,12 +548,23 @@ case class EntityDecl(
     }
     result += s"    )\n"
     result += s"  )\n"
-    result += s"))"
+    result += s"))\n"
+    result += "\n"
+    result += s"(define-fun $ident.nosub.inv ((this Ref)) Bool\n"
+    if (getSubClasses(ident).isEmpty) {
+      result += s"  ($ident.inv this)\n"
+    } else {
+      result += s"  (and\n"
+      result += s"    (deref-is-$ident this)\n"
+      result += s"    ($ident.inv this)\n"
+      result += s"  )\n"
+    }
+    result += s")"
     result
   }
 
   def toSMTAssert: String =
-    s"(assert (exists ((instanceOf$ident Ref)) (${ident}.inv instanceOf$ident)))"
+    s"(assert (exists ((instanceOf$ident Ref)) (${ident}.nosub.inv instanceOf$ident)))"
 
   def getPropertyDecls: List[PropertyDecl] =
     for (m <- members if m.isInstanceOf[PropertyDecl]) yield m.asInstanceOf[PropertyDecl]
@@ -1024,9 +1045,10 @@ case class IdentExp(ident: String) extends Exp {
 
 case class DotExp(exp: Exp, ident: String) extends Exp {
   override def toSMT(className: String): String = {
-    val classNameOfExp = exp2Type(exp).toString
     val expSMT = exp.toSMT(className)
-    s"($classNameOfExp.$ident $expSMT)"
+    val classNameOfExp = exp2Type(exp).toString
+    val classNameOfDeclaringClass = UtilSMT.getDeclaringClass(classNameOfExp, ident)
+    s"($classNameOfDeclaringClass.$ident $expSMT)"
   }
 
   override def toString = s"$exp.$ident"
