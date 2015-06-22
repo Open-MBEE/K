@@ -101,15 +101,26 @@ object K2Z3 {
     declareFunctions(ctx)
   }
 
-  def printObjectValue(v: String) : String = {
+  def printObjectValue(name:String, heap: Map[String,String], v: String): List[List[String]] = {
     val value = v.trim.replace("- ", "-")
     val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
     val objectValues = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
       .split(' ').map(_.trim).filterNot { _.isEmpty }.drop(1)
     val entityDecl = TypeChecker.classes(className)
     val properties = entityDecl.getAllPropertyDecls
-    val printList = (properties zip objectValues).map { x => (x._1.name + "::" + x._2) }.toList
-    s"$className(" + printList.mkString(", ") + ")"
+    var toPrint = List[String]()
+    val printList = (properties zip objectValues).map {
+      x =>
+        println(TypeChecker.isPrimitiveType(x._1.ty))
+        if (!TypeChecker.isPrimitiveType(x._1.ty)) {
+          println("nonprimitive " + x._2)
+          toPrint = x._2 :: toPrint
+          (x._1.name + ":: Ref " + x._2)
+          }
+        else (x._1.name + "::" + x._2)
+    }.toList
+    var all = List(name, s"$className(" + printList.mkString(", ") + ")")
+    toPrint.foldLeft (List(all)) { (res,x) => printObjectValue("Ref " + x, heap, heap(x)) ++ res }
   }
 
   def PrintModel(model: Model) {
@@ -117,8 +128,8 @@ object K2Z3 {
     if (z3Model != null) {
       log("<<++")
 
-      var rows : List[List[String]]  = List(List("Variable", "Value"))
-      
+      var rows: List[List[String]] = List(List("Variable", "Value"))
+
       val heapDecl = z3Model.getConstDecls.find { x => x.getName.toString.split("!")(0).equals("heap") }
       val heapMap =
         z3Model.getFuncInterp(heapDecl.get).getEntries.foldLeft(Map[String, String]()) { (res, x) =>
@@ -148,14 +159,10 @@ object K2Z3 {
               topLevelVariables.reverse.foreach { k =>
                 if (k._2) {
                   // primitive
-                  // println(s"\t${k._1} =\t\t${objectValues(i)}")
-                  
-                  rows = rows.+:(List(k._1, objectValues(i)))
+                  rows = (List(k._1, objectValues(i))) :: rows
                 } else {
                   // object
-//                  print(s"\t${k._1} =\t\t")
-//                  printObjectValue(heapMap(objectValues(i)))
-                  rows = rows.+:(List(k._1,  printObjectValue(heapMap(objectValues(i)))))
+                  rows = printObjectValue(k._1, heapMap, heapMap(objectValues(i))) ++ rows
                 }
                 i = i + 1
               }
@@ -167,38 +174,39 @@ object K2Z3 {
           }
         }
       }
+      println(rows)
       println(Tabulator.format(rows.reverse))
 
       log("-->>")
     }
   }
-  
+
   object Tabulator {
-  def format(table: Seq[Seq[Any]]) = table match {
-    case Seq() => ""
-    case _ => 
-      val sizes = for (row <- table) yield (for (cell <- row) yield if (cell == null) 0 else cell.toString.length)
-      val colSizes = for (col <- sizes.transpose) yield col.max
-      val rows = for (row <- table) yield formatRow(row, colSizes)
-      formatRows(rowSeparator(colSizes), rows)
+    def format(table: Seq[Seq[Any]]) = table match {
+      case Seq() => ""
+      case _ =>
+        val sizes = for (row <- table) yield (for (cell <- row) yield if (cell == null) 0 else cell.toString.length)
+        val colSizes = for (col <- sizes.transpose) yield col.max
+        val rows = for (row <- table) yield formatRow(row, colSizes)
+        formatRows(rowSeparator(colSizes), rows)
+    }
+
+    def formatRows(rowSeparator: String, rows: Seq[String]): String = (
+      rowSeparator ::
+      rows.head ::
+      rowSeparator ::
+      //rows.tail.toList.map { x => (x + "\n") ++ rowSeparator } :::
+      rows.tail.toList :::
+      rowSeparator ::
+      List()).mkString("\n")
+
+    def formatRow(row: Seq[Any], colSizes: Seq[Int]) = {
+      val cells = (for ((item, size) <- row.zip(colSizes)) yield if (size == 0) "" else ("%" + size + "s").format(item))
+      cells.mkString("|", "|", "|")
+    }
+
+    def rowSeparator(colSizes: Seq[Int]) = colSizes map { "-" * _ } mkString ("+", "+", "+")
   }
-
-  def formatRows(rowSeparator: String, rows: Seq[String]): String = (
-    rowSeparator :: 
-    rows.head :: 
-    rowSeparator :: 
-    rows.tail.toList ::: 
-    rowSeparator :: 
-    List()).mkString("\n")
-
-  def formatRow(row: Seq[Any], colSizes: Seq[Int]) = {
-    val cells = (for ((item, size) <- row.zip(colSizes)) yield if (size == 0) "" else ("%" + size + "s").format(item))
-    cells.mkString("|", "|", "|")
-  }
-
-  def rowSeparator(colSizes: Seq[Int]) = colSizes map { "-" * _ } mkString("+", "+", "+")
-}
-
 
   def solveSMT(model: Model, smtModel: String) {
     reset()
