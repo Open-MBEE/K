@@ -165,10 +165,7 @@ object K2Z3 {
                   i = i + 1
                 }
               case _ =>
-                val entityDecl = TypeChecker.classes(className)
-                val properties = entityDecl.getAllPropertyDecls
-                val printList = (properties zip objectValues).map { x => (x._1.name + " = " + x._2) }.toList
-              //println(s"\t(extra) $className(" + printList.mkString(", ") + ")")
+                rows = printObjectValue("(extra)", heapMap, value) ++ rows
             }
           }
         }
