@@ -1,16 +1,21 @@
+
 class A {
-  x : Int
+  x : Int = 2
+
   fun get : Int { x } 
 }
 
 class B extends A {
-  y : Int
+  y : Int = 5
+
   fun sum(k : Int) : Int {
-    y + k
+    get() + y + k
   }
 }
 
 
 bobj : B
 
-bobj.sum(bobj.get())
+theSum : Int = bobj.sum(bobj.get())
+
+req  theSum = 9 
