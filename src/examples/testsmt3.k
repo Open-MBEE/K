@@ -5,8 +5,8 @@ class A {
   x : Int = 1
   y : Int
 
-  fun sum: Int {
-    x + y
+  fun sum : Int {
+     x + y
   }
 
   req x < y
@@ -21,7 +21,10 @@ class B extends A {
   req a1.y < z
   req y < z
   req sum > 10
+  
 }
+
+
 
 inst1A : A = A(x :: 1,y :: 2) 
 inst2A : A = A(y :: 2) 

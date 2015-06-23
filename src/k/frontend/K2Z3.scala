@@ -123,6 +123,7 @@ object K2Z3 {
   def PrintModel(model: Model) {
 
     if (z3Model != null) {
+      
       log("<<++")
 
       var rows: List[List[String]] = List(List("Variable", "Value"))
@@ -149,9 +150,8 @@ object K2Z3 {
                 var topLevelVariables =
                   model.decls.foldLeft(List[(String, Boolean)]()) { (res, d) =>
                     d match {
-                      case pd @ PropertyDecl(_, _, _, _, _, _) =>
-                        (new Tuple2(pd.name, TypeChecker.isPrimitiveType(pd.ty))) :: res
-                      case _ => res
+                      case pd @ PropertyDecl(_, _, _, _, _, _) => (new Tuple2(pd.name, TypeChecker.isPrimitiveType(pd.ty))) :: res
+                      case _                                   => res
                     }
                   }
                 var i = 1
@@ -178,8 +178,9 @@ object K2Z3 {
 
       println()
       println("\tExtra objects created on the heap during analysis:")
-      if (rows.length > 1) println(Tabulator.format(extraRows.reverse))
+      if (extraRows.length > 1) println(Tabulator.format(extraRows.reverse))
       else println("\tNo extra objects were declared at the top level.")
+      println()
 
       log("-->>")
     }
@@ -229,7 +230,7 @@ object K2Z3 {
     var solver: Solver = ctx.mkSolver()
     solver.add(e)
     val params = ctx.mkParams()
-    params.add("algebraic_number_evaluator", true)
+//    params.add("algebraic_number_evaluator", true)
     //params.add("pp.decimal", true)
     solver.setParameters(params)
     if (debug) log("solving " + solver)

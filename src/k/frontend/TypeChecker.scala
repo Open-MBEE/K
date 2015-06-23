@@ -266,6 +266,85 @@ class TypeChecker(model: Model) {
     return false
   }
 
+  private def exprContainsAssignment(e: Exp): Boolean = {
+    e match {
+      case ParenExp(e)      => exprContainsAssignment(e)
+      case IdentExp(_)      => false
+      case DotExp(_, _)     => false
+      case ResultExp        => false
+      case FunApplExp(_, _) => false
+      case BinExp(exp1, op, exp2) =>
+        if (op == ASSIGN) true
+        else exprContainsAssignment(exp1) || exprContainsAssignment(exp2)
+      case WhileExp(cond, body)          => true
+      case IfExp(cond, tb, eb)           => exprContainsAssignment(tb) || (if (!eb.isEmpty) exprContainsAssignment(eb.get) else false)
+      case BlockExp(body)                => body.foldLeft(false) { (res, b) => res || declContainsAssignment(b) }
+      case UnaryExp(op, exp)             => exprContainsAssignment(exp)
+      case TupleExp(exps)                => false
+      case LambdaExp(pat, exp)           => exprContainsAssignment(exp)
+      case ReturnExp(exp)                => exprContainsAssignment(exp)
+      case ForExp(pattern, exp, body)    => true
+      case TypeCastCheckExp(cast, e, ty) => false
+      case QuantifiedExp(q, b, e)        => exprContainsAssignment(e)
+      case IntegerLiteral(_)             => false
+      case BooleanLiteral(_)             => false
+      case CharacterLiteral(_)           => false
+      case StringLiteral(_)              => false
+      case RealLiteral(_)                => false
+      case ThisLiteral                   => false
+    }
+  }
+
+  private def declContainsAssignment(d: MemberDecl): Boolean = {
+    d match {
+      case fd @ FunDecl(_, _, _, _, _, _) => fd.body.foldLeft(false)((res, b) => res || declContainsAssignment(b))
+      case ed @ ExpressionDecl(exp)       => exprContainsAssignment(exp)
+      case pd @ PropertyDecl(_, _, _, _, _, _) =>
+        if (pd.assignment.isEmpty) false
+        else pd.assignment.get
+      case _ => false
+    }
+
+  }
+
+  private def functionContainsReq(d: FunDecl): Boolean = {
+    d.body.foldLeft(false)((res, b) => res || b.isInstanceOf[ConstraintDecl])
+  }
+
+  def smtCheck {
+    /*
+     * For SMT we disallow statements with side effects and functions returning objects
+     */
+    model.decls.foreach { d =>
+      if (d.isInstanceOf[MemberDecl]) {
+        if (declContainsAssignment(d.asInstanceOf[MemberDecl])) {
+          error(s"Found assignment in declaration $d. SMT mode disallows assignments.")
+        }
+      }
+
+      if (d.isInstanceOf[FunDecl]) {
+        if (!isPrimitiveType(d.asInstanceOf[FunDecl].ty.getOrElse(UnitType))) {
+          error(s"Function $d does not return a primitive type. SMT mode disallows this.")
+        }
+        if (functionContainsReq(d.asInstanceOf[FunDecl])) {
+          error(s"Function $d contains a constraint. SMT mode disallows this.")
+        }
+      }
+
+      if (d.isInstanceOf[EntityDecl]) {
+        for (fd @ FunDecl(_, _, _, _, _, _) <- d.asInstanceOf[EntityDecl].members) {
+          if (!isPrimitiveType(fd.ty.getOrElse(UnitType))) {
+            error(s"Function $fd does not return a primitive type. SMT mode disallows this.")
+          }
+          if (functionContainsReq(fd)) {
+            error(s"Function $fd contains a constraint. SMT mode disallows this.")
+          }
+
+        }
+      }
+    }
+  }
+
   private def typeCheck: Boolean = {
 
     if (model == null) return true
@@ -557,7 +636,8 @@ class TypeChecker(model: Model) {
           if (exp.isInstanceOf[ReturnExp] && !fd.ty.isEmpty) {
             if (!areTypesEqual(lastT, fd.ty.get, true))
               error(s"Return type does not match for $exp in function ${fd.ident}")
-          }
+          } else if (lastT != UnitType && fd.body.length > 1)
+            error(s"Expression has non-unit type. $exp")
           exp2Type = exp2Type + (exp -> lastT)
         case _ => ()
       }
@@ -833,7 +913,7 @@ class TypeChecker(model: Model) {
     exp2Type = exp2Type + (exp -> result)
     exp2TypeEnv = exp2TypeEnv + (exp -> te)
 
-//    println(s"getExpType: $exp $result ${exp2TypeEnv(exp).decl} ${}")
+    //    println(s"getExpType: $exp $result ${exp2TypeEnv(exp).decl} ${}")
     return result
   }
 

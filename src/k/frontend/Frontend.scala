@@ -51,6 +51,7 @@ object Frontend {
 
     if (model != null) {
       val tc: TypeChecker = new TypeChecker(model)
+      tc.smtCheck
       log("Type checking completed. No errors found.")
     }
 
@@ -78,9 +79,9 @@ object Frontend {
 
     val smtModel = model.toSMT
 
-    println("--- SMT Model ---")
-    println(smtModel)
-    println("-----------------")
+//    println("--- SMT Model ---")
+//    println(smtModel)
+//    println("-----------------")
 
     K2Z3.solveSMT(model, smtModel)
 
