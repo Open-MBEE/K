@@ -11,7 +11,7 @@ case object TypeChecker {
   var globalTypeEnv: TypeEnv = TypeEnv(null, Map())
   var decl2TypeEnvironment: Map[TopDecl, TypeEnv] = Map()
   var origTypeEnvironments: Map[TopDecl, TypeEnv] = Map()
-  var exp2Type: Map[Exp, Type] = Map()
+  var exp2Type: IMap[Exp, Type] = new IMap()
   var exp2TypeEnv: IMap[Exp, TypeEnv] = new IMap()
   var keywords: Map[String, Type] = Map[String, Type]()
   var type2Decl = Map[Type, TopDecl]()
@@ -521,15 +521,15 @@ class TypeChecker(model: Model) {
     // except expressions that are in functions (bodies)
     model.decls.foreach { d =>
       d match {
-        case ExpressionDecl(exp) => exp2Type = exp2Type + (exp -> getExpType(globalTypeEnv, exp))
+        case ExpressionDecl(exp) => exp2Type.put(exp, getExpType(globalTypeEnv, exp))
         case ed @ EntityDecl(_, _, _, ident, _, _, _) =>
           ed.members.foreach { m =>
             m match {
-              case ExpressionDecl(exp) => exp2Type = exp2Type + (exp -> getExpType(decl2TypeEnvironment(ed), exp))
+              case ExpressionDecl(exp) => exp2Type.put(exp, getExpType(decl2TypeEnvironment(ed), exp))
               case _                   => ()
             }
           }
-        case cd @ ConstraintDecl(name, exp) => exp2Type = exp2Type + (exp -> getExpType(globalTypeEnv, exp))
+        case cd @ ConstraintDecl(name, exp) => exp2Type.put(exp, getExpType(globalTypeEnv, exp))
         case _                              => ()
       }
     }
@@ -542,7 +542,7 @@ class TypeChecker(model: Model) {
           if (ty != BoolType) {
             error(s"Condition $exp is not of type Bool.")
           }
-          exp2Type = exp2Type + (exp -> ty)
+          exp2Type.put(exp, ty)
         case fd @ FunDecl(_, _, _, _, _, _) =>
           processFunction(fd, globalTypeEnv, null)
         case ed @ EntityDecl(_, token, _, ident, _, _, _) =>
@@ -562,7 +562,7 @@ class TypeChecker(model: Model) {
                 if (ty != BoolType && ty != AnyType) {
                   error(s"Condition $exp is not of type Bool.")
                 }
-                exp2Type = exp2Type + (exp -> ty)
+                exp2Type.put(exp, ty)
               case fd @ FunDecl(_, _, _, _, _, _) =>
                 processFunction(fd, entityTypeEnv, ed)
               case pd @ PropertyDecl(_, _, _, _, _, _) =>
@@ -572,7 +572,7 @@ class TypeChecker(model: Model) {
                     if (!areTypesEqual(exprType, pd.ty, true)) {
                       error(s"Type does not match: ${pd.name}. Expected ${pd.ty}, Found $exprType")
                     }
-                    exp2Type = exp2Type + (e -> exprType)
+                    exp2Type.put(e, exprType)
                   case None => ()
                 }
               case ExpressionDecl(e) =>
@@ -580,7 +580,7 @@ class TypeChecker(model: Model) {
                 if (exprType != UnitType) {
                   error(s"Expression in class does not have unit type: $e")
                 }
-                exp2Type = exp2Type + (e -> exprType)
+                exp2Type.put(e, exprType)
               case _ => ()
             }
           }
@@ -590,7 +590,7 @@ class TypeChecker(model: Model) {
             if (!areTypesEqual(exprType, pd.ty, true)) {
               error(s"Type does not match: ${pd.name}. + Expected ${pd.ty}, Found $exprType")
             }
-            exp2Type += (pd.expr.get -> exprType)
+            exp2Type.put(pd.expr.get, exprType)
           }
         case _ => ()
       }
@@ -639,7 +639,7 @@ class TypeChecker(model: Model) {
               error(s"Return type does not match for $exp in function ${fd.ident}")
           } else if (lastT != UnitType && fd.body.length > 1)
             error(s"Expression has non-unit type. $exp")
-          exp2Type = exp2Type + (exp -> lastT)
+          exp2Type.put(exp, lastT)
         case _ => ()
       }
     }
@@ -911,7 +911,7 @@ class TypeChecker(model: Model) {
         type2Decl.map(_.swap).asInstanceOf[Map[TopDecl, Type]](te("this").asInstanceOf[ClassTypeInfo].decl)
       case _ => error(s"Type checking for ${exp.getClass} not implemented yet!")
     }
-    exp2Type = exp2Type + (exp -> result)
+    exp2Type.put(exp, result)
     exp2TypeEnv.put(exp,te)
 
 //    println(s"getExpType: $exp $result ${exp2TypeEnv.get(exp).decl} ${}}")
