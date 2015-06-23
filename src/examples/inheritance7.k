@@ -8,9 +8,11 @@ class A {
 class <b> B extends A {
   yy : Int
  
-  req i.x > 10
-  i : A 
+  -- req i.x > 10
+  -- i : A 
 }
+
+===
 
 b C {
   z : Int
@@ -31,3 +33,4 @@ fun foo(x : Int) : Int {
     return y
   }
 
+===
