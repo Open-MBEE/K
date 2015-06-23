@@ -568,7 +568,7 @@ case class EntityDecl(
 
   def getPropertyDecls: List[PropertyDecl] =
     for (m <- members if m.isInstanceOf[PropertyDecl]) yield m.asInstanceOf[PropertyDecl]
-
+    
   def getAllPropertyDecls: List[PropertyDecl] = {
     val propertyDeclsOfSuperClasses: List[PropertyDecl] =
       (for (superClass <- getSuperClasses(ident)) yield classes(superClass).getPropertyDecls).flatten
