@@ -87,3 +87,4 @@ class Rectangle extends Shape {
 }
 
 
+t : Triangle
