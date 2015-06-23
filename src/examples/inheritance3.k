@@ -9,11 +9,13 @@ class B extends A {
   y : Int = 5
 
   fun sum(k : Int) : Int {
-    y + k
+    get() + y + k
   }
 }
 
 
 bobj : B
 
-req bobj.sum(bobj.get()) = 7 
+theSum : Int = bobj.sum(bobj.get())
+
+req  theSum = 9 
