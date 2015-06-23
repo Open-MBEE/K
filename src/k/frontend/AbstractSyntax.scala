@@ -568,7 +568,7 @@ case class EntityDecl(
 
   def getPropertyDecls: List[PropertyDecl] =
     for (m <- members if m.isInstanceOf[PropertyDecl]) yield m.asInstanceOf[PropertyDecl]
-    
+
   def getAllPropertyDecls: List[PropertyDecl] = {
     val propertyDeclsOfSuperClasses: List[PropertyDecl] =
       (for (superClass <- getSuperClasses(ident)) yield classes(superClass).getPropertyDecls).flatten
@@ -1091,10 +1091,14 @@ case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
       // function application:
       val expSMT: String =
         exp1 match {
-          case IdentExp(ident) => s"$className.$ident this"
-          case DotExp(expBeforDot, ident) =>
-            val classOfFunction = exp2Type(expBeforDot).toString
-            s"$classOfFunction.$ident ${expBeforDot.toSMT(className)}"
+          case IdentExp(ident) => 
+            val declaringClass = UtilSMT.getDelaringClass(exp1)
+            s"$declaringClass.$ident this"
+          case DotExp(expBeforeDot, ident) =>
+            val classOfFunction = exp2Type(expBeforeDot).toString
+            val classNameOfDeclaringClass = UtilSMT.getDeclaringClass(classOfFunction, ident)
+            val expSMT = expBeforeDot.toSMT(className)
+            s"$classNameOfDeclaringClass.$ident $expSMT"
         }
       val argsSMT: String = args.map(_.toSMT(className)).mkString(" ")
       s"($expSMT $argsSMT)"
@@ -2080,7 +2084,7 @@ case class IntegerLiteral(i: Int) extends Literal {
   }
 }
 
-case class RealLiteral(f : java.math.BigDecimal) extends Literal {
+case class RealLiteral(f: java.math.BigDecimal) extends Literal {
   override def toSMT(className: String): String = {
     f.formatted("%.16f")
   }
