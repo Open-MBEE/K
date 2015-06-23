@@ -82,11 +82,13 @@ object K2Z3 {
     ctx = new Context(cfg)
   }
 
-  def printObjectValue(name: String, heap: Map[String, String], v: String): List[List[String]] = {
+  def printObjectValue(name: String, heap: Map[String, String], v: String, visited: Set[String]): List[List[String]] = {
+    if (visited.contains(v)) return Nil
     val value = v.trim.replace("- ", "-")
     val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
     val objectValues = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
       .split(' ').map(_.trim).filterNot { _.isEmpty }.drop(1)
+    if (className == "TopLevelDeclarations") return List(List(name, " - top level -"))
     val entityDecl = TypeChecker.classes(className)
     val properties = entityDecl.getAllPropertyDecls
     var toPrint = List[String]()
@@ -98,24 +100,30 @@ object K2Z3 {
         } else (x._1.name + "::" + x._2)
     }.toList
     var all = List(name, s"$className(" + printList.mkString(", ") + ")")
-    toPrint.foldLeft(List(all)) { (res, x) => printObjectValue("Ref " + x, heap, heap(x)) ++ res }
+    toPrint.foldLeft(List(all)) { (res, x) =>
+      if (heap.contains(x)) {
+        printObjectValue("Ref " + x, heap, heap(x), visited + name) ++ res
+      } else {
+        printObjectValue("else " + x, heap, heap("else"), visited + name) ++ res
+      }
+    }
   }
 
   def PrintModel(model: Model) {
 
     if (z3Model != null) {
-
       log("<<++")
 
       var rows: List[List[String]] = List(List("Variable", "Value"))
       var extraRows: List[List[String]] = List(List("Variable", "Value"))
 
       val heapDecl = z3Model.getConstDecls.find { x => x.getName.toString.split("!")(0).equals("heap") }
-      val heapMap =
+      var heapMap =
         z3Model.getFuncInterp(heapDecl.get).getEntries.foldLeft(Map[String, String]()) { (res, x) =>
           res + (x.getArgs.last.toString -> x.getValue.toString)
         }
-
+      val elseK = z3Model.getFuncInterp(heapDecl.get).getElse
+      heapMap += ("else" -> elseK.toString)
       // walk through heap
       heapMap.foreach { kv =>
         val key = kv._1
@@ -137,16 +145,11 @@ object K2Z3 {
                   }
                 var i = 1
                 topLevelVariables.reverse.foreach { k =>
-                  if (k._2) {
-                    // primitive
-                    rows = (List(k._1, objectValues(i))) :: rows
-                  } else {
-                    // object
-                    rows = printObjectValue(k._1, heapMap, heapMap(objectValues(i))) ++ rows
-                  }
+                  if (k._2) rows = (List(k._1, objectValues(i))) :: rows
+                  else rows = printObjectValue(k._1, heapMap, heapMap(objectValues(i)), Set()) ++ rows
                   i = i + 1
                 }
-              case _ => extraRows = printObjectValue("", heapMap, value) ++ extraRows
+              case _ => extraRows = printObjectValue("", heapMap, value, Set()) ++ extraRows
             }
           }
         }
@@ -209,13 +212,13 @@ object K2Z3 {
 
   def SolveExp(e: BoolExpr): com.microsoft.z3.Model = {
     var solver: Solver = ctx.mkSolver()
-    
+
     solver.add(e)
-    
+
     solver.setParameters(ctx.mkParams())
 
     val status = solver.check()
-    
+
     if (Status.SATISFIABLE == status) {
       z3Model = solver.getModel
     } else if (status == Status.UNSATISFIABLE) {
