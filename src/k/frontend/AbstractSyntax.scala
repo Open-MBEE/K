@@ -1046,7 +1046,7 @@ case class IdentExp(ident: String) extends Exp {
 case class DotExp(exp: Exp, ident: String) extends Exp {
   override def toSMT(className: String): String = {
     val expSMT = exp.toSMT(className)
-    val classNameOfExp = exp2Type(exp).toString
+    val classNameOfExp = exp2Type.get(exp).toString
     val classNameOfDeclaringClass = UtilSMT.getDeclaringClass(classNameOfExp, ident)
     s"($classNameOfDeclaringClass.$ident $expSMT)"
   }
@@ -1095,7 +1095,7 @@ case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
             val declaringClass = UtilSMT.getDelaringClass(exp1)
             s"$declaringClass.$ident this"
           case DotExp(expBeforeDot, ident) =>
-            val classOfFunction = exp2Type(expBeforeDot).toString
+            val classOfFunction = exp2Type.get(expBeforeDot).toString
             val classNameOfDeclaringClass = UtilSMT.getDeclaringClass(classOfFunction, ident)
             val expSMT = expBeforeDot.toSMT(className)
             s"$classNameOfDeclaringClass.$ident $expSMT"

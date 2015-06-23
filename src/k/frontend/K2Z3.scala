@@ -66,8 +66,7 @@ case class DataType(sort: Sort, constructor: FuncDecl, selectors: Map[String, Fu
 object K2Z3 {
 
   val debug: Boolean = false
-  var cfg: Map[String, String] = Map("model" -> "true",
-    "auto-config" -> "true")
+  var cfg: Map[String, String] = Map("model" -> "true", "auto-config" -> "true")
   var ctx: Context = new Context(cfg)
   var idents: MMap[String, (Expr, com.microsoft.z3.StringSymbol)] = MMap()
   var z3Model: com.microsoft.z3.Model = null
@@ -77,28 +76,10 @@ object K2Z3 {
   def error(msg: String) = Misc.error("K2Z3", msg)
   def log(msg: String) = Misc.log("K2Z3", msg)
 
-  def declareDatatypes(ctx: Context) {
-    datatypes = new DataTypes(ctx)
-    datatypes.addTupleType(List(RealType, BoolType))
-    datatypes.addDataType("A", Nil, List("x" -> RealType, "y" -> BoolType))
-  }
-
-  def declareFunctions(ctx: Context) {
-    // function f : Int -> Int inside A
-    val intType = datatypes.getSort(RealType)
-    val theAType = IdentType(QualifiedName(List("A")), Nil)
-    val theADatatype: DataType = datatypes.getDataType(theAType)
-    val theASort = theADatatype.sort
-    val fDecl: FuncDecl = ctx.mkFuncDecl("f", Array(theASort, intType), intType)
-
-  }
-
   def reset() {
     z3Model = null
     idents = new MMap()
     ctx = new Context(cfg)
-    declareDatatypes(ctx)
-    declareFunctions(ctx)
   }
 
   def printObjectValue(name: String, heap: Map[String, String], v: String): List[List[String]] = {
@@ -123,7 +104,7 @@ object K2Z3 {
   def PrintModel(model: Model) {
 
     if (z3Model != null) {
-      
+
       log("<<++")
 
       var rows: List[List[String]] = List(List("Variable", "Value"))
@@ -228,49 +209,28 @@ object K2Z3 {
 
   def SolveExp(e: BoolExpr): com.microsoft.z3.Model = {
     var solver: Solver = ctx.mkSolver()
+    
     solver.add(e)
-    val params = ctx.mkParams()
-//    params.add("algebraic_number_evaluator", true)
-    //params.add("pp.decimal", true)
-    solver.setParameters(params)
-    if (debug) log("solving " + solver)
+    
+    solver.setParameters(ctx.mkParams())
 
     val status = solver.check()
+    
     if (Status.SATISFIABLE == status) {
       z3Model = solver.getModel
     } else if (status == Status.UNSATISFIABLE) {
-      println("UNSAT")
+      println
+      log(s"The given model is NOT satisfiable. ")
+      println
     } else {
-      log("UNKNOWN...Model could not be solved successfully.")
+      println
+      log("Model could not be solved successfully.")
+      log("Reason: " + solver.getReasonUnknown)
+      println
       z3Model = null
     }
 
     z3Model
-  }
-
-  def getZ3Function(exp: Exp) = {
-    // TODO
-    // have to ensure that all functions have been put into Z3
-    // 
-    null
-  }
-
-  // create a function in Z3 with the given name
-  def createFunction(name: String, f: FunDecl) {
-    // TODO 
-  }
-
-  def Class2Z3(e: EntityDecl): Sort = {
-    val (fields, types): (List[String], List[Sort]) =
-      e.members.foldLeft((List[String](), List[Sort]()))((r, f) =>
-        if (f.isInstanceOf[PropertyDecl])
-          //(r._1 ++ List(f.asInstanceOf[PropertyDecl].name), r._2 ++ List(f.asInstanceOf[PropertyDecl].ty.toString))
-          (r._1 ++ List(f.asInstanceOf[PropertyDecl].name), r._2 ++ List(ctx.getRealSort))
-        else
-          r)
-    ctx.mkDatatypeSort(e.ident,
-      List(ctx.mkConstructor(e.ident + "_cons", "is_" + e.ident + "_cons", fields.toArray, types.toArray, null)).toArray)
-
   }
 
   def Expr2Z3(e: Exp): com.microsoft.z3.Expr = {
