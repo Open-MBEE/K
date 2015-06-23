@@ -1,6 +1,7 @@
 package k.frontend
 
 import k.frontend._
+import java.util.{IdentityHashMap => IMap}
 import javax.xml.bind.annotation.XmlElementDecl.GLOBAL
 
 case object TypeChecker {
@@ -11,7 +12,7 @@ case object TypeChecker {
   var decl2TypeEnvironment: Map[TopDecl, TypeEnv] = Map()
   var origTypeEnvironments: Map[TopDecl, TypeEnv] = Map()
   var exp2Type: Map[Exp, Type] = Map()
-  var exp2TypeEnv: Map[Exp, TypeEnv] = Map()
+  var exp2TypeEnv: IMap[Exp, TypeEnv] = new IMap()
   var keywords: Map[String, Type] = Map[String, Type]()
   var type2Decl = Map[Type, TopDecl]()
   var annotations = Map[String, AnnotationDecl]()
@@ -37,8 +38,8 @@ case object TypeChecker {
 
   // assming that exp is an ident exp...
   def getOwningEntityDecl(exp: Exp): EntityDecl = {
-    if (exp2TypeEnv contains exp) {
-      val te = exp2TypeEnv(exp)
+    if (exp2TypeEnv.containsKey(exp)) {
+      val te = exp2TypeEnv.get(exp)
       te(exp.toString) match {
         case PropertyTypeInfo(_, _, o) => o
         case FunctionTypeInfo(_, o)    => o
@@ -94,7 +95,7 @@ case object TypeChecker {
 
   def isLocal(exp: IdentExp): Boolean = {
     try {
-      exp2TypeEnv(exp)(exp.ident) match {
+      exp2TypeEnv.get(exp)(exp.ident) match {
         case ParamTypeInfo(_) => true
         case _                => false
       }
@@ -911,9 +912,10 @@ class TypeChecker(model: Model) {
       case _ => error(s"Type checking for ${exp.getClass} not implemented yet!")
     }
     exp2Type = exp2Type + (exp -> result)
-    exp2TypeEnv = exp2TypeEnv + (exp -> te)
+    exp2TypeEnv.put(exp,te)
 
-    //    println(s"getExpType: $exp $result ${exp2TypeEnv(exp).decl} ${}")
+//    println(s"getExpType: $exp $result ${exp2TypeEnv.get(exp).decl} ${}}")
+
     return result
   }
 
