@@ -9,14 +9,13 @@ class <b> B extends A {
   yy : Int
  
   req i.x > 10
-  i : A
- 
+  i : A 
 }
 
 b C {
   z : Int
   fun foo(x : Int) : Int {
-    if true then x
+    -- if true then x
     return x + 1
   }
 }
@@ -28,9 +27,7 @@ req bobj.z = 1
 y : Int
 
 fun foo(x : Int) : Int {
-    
-    if true then x
+    -- if true then x
     return y
   }
-
 

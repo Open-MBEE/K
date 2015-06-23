@@ -79,9 +79,9 @@ object Frontend {
 
     val smtModel = model.toSMT
 
-//    println("--- SMT Model ---")
-//    println(smtModel)
-//    println("-----------------")
+    println("--- SMT Model ---")
+    println(smtModel)
+    println("-----------------")
 
     K2Z3.solveSMT(model, smtModel)
 

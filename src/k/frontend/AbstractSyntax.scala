@@ -1019,7 +1019,7 @@ case class ParenExp(exp: Exp) extends Exp {
 
 case class IdentExp(ident: String) extends Exp {
   override def toSMT(className: String): String =
-    if (isLocal(this))
+    if (isLocal(this)) 
       ident
     else {
       val declaringClass = UtilSMT.getDelaringClass(this)
@@ -1686,6 +1686,10 @@ case class TypeCastCheckExp(cast: Boolean, exp: Exp, ty: Type) extends Exp {
 }
 
 case class ReturnExp(exp: Exp) extends Exp {
+  override def toSMT(className: String): String = {
+    exp.toSMT(className)
+  }  
+  
   override def toString = s"return $exp"
 
   override def toJson1 = {

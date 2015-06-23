@@ -1,3 +1,4 @@
+
 class A {
   x : Int
   req x > 10
@@ -13,3 +14,4 @@ class C extends B {
   z : Int
   req z = 4 && x < 15
 }
+
