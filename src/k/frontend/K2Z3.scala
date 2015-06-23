@@ -126,6 +126,7 @@ object K2Z3 {
       log("<<++")
 
       var rows: List[List[String]] = List(List("Variable", "Value"))
+      var extraRows: List[List[String]] = List(List("Variable", "Value"))
 
       val heapDecl = z3Model.getConstDecls.find { x => x.getName.toString.split("!")(0).equals("heap") }
       val heapMap =
@@ -164,14 +165,21 @@ object K2Z3 {
                   }
                   i = i + 1
                 }
-              case _ =>
-                rows = printObjectValue("(extra)", heapMap, value) ++ rows
+              case _ => extraRows = printObjectValue("", heapMap, value) ++ extraRows
             }
           }
         }
       }
+
+      println()
+      println("\tObjects created on the heap as specified by model:")
       if (rows.length > 1) println(Tabulator.format(rows.reverse))
-      else println("\tSeems like no instance variables were declared at the top level.")
+      else println("\tNo instance variables were declared at the top level.")
+
+      println()
+      println("\tExtra objects created on the heap during analysis:")
+      if (rows.length > 1) println(Tabulator.format(extraRows.reverse))
+      else println("\tNo extra objects were declared at the top level.")
 
       log("-->>")
     }
@@ -191,17 +199,17 @@ object K2Z3 {
       rowSeparator ::
       rows.head ::
       rowSeparator ::
-      //rows.tail.toList.map { x => (x + "\n") ++ rowSeparator } :::
+      //rows.tail.toList.map { x => (x + "\n") ++ rowSeparator } ::: // for row sep
       rows.tail.toList :::
       rowSeparator ::
       List()).mkString("\n")
 
     def formatRow(row: Seq[Any], colSizes: Seq[Int]) = {
       val cells = (for ((item, size) <- row.zip(colSizes)) yield if (size == 0) "" else ("%" + size + "s").format(item))
-      cells.mkString("|", "|", "|")
+      cells.mkString("\t|", "|", "|")
     }
 
-    def rowSeparator(colSizes: Seq[Int]) = colSizes map { "-" * _ } mkString ("+", "+", "+")
+    def rowSeparator(colSizes: Seq[Int]) = colSizes map { "-" * _ } mkString ("\t+", "+", "+")
   }
 
   def solveSMT(model: Model, smtModel: String) {

@@ -31,7 +31,7 @@ case object TypeChecker {
 
   }
 
-  def isPrimitiveType(t: Type) : Boolean = {
+  def isPrimitiveType(t: Type): Boolean = {
     t.isInstanceOf[PrimitiveType]
   }
 
@@ -42,7 +42,7 @@ case object TypeChecker {
       te(exp.toString) match {
         case PropertyTypeInfo(_, _, o) => o
         case FunctionTypeInfo(_, o)    => o
-        case i@_                         => error(s"Unexpected type info for given expression. Cannot retrieve owning decl for $exp ${i.getClass}")
+        case i @ _                     => error(s"Unexpected type info for given expression. Cannot retrieve owning decl for $exp ${i.getClass}")
       }
     } else null
   }
@@ -83,11 +83,11 @@ case object TypeChecker {
   def getDirectSuperClasses(className: String): List[String] =
     if (className == "TopLevelDeclarations") Nil
     else ClassHierarchy.parents(classes(className)).map(_.toString).toList
-    
+
   def getSuperClasses(className: String): List[String] =
     if (className == "TopLevelDeclarations") Nil
     else ClassHierarchy.parentsTransitive(classes(className)).map(_.toString).toList
-    
+
   def getSubClasses(className: String): List[String] =
     if (className == "TopLevelDeclarations") Nil
     else ClassHierarchy.childrenTransitive(classes(className)).map(_.toString).toList
@@ -210,22 +210,26 @@ object ClassHierarchy {
 
   }
 
-  def childrenTransitive(e: EntityDecl, visited: Set[Type] = Set()): Set[Type] = {
+  def childrenTransitive(e: EntityDecl, visited: Set[Type] = Set()): List[Type] = {
     val declType = type2Decl.map(_.swap).asInstanceOf[Map[EntityDecl, Type]](e)
-    if (visited.contains(declType)) return Set()
+    if (visited.contains(declType)) return Nil
     val immediateChildren = children.getOrElse(e, Nil).toList
-    val subChildren = (for (child <- immediateChildren) yield childrenTransitive(type2Decl(child).asInstanceOf[EntityDecl], visited + declType)).flatten
-    (immediateChildren ++ subChildren).toSet
+    val subChildren = (for (child <- immediateChildren)
+      yield childrenTransitive(type2Decl(child).asInstanceOf[EntityDecl], visited + declType)).flatten
+    (immediateChildren ++ subChildren).distinct
   }
 
-  def parentsTransitive(e: EntityDecl, visited: Set[Type] = Set()): Set[Type] = {
+  def parentsTransitive(e: EntityDecl, visited: Set[Type] = Set()): List[Type] = {
     val declType = type2Decl.map(_.swap).asInstanceOf[Map[EntityDecl, Type]](e)
-    if (visited.contains(declType)) return Set()
-    val immediateParent = parents.getOrElse(e, Nil).toList
-    val iParents = (for (parent <- immediateParent) yield parentsTransitive(type2Decl(parent).asInstanceOf[EntityDecl], visited + declType)).flatten
-    (immediateParent ++ iParents).toSet
+    if (visited.contains(declType)) return Nil
+    val immediateParent = parents.getOrElse(e, Nil).toList.reverse
+    val iParents = immediateParent.foldLeft(List[Type]()) {
+      (res, p) =>
+        parentsTransitive(type2Decl(p).asInstanceOf[EntityDecl], visited + declType) ++ (p :: res)
+    }
+    iParents.distinct
   }
-  
+
   def buildHierarchy(d: EntityDecl, types: Map[Type, TopDecl], visited: Set[EntityDecl]): Set[Type] = {
     d.extending.foldLeft(Set[Type]()) { (res, e) =>
       assert(types(e).isInstanceOf[EntityDecl])
@@ -321,7 +325,7 @@ class TypeChecker(model: Model) {
           ed.members.foreach { m =>
             m match {
               case pd @ PropertyDecl(_, _, _, _, _, _) =>
-                classTypeEnv += (pd.name -> PropertyTypeInfo(pd, false, ed))
+                classTypeEnv = classTypeEnv.overwrite(pd.name -> PropertyTypeInfo(pd, false, ed))
               case fd @ FunDecl(_, _, _, _, _, _) =>
                 classTypeEnv += (fd.ident -> FunctionTypeInfo(fd, ed))
               case _ => ()
@@ -645,23 +649,15 @@ class TypeChecker(model: Model) {
               else if (i == "size") SumType(it.args)
               else if (i == "at") SumType(it.args)
               else if (i == "toString") StringType
-              else
-                te(it.toString) match {
-                  case cti @ ClassTypeInfo(d) =>
-                    // get class type env and lookup property/function etc. 
-                    val classTypeEnv =
-                      decl2TypeEnvironment.find(
-                        de => de._1 match {
-                          case ed @ EntityDecl(_, _, _, _, _, _, _) => ed.ident.toString.equals(d.ident)
-                          case _                                    => false
-                        }).get._2
-
-                    classTypeEnv(i) match {
-                      case pti @ PropertyTypeInfo(decl, _, _) => getPropertyDeclType(decl)
-                      case pti @ ParamTypeInfo(p)             => p.ty
-                      case pti @ FunctionTypeInfo(decl, _)    => decl.ty.get
-                    }
+              else {
+                // get class type environment
+                val classTypeEnv = decl2TypeEnvironment(classes(it.ident.toString))
+                classTypeEnv(i) match {
+                  case pti @ PropertyTypeInfo(decl, _, _) => getPropertyDeclType(decl)
+                  case pti @ ParamTypeInfo(p)             => p.ty
+                  case pti @ FunctionTypeInfo(decl, _)    => decl.ty.get
                 }
+              }
             }
           case tt @ _ =>
             if (i == "collect") CollectType(List(tt))
@@ -837,12 +833,12 @@ class TypeChecker(model: Model) {
     exp2Type = exp2Type + (exp -> result)
     exp2TypeEnv = exp2TypeEnv + (exp -> te)
 
-    //println(s"getExpType: $exp $result ${exp2TypeEnv(exp).decl} ${}")
+//    println(s"getExpType: $exp $result ${exp2TypeEnv(exp).decl} ${}")
     return result
   }
 
   def inferTypeFrom(exp: String, ty: Type) = ty
 
   typeCheck
-  //exp2TypeEnv.keySet.foreach{e => if (e.isInstanceOf[IdentExp]) println(e + " " + getOwningEntityDecl(e))}
+
 }
