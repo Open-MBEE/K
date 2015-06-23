@@ -12,19 +12,15 @@ class <Req> Requirements {
 
 -------------------------------------------
 ===
-   fun pow(x : Int, y : Int) : Int {
+   Fun pow(x : Int, y : Int) : Int {
      i : Int
      r : Int = 1
-     while ( i < y) do {
-       r := r * x
-       i := i + 1
+     While ( i < y) {
+       r = r * x
+       i= i + 1
      }
-     return r
    }
 ===
-  fun pow (x : Int, y : Int) : Int
-  fun squared (x : Int) : Int { x * x }
-  fun cubed (x : Int) : Int { x * x * x }
 ------------------------------------------
 }
 
@@ -354,24 +350,23 @@ class Body {
 
 class Jupiter extends Body {
   @units("kg")
-  mass = 1898000000000000000000000000.0 --E27
+  req mass = 1898000000000000000000000000.0 --E27
   @units("km")
-  radius = 69911.0
+  req radius = 69911.0
   @units("km")
-  sundistance = 778500000.0
+  req sundistance = 778500000.0
   @units("m/s^2")
-  gravity = 24.79
+  req gravity = 24.79
   @units("g/cm^3")
-  density = 1.33
+  req density = 1.33
 }
 
 class Earth extends Body {
   @units("kg")
-  mass = 5972000000000000000000000.0 --E24
-  
-  
+  --req mass = 5972000000000000000000000.0 --E24
+  req mass = 5972.0E21 * 1.0
   @units("km")
-  req radius = 6371.0
+  req  radius = 6371.0
   @units("km")
   req sundistance = 149600000
   @units("m/s^2")
@@ -382,18 +377,18 @@ class Earth extends Body {
 
 class Europa extends Body {
   @units("kg")
-  mass = 4799800000000000000000.0 --E22 
+  req mass = 4799800000000000000000.0 --E22 
   @units("km")
-  radius = 1560.8
+  req radius = 1560.8
   @units("m/s^2")
-  gravity = 1.314
+  req gravity = 1.314
   @units("g/cm^3")
-  density = 3.013
+  req density = 3.013
 }
 
 class Clipper extends Body {
   @units("kg")
-  mass = 3100.0
+  req mass = 3100.0
 }
 
 
@@ -415,9 +410,7 @@ class GravitationalForces {
 
 
   fun Eur_Jup_Gravity : Real {
-  	 --11222000000000000000000000000000.6 * 2.5
-  	 -- 11222.0006E3 * 1.0
-  	 -- 0.1234548267 * 1.0
+  	 1222000.6*2.5
 
   }
 }
@@ -442,3 +435,6 @@ ActualTraj : HyperbolicArc
 fun Delta : Real {
 	PerfectTraj.velocity - ActualTraj.velocity
 }
+
+
+ 
