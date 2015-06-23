@@ -83,11 +83,11 @@ case object TypeChecker {
   def getDirectSuperClasses(className: String): List[String] =
     if (className == "TopLevelDeclarations") Nil
     else ClassHierarchy.parents(classes(className)).map(_.toString).toList
-
+    
   def getSuperClasses(className: String): List[String] =
     if (className == "TopLevelDeclarations") Nil
     else ClassHierarchy.parentsTransitive(classes(className)).map(_.toString).toList
-
+    
   def getSubClasses(className: String): List[String] =
     if (className == "TopLevelDeclarations") Nil
     else ClassHierarchy.childrenTransitive(classes(className)).map(_.toString).toList
@@ -225,7 +225,7 @@ object ClassHierarchy {
     val iParents = (for (parent <- immediateParent) yield parentsTransitive(type2Decl(parent).asInstanceOf[EntityDecl], visited + declType)).flatten
     (immediateParent ++ iParents).toSet
   }
-
+  
   def buildHierarchy(d: EntityDecl, types: Map[Type, TopDecl], visited: Set[EntityDecl]): Set[Type] = {
     d.extending.foldLeft(Set[Type]()) { (res, e) =>
       assert(types(e).isInstanceOf[EntityDecl])
