@@ -18,10 +18,12 @@ class C extends A, B {
 }
 
 class D {
+  bb : B
   d : Int
 }
 
 class E extends  D {
+  
   e : Int
 }
 
@@ -30,7 +32,7 @@ class F extends C, E {
 }
 
 class G extends E {
-  ge : E
+  ee : E
   g : Int
 }
 
