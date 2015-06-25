@@ -28,7 +28,10 @@ object Frontend {
         parseArgs(map ++ Map('modelFile -> value), tail)
       case "-v" :: tail     => parseArgs(map ++ Map('verbose -> true), tail)
       case "-stats" :: tail => parseArgs(map ++ Map('stats -> true), tail)
+      case "-dot" :: tail   => parseArgs(map ++ Map('dot -> true), tail)
       case "-json" :: tail  => parseArgs(map ++ Map('printJson -> true), tail)
+      case "-mmsJson" :: value :: tail =>
+        parseArgs(map ++ Map('mmsJson -> value), tail)
       case "-expressionToJson" :: value :: tail =>
         parseArgs(map ++ Map('expression -> value), tail)
       case "-jsonToExpression" :: value :: tail =>
@@ -41,13 +44,22 @@ object Frontend {
 
   def scala_main(args: Array[String]) {
     val options = parseArgs(Map(), args.toList)
+    var model: Model = null
+    var filename: String = null
 
-    val (model: Model, filename: String) =
-      options.get('modelFile) match {
-        case Some(f: String) =>
-          (getModelFromFile(f), Paths.get(f).getFileName.toString)
-        case None => (null, null)
+    options.get('modelFile) match {
+      case Some(f: String) =>
+        model = getModelFromFile(f)
+        filename = Paths.get(f).getFileName.toString
+      case _ => ()
+    }
+
+    options.get('mmsJson) match {
+      case Some(file: String) => {
+        model = parseMMSJson(file)
       }
+      case _ => ()
+    }
 
     if (model != null) {
       val tc: TypeChecker = new TypeChecker(model)
@@ -74,32 +86,133 @@ object Frontend {
           Options.useJson1 = optionsUseJson1
         } else
           println("Model was null!")
-      case None => ()
+      case _ => ()
     }
 
-    val smtModel = model.toSMT
-
-    println("--- SMT Model ---")
-    println(smtModel)
-    println("-----------------")
-
-    K2Z3.solveSMT(model, smtModel)
+    if (model != null) {
+      val smtModel = model.toSMT
+      println("--- SMT Model ---")
+      println(smtModel)
+      println("-----------------")
+      K2Z3.solveSMT(model, smtModel)
+    }
 
     // print DOT format class diagram
-    if (model != null) printClassDOT(filename, model)
+    options.get('dot) match {
+      case Some(_) => if (model != null) printClassDOT(filename, model)
+      case _       => ()
+    }
 
     options.get('stats) match {
       case Some(_) => printStats(model)
-      case None    => ()
+      case _       => ()
     }
 
     options.get('expression) match {
       case Some(expressionString: String) => {
         println(exp2Json(expressionString))
       }
-      case None => ()
+      case _ => ()
     }
 
+  }
+
+  def parseMMSJson(file: String): Model = {
+    /*
+     */
+    val json = scala.io.Source.fromFile(file).mkString
+    var tokener: JSONTokener = new JSONTokener(json)
+    var jsonObject: JSONObject = new JSONObject(tokener)
+    val elementsArray = jsonObject.get("elements").asInstanceOf[JSONArray]
+    var packageName: Option[PackageDecl] = None
+    var imports: List[ImportDecl] = List()
+    var annotations: List[AnnotationDecl] = List()
+    var mdecls: List[TopDecl] = List[TopDecl]()
+    var id2Decl: Map[String, TopDecl] = Map()
+
+    // first build the classes 
+    for (i <- Range(0, elementsArray.length())) {
+      val obj = elementsArray.get(i).asInstanceOf[JSONObject]
+      if (obj.keySet.contains("specialization")) {
+        if (obj.getString("name").length == 0) {
+          println("Warning: found unnamed element in JSON: " + obj.getString("sysmlid"))
+        } else {
+          val specializationObject = obj.getJSONObject("specialization")
+          specializationObject.getString("type") match {
+            case "Element" =>
+              val entity = EntityDecl(Nil, ClassToken, None, obj.getString("name"), Nil, Nil, Nil)
+              mdecls = entity :: mdecls
+              id2Decl += (obj.getString("sysmlid") -> entity)
+            case _ => ()
+          }
+        }
+      }
+    }
+
+    // now we can process properties and constraints
+
+    for (i <- Range(0, elementsArray.length())) {
+      val obj = elementsArray.get(i).asInstanceOf[JSONObject]
+      if (obj.keySet.contains("specialization")) {
+        val specializationObject = obj.getJSONObject("specialization")
+        if (obj.getString("name").length == 0 &&
+          specializationObject.getString("type") != "Generalization") {
+          println("Warning: found unnamed element in JSON: " + obj.getString("sysmlid"))
+        } else {
+          specializationObject.getString("type") match {
+            case "Property" =>
+              val owningDecl = id2Decl(obj.getString("owner")).asInstanceOf[EntityDecl]
+              val propertyType =
+                if (specializationObject.get("propertyType") == JSONObject.NULL) IntType
+                else {
+                  val typeDecl = id2Decl(specializationObject.getString("propertyType")).asInstanceOf[EntityDecl]
+                  IdentType(QualifiedName(List(typeDecl.ident)), List())
+                }
+              val property = PropertyDecl(Nil, obj.getString("name"), propertyType, None, None, None)
+              val newDecl = EntityDecl(owningDecl.annotations, owningDecl.entityToken,
+                owningDecl.keyword, owningDecl.ident,
+                owningDecl.typeParams, owningDecl.extending,
+                property :: owningDecl.members)
+              mdecls = mdecls.diff(List(owningDecl))
+              mdecls = newDecl :: mdecls
+
+              id2Decl += (obj.getString("owner") -> newDecl)
+
+            case "Package" => packageName =
+              Some(PackageDecl(QualifiedName(obj.getString("qualifiedName").replace("-", "_").split("/").toList.filterNot { _.isEmpty })))
+            case "Constraint" =>
+              val constraintExpression = specializationObject.getJSONObject("specification").getJSONArray("expressionBody").get(0).asInstanceOf[String]
+              val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(constraintExpression)
+              var m: Model = ksv.visit(tree).asInstanceOf[Model]
+              var exp: Exp = m.decls(0).asInstanceOf[ExpressionDecl].exp
+              val owningDecl = id2Decl(obj.getString("owner")).asInstanceOf[EntityDecl]
+              val constraint = ConstraintDecl(Some(obj.getString("name")), exp)
+              val newDecl = EntityDecl(owningDecl.annotations, owningDecl.entityToken,
+                owningDecl.keyword, owningDecl.ident,
+                owningDecl.typeParams, owningDecl.extending,
+                constraint :: owningDecl.members)
+              mdecls = mdecls.diff(List(owningDecl))
+              mdecls = newDecl :: mdecls
+              id2Decl += (obj.getString("owner") -> newDecl)
+            case "Generalization" =>
+              val owningDecl = id2Decl(specializationObject.getString("source")).asInstanceOf[EntityDecl]
+              val targetDecl = id2Decl(specializationObject.getString("target")).asInstanceOf[EntityDecl]
+              val newDecl = EntityDecl(owningDecl.annotations, owningDecl.entityToken,
+                owningDecl.keyword, owningDecl.ident,
+                owningDecl.typeParams, IdentType(QualifiedName(List(targetDecl.ident)), List()) :: owningDecl.extending, owningDecl.members)
+              mdecls = mdecls.diff(List(owningDecl))
+              mdecls = newDecl :: mdecls
+              id2Decl += (obj.getString("owner") -> newDecl)
+
+            case _ => ()
+          }
+        }
+      }
+    }
+
+    val model = Model(packageName, imports, annotations, mdecls)
+    println(model)
+    model
   }
 
   def printClassDOT(filename: String, model: Model) = {

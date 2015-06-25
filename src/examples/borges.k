@@ -43,11 +43,11 @@ class <event> Event {
 
 }
 
-  a : Event
-  b : Event
-  telecom : Event
-  radioScience : Event
-  targetSlew : Event
+a : Event
+b : Event
+telecom : Event
+radioScience : Event
+targetSlew : Event
 
   req Schedule1OrSchedule2: 
     (
