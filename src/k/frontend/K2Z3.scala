@@ -65,7 +65,7 @@ case class DataType(sort: Sort, constructor: FuncDecl, selectors: Map[String, Fu
 
 object K2Z3 {
 
-  val debug: Boolean = false
+  val debug: Boolean = true
   var cfg: Map[String, String] = Map("model" -> "true", "auto-config" -> "true")
   var ctx: Context = new Context(cfg)
   var idents: MMap[String, (Expr, com.microsoft.z3.StringSymbol)] = MMap()
@@ -201,6 +201,13 @@ object K2Z3 {
     reset()
     val boolExp = ctx.parseSMTLIB2String(smtModel, null, null, null, null)
     z3Model = SolveExp(boolExp)
+    if (debug) {
+      println
+      println("--- BEGIN RAW SMT MODEL: ---")
+      println(z3Model)
+      println("--- END RAW SMT MODEL ---")
+      println
+    }
     PrintModel(model)
   }
 

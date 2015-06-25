@@ -12,8 +12,6 @@ class <b> B extends A {
   -- i : A 
 }
 
-===
-
 b C {
   z : Int
   fun foo(x : Int) : Int {
@@ -32,5 +30,3 @@ fun foo(x : Int) : Int {
     -- if true then x
     return y
   }
-
-===

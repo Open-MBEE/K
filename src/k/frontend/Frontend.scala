@@ -79,9 +79,13 @@ object Frontend {
 
     val smtModel = model.toSMT
 
-    println("--- SMT Model ---")
-    println(smtModel)
-    println("-----------------")
+    if (K2Z3.debug) {
+      println
+      println("--- Z3 Formula: ---")
+      println(smtModel)
+      println("-----------------")
+      println
+    }
 
     K2Z3.solveSMT(model, smtModel)
 
