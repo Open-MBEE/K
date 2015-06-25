@@ -1,44 +1,66 @@
 package examples.borges
 
 class <event> Event {
-  t1 : Real
+  t1 : Real 
   t2 : Real  
+  duration : Real  
+
+  req t1 > 0
+  req t2 > t1 
+  req t2 = t1 + duration
+  req duration > 0
+
+  -- START OPERATORS -- 
+  fun before (e : Event) : Bool {
+    t2 < e.t1
+  }
+
+  fun meets (e : Event) : Bool {
+    t2 = e.t1
+  }  
+
+  fun overlaps (e : Event) : Bool {
+    t2 > e.t1 && t2 < e.t2
+  }
+
+  fun starts (e : Event) : Bool {
+    t1 = e.t1
+  }
+
+  fun during (e : Event) : Bool {
+    t2 > e.t1 && t2 < e.t2 &&
+    t1 > e.t1 && t2 < e.t2
+  }
+ 
+  fun finishes (e : Event) : Bool {
+    t2 = e.t2
+  }
+
+  fun equal (e : Event) : Bool {
+    t1 = e.t1 && t2 = e.t2
+  }
+  -- END OPERATORS --
+
 }
 
-class A extends Event
-class B extends Event
-event Telecom
-event RadioScience
-event TargetSlew
-
-class Schedule {    
-
-  x : Int
+  a : Event
+  b : Event
+  telecom : Event
+  radioScience : Event
+  targetSlew : Event
 
   req Schedule1OrSchedule2: 
     (
-      A.t2 = B.t1 && -- encoding m
-      B.t2 = Telecom.t1 && -- encodig m
-      Telecom.t2 = RadioScience.t1 && -- encoding m
-      RadioScience.t2 = TargetSlew.t1 -- encoding m
+      a.meets(b) && -- encoding m
+      b.meets(telecom) && -- encodig m
+      telecom.meets(radioScience) && -- encoding m
+      radioScience.meets(targetSlew) -- encoding m
     )
     ||
     (
-      A.t2 = B.t1 && -- encoding m
-      B.t2 = Telecom.t1 && -- encoding m
-      Telecom.t2 = RadioScience.t1 && -- encoding m 
-      RadioScience.t1 = TargetSlew.t2 -- encoding M
+      a.meets(b) && -- encoding m
+      b.meets(telecom) && -- encoding m
+      telecom.meets(radioScience) && -- encoding m 
+      radioScience.meets(targetSlew) -- encoding M
     )
     
-    req Distinctness:
-      A.t2 > A.t1 &&
-      B.t2 > B.t1 &&
-      Telecom.t2 > Telecom.t1 &&
-      RadioScience.t2 > RadioScience.t1 &&
-      TargetSlew.t2 > TargetSlew.t1 &&
-      A.t1 > 0 && B.t1 > 0 && Telecom.t1 > 0 && RadioScience.t1 > 0
-      && TargetSlew.t1 > 1.1 && TargetSlew.t1 = 1.123
-      
-      req x*x = 2 && x > 0
-    
-}

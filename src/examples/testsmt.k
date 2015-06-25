@@ -1,4 +1,3 @@
-
 class A {
   a : Int = 10
 }
