@@ -1,3 +1,6 @@
+
+-- This does not solve due to recursion beteen A and B when the invariants are called.
+
 class A {
   x : Int
   j : B
