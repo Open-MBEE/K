@@ -1,4 +1,7 @@
 
+-- Currently rejected by type checker since function move returns a State object.
+-- However this should be ok.
+
 -- Test 6: --
 
 class Event {

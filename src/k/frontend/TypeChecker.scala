@@ -102,6 +102,7 @@ case object TypeChecker {
     try {
       exp2TypeEnv.get(exp)(exp.ident) match {
         case ParamTypeInfo(_) => true
+        case PatternTypeInfo(_,_) => true
         case _                => false
       }
     } catch {

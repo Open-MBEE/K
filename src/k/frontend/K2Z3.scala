@@ -152,7 +152,7 @@ object K2Z3 {
                 topLevelVariables.reverse.foreach { k =>
                   if (k._2) rows = (List(k._1, objectValues(i))) :: rows
                   else {
-                    val res = printObjectValue(k._1, heapMap, heapMap(objectValues(i)), visited)
+                    val res = printObjectValue(k._1, heapMap, heapMap.getOrElse(objectValues(i), heapMap("else")), visited)
                     rows = res._2 ++ rows
                     visited = res._1 + ("Ref " + key)
                   }
