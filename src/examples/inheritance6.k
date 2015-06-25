@@ -2,6 +2,7 @@
 -- This example does not solve. Too hard a problem for Z3
 -- with current encoding. Not clear whether another encoding
 -- would be better.
+-- This due to recursion (linked lists problem).
 
 class Person {
   father : Person

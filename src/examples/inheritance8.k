@@ -1,4 +1,3 @@
-
 -- Testing layout of fields in datatypes.
 -- In H they should preferably be layed out as followx:
 --  a b c d e f g h

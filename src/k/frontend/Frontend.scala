@@ -91,9 +91,11 @@ object Frontend {
 
     if (model != null) {
       val smtModel = model.toSMT
-      println("--- SMT Model ---")
+          if (K2Z3.debug) {
+println("--- SMT Model ---")
       println(smtModel)
       println("-----------------")
+}
       K2Z3.solveSMT(model, smtModel)
     }
 
