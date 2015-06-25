@@ -1,7 +1,7 @@
 package k.frontend
 
 import k.frontend._
-import java.util.{IdentityHashMap => IMap}
+import java.util.{ IdentityHashMap => IMap }
 import javax.xml.bind.annotation.XmlElementDecl.GLOBAL
 
 case object TypeChecker {
@@ -33,7 +33,12 @@ case object TypeChecker {
   }
 
   def isPrimitiveType(t: Type): Boolean = {
-    t.isInstanceOf[PrimitiveType]
+    t.isInstanceOf[PrimitiveType] ||
+    (t match {
+      case CartesianType(types) => types.forall { isPrimitiveType(_) }
+      case ParenType(ty) => isPrimitiveType(ty)
+      case _ => false
+    })
   }
 
   // assming that exp is an ident exp...
@@ -110,35 +115,61 @@ import TypeChecker._
 
 case class TypeEnv(decl: TopDecl, map: Map[String, TypeInfo]) {
   def overwrite(kv: (String, TypeInfo)) = TypeEnv(decl, map + kv)
-  def +(kv: (String, TypeInfo)): TypeEnv = {
+  def union(kv: (String, TypeInfo)): TypeEnv = {
     if (map.contains(kv._1)) {
       error(s"${kv._1} already defined. Please check. Exiting.")
     } else {
       TypeEnv(decl, map + kv)
     }
   }
-  def ++(te: TypeEnv): TypeEnv = {
-    if (!map.forall(kv =>
-      (kv._1, kv._2) match {
-        case (fi, FunctionTypeInfo(fd, od)) =>
-          if (te.map.contains(fi)) {
-            val ofd = te.map(fi).asInstanceOf[FunctionTypeInfo].decl
-            if (!areTypesEqual(fd.ty.getOrElse(AnyType), ofd.ty.getOrElse(AnyType), false)) {
-              error(s"${fd.ident} redefined with different type.")
-            } else {
-              if (!(fd.params zip ofd.params).forall { p => areTypesEqual(p._1.ty, p._2.ty, false) })
-                error(s"${fd.ident} redefined with different parameter types.")
-              else true
+
+  /*
+   * Overwrites globals with locals and member variables
+   * Does not allow function overloading
+   * Uses decl from this 
+   */
+  def union2(te: TypeEnv): TypeEnv = {
+    var newMap = Map[String, TypeInfo]()
+    map.foreach { kv => newMap += (kv._1 -> kv._2) }
+    te.map.foreach {
+      kv =>
+        (kv._1, kv._2) match {
+          case (functionName, FunctionTypeInfo(fdecl, fowner)) =>
+            if (map.contains(functionName)) {
+              val ofdecl = map(functionName).asInstanceOf[FunctionTypeInfo].decl
+              val areReturnTypesEqual = areTypesEqual(fdecl.ty.getOrElse(UnitType),
+                ofdecl.ty.getOrElse(UnitType), false)
+              val areParamsEqual = (fdecl.params zip ofdecl.params).forall { p => areTypesEqual(p._1.ty, p._2.ty, false) }
+              if (!(areReturnTypesEqual && areParamsEqual)) {
+                error(s"${fdecl.ident} redefined with different type.")
+              }
             }
-          } else true
-        case (pi, PropertyTypeInfo(pd, false, od)) =>
-          if (te.map.contains(pi)) {
-            error(s"${pi} declared more than once.")
-          } else true
-        case _ => true
-      })) {
+            newMap += (kv._1 -> kv._2)
+          case (pname, pti@PropertyTypeInfo(pdecl, global, powner)) =>
+            if (map.contains(pname)) {
+              if(!map(pname).isInstanceOf[PropertyTypeInfo]){
+                error(s"$pname overloaded. Currently not supported.")
+              }
+              val opti = map(pname).asInstanceOf[PropertyTypeInfo]
+              if(opti.global && pti.global && opti != pti){
+                error(s"$pname has been declared multiple times in the global scope.")
+              }
+              if(opti.global && !pti.global){
+                newMap += (pname -> pti)
+              }
+              if(pti.global && !opti.global){
+                newMap += (pname -> opti)
+              }
+              if(!pti.global && !opti.global){
+                error(s"$pname declared multiple times.")
+              }
+            } else {
+              newMap += (kv._1 -> kv._2)
+            }
+          case _ => newMap += (kv._1 -> kv._2)
+        }
     }
-    TypeEnv(te.decl, map ++ te.map)
+    TypeEnv(decl, newMap)
   }
   def apply(k: String): TypeInfo = {
     if (!map.contains(k)) error(s"Could not find declaration for $k")
@@ -161,7 +192,7 @@ case class ClassTypeInfo(decl: EntityDecl) extends TypeInfo {
 }
 case class PropertyTypeInfo(decl: PropertyDecl, global: Boolean, owner: EntityDecl) extends TypeInfo {
   override def toString =
-    s"Property: ${decl.name} : ${decl.ty} ${if (owner != null) owner.ident}"
+    s"Property: ${decl.name} : ${decl.ty} $global ${if (owner != null) owner.ident}"
 }
 case class TypeTypeInfo(decl: TypeDecl) extends TypeInfo
 case class ParamTypeInfo(p: Param) extends TypeInfo
@@ -269,30 +300,19 @@ class TypeChecker(model: Model) {
 
   private def exprContainsAssignment(e: Exp): Boolean = {
     e match {
-      case ParenExp(e)      => exprContainsAssignment(e)
-      case IdentExp(_)      => false
-      case DotExp(_, _)     => false
-      case ResultExp        => false
-      case FunApplExp(_, _) => false
+      case ParenExp(e) => exprContainsAssignment(e)
       case BinExp(exp1, op, exp2) =>
         if (op == ASSIGN) true
         else exprContainsAssignment(exp1) || exprContainsAssignment(exp2)
-      case WhileExp(cond, body)          => true
-      case IfExp(cond, tb, eb)           => exprContainsAssignment(tb) || (if (!eb.isEmpty) exprContainsAssignment(eb.get) else false)
-      case BlockExp(body)                => body.foldLeft(false) { (res, b) => res || declContainsAssignment(b) }
-      case UnaryExp(op, exp)             => exprContainsAssignment(exp)
-      case TupleExp(exps)                => false
-      case LambdaExp(pat, exp)           => exprContainsAssignment(exp)
-      case ReturnExp(exp)                => exprContainsAssignment(exp)
-      case ForExp(pattern, exp, body)    => true
-      case TypeCastCheckExp(cast, e, ty) => false
-      case QuantifiedExp(q, b, e)        => exprContainsAssignment(e)
-      case IntegerLiteral(_)             => false
-      case BooleanLiteral(_)             => false
-      case CharacterLiteral(_)           => false
-      case StringLiteral(_)              => false
-      case RealLiteral(_)                => false
-      case ThisLiteral                   => false
+      case WhileExp(cond, body)       => true
+      case IfExp(cond, tb, eb)        => exprContainsAssignment(tb) || (if (!eb.isEmpty) exprContainsAssignment(eb.get) else false)
+      case BlockExp(body)             => body.foldLeft(false) { (res, b) => res || declContainsAssignment(b) }
+      case UnaryExp(op, exp)          => exprContainsAssignment(exp)
+      case LambdaExp(pat, exp)        => exprContainsAssignment(exp)
+      case ReturnExp(exp)             => exprContainsAssignment(exp)
+      case ForExp(pattern, exp, body) => true
+      case QuantifiedExp(q, b, e)     => exprContainsAssignment(e)
+      case _                          => false
     }
   }
 
@@ -368,10 +388,10 @@ class TypeChecker(model: Model) {
           }
           type2Decl = type2Decl + (IdentType(QualifiedName(List(ident)), List()) -> dED)
           classes = classes + (ident -> dED)
-          globalTypeEnv = globalTypeEnv + (ident -> ClassTypeInfo(ed))
+          globalTypeEnv = globalTypeEnv.union(ident -> ClassTypeInfo(ed))
         case td @ TypeDecl(ident, _, _) =>
           type2Decl = type2Decl + (IdentType(QualifiedName(List(ident)), List()) -> d.asInstanceOf[TypeDecl])
-          globalTypeEnv = globalTypeEnv + (ident -> TypeTypeInfo(td))
+          globalTypeEnv = globalTypeEnv.union(ident -> TypeTypeInfo(td))
         case _ => ()
       }
     }
@@ -390,7 +410,7 @@ class TypeChecker(model: Model) {
             error(s"Property $name has conflicting modifiers.")
 
           if (!doesTypeExist(globalTypeEnv, ty)) error(s"Specified type $ty does not exist. Please check. Exiting.")
-          globalTypeEnv = globalTypeEnv + (name -> PropertyTypeInfo(p, true, null))
+          globalTypeEnv = globalTypeEnv.union(name -> PropertyTypeInfo(p, true, null))
         case _ => ()
       }
     }
@@ -401,13 +421,13 @@ class TypeChecker(model: Model) {
       d match {
         case ed @ EntityDecl(_, token, _, ident, _, _, _) if token != AssocToken =>
           // add 'this' to the type env
-          var classTypeEnv = globalTypeEnv ++ TypeEnv(ed, Map(("this" -> ClassTypeInfo(ed))))
+          var classTypeEnv = TypeEnv(ed, globalTypeEnv.map + ("this" -> ClassTypeInfo(ed)))
           ed.members.foreach { m =>
             m match {
               case pd @ PropertyDecl(_, _, _, _, _, _) =>
                 classTypeEnv = classTypeEnv.overwrite(pd.name -> PropertyTypeInfo(pd, false, ed))
               case fd @ FunDecl(_, _, _, _, _, _) =>
-                classTypeEnv += (fd.ident -> FunctionTypeInfo(fd, ed))
+                classTypeEnv = classTypeEnv.union(fd.ident -> FunctionTypeInfo(fd, ed))
               case _ => ()
             }
           }
@@ -431,13 +451,12 @@ class TypeChecker(model: Model) {
           if (!(ed.members.forall { m =>
             m.asInstanceOf[PropertyDecl].ty.isInstanceOf[IdentType]
           })) error(s"$ident association uses a non user defined type as source/target.")
-
-          var classTypeEnv = globalTypeEnv ++ TypeEnv(ed, Map("this" -> ClassTypeInfo(ed)))
+          var classTypeEnv = TypeEnv(ed, globalTypeEnv.map + ("this" -> ClassTypeInfo(ed)))
           classTypeEnv = ed.members.foldLeft(classTypeEnv) {
             (res, m) =>
               m match {
                 case pd @ PropertyDecl(_, _, _, _, _, _) =>
-                  res + (pd.name -> PropertyTypeInfo(pd, false, ed))
+                  res.overwrite(pd.name -> PropertyTypeInfo(pd, false, ed))
                 case _ =>
                   error(s"$ident association contains members besides functions.\n\tCurrently this is unsupported.")
               }
@@ -466,10 +485,10 @@ class TypeChecker(model: Model) {
                   false
               }).get
 
-          decl2TypeEnvironment += (cte0._1 -> (cte0._2 + ((m2.name) -> PropertyTypeInfo(m2, false, ed))))
-          origTypeEnvironments += (cte0._1 -> (cte0._2 + ((m2.name) -> PropertyTypeInfo(m2, false, ed))))
-          decl2TypeEnvironment += (cte1._1 -> (cte1._2 + ((m1.name) -> PropertyTypeInfo(m1, false, ed))))
-          origTypeEnvironments += (cte1._1 -> (cte1._2 + ((m1.name) -> PropertyTypeInfo(m1, false, ed))))
+          decl2TypeEnvironment += (cte0._1 -> (cte0._2.union((m2.name) -> PropertyTypeInfo(m2, false, ed))))
+          origTypeEnvironments += (cte0._1 -> (cte0._2.union((m2.name) -> PropertyTypeInfo(m2, false, ed))))
+          decl2TypeEnvironment += (cte1._1 -> (cte1._2.union((m1.name) -> PropertyTypeInfo(m1, false, ed))))
+          origTypeEnvironments += (cte1._1 -> (cte1._2.union((m1.name) -> PropertyTypeInfo(m1, false, ed))))
           decl2TypeEnvironment += (d -> classTypeEnv)
           origTypeEnvironments += (d -> classTypeEnv)
 
@@ -489,7 +508,7 @@ class TypeChecker(model: Model) {
               }
             case None => ()
           }
-          res + (fd.ident -> FunctionTypeInfo(fd, null))
+          res.union(fd.ident -> FunctionTypeInfo(fd, null))
         case _ => res
       }
     }
@@ -500,18 +519,13 @@ class TypeChecker(model: Model) {
         case ed @ EntityDecl(_, t, _, ident, _, _, _) if t != AssocToken =>
           val classTypeEnv = decl2TypeEnvironment(d)
           val extending = ClassHierarchy.parentsTransitive(ed)
-          val newClassTypeEnv =
-            extending.foldLeft(TypeEnv(ed, Map[String, TypeInfo]())) {
+          val newClassTypeEnv = {
+            val extendingEnv = extending.foldLeft(TypeEnv(ed, Map[String, TypeInfo]())) {
               (res, ex) =>
-                val extendingTypeEnv = origTypeEnvironments.find(
-                  de =>
-                    de._1 match {
-                      case ed @ EntityDecl(_, _, _, _, _, _, _) =>
-                        ed.ident.toString.equals(ex.asInstanceOf[IdentType].ident.toString)
-                      case _ => false
-                    }).get
-                res ++ extendingTypeEnv._2
-            } ++ classTypeEnv
+                origTypeEnvironments(classes(ex.asInstanceOf[IdentType].ident.toString)).union2(res)
+            }
+            classTypeEnv.union2(extendingEnv)
+          }
           decl2TypeEnvironment += (d -> newClassTypeEnv)
         case _ => ()
       }
@@ -833,7 +847,7 @@ class TypeChecker(model: Model) {
                 // assuming lambda expression as only argument
                 // assuming ident pattern in lambda expression
                 val lambdaExp = args.last.asInstanceOf[PositionalArgument].exp.asInstanceOf[LambdaExp]
-                val lambdaTe = te + (lambdaExp.pat.asInstanceOf[IdentPattern].ident -> te(t.last.toString))
+                val lambdaTe = te.overwrite(lambdaExp.pat.asInstanceOf[IdentPattern].ident -> te(t.last.toString))
                 // CollectType(List(getExpType(lambdaTe, lambdaExp)))
                 IdentType(QualifiedName(List("Seq")), List(getExpType(lambdaTe, lambdaExp)))
               }
@@ -912,9 +926,9 @@ class TypeChecker(model: Model) {
       case _ => error(s"Type checking for ${exp.getClass} not implemented yet!")
     }
     exp2Type.put(exp, result)
-    exp2TypeEnv.put(exp,te)
+    exp2TypeEnv.put(exp, te)
 
-//    println(s"getExpType: $exp $result ${exp2TypeEnv.get(exp).decl} ${}}")
+    //    println(s"getExpType: $exp $result ${exp2TypeEnv.get(exp).decl} ${}}")
 
     return result
   }

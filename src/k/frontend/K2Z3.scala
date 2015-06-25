@@ -82,13 +82,13 @@ object K2Z3 {
     ctx = new Context(cfg)
   }
 
-  def printObjectValue(name: String, heap: Map[String, String], v: String, visited: Set[String]): List[List[String]] = {
-    if (visited.contains(v)) return Nil
+  def printObjectValue(name: String, heap: Map[String, String], v: String, visited: Set[String]): (Set[String], List[List[String]]) = {
+    if (visited.contains(name)) return (visited, Nil)
     val value = v.trim.replace("- ", "-")
     val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
     val objectValues = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
       .split(' ').map(_.trim).filterNot { _.isEmpty }.drop(1)
-    if (className == "TopLevelDeclarations") return List(List(name, " - top level -"))
+    if (className == "TopLevelDeclarations") return (visited, List(List(name, " - top level -")))
     val entityDecl = TypeChecker.classes(className)
     val properties = entityDecl.getAllPropertyDecls
     var toPrint = List[String]()
@@ -100,13 +100,16 @@ object K2Z3 {
         } else (x._1.name + "::" + x._2)
     }.toList
     var all = List(name, s"$className(" + printList.mkString(", ") + ")")
-    toPrint.foldLeft(List(all)) { (res, x) =>
+    var result = toPrint.foldLeft((visited, List(all))) { (res, x) =>
       if (heap.contains(x)) {
-        printObjectValue("Ref " + x, heap, heap(x), visited + name) ++ res
+        val downRes = printObjectValue("Ref " + x, heap, heap(x), res._1 + name)
+        ((downRes._1 + name) ++ res._1, downRes._2 ++ res._2)
       } else {
-        printObjectValue("else " + x, heap, heap("else"), visited + name) ++ res
+        val downRes = printObjectValue("else " + x, heap, heap("else"), res._1 + name)
+        ((downRes._1 + name) ++ res._1, downRes._2 ++ res._2)
       }
     }
+    (result._1 + name, result._2)
   }
 
   def PrintModel(model: Model) {
@@ -124,6 +127,8 @@ object K2Z3 {
         }
       val elseK = z3Model.getFuncInterp(heapDecl.get).getElse
       heapMap += ("else" -> elseK.toString)
+      var visited = Set[String]()
+
       // walk through heap
       heapMap.foreach { kv =>
         val key = kv._1
@@ -146,10 +151,19 @@ object K2Z3 {
                 var i = 1
                 topLevelVariables.reverse.foreach { k =>
                   if (k._2) rows = (List(k._1, objectValues(i))) :: rows
-                  else rows = printObjectValue(k._1, heapMap, heapMap(objectValues(i)), Set()) ++ rows
+                  else {
+                    val res = printObjectValue(k._1, heapMap, heapMap(objectValues(i)), visited)
+                    rows = res._2 ++ rows
+                    visited = res._1 + ("Ref " + key)
+                  }
                   i = i + 1
                 }
-              case _ => extraRows = printObjectValue("", heapMap, value, Set()) ++ extraRows
+              case _ => {
+                val res = printObjectValue("Ref " + key, heapMap, value, visited)
+                extraRows = res._2 ++ extraRows
+                visited = res._1
+              }
+
             }
           }
         }
@@ -190,7 +204,7 @@ object K2Z3 {
       List()).mkString("\n")
 
     def formatRow(row: Seq[Any], colSizes: Seq[Int]) = {
-      val cells = (for ((item, size) <- row.zip(colSizes)) yield if (size == 0) "" else ("%" + size + "s").format(item))
+      val cells = (for ((item, size) <- row.zip(colSizes)) yield if (size == 0) "" else ("%-" + size + "s").format(item))
       cells.mkString("\t|", "|", "|")
     }
 
