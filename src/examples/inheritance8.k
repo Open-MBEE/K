@@ -1,4 +1,3 @@
-
 -- Testing layout of fields in datatypes.
 -- In H they should preferably be layed out as followx:
 --  a b c d e f g h
@@ -18,10 +17,12 @@ class C extends A, B {
 }
 
 class D {
+  bb : B
   d : Int
 }
 
 class E extends  D {
+  
   e : Int
 }
 
@@ -30,7 +31,7 @@ class F extends C, E {
 }
 
 class G extends E {
-  ge : E
+  ee : E
   g : Int
 }
 
