@@ -1,3 +1,6 @@
+
+-- This does not solve due to recursion beteen A and B when the invariants are called.
+
 class A {
   x : Int
   j : B
@@ -11,8 +14,6 @@ class <b> B extends A {
   -- req i.x > 10
   -- i : A 
 }
-
-===
 
 b C {
   z : Int
@@ -32,5 +33,3 @@ fun foo(x : Int) : Int {
     -- if true then x
     return y
   }
-
-===

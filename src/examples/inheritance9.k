@@ -1,7 +1,8 @@
+  
 class A {
   a : Int = 10
 }
-
+ 
 class B extends A {
   b : Int
 
@@ -19,9 +20,9 @@ class D extends C {
 
   req d = c + 1
 }
-
+ 
 class E {
   a : A
 }
 
-a : A
+
