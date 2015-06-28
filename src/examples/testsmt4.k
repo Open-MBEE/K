@@ -1,6 +1,4 @@
 
--- Test 4: --
-
 class Event {
   t1: Int
   t2: Int
@@ -33,17 +31,3 @@ class Schedule {
 
 }
 
-=== MODEL:
-
-[
-  event:    2 -> (lift-Event (mk-Event 0 1)), 
-  schedule: 4 -> (lift-Schedule (mk-Schedule 13 14 15 16)), 
-  top:     12 -> (lift-TopLevelDeclarations TopLevelDeclarations!val!0), 
-  schedule.a: 13 -> (lift-Event (mk-Event 8852 8853)), 
-  schedule.b: 14 -> (lift-Event (mk-Event 8853 8854)), 
-  schedule.d: 15 -> (lift-Event (mk-Event 8855 8858)), 
-  schedule.c: 16 -> (lift-Event (mk-Event 8856 8857)), 
-         else -> (lift-Event (mk-Event 8853 8854))
-]
-
-===

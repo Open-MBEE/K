@@ -1,8 +1,4 @@
 
--- Does not solve due to recursion.
-
--- Test 8: --
-
 class Person {
   age : Int
 

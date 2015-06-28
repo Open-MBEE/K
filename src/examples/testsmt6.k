@@ -2,8 +2,6 @@
 -- Currently rejected by type checker since function move returns a State object.
 -- However this should be ok.
 
--- Test 6: --
-
 class Event {
   id : Int
 }
@@ -35,23 +33,4 @@ class RocketMachine {
   req move(ready, fire) = firing
   req move(firing, turn_off) = off  
 }
-
-=== MODEL:
-
-[
-  event:          0 -> (lift-Event (mk-Event 6)), 
-  state:          1 -> (lift-State (mk-State 7)), 
-  rocket:         2 -> (lift-RocketMachine (mk-RocketMachine 3 8 4 9 10 11)), 
-  state.off:      3 -> (lift-State (mk-State 12)), 
-  state.firing:   4 -> (lift-State (mk-State 14)), 
-  top:            5 -> (lift-TopLevelDeclarations TopLevelDeclarations!val!0), 
-  state.ready:    8 -> (lift-State (mk-State 13)), 
-  event.turn_on:  9 -> (lift-Event (mk-Event 15)), 
-  event.fire:    10 -> (lift-Event (mk-Event 16)), 
-  event.turn_off 11 -> (lift-Event (mk-Event 17))
-]
-
-
-
-===
 
