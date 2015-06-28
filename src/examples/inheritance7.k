@@ -1,5 +1,6 @@
 
--- This does not solve due to recursion beteen A and B when the invariants are called.
+-- This does not solve due to linked list recursion: it
+-- creates a chain of As.
 
 class A {
   x : Int
