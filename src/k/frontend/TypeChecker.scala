@@ -88,6 +88,14 @@ case object TypeChecker {
       case _                   => false
     }
 
+  def getDirectSubClasses(className: String): List[String] =
+    if (className == "TopLevelDeclarations") Nil
+    else {
+      if (ClassHierarchy.children.contains(classes(className)))
+        ClassHierarchy.children(classes(className)).map(_.toString).toList
+      else Nil
+  }
+
   def getDirectSuperClasses(className: String): List[String] =
     if (className == "TopLevelDeclarations") Nil
     else ClassHierarchy.parents(classes(className)).map(_.toString).toList
