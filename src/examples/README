@@ -1,0 +1,181 @@
+
+----------
+testsmt1.k
+----------
+
+  Works! 
+
+  However, in the result it is difficult to see the roots for extra
+  objects, one for each class (not the top level but the existence proofs). 
+  This is a general comment to the extra table, which I will only mention 
+  here for this test case. Not sure whether it is an issue or not.
+
+----------
+testsmt2.k
+----------
+
+  Does not display correctly. Same problem for a number test cases now.
+  Due to change in Z3 translation which results in different looking
+  output.
+
+  It Looks as follows:
+
+  [K2Z3] <<++
+
+  Objects created on the heap as specified by model:
+  No instance variables were declared at the top level.
+
+  Extra objects created on the heap during analysis:
+  No extra objects were declared at the top level.
+
+  [K2Z3] -->>
+
+  The raw SMT generated model looks like this:
+
+  --- BEGIN RAW SMT MODEL: ---
+(define-fun instanceOfDuration!0 () Int
+  2)
+(define-fun instanceOfTopLevelDeclarations!2 () Int
+  6)
+(define-fun instanceOfEvent!1 () Int
+  4)
+(define-fun heap () (Array Int Any)
+  (_ as-array k!3))
+(define-fun k!3!5 ((x!1 Int)) Any
+  (ite (= x!1 12) (lift-Duration (mk-Duration 2271 2281))
+  (ite (= x!1 9) (lift-Event (mk-Event 12 10))
+  (ite (= x!1 2) (lift-Duration (mk-Duration 0 1))
+  (ite (= x!1 4) (lift-Event (mk-Event 8 (- 2436)))
+  (ite (= x!1 11) (lift-Event (mk-Event 13 20))
+  (ite (= x!1 6) (lift-TopLevelDeclarations (mk-TopLevelDeclarations 9 11))
+  (ite (= x!1 13) (lift-Duration (mk-Duration 2282 2302))
+    (lift-Duration (mk-Duration 8854 8855))))))))))
+(define-fun k!4 ((x!1 Int)) Int
+  (ite (= x!1 6) 6
+  (ite (= x!1 4) 4
+  (ite (= x!1 12) 12
+  (ite (= x!1 8) 8
+  (ite (= x!1 11) 11
+  (ite (= x!1 9) 9
+  (ite (= x!1 13) 13
+    2))))))))
+(define-fun k!3 ((x!1 Int)) Any
+  (k!3!5 (k!4 x!1)))
+--- END RAW SMT MODEL ---
+
+----------
+testsmt3.k
+----------
+
+Works!
+
+----------
+testsmt4.k
+----------
+
+Does not print corrcetly.
+
+----------
+testsmt5.k
+----------
+
+Does not print corrctly.
+
+----------
+testsmt6.k
+----------
+
+Rejected by type checker due to object returned.
+However, we should probably allow this case since
+no object is created in the function.
+
+----------
+testsmt7.k
+----------
+
+Does not print correctly.
+
+----------
+testsmt8.k
+----------
+
+Does not print correctly.
+
+----------
+testsmt9.k
+----------
+
+Works!
+
+--------------
+inheritance1.k
+--------------
+
+Does not print correctly.
+
+--------------
+inheritance2.k
+--------------
+
+Does not print corrctlty.
+
+--------------
+inheritance3.k
+--------------
+
+Does not print correctly.
+
+--------------
+inheritance4.k
+--------------
+
+Does not print correctly.
+
+--------------
+inheritance5.k
+--------------
+
+Does not pass type checking which is correct.
+
+--------------
+inheritance6.k
+--------------
+
+Does not solve. This is the truely recursive Person
+father-child example (linked lists). Allowing pointers
+(father and child) to be null does not seem to help.
+
+--------------
+inheritance7.k
+--------------
+
+Does not solve. This is again the truely recursive linked
+list problem. It keeps creating links to As.
+
+But: the getSubclasses function does not seem to work correctly
+in combination with definitions of the form:
+
+  class A { ... }
+
+  class <b> B extends A { ... }
+
+  b C { ... }
+
+It does not consider C as being a subclass of B.
+
+It does, however, corrcetly consider B to be a super class of C.
+so getSuperClasses works.
+
+--------------
+inheritance8.k
+--------------
+
+Does not print correctly.
+
+--------------
+inheritance9.k
+--------------
+
+Does not print correctly.
+
+

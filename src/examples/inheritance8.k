@@ -1,8 +1,4 @@
 -- Testing layout of fields in datatypes.
--- In H they should preferably be layed out as followx:
---  a b c d e f g h
--- or something close. This is not a semanti issue, it
--- just looks better, a cosmetic issue.
 
 class A {
   a : Int
@@ -31,7 +27,7 @@ class F extends C, E {
 }
 
 class G extends E {
-  ee : E
+  -- ee : E
   g : Int
 }
 

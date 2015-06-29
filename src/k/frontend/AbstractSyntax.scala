@@ -42,8 +42,19 @@ object UtilSMT {
   }
 
   var storedModel: Model = null
+  var subClassMap: Map[String, List[String]] = Map()
   var constantsToDeclare: List[(String, Type)] = Nil
   var constantCounter: Int = 0
+
+  def getSubClassesTransitive(className: String): List[String] = {
+    if (subClassMap contains className)
+      subClassMap(className)
+    else {
+      val classes = getSubClasses(className)
+      subClassMap = subClassMap + (className -> classes)
+      classes
+    }
+  }
 
   def getNewConstant(ty: Type): String = {
     constantCounter += 1
@@ -62,7 +73,7 @@ object UtilSMT {
     result
   }
 
-  def getDelaringClass(identExp: Exp): String = {
+  def getDeclaringClass(identExp: Exp): String = {
     if (!identExp.isInstanceOf[IdentExp])
       errorSMT(s"Should be an IdentExp: $identExp")
     else {
@@ -97,12 +108,12 @@ object UtilSMT {
   def applyRelevantSubInvariant(classes: List[String], level: Int = 0): String = {
     classes match {
       case Nil =>
-         "     " + ("  " * level) + "false" + (")" * level) + "\n"
+        "     " + ("  " * level) + "false" + (")" * level) + "\n"
       case className :: rest =>
-         "    " + ("  " * level) + s"(ite (deref-is-$className this) ($className.inv this)\n" +
+        "    " + ("  " * level) + s"(ite (deref-is-$className this) ($className.inv this)\n" +
           applyRelevantSubInvariant(rest, level + 1)
     }
-  }  
+  }
 
   def isConstructorPredicate(exp: Exp): Boolean = {
     val result = exp match {
@@ -134,7 +145,6 @@ object UtilSMT {
     newModel
   }
 }
-//import ToSMTSupport._
 
 private[frontend] object ToStringSupport {
   private val space = "  "
@@ -160,8 +170,11 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
                  decls: List[TopDecl]) {
 
   def toSMT: String = {
+    def sortEntityDecls(ed1: EntityDecl, ed2: EntityDecl): Boolean =
+      UtilSMT.getSubClassesTransitive(ed1.ident) contains ed2.ident
+
     val model: Model = UtilSMT.transformModel(this)
-    val entityDecls: List[EntityDecl] = model.decls.asInstanceOf[List[EntityDecl]]
+    val entityDecls: List[EntityDecl] = model.decls.asInstanceOf[List[EntityDecl]].sortWith(sortEntityDecls)
 
     var result1: String = "" // text before omitted constructor parameter constants
     var result2: String = "" // text after omitted constructor parameter constants
@@ -217,6 +230,15 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
       result1 += "\n"
     }
 
+    // Generate isa-functions (not used right now):    
+
+    result1 += "; ---------- isa-functions: ----------\n"
+    result1 += "\n"
+    for (ed <- entityDecls) {
+      result1 += ed.toSMTIsAFunction + "\n"
+      result1 += "\n"
+    }
+
     // Generate getters:    
 
     result1 += "; ---------- getters: ----------\n"
@@ -251,9 +273,6 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
 
     result2 += s"; ---------- invariants: ----------\n"
     result2 += "\n"
-    for (ed <- entityDecls) {
-      result2 += ed.toSMTInvariantDecl + "\n\n"
-    }
     for (ed <- entityDecls) {
       result2 += s"; --- ${ed.ident}:\n"
       result2 += "\n"
@@ -456,13 +475,13 @@ case class EntityDecl(
 
   def toSMTIsAFunction: String = {
     var result: String = ""
-    val subClasses = getSubClasses(ident)
+    val subClasses = UtilSMT.getSubClassesTransitive(ident)
     result += s"(define-fun deref-isa-$ident ((this Ref)) Bool\n"
     if (subClasses.isEmpty) {
       result += s"  (deref-is-$ident this)\n"
     } else {
       result += "  (or\n"
-      for (cn <- ident :: getSubClasses(ident)) {
+      for (cn <- ident :: subClasses) {
         result += s"    (deref-is-$cn this)\n"
       }
       result += "  )\n"
@@ -477,7 +496,7 @@ case class EntityDecl(
     if (!propertyDecls.isEmpty) {
       result += s"; --- $ident:\n"
       result += "\n"
-      val subClasses = getSubClasses(ident)
+      val subClasses = UtilSMT.getSubClassesTransitive(ident)
       var firstTime = true
       for (pd <- propertyDecls) {
         if (firstTime)
@@ -505,13 +524,6 @@ case class EntityDecl(
     result
   }
 
-  def toSMTInvariantDecl: String = {
-    var result: String = ""
-    result += s"(declare-fun ${ident}.inv (Ref) Bool)\n"
-    result += s"(declare-fun ${ident}.inv.sub (Ref) Bool)"
-    result
-  }
-
   def toSMTInvariant: String = {
     var constraints: List[String] = Nil
     // constraints for property definitions of the form: x : T = e
@@ -523,7 +535,8 @@ case class EntityDecl(
     }
     // constraints for embedded references/parts:
     for (PropertyDecl(_, propertyName, IdentType(QualifiedName(typeName :: Nil), _), _, _, _) <- members) {
-      constraints ::= s"($typeName.inv.sub ($ident.$propertyName this))"
+      // if (typeName != "Any")
+      constraints ::= s"(deref-isa-$typeName ($ident.$propertyName this))"
     }
     // constraints for constraint decls:
     for (ConstraintDecl(name, exp) <- members) {
@@ -535,42 +548,36 @@ case class EntityDecl(
 
     // The inv function:
     val directSuperClasses: List[String] = getDirectSuperClasses(ident)
-    result += s"(assert (forall ((this Ref))\n"
-    result += s"  (=\n"
-    result += s"    ($ident.inv this)\n"
+    result += s"(define-fun $ident.inv ((this Ref)) Bool\n"
     if (directSuperClasses.isEmpty && constraints.isEmpty) {
-      result += "    true\n"
+      result += "  true\n"
     } else {
-      result += s"    (and\n"
+      result += s"  (and\n"
       for (directSuperClass <- getDirectSuperClasses(ident)) {
-        result += s"      ($directSuperClass.inv this)\n"
+        result += s"    ($directSuperClass.inv this)\n"
       }
       for (constraint <- constraints.reverse) {
-        result += s"      $constraint\n"
+        result += s"    $constraint\n"
       }
-      result += s"    )\n"
+      result += s"  )\n"
     }
-    result += s"  )\n"
-    result += s"))\n"
+    result += s")\n"
     result += "\n"
-      
-    // The inv.sub function:
-    val subClasses = getSubClasses(ident)
-    result += s"(assert (forall ((this Ref))\n"
-    result += s"  (=\n"
-    result += s"    ($ident.inv.sub this)\n"
-    result += UtilSMT.applyRelevantSubInvariant(ident :: subClasses)
-    result += s"  )\n"
-    result += s"))\n"
-    result += "\n"    
-      
+
     // The inv.nosub function:
     result += s"(define-fun $ident.inv.nosub ((this Ref)) Bool\n"
     result += s"  (and\n"
     result += s"    (deref-is-$ident this)\n"
     result += s"    ($ident.inv this)\n"
     result += s"  )\n"
-    result += s")"
+    result += s")\n"
+    result += "\n"
+
+    // Enforce invariant:    
+    result += s"(assert (forall ((this Ref))\n"
+    result += s"  (=> (deref-is-$ident this) ($ident.inv this))\n"
+    result += s"))"
+
     result
   }
 
@@ -999,7 +1006,7 @@ case class IdentExp(ident: String) extends Exp {
     if (isLocal(this))
       ident
     else {
-      val declaringClass = UtilSMT.getDelaringClass(this)
+      val declaringClass = UtilSMT.getDeclaringClass(this)
       s"($declaringClass.$ident this) "
     }
 
@@ -1069,7 +1076,7 @@ case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
       val expSMT: String =
         exp1 match {
           case IdentExp(ident) =>
-            val declaringClass = UtilSMT.getDelaringClass(exp1)
+            val declaringClass = UtilSMT.getDeclaringClass(exp1)
             s"$declaringClass.$ident this"
           case DotExp(expBeforeDot, ident) =>
             val classOfFunction = exp2Type.get(expBeforeDot).toString

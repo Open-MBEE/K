@@ -349,6 +349,8 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
       StringLiteral(ctx.StringLiteral().getSymbol().getText())
     } else if (ctx.ThisLiteral() != null) {
       ThisLiteral
+    } else if (ctx.NullLiteral() != null) {
+      NullLiteral
     } else {
       BooleanLiteral(java.lang.Boolean.parseBoolean(ctx.BooleanLiteral().getSymbol().getText()))
     }
