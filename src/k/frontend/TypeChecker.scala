@@ -230,7 +230,7 @@ object ClassHierarchy {
         case ed @ EntityDecl(_, t, _, _, _, _, _) if t.isInstanceOf[IdentifierToken] =>
           val tokenClass = t.asInstanceOf[IdentifierToken].name
           val tokenClassType = keywords(tokenClass)
-          val edParents = buildHierarchy(ed, type2Decl, Set())
+          val edParents = buildHierarchy(ed, type2Decl, Set()) + tokenClassType
           parents = parents + (ed -> (edParents + tokenClassType))
           edParents.foreach { p =>
             val parent = type2Decl(p).asInstanceOf[EntityDecl]
