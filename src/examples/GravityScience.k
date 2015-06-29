@@ -8,17 +8,19 @@ annotation maturity : String
 annotation ID : String
 annotation units : String
 
+
 class <Req> Requirements {
 
 -------------------------------------------
 ===
-   Fun pow(x : Int, y : Int) : Int {
+   fun pow(x : Int, y : Int) : Int {
      i : Int
      r : Int = 1
-     While ( i < y) {
+     while ( i < y) do {
        r = r * x
        i= i + 1
      }
+	 return r
    }
 ===
 ------------------------------------------
@@ -38,7 +40,7 @@ class GravSciReqs extends Requirements {
   @maturity("?")
   @ID("xxx")
   @units("degrees")  
-  req ValidAngle: 20.0 <= angle_ClipperEarthSun && angle_ClipperEarthSun <= 180.0
+  req ValidAngle: 20.0 <= angle_ClipperEarthSun && angle_ClipperEarthSun <= 180.0 
 
   @owner("Gravity Science Concept")
   @text("A range of latitudes and longitudes is desired for measurements")
@@ -124,16 +126,19 @@ class InstrumentReqs extends Requirements {
   req currentlyMeasuring
 
 ===
-Fun accuracy (t : Int)  -- this is supposed to tell us the accuracy that we are experiencing at any given time could let it be unimplemented
+Fun accuracy (t : Int)  -- this is supposed to tell us the accuracy 
+that we are experiencing at any given time could let it be unimplemented
 
-Fun measuring(t : Int) --this Is supposed to tell us if we are currently measuring or not could let it be unimplemented
+Fun measuring(t : Int) --this Is supposed to tell us if we are currently 
+measuring or not could let it be unimplemented
 
 Fun start(t : Int) { measuring(t) && !measuring(t-1)}
 Fun stop(t : Int) {measuring(t) && !measuring(t+1)}
 Fun interval(t1 : Int, t2: Int) { start(t1) && stop(t2) &&
            forall t : Int :- t1 <= t <= t2 => measuring(t) }
 
-Forall t : Int :- interval(t) => accuracy(t) = 0.07 -- or whatever constraint you want to put on the accuracy
+Forall t : Int :- interval(t) => accuracy(t) = 0.07 -- or whatever 
+constraint you want to put on the accuracy
 ===
 
 
@@ -231,7 +236,8 @@ class RadioReq extends Requirements {
   @maturity("Identified")
   @ID("601")
   @units("dB-Hz")
-  req ValidDownlink_pt_no: 0.0 <= GS_downlink_pt_no && GS_downlink_pt_no <= 10.0 && DSN = 34
+  req ValidDownlink_pt_no: 0.0 <= GS_downlink_pt_no && 
+  	  					   GS_downlink_pt_no <= 10.0 && DSN = 34
 
   @owner("Radio")
   @name("2-way Doppler accuracy")
@@ -242,8 +248,10 @@ class RadioReq extends Requirements {
   @maturity("Identified")
   @ID("619")
   @units("mm/sec and dB")
-  req Valid2WayDopplerAccuracy: 0.0 <= twowayDoppleraccuracy &&  twowayDoppleraccuracy <= 0.1 && 
-  	  10.0 < twowayDoppler_PcNo && twowayDoppler_PcNo <= 20.0
+  req Valid2WayDopplerAccuracy: 0.0 <= twowayDoppleraccuracy &&
+  	  							twowayDoppleraccuracy <= 0.1 && 
+  	  							10.0 < twowayDoppler_PcNo && 
+								twowayDoppler_PcNo <= 20.0
 
   @owner("Radio")
   @name("Gravity Science X-Band Coherency Requirements")
@@ -300,6 +308,7 @@ class RadioReq extends Requirements {
   =====================================================
 class RadioGravSciReqs extends Requirements {
 
+  range : Real
   altitude : Real
   k2accuracy : Real
   isoccultatedbyearth : Bool
@@ -311,7 +320,7 @@ class RadioGravSciReqs extends Requirements {
   @maturity("Identified")
   @ID("unnamed18")
   @units("km")
-  req ValidAltitude: 0.0 <altitude && altitude <= 100.0
+  req ValidAltitude: 0.0 < altitude && altitude <= 100.0
 
   @owner("Radio/Gravity Science")
   @name("Measure k2")
@@ -333,11 +342,19 @@ class RadioGravSciReqs extends Requirements {
   @afid("CT xx.xxx")
   @maturity("Identified")
   @ID("Sr.5.1.2")
-  @units("none")
-  req ValidNoOccultation: (isoccultatedbyearth = false) && altitude <= 18.0
+  @units("none and Jupiter Europa Radii")
+  req ValidNoOccultation: (isoccultatedbyearth = false)
+  	  					    && range <= 18.0 * europa.radius
+--req while (range <= 18.0 * Europa.radius) do {
+--		isocculatedbyearth = false
+--		}
+--
+--  Redundant with reqs below for Jupiter, Europa, & Clipper classes
+--  req Jupiter.sundistance > Europa.sundistance > Clipper.sundistance
 
 }
 
+radioGravSciReqs : RadioGravSciReqs
 
 class Body {
   mass : Real
@@ -350,11 +367,13 @@ class Body {
 
 class Jupiter extends Body {
   @units("kg")
-  req mass = 1898000000000000000000000000.0 --E27
+  --req mass = 1898000000000000000000000000.0 --E27
+  req mass = 1.898E27
   @units("km")
   req radius = 69911.0
   @units("km")
-  req sundistance = 778500000.0
+  --req sundistance = 778500000.0
+  req sundistance = 7.785E8
   @units("m/s^2")
   req gravity = 24.79
   @units("g/cm^3")
@@ -364,11 +383,12 @@ class Jupiter extends Body {
 class Earth extends Body {
   @units("kg")
   --req mass = 5972000000000000000000000.0 --E24
-  req mass = 5972.0E21 * 1.0
+  req mass = 5.972E24
   @units("km")
   req  radius = 6371.0
   @units("km")
-  req sundistance = 149600000
+  --req sundistance = 149600000.0
+  req sundistance = 1.4966E8
   @units("m/s^2")
   req gravity = 9.807
   @units("g/cm^3")
@@ -377,9 +397,13 @@ class Earth extends Body {
 
 class Europa extends Body {
   @units("kg")
-  req mass = 4799800000000000000000.0 --E22 
+ -- req mass = 4799800000000000000000.0 --E22 
+  req mass = 4.7998E22
   @units("km")
   req radius = 1560.8
+  @units("km")
+--  req (Jupiter.sundistance - 607900.0) < sundistance && 
+--  	   sundistance < (Jupiter.sundistance + 607900.0)
   @units("m/s^2")
   req gravity = 1.314
   @units("g/cm^3")
@@ -389,7 +413,18 @@ class Europa extends Body {
 class Clipper extends Body {
   @units("kg")
   req mass = 3100.0
+  @units("km")
+  req (europa.sundistance - 18.0 * europa.radius) < sundistance && 
+  	   sundistance < (europa.sundistance - 1560.8)
 }
+
+europa : Europa
+
+--req (Europa.sundistance - 18.0 * Europa.radius) < sundistance && 
+  --	   sundistance < (Europa.sundistance - 1560.8)
+
+--req (Jupiter.sundistance - 607900.0) < sundistance && 
+  	   --sundistance < (Jupiter.sundistance + 607900.0)
 
 
 class GravitationalForces { 
@@ -401,17 +436,15 @@ class GravitationalForces {
   distance : Real
   acceleration : Real
   altitude : Real
-  ===
+  
+  fun squared (x : Real) : Real { x * x }
+  
   fun Eur_Jup_Gravity : Real {
-  	  6.74E-11*Eur.mass*Jup.mass/(distance*distance)
-
+  	  6.74E-11*Eur.mass*Jup.mass/squared(Jup.sundistance-Eur.sundistance)
   }
- ===
 
-
-  fun Eur_Jup_Gravity : Real {
+  fun Eur_Jup_Gravity2 : Real {
   	 1222000.6*2.5
-
   }
 }
 
@@ -435,6 +468,3 @@ ActualTraj : HyperbolicArc
 fun Delta : Real {
 	PerfectTraj.velocity - ActualTraj.velocity
 }
-
-
- 
