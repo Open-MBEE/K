@@ -35,15 +35,22 @@ object UtilSMT {
   object Names {
     val mainClass: String = "TopLevelDeclarations"
   }
-  
+
   var storedModel: Model = null
   var subClassMap: Map[String, List[String]] = Map()
   var constantsToDeclare: List[(String, Type)] = Nil
   var constantCounter: Int = 0
 
   def error(msg: String) = Misc.error("Z3", msg)
-  def log(msg: String) = Misc.log("Z3", msg)  
-    
+  def log(msg: String) = Misc.log("Z3", msg)
+
+  def sortEntityDecls(unsortedEntityDecls: List[EntityDecl]): List[EntityDecl] = {
+    val entityDeclPairs =
+      for (ed1 <- unsortedEntityDecls; ed2 <- TypeChecker.getDirectSubClasses(ed1.ident)) yield (ed1, classes(ed2))
+    val sortedEntityDecls = Misc.topologicalSort(entityDeclPairs).toList
+    sortedEntityDecls ++ (unsortedEntityDecls.filterNot(sortedEntityDecls.contains(_)))
+  }
+
   def getSubClassesTransitive(className: String): List[String] = {
     if (subClassMap contains className)
       subClassMap(className)
@@ -168,37 +175,15 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
                  decls: List[TopDecl]) {
 
   def toSMT: String = {
-
-    def tsort[A](edges: Traversable[(A, A)]): Iterable[A] = {
-      def tsort(toPreds: Map[A, Set[A]], done: Iterable[A]): Iterable[A] = {
-        val (noPreds, hasPreds) = toPreds.partition { _._2.isEmpty }
-        if (noPreds.isEmpty) {
-          if (hasPreds.isEmpty) done else sys.error(hasPreds.toString)
-        } else {
-          val found = noPreds.map { _._1 }
-          tsort(hasPreds.mapValues { _ -- found }, done ++ found)
-        }
-      }
-
-      val toPred = edges.foldLeft(Map[A, Set[A]]()) { (acc, e) =>
-        acc + (e._1 -> acc.getOrElse(e._1, Set())) + (e._2 -> (acc.getOrElse(e._2, Set()) + e._1))
-      }
-      tsort(toPred, Seq())
-    }
-
     val model: Model = UtilSMT.transformModel(this)
-    val unsortedEntityDecls: List[EntityDecl] = model.decls.asInstanceOf[List[EntityDecl]]
-    val entityDeclPairs =
-      for (ed1 <- unsortedEntityDecls; ed2 <- TypeChecker.getDirectSubClasses(ed1.ident)) yield (ed1, classes(ed2))
-    val sortedEntityDecls = tsort(entityDeclPairs).toList
-    val entityDecls = sortedEntityDecls ++ (unsortedEntityDecls.filterNot(e => sortedEntityDecls.contains(e))) 
+    val entityDecls = UtilSMT.sortEntityDecls(model.decls.asInstanceOf[List[EntityDecl]])
     
     var result1: String = "" // text before omitted constructor parameter constants
     var result2: String = "" // text after omitted constructor parameter constants
     // result will eventually contain result1 ++ constants ++ result2.
     // This approach is needed since constants need to go before result2 but 
     // in part are computed based on result2.
-      
+
     // Generate options
 
     result1 += "; ---------- options: ----------\n"
@@ -870,8 +855,8 @@ case class FunDecl(ident: String,
                    ty: Option[Type],
                    spec: List[FunSpec],
                    body: List[MemberDecl]) extends MemberDecl {
- 
-   def toSMT(className: String): String = {
+
+  override def toSMT(className: String): String = {
     var result: String = ""
     val resultType: String = ty match {
       case None    => "Int"
@@ -892,7 +877,7 @@ case class FunDecl(ident: String,
     }
     result
   }
-  
+
   override def toString = {
     var result = s"fun $ident"
     if (typeParams.size > 0) {
