@@ -19,6 +19,7 @@ class Triangle extends Shape {
   c : Angle
   base : Int
   height : Int
+  tArea : Real
     
   req Angles: (a.a + b.a + c.a) = 180
   
@@ -43,8 +44,9 @@ class Triangle extends Shape {
     base * height / 2  
   }
   
-  req ValidAreaFunction: area() > 10
-  
+  req ValidAreaFunction: area() > 10.0
+
+  req tArea = area()  
 }
 
 class Rectangle extends Shape {

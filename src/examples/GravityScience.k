@@ -308,6 +308,7 @@ class RadioReq extends Requirements {
   =====================================================
 class RadioGravSciReqs extends Requirements {
 
+  europa : Europa
   range : Real
   altitude : Real
   k2accuracy : Real
@@ -414,11 +415,11 @@ class Clipper extends Body {
   @units("kg")
   req mass = 3100.0
   @units("km")
+  europa : Europa
   req (europa.sundistance - 18.0 * europa.radius) < sundistance && 
   	   sundistance < (europa.sundistance - 1560.8)
 }
 
-europa : Europa
 
 --req (Europa.sundistance - 18.0 * Europa.radius) < sundistance && 
   --	   sundistance < (Europa.sundistance - 1560.8)
