@@ -168,12 +168,31 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
                  decls: List[TopDecl]) {
 
   def toSMT: String = {
-    def sortEntityDecls(ed1: EntityDecl, ed2: EntityDecl): Boolean =
-      UtilSMT.getSubClassesTransitive(ed1.ident) contains ed2.ident
+
+    def tsort[A](edges: Traversable[(A, A)]): Iterable[A] = {
+      def tsort(toPreds: Map[A, Set[A]], done: Iterable[A]): Iterable[A] = {
+        val (noPreds, hasPreds) = toPreds.partition { _._2.isEmpty }
+        if (noPreds.isEmpty) {
+          if (hasPreds.isEmpty) done else sys.error(hasPreds.toString)
+        } else {
+          val found = noPreds.map { _._1 }
+          tsort(hasPreds.mapValues { _ -- found }, done ++ found)
+        }
+      }
+
+      val toPred = edges.foldLeft(Map[A, Set[A]]()) { (acc, e) =>
+        acc + (e._1 -> acc.getOrElse(e._1, Set())) + (e._2 -> (acc.getOrElse(e._2, Set()) + e._1))
+      }
+      tsort(toPred, Seq())
+    }
 
     val model: Model = UtilSMT.transformModel(this)
-    val entityDecls: List[EntityDecl] = model.decls.asInstanceOf[List[EntityDecl]].sortWith(sortEntityDecls)
-
+    val unsortedEntityDecls: List[EntityDecl] = model.decls.asInstanceOf[List[EntityDecl]]
+    val entityDeclPairs =
+      for (ed1 <- unsortedEntityDecls; ed2 <- TypeChecker.getDirectSubClasses(ed1.ident)) yield (ed1, classes(ed2))
+    val sortedEntityDecls = tsort(entityDeclPairs).toList
+    val entityDecls = sortedEntityDecls ++ (unsortedEntityDecls.filterNot(e => sortedEntityDecls.contains(e))) 
+    
     var result1: String = "" // text before omitted constructor parameter constants
     var result2: String = "" // text after omitted constructor parameter constants
     // result will eventually contain result1 ++ constants ++ result2.
@@ -287,7 +306,7 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
       result2 += ed.toSMTAssert + "\n"
     }
     result2 += "\n"
-    result2 += "(apply quasi-macros)"
+    //    result2 += "(apply quasi-macros)"
 
     // Add constants for omitted constructor parameters:
 
