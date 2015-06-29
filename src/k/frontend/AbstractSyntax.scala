@@ -51,6 +51,17 @@ object UtilSMT {
     sortedEntityDecls ++ (unsortedEntityDecls.filterNot(sortedEntityDecls.contains(_)))
   }
 
+  def ignoreMember(memberDecl: MemberDecl): Boolean = {
+    memberDecl match {
+      case PropertyDecl(modifiers, name, ty, multiplicity, assignment, expr) =>
+        ty match {
+          case UnitType | CharType | StringType => true
+          case _                                => false
+        }
+      case _ => false
+    }
+  }
+
   def getSubClassesTransitive(className: String): List[String] = {
     if (subClassMap contains className)
       subClassMap(className)
@@ -177,7 +188,7 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
   def toSMT: String = {
     val model: Model = UtilSMT.transformModel(this)
     val entityDecls = UtilSMT.sortEntityDecls(model.decls.asInstanceOf[List[EntityDecl]])
-    
+
     var result1: String = "" // text before omitted constructor parameter constants
     var result2: String = "" // text after omitted constructor parameter constants
     // result will eventually contain result1 ++ constants ++ result2.
@@ -587,7 +598,7 @@ case class EntityDecl(
     s"(assert (exists ((instanceOf$ident Ref)) (${ident}.inv.nosub instanceOf$ident)))"
 
   def getPropertyDecls: List[PropertyDecl] =
-    for (m <- members if m.isInstanceOf[PropertyDecl]) yield m.asInstanceOf[PropertyDecl]
+    for (m <- members if m.isInstanceOf[PropertyDecl] && !UtilSMT.ignoreMember(m)) yield m.asInstanceOf[PropertyDecl]
 
   def getAllPropertyDecls: List[PropertyDecl] = {
     val propertyDeclsOfSuperClasses: List[PropertyDecl] =
