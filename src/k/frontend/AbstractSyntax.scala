@@ -23,11 +23,6 @@ object UtilAST {
 
   def ??? : Nothing = ???("")
 
-  def errorSMT(text: String = "bug translation!"): Nothing = {
-    println("*** SMT error: " + text)
-    null.asInstanceOf[Nothing]
-  }
-
   def debug(text: String) {
     if (Options.debug) println(s"[-- debug --: $text]")
   }
@@ -40,12 +35,15 @@ object UtilSMT {
   object Names {
     val mainClass: String = "TopLevelDeclarations"
   }
-
+  
   var storedModel: Model = null
   var subClassMap: Map[String, List[String]] = Map()
   var constantsToDeclare: List[(String, Type)] = Nil
   var constantCounter: Int = 0
 
+  def error(msg: String) = Misc.error("Z3", msg)
+  def log(msg: String) = Misc.log("Z3", msg)  
+    
   def getSubClassesTransitive(className: String): List[String] = {
     if (subClassMap contains className)
       subClassMap(className)
@@ -75,7 +73,7 @@ object UtilSMT {
 
   def getDeclaringClass(identExp: Exp): String = {
     if (!identExp.isInstanceOf[IdentExp])
-      errorSMT(s"Should be an IdentExp: $identExp")
+      error(s"Should be an IdentExp: $identExp")
     else {
       val entityDecl: EntityDecl = getOwningEntityDecl(identExp)
       if (entityDecl == null)
@@ -90,7 +88,7 @@ object UtilSMT {
     val declaringEntityDecl = typeInfo match {
       case PropertyTypeInfo(_, _, owning) => owning
       case FunctionTypeInfo(_, owning)    => owning
-      case _                              => errorSMT(s"property type or function type expected: $typeInfo")
+      case _                              => error(s"property type or function type expected: $typeInfo")
     }
     declaringEntityDecl.ident
   }
@@ -200,7 +198,7 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
     // result will eventually contain result1 ++ constants ++ result2.
     // This approach is needed since constants need to go before result2 but 
     // in part are computed based on result2.
-
+      
     // Generate options
 
     result1 += "; ---------- options: ----------\n"
@@ -872,8 +870,8 @@ case class FunDecl(ident: String,
                    ty: Option[Type],
                    spec: List[FunSpec],
                    body: List[MemberDecl]) extends MemberDecl {
-
-  override def toSMT(className: String): String = {
+ 
+   def toSMT(className: String): String = {
     var result: String = ""
     val resultType: String = ty match {
       case None    => "Int"
@@ -890,11 +888,11 @@ case class FunDecl(ident: String,
         result += s"  $expSMT\n"
         result += ")"
       case _ =>
-        UtilAST.errorSMT(s"Body of function $className.$ident contains more than one expression")
+        UtilSMT.error(s"Body of function $className.$ident contains more than one expression")
     }
     result
   }
-
+  
   override def toString = {
     var result = s"fun $ident"
     if (typeParams.size > 0) {
