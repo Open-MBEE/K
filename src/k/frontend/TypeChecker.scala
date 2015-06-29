@@ -5,8 +5,10 @@ import java.util.{ IdentityHashMap => IMap }
 import javax.xml.bind.annotation.XmlElementDecl.GLOBAL
 
 case object TypeChecker {
-  def error(msg: String) = Misc.error("TC", msg)
-  def log(msg: String) = Misc.log("TC", msg)
+  val debug = false
+  def error(msg: String) = Misc.error("TypeChecker", msg)
+  def log(msg: String) = Misc.log("TypeChecker", msg)
+  def logDebug(msg: String) = if (debug) log(msg)
 
   var globalTypeEnv: TypeEnv = TypeEnv(null, Map())
   var decl2TypeEnvironment: Map[TopDecl, TypeEnv] = Map()
@@ -34,11 +36,11 @@ case object TypeChecker {
 
   def isPrimitiveType(t: Type): Boolean = {
     t.isInstanceOf[PrimitiveType] ||
-    (t match {
-      case CartesianType(types) => types.forall { isPrimitiveType(_) }
-      case ParenType(ty) => isPrimitiveType(ty)
-      case _ => false
-    })
+      (t match {
+        case CartesianType(types) => types.forall { isPrimitiveType(_) }
+        case ParenType(ty)        => isPrimitiveType(ty)
+        case _                    => false
+      })
   }
 
   // assming that exp is an ident exp...
@@ -101,9 +103,9 @@ case object TypeChecker {
   def isLocal(exp: IdentExp): Boolean = {
     try {
       exp2TypeEnv.get(exp)(exp.ident) match {
-        case ParamTypeInfo(_) => true
-        case PatternTypeInfo(_,_) => true
-        case _                => false
+        case ParamTypeInfo(_)      => true
+        case PatternTypeInfo(_, _) => true
+        case _                     => false
       }
     } catch {
       case _: Throwable => false
@@ -146,22 +148,22 @@ case class TypeEnv(decl: TopDecl, map: Map[String, TypeInfo]) {
               }
             }
             newMap += (kv._1 -> kv._2)
-          case (pname, pti@PropertyTypeInfo(pdecl, global, powner)) =>
+          case (pname, pti @ PropertyTypeInfo(pdecl, global, powner)) =>
             if (map.contains(pname)) {
-              if(!map(pname).isInstanceOf[PropertyTypeInfo]){
+              if (!map(pname).isInstanceOf[PropertyTypeInfo]) {
                 error(s"$pname overloaded. Currently not supported.")
               }
               val opti = map(pname).asInstanceOf[PropertyTypeInfo]
-              if(opti.global && pti.global && opti != pti){
+              if (opti.global && pti.global && opti != pti) {
                 error(s"$pname has been declared multiple times in the global scope.")
               }
-              if(opti.global && !pti.global){
+              if (opti.global && !pti.global) {
                 newMap += (pname -> pti)
               }
-              if(pti.global && !opti.global){
+              if (pti.global && !opti.global) {
                 newMap += (pname -> opti)
               }
-              if(!pti.global && !opti.global){
+              if (!pti.global && !opti.global) {
                 error(s"$pname declared multiple times.")
               }
             } else {
