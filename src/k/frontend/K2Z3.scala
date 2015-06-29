@@ -115,21 +115,41 @@ object K2Z3 {
   def PrintModel(model: Model) {
 
     if (z3Model != null) {
+
+      if (debug) println(z3Model)
+
       log("<<++")
 
       var rows: List[List[String]] = List(List("Variable", "Value"))
       var extraRows: List[List[String]] = List(List("Variable", "Value"))
 
-      val heapDecl = z3Model.getConstDecls.find { x => x.getName.toString.split("!")(0).equals("heap") }
+      var heapDecl = z3Model.getFuncDecls.find {
+        x =>
+          val isHeap = !z3Model.getFuncInterp(x).getEntries.
+            find { e => e.getValue.toString.contains("lift-TopLevelDeclarations") }.isEmpty ||
+            z3Model.getFuncInterp(x).getElse.toString.contains("lift-TopLevelDeclarations")
+
+          if (debug) println(s"$x $isHeap")
+          
+          isHeap
+      }
+
+      if (heapDecl.isEmpty) {
+        error(s"FATAL INTERNAL ERROR! Could not find a heap declaration for printing the model.")
+      }
+
       var heapMap =
-        z3Model.getFuncInterp(heapDecl.get).getEntries.foldLeft(Map[String, String]()) { (res, x) =>
-          res + (x.getArgs.last.toString -> x.getValue.toString)
-        }
+        z3Model.getFuncInterp(heapDecl.get).getEntries.
+          foldLeft(Map[String, String]()) { (res, x) =>
+            res + (x.getArgs.last.toString -> x.getValue.toString)
+          }
+
       val elseK = z3Model.getFuncInterp(heapDecl.get).getElse
       heapMap += ("else" -> elseK.toString)
+
       var visited = Set[String]()
 
-      // walk through heap
+      // walk through heap and  print entries
       heapMap.foreach { kv =>
         val key = kv._1
         val value = kv._2.replace("- ", "-")
