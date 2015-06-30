@@ -436,6 +436,7 @@ class TypeChecker(model: Model) {
           ed.members.foreach { m =>
             m match {
               case pd @ PropertyDecl(_, _, _, _, _, _) =>
+                if (!doesTypeExist(classTypeEnv, pd.ty)) error(s"Specified type ${pd.ty} does not exist. Please check. Exiting.")
                 classTypeEnv = classTypeEnv.overwrite(pd.name -> PropertyTypeInfo(pd, false, ed))
               case fd @ FunDecl(_, _, _, _, _, _) =>
                 classTypeEnv = classTypeEnv.union(fd.ident -> FunctionTypeInfo(fd, ed))
