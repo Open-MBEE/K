@@ -1,5 +1,32 @@
 package k.frontend
 
+object Tabulator {
+  def format(table: Seq[Seq[Any]]) = table match {
+    case Seq() => ""
+    case _ =>
+      val sizes = for (row <- table) yield (for (cell <- row) yield if (cell == null) 0 else cell.toString.length)
+      val colSizes = for (col <- sizes.transpose) yield col.max
+      val rows = for (row <- table) yield formatRow(row, colSizes)
+      formatRows(rowSeparator(colSizes), rows)
+  }
+
+  def formatRows(rowSeparator: String, rows: Seq[String]): String = (
+    rowSeparator ::
+    rows.head ::
+    rowSeparator ::
+    //rows.tail.toList.map { x => (x + "\n") ++ rowSeparator } ::: // for row sep
+    rows.tail.toList :::
+    rowSeparator ::
+    List()).mkString("\n")
+
+  def formatRow(row: Seq[Any], colSizes: Seq[Int]) = {
+    val cells = (for ((item, size) <- row.zip(colSizes)) yield if (size == 0) "" else ("%-" + size + "s").format(item))
+    cells.mkString("\t|", "|", "|")
+  }
+
+  def rowSeparator(colSizes: Seq[Int]) = colSizes map { "-" * _ } mkString ("\t+", "+", "+")
+}
+
 object Misc {
 
   def substitute(post: Exp, lhs: String, rhs: Exp): Exp = {
@@ -142,6 +169,10 @@ object Misc {
     System.exit(-1).asInstanceOf[Nothing]
   }
 
+  def error2(prefix: String, message: String) = {
+    println(s"[$prefix] $message")
+  }
+
   def log(prefix: String, msg: String) = println(s"[$prefix] $msg")
 
   def areTypesEqual(t1: Type, t2: Type, compatibility: Boolean): Boolean = {
@@ -202,7 +233,7 @@ object Misc {
     val toPred = edges.foldLeft(Map[A, Set[A]]()) { (acc, e) =>
       acc + (e._1 -> acc.getOrElse(e._1, Set())) + (e._2 -> (acc.getOrElse(e._2, Set()) + e._1))
     }
-    
+
     tsort(toPred, Seq())
   }
 }
