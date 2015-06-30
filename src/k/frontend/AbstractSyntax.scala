@@ -75,8 +75,6 @@ object UtilSMT {
     }
   }
 
-  // @@@\  
-
   def memberList2SMT(members: List[MemberDecl], level: Int = 0): String = {
     members match {
       case ExpressionDecl(exp) :: Nil =>
@@ -97,8 +95,6 @@ object UtilSMT {
         UtilSMT.error(s"Body of function not well formed:\n${members.mkString("\n")}")
     }
   }
-
-  // @@@/  
 
   def getSubClassesTransitive(className: String): List[String] = {
     if (subClassMap contains className)
@@ -142,9 +138,9 @@ object UtilSMT {
   def getDeclaringClass(className: String, ident: String): String = {
     val typeInfo = decl2TypeEnvironment(classes(className)).map(ident)
     val declaringEntityDecl = typeInfo match {
-      case PropertyTypeInfo(_, _, owning) => owning
-      case FunctionTypeInfo(_, owning)    => owning
-      case _                              => error(s"property type or function type expected: $typeInfo")
+      case PropertyTypeInfo(_, _, _, owning) => owning
+      case FunctionTypeInfo(_, owning)       => owning
+      case _                                 => error(s"property type or function type expected: $typeInfo")
     }
     declaringEntityDecl.ident
   }
@@ -904,9 +900,7 @@ case class FunDecl(ident: String,
                    ty: Option[Type],
                    spec: List[FunSpec],
                    body: List[MemberDecl]) extends MemberDecl {
-
-  // @@@\  
-
+  
   override def toSMT(className: String): String = {
     var result: String = ""
     val resultType: String = ty match {
@@ -930,33 +924,7 @@ case class FunDecl(ident: String,
     }
     result
   }
-
-  // @@@/  
-
-  /*
-  override def toSMT(className: String): String = {
-    var result: String = ""
-    val resultType: String = ty match {
-      case None    => "Int"
-      case Some(t) => t.toSMT
-    }
-    body match {
-      case Nil =>
-        val parameterTypes: String = s"Ref " + params.map(_.toSMTType).mkString(" ")
-        result += s"(declare-fun $className.$ident ($parameterTypes) $resultType)"
-      case ExpressionDecl(exp) :: Nil =>
-        val parameters: String = s"(this Ref)" + params.map(_.toSMT).mkString
-        val expSMT = exp.toSMT(className)
-        result += s"(define-fun $className.$ident ($parameters) $resultType\n"
-        result += s"  $expSMT\n"
-        result += ")"
-      case _ =>
-        UtilSMT.error(s"Body of function $className.$ident contains more than one expression")
-    }
-    result
-  }  
-  */
-
+ 
   override def toString = {
     var result = s"fun $ident"
     if (typeParams.size > 0) {
