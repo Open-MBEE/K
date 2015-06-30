@@ -41,6 +41,13 @@ object UtilSMT {
   var constantsToDeclare: List[(String, Type)] = Nil
   var constantCounter: Int = 0
 
+  def reset {
+    storedModel = null
+    subClassMap = Map()
+    constantsToDeclare = Nil
+    constantCounter = 0
+  }
+
   def error(msg: String) = Misc.error("Z3", msg)
   def log(msg: String) = Misc.log("Z3", msg)
 
@@ -2265,6 +2272,26 @@ case class SumType(ty: List[Type]) extends PrimitiveType {
 case object AnyType extends Type {
   override def toJson1 = null
   override def toJson2 = null
+}
+
+case class ClassType(ident: QualifiedName) extends Type {
+  override def toString = s"ClassOf($ident)"
+  override def toSMT: String = ???
+  override def toJson1 = {
+    val identType = new JSONObject()
+    val arguments = new JSONArray()
+    identType.put("ident", ident.toJson)
+    identType.put("type", "ClassType")
+  }
+
+  override def toJson2 = {
+    val expression = new JSONObject()
+    val operand = new JSONArray()
+    operand.put(new JSONObject().put("type", "ClassType").put("element", "ElementValue"))
+    operand.put(ident.toJson)
+    expression.put("type", "Expression")
+    expression.put("operand", operand)
+  }
 }
 
 case class IdentType(ident: QualifiedName, args: List[Type]) extends Type {

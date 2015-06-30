@@ -30,7 +30,3 @@ req bobj.z = 1
 
 y : Int
 
-fun foo(x : Int) : Int {
-    -- if true then x
-    return y
-  }

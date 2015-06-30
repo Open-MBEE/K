@@ -988,8 +988,10 @@ class TypeChecker(model: Model) {
   try {
     typeCheck
   } catch {
-    case TypeCheckException => Misc.error("TypeChecker", "Given K did not type check.")
-    case _: Throwable       => Misc.error("TypeChecker", "Exception encountered during type checking.")
+    case TypeCheckException =>
+      if(!silent) Misc.error2("TypeChecker", "Given K did not type check.")
+    case _: Throwable       => 
+      if(!silent) Misc.error2("TypeChecker", "Exception encountered during type checking.")
   }
 
 }
