@@ -1,4 +1,3 @@
-D
 class A {
   x : Int
 }

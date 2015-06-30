@@ -65,7 +65,7 @@ case class DataType(sort: Sort, constructor: FuncDecl, selectors: Map[String, Fu
 
 object K2Z3 {
 
-  val debug: Boolean = true
+  val debug: Boolean = false
   var cfg: Map[String, String] = Map("model" -> "true", "auto-config" -> "true")
   var ctx: Context = new Context(cfg)
   var idents: MMap[String, (Expr, com.microsoft.z3.StringSymbol)] = MMap()
@@ -204,34 +204,7 @@ object K2Z3 {
     }
   }
 
-  object Tabulator {
-    def format(table: Seq[Seq[Any]]) = table match {
-      case Seq() => ""
-      case _ =>
-        val sizes = for (row <- table) yield (for (cell <- row) yield if (cell == null) 0 else cell.toString.length)
-        val colSizes = for (col <- sizes.transpose) yield col.max
-        val rows = for (row <- table) yield formatRow(row, colSizes)
-        formatRows(rowSeparator(colSizes), rows)
-    }
-
-    def formatRows(rowSeparator: String, rows: Seq[String]): String = (
-      rowSeparator ::
-      rows.head ::
-      rowSeparator ::
-      //rows.tail.toList.map { x => (x + "\n") ++ rowSeparator } ::: // for row sep
-      rows.tail.toList :::
-      rowSeparator ::
-      List()).mkString("\n")
-
-    def formatRow(row: Seq[Any], colSizes: Seq[Int]) = {
-      val cells = (for ((item, size) <- row.zip(colSizes)) yield if (size == 0) "" else ("%-" + size + "s").format(item))
-      cells.mkString("\t|", "|", "|")
-    }
-
-    def rowSeparator(colSizes: Seq[Int]) = colSizes map { "-" * _ } mkString ("\t+", "+", "+")
-  }
-
-  def solveSMT(model: Model, smtModel: String) {
+  def solveSMT(model: Model, smtModel: String, printModel : Boolean) {
     reset()
     val boolExp = ctx.parseSMTLIB2String(smtModel, null, null, null, null)
     z3Model = SolveExp(boolExp)
@@ -242,7 +215,7 @@ object K2Z3 {
       println("--- END RAW SMT MODEL ---")
       println
     }
-    PrintModel(model)
+    if(printModel) PrintModel(model)
   }
 
   def SolveExp(e: Exp): com.microsoft.z3.Model = {
