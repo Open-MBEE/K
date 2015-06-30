@@ -4,11 +4,18 @@ import k.frontend._
 import java.util.{ IdentityHashMap => IMap }
 import javax.xml.bind.annotation.XmlElementDecl.GLOBAL
 
+object TypeCheckException extends RuntimeException
+
 case object TypeChecker {
   val debug = false
-  def error(msg: String) = Misc.error("TypeChecker", msg)
-  def log(msg: String) = Misc.log("TypeChecker", msg)
-  def logDebug(msg: String) = if (debug) log(msg)
+  var silent = false
+  def error(msg: String) = {
+    if (!silent) Misc.error2("TypeChecker", msg)
+    throw TypeCheckException
+  }
+  def log(msg: String) = if (!silent) Misc.log("TypeChecker", msg)
+  def logDebug(msg: String) = if (debug && !silent) Misc.log("TypeChecker", s"DEBUG $msg")
+  def warning(msg: String) = Misc.log("TypeChecker", s"Warning $msg")
 
   var globalTypeEnv: TypeEnv = TypeEnv(null, Map())
   var decl2TypeEnvironment: Map[TopDecl, TypeEnv] = Map()
@@ -19,6 +26,20 @@ case object TypeChecker {
   var type2Decl = Map[Type, TopDecl]()
   var annotations = Map[String, AnnotationDecl]()
   var classes = Map[String, EntityDecl]()
+
+  def reset() {
+    globalTypeEnv = TypeEnv(null, Map())
+    decl2TypeEnvironment = Map()
+    origTypeEnvironments = Map()
+    exp2Type = new IMap()
+    exp2TypeEnv = new IMap()
+    keywords = Map[String, Type]()
+    type2Decl = Map[Type, TopDecl]()
+    annotations = Map[String, AnnotationDecl]()
+    classes = Map[String, EntityDecl]()
+    ClassHierarchy.parents = Map[EntityDecl, Set[Type]]()
+    ClassHierarchy.children = Map[EntityDecl, Set[Type]]()
+  }
 
   def getEntityDecl(className: String): EntityDecl = {
     assert(classes contains className, s"$className does not exist in 'classes'")
@@ -90,11 +111,9 @@ case object TypeChecker {
 
   def getDirectSubClasses(className: String): List[String] =
     if (className == "TopLevelDeclarations") Nil
-    else {
-      if (ClassHierarchy.children.contains(classes(className)))
-        ClassHierarchy.children(classes(className)).map(_.toString).toList
-      else Nil
-  }
+    else if (ClassHierarchy.children.contains(classes(className)))
+      ClassHierarchy.children(classes(className)).map(_.toString).toList
+    else Nil
 
   def getDirectSuperClasses(className: String): List[String] =
     if (className == "TopLevelDeclarations") Nil
@@ -182,21 +201,26 @@ case class TypeEnv(decl: TopDecl, map: Map[String, TypeInfo]) {
     }
     TypeEnv(decl, newMap)
   }
+
   def apply(k: String): TypeInfo = {
     if (!map.contains(k)) error(s"Could not find declaration for $k")
     else map(k)
   }
   def contains(k: String): Boolean = map.contains(k)
+
+  override def toString = {
+    if (decl != null) s"${decl.asInstanceOf[EntityDecl].ident} : $map"
+    else s"Global : $map"
+  }
 }
 
 trait TypeInfo
 
 case class FunctionTypeInfo(decl: FunDecl, owner: EntityDecl) extends TypeInfo {
   val returnType: Option[Type] = decl.ty
-  val argsType: List[Type] = List()
 
   override def toString() =
-    s"""Function: ${decl.ident} : (${argsType.mkString(",")}) -> ${returnType.getOrElse("")}"""
+    s"""Function: ${decl.ident} : (${decl.params.mkString(",")}) -> ${returnType.getOrElse("")}"""
 }
 case class ClassTypeInfo(decl: EntityDecl) extends TypeInfo {
   override def toString = s"Class: ${decl.ident}"
@@ -214,33 +238,21 @@ object ClassHierarchy {
   var children = Map[EntityDecl, Set[Type]]()
 
   def buildHierarchy(model: Model) {
-    model.decls.foreach { d =>
-      d match {
-        case ed @ EntityDecl(_, t, _, _, _, _, _) if t == ClassToken =>
-          val edParents = buildHierarchy(ed, type2Decl, Set())
-          parents = parents + (ed -> edParents)
-          edParents.foreach { p =>
-            val parent = type2Decl(p).asInstanceOf[EntityDecl]
-            if (!children.contains(parent)) children = children + (parent -> Set())
-            children = children +
-              (parent ->
-                (children(parent) +
-                  (type2Decl.map(_.swap).asInstanceOf[Map[TopDecl, Type]](ed))))
-          }
-        case ed @ EntityDecl(_, t, _, _, _, _, _) if t.isInstanceOf[IdentifierToken] =>
-          val tokenClass = t.asInstanceOf[IdentifierToken].name
-          val tokenClassType = keywords(tokenClass)
-          val edParents = buildHierarchy(ed, type2Decl, Set()) + tokenClassType
-          parents = parents + (ed -> (edParents + tokenClassType))
-          edParents.foreach { p =>
-            val parent = type2Decl(p).asInstanceOf[EntityDecl]
-            if (!children.contains(parent)) children = children + (parent -> Set())
-            children = children +
-              (parent ->
-                (children(parent) +
-                  (type2Decl.map(_.swap).asInstanceOf[Map[TopDecl, Type]](ed))))
-          }
-        case _ => ()
+
+    for (ed @ EntityDecl(_, _, _, _, _, _, _) <- model.decls) {
+      var edParents: Set[Type] = Set()
+      if (ed.entityToken.isInstanceOf[IdentifierToken]) {
+        edParents += keywords(ed.entityToken.asInstanceOf[IdentifierToken].name)
+      }
+      edParents ++= buildHierarchy(ed, type2Decl, Set())
+      parents += (ed -> edParents)
+      edParents.foreach { p =>
+        val parent = type2Decl(p).asInstanceOf[EntityDecl]
+        if (!children.contains(parent)) children = children + (parent -> Set())
+        children = children +
+          (parent ->
+            (children(parent) +
+              (type2Decl.map(_.swap).asInstanceOf[Map[TopDecl, Type]](ed))))
       }
     }
 
@@ -381,12 +393,14 @@ class TypeChecker(model: Model) {
 
     if (model == null) return true
 
-    // pass: get class and type information 
+    // get declared annotations and corresponding types
     model.annotations.foreach { d =>
       val ad = d.asInstanceOf[AnnotationDecl]
       if (annotations.contains(ad.name)) error(s"Redefining annotation ${ad.name}.")
-      annotations = annotations + (ad.name -> ad)
+      annotations += (ad.name -> ad)
     }
+
+    // get class information
     model.decls.foreach { d =>
       d match {
         case ed @ EntityDecl(_, _, _, ident, _, _, _) =>
@@ -418,11 +432,28 @@ class TypeChecker(model: Model) {
             ((p.modifiers.contains(Var) || p.modifiers.contains(Val)) &&
               (p.modifiers.contains(Ordered) || p.modifiers.contains(Unique) ||
                 p.modifiers.contains(Source) || p.modifiers.contains(Target))))
-            error(s"Property $name has conflicting modifiers.")
+            error(s"Property $name has conflicting modifiers: ${p.modifiers.mkString(",")}.")
 
           if (!doesTypeExist(globalTypeEnv, ty)) error(s"Specified type $ty does not exist. Please check. Exiting.")
           globalTypeEnv = globalTypeEnv.union(name -> PropertyTypeInfo(p, true, null))
         case _ => ()
+      }
+    }
+
+    // pass: process functions (not bodies of functions) at top level
+    globalTypeEnv = model.decls.foldLeft(globalTypeEnv) { (res, d) =>
+      d match {
+        case fd @ FunDecl(_, _, _, _, _, _) =>
+          // check if the type exists
+          fd.ty match {
+            case Some(t) =>
+              if (!doesTypeExist(res, t)) {
+                error(s"Specified type $t does not exist. Please check. Exiting.")
+              }
+            case None => ()
+          }
+          res.union(fd.ident -> FunctionTypeInfo(fd, null))
+        case _ => res
       }
     }
 
@@ -508,22 +539,7 @@ class TypeChecker(model: Model) {
       }
     }
 
-    // pass: process functions at top level
-    globalTypeEnv = model.decls.foldLeft(globalTypeEnv) { (res, d) =>
-      d match {
-        case fd @ FunDecl(_, _, _, _, _, _) =>
-          // check if the type exists
-          fd.ty match {
-            case Some(t) =>
-              if (!doesTypeExist(res, t)) {
-                error(s"Specified type $t does not exist. Please check. Exiting.")
-              }
-            case None => ()
-          }
-          res.union(fd.ident -> FunctionTypeInfo(fd, null))
-        case _ => res
-      }
-    }
+    logDebug(s"GlobalTE: $globalTypeEnv")
 
     // pass: do inheritance for each class and associations
     model.decls.foreach { d =>
@@ -542,6 +558,8 @@ class TypeChecker(model: Model) {
         case _ => ()
       }
     }
+
+    decl2TypeEnvironment.foreach(kv => logDebug(s"${kv._2}"))
 
     // pass: build the information for expressions 
     // except expressions that are in functions (bodies)
@@ -656,17 +674,26 @@ class TypeChecker(model: Model) {
     }
 
     // process expressions in function
-    fd.body.foreach { m =>
-      m match {
-        case ExpressionDecl(exp) =>
-          lastT = getExpType(functionTypeEnv, exp)
-          if (exp.isInstanceOf[ReturnExp] && !fd.ty.isEmpty) {
-            if (!areTypesEqual(lastT, fd.ty.get, true))
-              error(s"Return type does not match for $exp in function ${fd.ident}")
-          } else if (lastT != UnitType && fd.body.length > 1)
-            error(s"Expression has non-unit type. $exp")
-          exp2Type.put(exp, lastT)
-        case _ => ()
+    for (i <- Range(0, fd.body.length)) {
+      val m = fd.body(i)
+      val mType = {
+        m match {
+          case ExpressionDecl(exp) =>
+            lastT = getExpType(functionTypeEnv, exp)
+            if (exp.isInstanceOf[ReturnExp] && !fd.ty.isEmpty) {
+              if (!areTypesEqual(lastT, fd.ty.get, true))
+                error(s"Return type does not match for $exp in function ${fd.ident}")
+            }
+            exp2Type.put(exp, lastT)
+            lastT
+          case _ => UnitType
+        }
+      }
+      if (i < fd.body.length - 1 && mType != UnitType)
+        error(s"Non-unit type expression found in function body: $m")
+      if (i == fd.body.length - 1 && !fd.ty.isEmpty) {
+        if (!areTypesEqual(mType, fd.ty.get, true))
+          error(s"Return type does not match for $m in function ${fd.ident}")
       }
     }
 
@@ -682,11 +709,13 @@ class TypeChecker(model: Model) {
   }
 
   def getFunDecl(te: TypeEnv, exp: Exp): (Boolean, FunDecl) = {
+    logDebug(s"getFunDecl: $exp in $te")
+
     val result: (Boolean, FunDecl) = exp match {
       case ParenExp(e) => getFunDecl(te, e)
       case IdentExp(i) =>
         if (!te.contains(i)) {
-          error(s"$i not found in scope for $exp. Please check. Exiting.")
+          error(s"$i not found in scope for $exp.")
         }
         te(i) match {
           case pti @ FunctionTypeInfo(decl, _) => (false, decl)
@@ -718,12 +747,13 @@ class TypeChecker(model: Model) {
   }
 
   def getExpType(te: TypeEnv, exp: Exp): Type = {
+    logDebug(s"getExpType: $exp in $te")
     val result: Type = exp match {
       case ResultExp   => AnyType //TODO
       case ParenExp(e) => getExpType(te, e)
       case IdentExp(i) =>
         if (!te.contains(i)) {
-          error(s"$i not found in scope for $exp. Please check. Exiting.")
+          error(s"$i not found in scope for $exp.")
         }
         te(i) match {
           case pti @ PropertyTypeInfo(decl, _, _) => getPropertyDeclType(decl)
@@ -733,7 +763,8 @@ class TypeChecker(model: Model) {
               case Some(t) => t
               case None    => UnitType
             }
-          case cti @ ClassTypeInfo(decl)   => IdentType(QualifiedName(List(decl.ident)), null)
+          case cti @ ClassTypeInfo(decl) =>
+            ClassType(QualifiedName(List(decl.ident)))
           case pti @ PatternTypeInfo(p, t) => t
           case tt @ _ =>
             error(s"Type could not be found for $exp." + tt.getClass)
@@ -839,9 +870,15 @@ class TypeChecker(model: Model) {
           var functionReturnType = getExpType(te, fexp)
           var (collectionFunction, functionDecl) = getFunDecl(te, fexp)
 
+          if (functionDecl == null)
+            error(s"Could not find function for $exp.")
+
           // ensure arguments match param types (unless collection function)
           if (!args.forall { a => a.isInstanceOf[PositionalArgument] })
             error(s"Cannot use named arguments to a non-constructor function call: $exp")
+
+          if (args.length != functionDecl.params.length)
+            error(s"Incorrect number of arguments $exp")
 
           if (!collectionFunction &&
             !((functionDecl.params zip args).forall { pa =>
@@ -856,6 +893,7 @@ class TypeChecker(model: Model) {
                 IdentType(QualifiedName(List("Seq")), t)
               else {
                 assert(args.length <= 1)
+                // TODO
                 // assuming lambda expression as only argument
                 // assuming ident pattern in lambda expression
                 val lambdaExp = args.last.asInstanceOf[PositionalArgument].exp.asInstanceOf[LambdaExp]
@@ -940,13 +978,18 @@ class TypeChecker(model: Model) {
     exp2Type.put(exp, result)
     exp2TypeEnv.put(exp, te)
 
-    //    println(s"getExpType: $exp $result ${exp2TypeEnv.get(exp).decl} ${}}")
+    logDebug(s"getExpType: $exp $result")
 
     return result
   }
 
   def inferTypeFrom(exp: String, ty: Type) = ty
 
-  typeCheck
+  try {
+    typeCheck
+  } catch {
+    case TypeCheckException => Misc.error("TypeChecker", "Given K did not type check.")
+    case _: Throwable       => Misc.error("TypeChecker", "Exception encountered during type checking.")
+  }
 
 }
