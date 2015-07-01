@@ -26,7 +26,7 @@ object Frontend {
       case Nil => map
       case "-f" :: value :: tail =>
         parseArgs(map ++ Map('modelFile -> value), tail)
-      case "-test" :: tail     => parseArgs(map ++ Map('test -> true), tail)
+      case "-tests" :: tail     => parseArgs(map ++ Map('tests -> true), tail)
       case "-baseline" :: tail => parseArgs(map ++ Map('baseline -> true), tail)
       case "-v" :: tail        => parseArgs(map ++ Map('verbose -> true), tail)
       case "-stats" :: tail    => parseArgs(map ++ Map('stats -> true), tail)
@@ -49,7 +49,7 @@ object Frontend {
     var model: Model = null
     var filename: String = null
 
-    options.get('test) match {
+    options.get('tests) match {
       case Some(true) => doTests(options.getOrElse('baseline, false).asInstanceOf[Boolean])
       case _          => ()
     }
