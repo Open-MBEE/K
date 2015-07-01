@@ -10,8 +10,9 @@ import scala.collection.mutable.Stack
 // is ill defined and in those cases, it is set to toJson
 // for expressions, toJson2 is LISP style... 
 
-object Options {
+object ASTOptions {
   var debug = false
+  var silent = false
   var useJson1 = true
 }
 
@@ -24,12 +25,14 @@ object UtilAST {
   def ??? : Nothing = ???("")
 
   def debug(text: String) {
-    if (Options.debug) println(s"[-- debug --: $text]")
+    if (ASTOptions.debug) println(s"[-- debug --: $text]")
   }
 }
 import UtilAST._
 import ClassHierarchy._
 import TypeChecker._
+
+object K2SMTException extends Exception
 
 object UtilSMT {
   object Names {
@@ -48,8 +51,13 @@ object UtilSMT {
     constantCounter = 0
   }
 
-  def error(msg: String) = Misc.error("Z3", msg)
-  def log(msg: String) = Misc.log("Z3", msg)
+  def error(msg: String) = {
+    if (ASTOptions.silent) Misc.silentErrorThrow("K2SMT", msg, K2SMTException)
+    else Misc.errorThrow("K2SMT", msg, K2SMTException)
+  }
+  def log(msg: String) = if (!ASTOptions.silent) Misc.log("TypeChecker", msg)
+  def logDebug(msg: String) = if (ASTOptions.debug && !ASTOptions.silent) Misc.log("TypeChecker", s"DEBUG $msg")
+  def warning(msg: String) = Misc.log("TypeChecker", s"Warning $msg")
 
   def sortEntityDecls(unsortedEntityDecls: List[EntityDecl]): List[EntityDecl] = {
     val entityDeclPairs =
@@ -451,7 +459,7 @@ case class ImportDecl(name: QualifiedName, star: Boolean) {
 trait TopDecl {
   def toSMT: String = ???
   def toJson: JSONObject = {
-    if (Options.useJson1) toJson1
+    if (ASTOptions.useJson1) toJson1
     else toJson2
   }
   def toJson1: JSONObject
@@ -991,7 +999,7 @@ case class ExpressionDecl(exp: Exp) extends MemberDecl {
 trait Exp {
   def toSMT(className: String): String = ???
   def toJson: JSONObject = {
-    if (Options.useJson1) toJson1
+    if (ASTOptions.useJson1) toJson1
     else toJson2
   }
   def toJson1: JSONObject
@@ -2198,7 +2206,7 @@ trait Quantifier {
   def toSMT: String
 
   def toJson: JSONObject = {
-    if (Options.useJson1) toJson1
+    if (ASTOptions.useJson1) toJson1
     else toJson2
   }
 
@@ -2251,7 +2259,7 @@ case object Exists extends Quantifier {
 trait Type {
   def toSMT: String = ???
   def toJson: JSONObject = {
-    if (Options.useJson1 == true) toJson1
+    if (ASTOptions.useJson1 == true) toJson1
     else toJson2
   }
 
@@ -2525,7 +2533,7 @@ trait Pattern {
   def boundNames: Set[String] = Set()
   def toSMT: String = ???
   def toJson: JSONObject = {
-    if (Options.useJson1) toJson1
+    if (ASTOptions.useJson1) toJson1
     else toJson2
   }
 
@@ -2648,7 +2656,7 @@ case class RngBinding(patterns: List[Pattern], collection: Collection) {
   override def toString = patterns.mkString(",") + " : " + collection
 
   def toJson: JSONObject = {
-    if (Options.useJson1) toJson1
+    if (ASTOptions.useJson1) toJson1
     else toJson2
   }
 
@@ -2676,7 +2684,7 @@ trait Collection {
   def toSMT: String = ???
 
   def toJson: JSONObject = {
-    if (Options.useJson1) toJson1
+    if (ASTOptions.useJson1) toJson1
     else toJson2
   }
 
@@ -2732,7 +2740,7 @@ case class Multiplicity(exp1: Exp, exp2: Option[Exp]) {
       s"[$exp1]"
 
   def toJson = {
-    if (Options.useJson1) toJson1
+    if (ASTOptions.useJson1) toJson1
     else toJson2
   }
 

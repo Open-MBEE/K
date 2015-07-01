@@ -70,7 +70,7 @@ object Misc {
                 BinExp(p, AND, UnaryExp(NOT, cond)))
           }
         case _ =>
-          error("Util", "Unknown expression in wp: " + e)
+          errorExit("Util", "Unknown expression in wp: " + e)
       })
   }
 
@@ -164,14 +164,19 @@ object Misc {
     result
   }
 
-  def error(prefix: String, message: String): Nothing = {
-    println(s"[$prefix] $message")
+  def errorExit(prefix: String, message: String): Nothing = {
+    log(prefix, message)
     System.exit(-1).asInstanceOf[Nothing]
   }
 
-  def error2(prefix: String, message: String) = {
-    println(s"[$prefix] $message")
+  def errorThrow(prefix: String, message: String, e: Exception) = {
+    log(prefix, message)
+    throw e
   }
+
+  def silentErrorExit(prefix: String, message: String): Nothing = System.exit(-1).asInstanceOf[Nothing]
+
+  def silentErrorThrow(prefix: String, message: String, e: Exception) = throw e
 
   def log(prefix: String, msg: String) = println(s"[$prefix] $msg")
 

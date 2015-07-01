@@ -6,15 +6,17 @@ class <event> DurativeEvent{
 		EndTime : Int
 		duration : Int
 		
-		t1 : Int   //StartTime
-		t2 : Int	//endTime
-		Dur : Int	//Duration
+		t1 : Int   --StartTime
+		t2 : Int    --endTime
+		Dur : Int	--Duration
 			
 		@doc("Duration will be inherited by any class that extends 'DurativeEvent'")	
 		req durationTime:
 			t2 = t1 + Dur
 		
 }
+======
+RahulKu: Seems like this is old code. Commenting out so that we can still run on it.
 
 package STAKRschedule{
 
@@ -73,3 +75,4 @@ event Exit
 		req VerifyComplete.t1 = SendCMD.t2 + incr
 
 }
+======

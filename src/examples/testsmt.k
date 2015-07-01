@@ -1,14 +1,19 @@
 
 class A {
-  x : Int
-
-  req x > 0
+  a : Int
 }
-
+ 
 class B extends A {
-  y : Int
-
-  a : A
-
-  req y = x + 1
+  b : Int
 }
+ 
+class C extends A {
+  c : Int
+}
+ 
+class D {
+  d : Int
+}
+ 
+a : A = C(a :: 1, b :: 2, c :: 3)
+ 

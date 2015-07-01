@@ -1,4 +1,4 @@
-package examples.GravityScience
+package Kevin.GravityScience
 
 annotation owner : String
 annotation name : String
@@ -115,13 +115,13 @@ class InstrumentReqs extends Requirements {
   @maturity("Identified")
   @ID("476")
   @units("absolute and seconds")
-  req ValidMeasurementAccuracy: 0 < measurement_accuracy && 
+  req ValidMeasurementAccuracy: 0.0 < measurement_accuracy && 
                                 measurement_accuracy <= 0.1 && 
-                                interval <= 60.0
+                                0.0 <= interval && interval <= 60.0
 
   req CurrentlyMeasuringAccuracy: currentlyMeasuring => 
-                                    0 < measurement_accuracy && 
-                                    measurement_accuracy <= 0.1
+                                  0.0 < measurement_accuracy && 
+                                  measurement_accuracy <= 0.1
   
   req currentlyMeasuring
 
@@ -195,7 +195,7 @@ class RadioReq extends Requirements {
   @ID("7")
   @units("milliradians")
   req ValidBoresightPointingError: 0.0 <= GS_boresight_pointing_error &&
-  	  GS_boresight_pointing_error <= 8.7
+  	  							   GS_boresight_pointing_error <= 8.7
 
   @owner("Radio")
   @name("FANBEAM Electrical Boresight Alignment")
@@ -214,7 +214,7 @@ class RadioReq extends Requirements {
   @ID("602")
   @units("degrees")
   req ValidBoresightAlignment: 0.0 <= fanbeam_boresight_alignment &&
-  	  fanbeam_boresight_alignment <= 0.25
+  	  						   fanbeam_boresight_alignment <= 0.25
 
   @owner("Radio")
   @name("Gravity Science Power/Noise")
@@ -225,7 +225,8 @@ class RadioReq extends Requirements {
   @maturity("Identified")
   @ID("474")
   @units("dB-Hz")
-  req ValidPowerNoise: 0.0 <= xband_downlink_pt_no &&  xband_downlink_pt_no <= 10.0 && DSN = 34
+  req ValidPowerNoise: 0.0 <= xband_downlink_pt_no && 
+  	  				   xband_downlink_pt_no <= 10.0 && DSN = 34
 
   @owner("Radio")
   @name("Gravity Science X-Band D/L Pt/No")
@@ -308,11 +309,11 @@ class RadioReq extends Requirements {
   =====================================================
 class RadioGravSciReqs extends Requirements {
 
-  europa : Europa
   range : Real
   altitude : Real
   k2accuracy : Real
   isoccultatedbyearth : Bool
+  europa : Europa
 
   @owner("Radio/Gravity Science")
   @name("Gravity Science Altitude")
@@ -345,17 +346,14 @@ class RadioGravSciReqs extends Requirements {
   @ID("Sr.5.1.2")
   @units("none and Jupiter Europa Radii")
   req ValidNoOccultation: (isoccultatedbyearth = false)
-  	  					    && range <= 18.0 * europa.radius
---req while (range <= 18.0 * Europa.radius) do {
---		isocculatedbyearth = false
+  	  					  	&& 0.0 < range 
+  	  					    && range <= (18.0 * europa.radius)
+--	req (range <= 18.0 * Europa.radius) && 0.0 < range do =>	isoccultatedbyearth = false
 --		}
---
---  Redundant with reqs below for Jupiter, Europa, & Clipper classes
---  req Jupiter.sundistance > Europa.sundistance > Clipper.sundistance
-
 }
 
-radioGravSciReqs : RadioGravSciReqs
+--  Redundant with reqs below for Jupiter, Europa, & Clipper classes
+--  req Jupiter.sundistance > Europa.sundistance > Clipper.sundistance
 
 class Body {
   mass : Real
@@ -381,6 +379,31 @@ class Jupiter extends Body {
   req density = 1.33
 }
 
+class Europa extends Body {
+  jupiter : Jupiter
+  @units("kg")
+ -- req mass = 4799800000000000000000.0 --E22 
+  req mass = 4.7998E22
+  @units("km")
+  req radius = 1560.8
+  @units("km")
+  req (jupiter.sundistance - 607900.0) < sundistance && 
+  	   sundistance < (jupiter.sundistance + 607900.0)
+  @units("m/s^2")
+  req gravity = 1.314
+  @units("g/cm^3")
+  req density = 3.013
+}
+
+class Clipper extends Body {
+  europa : Europa
+  @units("kg")
+  req mass = 3100.0
+  @units("km")
+  req (europa.sundistance - 18.0 * europa.radius) < sundistance && 
+  	   sundistance < (europa.sundistance - 1560.8)
+}
+
 class Earth extends Body {
   @units("kg")
   --req mass = 5972000000000000000000000.0 --E24
@@ -396,58 +419,35 @@ class Earth extends Body {
   req density = 5.51
 }
 
-class Europa extends Body {
-  @units("kg")
- -- req mass = 4799800000000000000000.0 --E22 
-  req mass = 4.7998E22
-  @units("km")
-  req radius = 1560.8
-  @units("km")
---  req (Jupiter.sundistance - 607900.0) < sundistance && 
---  	   sundistance < (Jupiter.sundistance + 607900.0)
-  @units("m/s^2")
-  req gravity = 1.314
-  @units("g/cm^3")
-  req density = 3.013
-}
-
-class Clipper extends Body {
-  @units("kg")
-  req mass = 3100.0
-  @units("km")
-  europa : Europa
-  req (europa.sundistance - 18.0 * europa.radius) < sundistance && 
-  	   sundistance < (europa.sundistance - 1560.8)
-}
-
-
---req (Europa.sundistance - 18.0 * Europa.radius) < sundistance && 
-  --	   sundistance < (Europa.sundistance - 1560.8)
-
---req (Jupiter.sundistance - 607900.0) < sundistance && 
-  	   --sundistance < (Jupiter.sundistance + 607900.0)
-
+--jupiter : Jupiter
+--europa : Europa
+--clipper : Clipper
+--earth : Earth
 
 class GravitationalForces { 
+  europa : Europa
+  jupiter : Jupiter
   --reference GravityFunction.k
-  Eur : Europa
-  Jup : Jupiter
-  Ear : Earth
-  Clip : Clipper
-  distance : Real
-  acceleration : Real
-  altitude : Real
+--  distance : Real
+--  acceleration : Real
+--  altitude : Real
   
-  fun squared (x : Real) : Real { x * x }
+  fun squared (x : Real) : Real { x * x } --needs to be in class for now, Rahul working issue
   
   fun Eur_Jup_Gravity : Real {
-  	  6.74E-11*Eur.mass*Jup.mass/squared(Jup.sundistance-Eur.sundistance)
+  	  6.74E-11*europa.mass*jupiter.mass/squared(jupiter.sundistance-europa.sundistance)
   }
 
-  fun Eur_Jup_Gravity2 : Real {
-  	 1222000.6*2.5
-  }
+--  fun Eur_Jup_Gravity2 : Real { -- For Testing Purposes
+--  	 1222000.6*2.5
+--  }
 }
+
+gf1 : GravitationalForces
+jupiter1 : Jupiter
+earth1 : Earth
+clippe1r : Clipper
+europa1 : Europa
 
 class HyperbolicArc extends Requirements {
 
