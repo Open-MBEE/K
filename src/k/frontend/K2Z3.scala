@@ -67,7 +67,7 @@ case class DataType(sort: Sort, constructor: FuncDecl, selectors: Map[String, Fu
 
 object K2Z3 {
 
-  val debug: Boolean = false
+  val debug: Boolean = true
   var cfg: Map[String, String] = Map("model" -> "true", "auto-config" -> "true")
   var ctx: Context = new Context(cfg)
   var idents: MMap[String, (Expr, com.microsoft.z3.StringSymbol)] = MMap()
@@ -86,21 +86,29 @@ object K2Z3 {
 
   def printObjectValue(name: String, heap: Map[String, String], v: String, visited: Set[String]): (Set[String], List[List[String]]) = {
     if (visited.contains(name)) return (visited, Nil)
+//    println(v)
     val value = v.trim.replace("- ", "-")
     val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
     val objectValues = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
       .split(' ').map(_.trim).filterNot { _.isEmpty }.drop(1)
+//    println("object values " + objectValues.mkString(" "))
     if (className == "TopLevelDeclarations") return (visited, List(List(name, " - top level -")))
     val entityDecl = TypeChecker.classes(className)
     val properties = entityDecl.getAllPropertyDecls
     var toPrint = List[String]()
-    val printList = (properties zip objectValues).map {
-      x =>
-        if (!TypeChecker.isPrimitiveType(x._1.ty)) {
-          toPrint = x._2 :: toPrint
-          (x._1.name + ":: Ref " + x._2)
-        } else (x._1.name + "::" + x._2)
-    }.toList
+    val printList =
+      (properties zip objectValues).map {
+        x =>
+          if (!TypeChecker.isPrimitiveType(x._1.ty)) {
+//            println("non prim " + x._1.name)
+            toPrint = x._2 :: toPrint
+            (x._1.name + ":: Ref " + x._2)
+          }
+          else {
+//            println("prim "+ x._1.name)
+            (x._1.name + "::" + x._2)
+          }
+      }.toList
     var all = List(name, s"$className(" + printList.mkString(", ") + ")")
     var result = toPrint.foldLeft((visited, List(all))) { (res, x) =>
       if (heap.contains(x)) {
@@ -132,7 +140,7 @@ object K2Z3 {
             z3Model.getFuncInterp(x).getElse.toString.contains("lift-TopLevelDeclarations")
 
           if (debug) println(s"$x $isHeap")
-          
+
           isHeap
       }
 
@@ -206,24 +214,21 @@ object K2Z3 {
     }
   }
 
-  
-  
-  def solveSMT(model: Model, smtModel: String, printModel : Boolean) {
-    try{
-    reset()
-    val boolExp = ctx.parseSMTLIB2String(smtModel, null, null, null, null)
-    z3Model = SolveExp(boolExp)
-    if (debug) {
-      println
-      println("--- BEGIN RAW SMT MODEL: ---")
-      println(z3Model)
-      println("--- END RAW SMT MODEL ---")
-      println
-    }
-    if(printModel) PrintModel(model)
-    }
-    catch{
-      case _ : Throwable => throw K2Z3Exception
+  def solveSMT(model: Model, smtModel: String, printModel: Boolean) {
+    try {
+      reset()
+      val boolExp = ctx.parseSMTLIB2String(smtModel, null, null, null, null)
+      z3Model = SolveExp(boolExp)
+      if (debug) {
+        println
+        println("--- BEGIN RAW SMT MODEL: ---")
+        println(z3Model)
+        println("--- END RAW SMT MODEL ---")
+        println
+      }
+      if (printModel) PrintModel(model)
+    } catch {
+      case _: Throwable => throw K2Z3Exception
     }
   }
 

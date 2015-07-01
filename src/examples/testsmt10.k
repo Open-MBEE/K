@@ -8,7 +8,7 @@ class A {
 
   fun g (x : Int) : Int {
     k : Int = f(x) + 1
-    k + 1
+    a + f(x) + k + 1
   }
 }
 
@@ -23,5 +23,6 @@ class B extends A {
 
   r : Int = h(10)
 
-  req r = 16
+  req r = 25
 }
+
