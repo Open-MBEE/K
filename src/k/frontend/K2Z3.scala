@@ -85,13 +85,36 @@ object K2Z3 {
   }
 
   def printObjectValue(name: String, heap: Map[String, String], v: String, visited: Set[String]): (Set[String], List[List[String]]) = {
+
     if (visited.contains(name)) return (visited, Nil)
-//    println(v)
+
     val value = v.trim.replace("- ", "-")
     val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
-    val objectValues = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
-      .split(' ').map(_.trim).filterNot { _.isEmpty }.drop(1)
-//    println("object values " + objectValues.mkString(" "))
+    val objectValuesString = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
+    val objectValuesOrig = objectValuesString.split(' ').map(_.trim).filterNot { _.isEmpty }.drop(1)
+
+    var objectValues = List[String]()
+    var i = 0
+    while (i < objectValuesOrig.length) {
+      var value = objectValuesOrig(i)
+      if (objectValuesOrig(i).contains("Tuple2")) {
+        i = i + 1
+        value += " " + objectValuesOrig(i)
+        i = i + 1
+        value += " " + objectValuesOrig(i)
+      } else if (objectValuesOrig(i).contains("Tuple3")) {
+        i = i + 1
+        value += " " + objectValuesOrig(i)
+        i = i + 1
+        value += " " + objectValuesOrig(i)
+        i = i + 1
+        value += " " + objectValuesOrig(i)
+      }
+      objectValues = value :: objectValues
+      i = i + 1
+    }
+    objectValues = objectValues.reverse
+
     if (className == "TopLevelDeclarations") return (visited, List(List(name, " - top level -")))
     val entityDecl = TypeChecker.classes(className)
     val properties = entityDecl.getAllPropertyDecls
@@ -100,12 +123,9 @@ object K2Z3 {
       (properties zip objectValues).map {
         x =>
           if (!TypeChecker.isPrimitiveType(x._1.ty)) {
-//            println("non prim " + x._1.name)
             toPrint = x._2 :: toPrint
             (x._1.name + ":: Ref " + x._2)
-          }
-          else {
-//            println("prim "+ x._1.name)
+          } else {
             (x._1.name + "::" + x._2)
           }
       }.toList
@@ -228,7 +248,8 @@ object K2Z3 {
       }
       if (printModel) PrintModel(model)
     } catch {
-      case _: Throwable => throw K2Z3Exception
+      case e: Throwable =>
+        throw K2Z3Exception
     }
   }
 
