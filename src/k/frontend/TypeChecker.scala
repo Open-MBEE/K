@@ -11,14 +11,14 @@ case object TypeChecker {
   var silent = false
   def error(msg: String) = {
     if (silent) Misc.silentErrorThrow("TypeChecker", msg, TypeCheckException)
-    else Misc.errorThrow("TypeChecker", msg, TypeCheckException) 
+    else Misc.errorThrow("TypeChecker", msg, TypeCheckException)
   }
   def log(msg: String) = if (!silent) Misc.log("TypeChecker", msg)
   def logDebug(msg: String) = if (debug && !silent) Misc.log("TypeChecker", s"DEBUG $msg")
   def warning(msg: String) = Misc.log("TypeChecker", s"Warning $msg")
 
   var globalTypeEnv: TypeEnv = TypeEnv(null, Map())
-  var decl2TypeEnvironment: Map[TopDecl, TypeEnv] = Map()
+  var decl2TypeEnvi: Map[TopDecl, TypeEnv] = Map()
   var origTypeEnvironments: Map[TopDecl, TypeEnv] = Map()
   var exp2Type: IMap[Exp, Type] = new IMap()
   var exp2TypeEnv: IMap[Exp, TypeEnv] = new IMap()
@@ -29,7 +29,7 @@ case object TypeChecker {
 
   def reset() {
     globalTypeEnv = TypeEnv(null, Map())
-    decl2TypeEnvironment = Map()
+    decl2TypeEnvi = Map()
     origTypeEnvironments = Map()
     exp2Type = new IMap()
     exp2TypeEnv = new IMap()
@@ -60,6 +60,7 @@ case object TypeChecker {
       (t match {
         case CartesianType(types) => types.forall { isPrimitiveType(_) }
         case ParenType(ty)        => isPrimitiveType(ty)
+        case UnitType             => true
         case _                    => false
       })
   }
@@ -380,13 +381,18 @@ class TypeChecker(model: Model) {
 
       if (d.isInstanceOf[EntityDecl]) {
         for (fd @ FunDecl(_, _, _, _, _, _) <- d.asInstanceOf[EntityDecl].members) {
-          if (!isPrimitiveType(fd.ty.getOrElse(UnitType))) {
+          val lastMemberIsConstructorCall =
+            if (fd.body.length == 0) false
+            else fd.body.last match {
+              case ExpressionDecl(e) => !isConstructorCall(exp2TypeEnv.get(e), e).isEmpty
+              case _                 => false
+            }
+          if (!isPrimitiveType(fd.ty.getOrElse(UnitType)) && lastMemberIsConstructorCall) {
             error(s"Function $fd does not return a primitive type. SMT mode disallows this.")
           }
           if (functionContainsReq(fd)) {
             error(s"Function $fd contains a constraint. SMT mode disallows this.")
           }
-
         }
       }
     }
@@ -477,7 +483,7 @@ class TypeChecker(model: Model) {
               case _ => ()
             }
           }
-          decl2TypeEnvironment += (d -> classTypeEnv)
+          decl2TypeEnvi += (d -> classTypeEnv)
           origTypeEnvironments += (d -> classTypeEnv)
         case ed @ EntityDecl(_, AssocToken, _, ident, _, _, _) =>
 
@@ -512,7 +518,7 @@ class TypeChecker(model: Model) {
           val m1 = ed.members(0).asInstanceOf[PropertyDecl]
           val m2 = ed.members(1).asInstanceOf[PropertyDecl]
           val cte0 =
-            decl2TypeEnvironment.find(p =>
+            decl2TypeEnvi.find(p =>
               p._1 match {
                 case ed1 @ EntityDecl(_, t, _, ident, _, _, _) if t != AssocToken =>
                   if (ed1.ident.equals(m1.ty.toString)) true
@@ -522,7 +528,7 @@ class TypeChecker(model: Model) {
               }).get
 
           val cte1 =
-            decl2TypeEnvironment.find(p =>
+            decl2TypeEnvi.find(p =>
               p._1 match {
                 case ed1 @ EntityDecl(_, t, _, ident, _, _, _) if t != AssocToken =>
                   if (ed1.ident.equals(m2.ty.toString)) true
@@ -531,11 +537,11 @@ class TypeChecker(model: Model) {
                   false
               }).get
 
-          decl2TypeEnvironment += (cte0._1 -> (cte0._2.union((m2.name) -> PropertyTypeInfo(m2, false, true, ed))))
+          decl2TypeEnvi += (cte0._1 -> (cte0._2.union((m2.name) -> PropertyTypeInfo(m2, false, true, ed))))
           origTypeEnvironments += (cte0._1 -> (cte0._2.union((m2.name) -> PropertyTypeInfo(m2, false, true, ed))))
-          decl2TypeEnvironment += (cte1._1 -> (cte1._2.union((m1.name) -> PropertyTypeInfo(m1, false, true, ed))))
+          decl2TypeEnvi += (cte1._1 -> (cte1._2.union((m1.name) -> PropertyTypeInfo(m1, false, true, ed))))
           origTypeEnvironments += (cte1._1 -> (cte1._2.union((m1.name) -> PropertyTypeInfo(m1, false, true, ed))))
-          decl2TypeEnvironment += (d -> classTypeEnv)
+          decl2TypeEnvi += (d -> classTypeEnv)
           origTypeEnvironments += (d -> classTypeEnv)
 
         case _ => ()
@@ -548,7 +554,7 @@ class TypeChecker(model: Model) {
     model.decls.foreach { d =>
       d match {
         case ed @ EntityDecl(_, t, _, ident, _, _, _) if t != AssocToken =>
-          val classTypeEnv = decl2TypeEnvironment(d)
+          val classTypeEnv = decl2TypeEnvi(d)
           val extending = ClassHierarchy.parentsTransitive(ed)
           val newClassTypeEnv = {
             val extendingEnv = extending.foldLeft(TypeEnv(ed, Map[String, TypeInfo]())) {
@@ -557,12 +563,12 @@ class TypeChecker(model: Model) {
             }
             classTypeEnv.union2(extendingEnv)
           }
-          decl2TypeEnvironment += (d -> newClassTypeEnv)
+          decl2TypeEnvi += (d -> newClassTypeEnv)
         case _ => ()
       }
     }
 
-    decl2TypeEnvironment.foreach(kv => logDebug(s"${kv._2}"))
+    decl2TypeEnvi.foreach(kv => logDebug(s"${kv._2}"))
 
     // pass: build the information for expressions 
     // except expressions that are in functions (bodies)
@@ -572,7 +578,7 @@ class TypeChecker(model: Model) {
         case ed @ EntityDecl(_, _, _, ident, _, _, _) =>
           ed.members.foreach { m =>
             m match {
-              case ExpressionDecl(exp) => exp2Type.put(exp, getExpType(decl2TypeEnvironment(ed), exp))
+              case ExpressionDecl(exp) => exp2Type.put(exp, getExpType(decl2TypeEnvi(ed), exp))
               case _                   => ()
             }
           }
@@ -593,7 +599,7 @@ class TypeChecker(model: Model) {
         case fd @ FunDecl(_, _, _, _, _, _) =>
           processFunction(fd, globalTypeEnv, null)
         case ed @ EntityDecl(_, token, _, ident, _, _, _) =>
-          val entityTypeEnv = decl2TypeEnvironment(ed)
+          val entityTypeEnv = decl2TypeEnvi(ed)
 
           ed.annotations.foreach { a =>
             val annotationExpType = getExpType(entityTypeEnv, a.exp)
@@ -718,7 +724,7 @@ class TypeChecker(model: Model) {
       }
     }
 
-    decl2TypeEnvironment = decl2TypeEnvironment + (fd -> functionTypeEnv)
+    decl2TypeEnvi = decl2TypeEnvi + (fd -> functionTypeEnv)
 
   }
 
@@ -745,7 +751,7 @@ class TypeChecker(model: Model) {
             } else {
               te(it.toString) match {
                 case cti @ ClassTypeInfo(d) =>
-                  val classTypeEnv = decl2TypeEnvironment(d)
+                  val classTypeEnv = decl2TypeEnvi(d)
                   classTypeEnv(i) match {
                     case pti @ FunctionTypeInfo(decl, _) => (false, decl)
                     case _                               => error(s"Unknown type info received for expression when discovering function type. $exp")
@@ -803,7 +809,7 @@ class TypeChecker(model: Model) {
               else if (i == "toString") StringType
               else {
                 // get class type environment
-                val classTypeEnv = decl2TypeEnvironment(classes(it.ident.toString))
+                val classTypeEnv = decl2TypeEnvi(classes(it.ident.toString))
                 classTypeEnv(i) match {
                   case pti @ PropertyTypeInfo(decl, _, _, _) => getPropertyDeclType(decl)
                   case pti @ ParamTypeInfo(p)                => p.ty
@@ -855,7 +861,7 @@ class TypeChecker(model: Model) {
 
           assert(decl.isInstanceOf[EntityDecl])
 
-          val declTypeEnvironment = decl2TypeEnvironment(decl)
+          val declTypeEnvironment = decl2TypeEnvi(decl)
 
           if (!args.forall { a => a.isInstanceOf[NamedArgument] })
             error(s"Have to use named arguments in a constructor function call: $exp")

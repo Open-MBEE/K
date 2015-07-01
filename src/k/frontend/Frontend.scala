@@ -75,9 +75,10 @@ object Frontend {
         log("Type checking completed. No errors found.")
       } catch {
         case TypeCheckException => Misc.errorExit("Main", "Given K did not type check.")
-        case _: Throwable       => Misc.errorExit("Main", "Exception encountered during type checking.")
+        case e: Throwable       =>
+          e.printStackTrace()
+          Misc.errorExit("Main", "Exception encountered during type checking.")
       }
-
     }
 
     options.get('printJson) match {

@@ -68,6 +68,7 @@ case class DataType(sort: Sort, constructor: FuncDecl, selectors: Map[String, Fu
 object K2Z3 {
 
   val debug: Boolean = false
+  val silent : Boolean = false
   var cfg: Map[String, String] = Map("model" -> "true", "auto-config" -> "true")
   var ctx: Context = new Context(cfg)
   var idents: MMap[String, (Expr, com.microsoft.z3.StringSymbol)] = MMap()
@@ -75,8 +76,13 @@ object K2Z3 {
   val tc: TypeChecker = new TypeChecker(null)
   var datatypes: DataTypes = null
 
-  def error(msg: String) = Misc.errorExit("K2Z3", msg)
-  def log(msg: String) = Misc.log("K2Z3", msg)
+  def error(msg: String) = {
+    if (silent) Misc.silentErrorThrow("K2Z3", msg, K2Z3Exception)
+    else Misc.errorThrow("K2Z3", msg, K2Z3Exception)
+  }
+  def log(msg: String = "") = if (!silent) Misc.log("K2Z3", msg)
+  def logDebug(msg: String) = if (debug && !silent) Misc.log("K2Z3", s"DEBUG $msg")
+  def warning(msg: String) = Misc.log("K2Z3", s"Warning $msg")
 
   def reset() {
     z3Model = null
@@ -89,6 +95,7 @@ object K2Z3 {
     if (visited.contains(name)) return (visited, Nil)
 
     val value = v.trim.replace("- ", "-")
+    if (value.indexOf("mk-") < 0) return (visited + name, Nil)
     val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
     val objectValuesString = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
     val objectValuesOrig = objectValuesString.split(' ').map(_.trim).filterNot { _.isEmpty }.drop(1)
@@ -146,7 +153,7 @@ object K2Z3 {
 
     if (z3Model != null) {
 
-      if (debug) println(z3Model)
+      logDebug(z3Model.toString)
 
       log("<<++")
 
@@ -158,9 +165,7 @@ object K2Z3 {
           val isHeap = !z3Model.getFuncInterp(x).getEntries.
             find { e => e.getValue.toString.contains("lift-TopLevelDeclarations") }.isEmpty ||
             z3Model.getFuncInterp(x).getElse.toString.contains("lift-TopLevelDeclarations")
-
-          if (debug) println(s"$x $isHeap")
-
+          logDebug(s"$x $isHeap")
           isHeap
       }
 
@@ -219,16 +224,16 @@ object K2Z3 {
         }
       }
 
-      println()
-      println("\tObjects created on the heap as specified by model:")
-      if (rows.length > 1) println(Tabulator.format(rows.reverse))
-      else println("\tNo instance variables were declared at the top level.")
+      log()
+      log("\tTop level objects created:")
+      if (rows.length > 1) log(Tabulator.format(rows.reverse))
+      else log("\tNo instance variables were declared at the top level.")
 
-      println()
-      println("\tExtra objects created on the heap during analysis:")
-      if (extraRows.length > 1) println(Tabulator.format(extraRows.reverse))
-      else println("\tNo extra objects were declared at the top level.")
-      println()
+      log()
+      log("\tExtra objects created during analysis:")
+      if (extraRows.length > 1) log(Tabulator.format(extraRows.reverse))
+      else log("\tNo extra objects.")
+      log()
 
       log("-->>")
     }
@@ -239,6 +244,9 @@ object K2Z3 {
       reset()
       val boolExp = ctx.parseSMTLIB2String(smtModel, null, null, null, null)
       z3Model = SolveExp(boolExp)
+      // using println here as an exception because we would 
+      // like to copy and use the raw SMT code in rise4fun etc. 
+      // using log would introduce an undesired prefix on each line.
       if (debug) {
         println
         println("--- BEGIN RAW SMT MODEL: ---")
@@ -249,6 +257,7 @@ object K2Z3 {
       if (printModel) PrintModel(model)
     } catch {
       case e: Throwable =>
+        if(debug) e.printStackTrace()
         throw K2Z3Exception
     }
   }
@@ -271,14 +280,14 @@ object K2Z3 {
     if (Status.SATISFIABLE == status) {
       z3Model = solver.getModel
     } else if (status == Status.UNSATISFIABLE) {
-      println
+      log()
       log(s"The given model is NOT satisfiable. ")
-      println
+      log()
     } else {
-      println
+      log()
       log("Model could not be solved successfully.")
       log("Reason: " + solver.getReasonUnknown)
-      println
+      log()
       z3Model = null
     }
 
