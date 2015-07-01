@@ -12,6 +12,8 @@ object Util {
 }
 import Util._
 
+object K2Z3Exception extends Exception
+
 class DataTypes(ctx: Context) {
   type TypeName = String
   type FieldName = String
@@ -73,7 +75,7 @@ object K2Z3 {
   val tc: TypeChecker = new TypeChecker(null)
   var datatypes: DataTypes = null
 
-  def error(msg: String) = Misc.error("K2Z3", msg)
+  def error(msg: String) = Misc.errorExit("K2Z3", msg)
   def log(msg: String) = Misc.log("K2Z3", msg)
 
   def reset() {
@@ -204,7 +206,10 @@ object K2Z3 {
     }
   }
 
+  
+  
   def solveSMT(model: Model, smtModel: String, printModel : Boolean) {
+    try{
     reset()
     val boolExp = ctx.parseSMTLIB2String(smtModel, null, null, null, null)
     z3Model = SolveExp(boolExp)
@@ -216,6 +221,10 @@ object K2Z3 {
       println
     }
     if(printModel) PrintModel(model)
+    }
+    catch{
+      case _ : Throwable => throw K2Z3Exception
+    }
   }
 
   def SolveExp(e: Exp): com.microsoft.z3.Model = {

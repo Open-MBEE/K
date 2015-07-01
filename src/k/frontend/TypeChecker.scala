@@ -4,14 +4,14 @@ import k.frontend._
 import java.util.{ IdentityHashMap => IMap }
 import javax.xml.bind.annotation.XmlElementDecl.GLOBAL
 
-object TypeCheckException extends RuntimeException
+object TypeCheckException extends Exception
 
 case object TypeChecker {
   val debug = false
   var silent = false
   def error(msg: String) = {
-    if (!silent) Misc.error2("TypeChecker", msg)
-    throw TypeCheckException
+    if (silent) Misc.silentErrorThrow("TypeChecker", msg, TypeCheckException)
+    else Misc.errorThrow("TypeChecker", msg, TypeCheckException) 
   }
   def log(msg: String) = if (!silent) Misc.log("TypeChecker", msg)
   def logDebug(msg: String) = if (debug && !silent) Misc.log("TypeChecker", s"DEBUG $msg")
@@ -985,13 +985,6 @@ class TypeChecker(model: Model) {
 
   def inferTypeFrom(exp: String, ty: Type) = ty
 
-  try {
-    typeCheck
-  } catch {
-    case TypeCheckException =>
-      if(!silent) Misc.error2("TypeChecker", "Given K did not type check.")
-    case _: Throwable       => 
-      if(!silent) Misc.error2("TypeChecker", "Exception encountered during type checking.")
-  }
-
+  typeCheck
+  
 }

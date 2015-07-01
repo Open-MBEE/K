@@ -69,26 +69,32 @@ object Frontend {
     }
 
     if (model != null) {
-      val tc: TypeChecker = new TypeChecker(model)
-      tc.smtCheck
-      log("Type checking completed. No errors found.")
+      try {
+        val tc: TypeChecker = new TypeChecker(model)
+        tc.smtCheck
+        log("Type checking completed. No errors found.")
+      } catch {
+        case TypeCheckException => Misc.errorExit("Main", "Given K did not type check.")
+        case _: Throwable       => Misc.errorExit("Main", "Exception encountered during type checking.")
+      }
+
     }
 
     options.get('printJson) match {
       case Some(_) =>
         if (model != null) {
           // Remember old value of option
-          val optionsUseJson1 = Options.useJson1
+          val optionsUseJson1 = ASTOptions.useJson1
           // MMS method using toJson1
-          Options.useJson1 = true
+          ASTOptions.useJson1 = true
           println("JSON1: " + model.toJson)
           val modelFromJson = visitJsonObject(model.toJson).asInstanceOf[Model]
           // MMS method using toJson2
-          Options.useJson1 = false
+          ASTOptions.useJson1 = false
           println("JSON2: " + model.toJson)
           val modelFromJson2 = visitJsonObject2(model.toJson).asInstanceOf[Model]
           // Reset old value of option
-          Options.useJson1 = optionsUseJson1
+          ASTOptions.useJson1 = optionsUseJson1
         } else
           println("Model was null!")
       case _ => ()
@@ -129,8 +135,9 @@ object Frontend {
     else Stream.empty)
 
   def doTests(saveBaseline: Boolean) {
+
     var resultRows: List[List[String]] = List(List("Name", "ModelEqual", "JSON1Equal", "JSON2Equal", "SMTEqual", "SMTModelEqual"))
-    val examplesDir = new File(new File(new File(".").getAbsolutePath, "src"), "examples")
+    val examplesDir = new File(new File(new File(".").getAbsolutePath, "src"), "tests")
     var kFiles = getFileTree(examplesDir).filter(_.getName.endsWith(".k"))
     val baselineFile = new File(examplesDir, "baseline.json")
     val baselineObject =
@@ -144,17 +151,13 @@ object Frontend {
       }
     val currentResultsObject = new JSONObject()
 
-    kFiles = kFiles.filter { x => x.getName.contains("testsmt") || x.getName.contains("inheritance") }
-
-    kFiles = kFiles.filterNot { x => x.getName == "testsmt6.k" }
-    kFiles = kFiles.filterNot { x => x.getName == "testsmt10.k" }
-
     kFiles.foreach { file =>
       try {
         println(s"Running test ${file.getName}")
 
         TypeChecker.reset
         UtilSMT.reset
+        ASTOptions.silent = true
         TypeChecker.silent = true
 
         val model = getModelFromFile(file.toString)
@@ -163,9 +166,9 @@ object Frontend {
 
         val (json1, json2) =
           if (model != null) {
-            Options.useJson1 = true
+            ASTOptions.useJson1 = true
             val json1 = model.toJson
-            Options.useJson1 = false
+            ASTOptions.useJson1 = false
             val json2 = model.toJson
             (json1, json2)
           } else (null, null)
@@ -197,11 +200,15 @@ object Frontend {
         if (baselineObject.has(file.getName)) {
           resultRows = compareResult(baselineObject.getJSONObject(file.getName),
             currentTestJsonObject) :: resultRows
+        } else {
+          resultRows = List(file.getName + "*", "New", "test", "case", "", "") :: resultRows
         }
 
       } catch {
-        case TypeCheckException => resultRows = List(file.getName, "Does", "not", "type", "check", "") :: resultRows
-        case _: Throwable       => resultRows = List(file.getName, "-", "-", "-", "-", "-") :: resultRows
+        case TypeCheckException => resultRows = List(file.getName + "*", "Does", "not", "type", "check", "") :: resultRows
+        case K2SMTException     => resultRows = List(file.getName + "*", "K2SMT", "error", "", "", "") :: resultRows
+        case K2Z3Exception      => resultRows = List(file.getName + "*", "K2Z3", "error", "", "", "") :: resultRows
+        case _: Throwable       => resultRows = List(file.getName + "*", "-", "-", "-", "-", "-") :: resultRows
       }
     }
     if (saveBaseline) {
@@ -210,6 +217,9 @@ object Frontend {
       fw.close
       println("Baseline saved.")
     }
+    println
+    println("Results:")
+    println
     println(Tabulator.format(resultRows.reverse))
   }
 
@@ -1037,7 +1047,7 @@ object Frontend {
     val array = new JSONArray()
     val operand = new JSONArray()
     val root = new JSONObject()
-    Options.useJson1 = true
+    ASTOptions.useJson1 = true
     exp.toJson.toString(4)
   }
 
@@ -1050,7 +1060,7 @@ object Frontend {
     val operand = new JSONArray()
     val root = new JSONObject()
 
-    Options.useJson1 = false
+    ASTOptions.useJson1 = false
 
     var elements = exp.toJson
     var specialization = new JSONObject()
