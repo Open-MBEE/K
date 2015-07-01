@@ -48,7 +48,7 @@ object UtilSMT {
     constantCounter = 0
   }
 
-  def error(msg: String) = Misc.error("Z3", msg)
+  def error(msg: String) = Misc.error("Z3", s"Unsupported: $msg")
   def log(msg: String) = Misc.log("Z3", msg)
 
   def sortEntityDecls(unsortedEntityDecls: List[EntityDecl]): List[EntityDecl] = {
@@ -65,7 +65,7 @@ object UtilSMT {
       case BoolType | IntType | RealType => true
       case IdentType(_, _)               => true
       case FunctionType(_, _) | SubType(_, _, _) | CharType | StringType | UnitType =>
-        UtilSMT.error(s"Illformed type $ty in local property declaration")
+        UtilSMT.error(s"$ty in local property declaration")
     }
 
   def ignoreMember(memberDecl: MemberDecl): Boolean = {
@@ -82,17 +82,17 @@ object UtilSMT {
         "  " + ("  " * level) + expSMT + (")" * level)
       case pd @ PropertyDecl(Nil, name, ty, None, _, exp) :: rest =>
         if (!wellFormedType(ty))
-          UtilSMT.error(s"Type $ty in local property declaration is not well formed: $pd")
+          UtilSMT.error(s"$ty in local property declaration $pd")
         exp match {
           case Some(e) =>
             val expSMT = e.toSMT
             "  " + ("  " * level) + s"(let (($name $expSMT))\n" +
               memberList2SMT(rest, level + 1)
           case None =>
-            UtilSMT.error(s"Expression is missing in local property declaration: $pd")
+            UtilSMT.error(s"expression is missing in local property declaration $pd")
         }
       case _ =>
-        UtilSMT.error(s"Body of function not well formed:\n${members.mkString("\n")}")
+        UtilSMT.error(s"body of function\n${members.mkString("\n")}")
     }
   }
 
@@ -906,11 +906,11 @@ case class FunDecl(ident: String,
     val resultType: String = ty match {
       case Some(t) =>
         if (!UtilSMT.wellFormedType(t))
-          UtilSMT.error(s"Function return type $t is not well formed: $this")
+          UtilSMT.error(s"function return type $t in $this")
         else
           t.toSMT
       case None =>
-        UtilSMT.error(s"Missing return type (= Unit) is not allowed: $this")
+        UtilSMT.error(s"Missing return type (= Unit) $this")
     }
     if (body == Nil) {
       val parameterTypes: String = s"Ref " + params.map(_.toSMTType).mkString(" ")
@@ -1676,7 +1676,22 @@ case class AssertExp(exp: Exp) extends Exp {
   }
 }
 
+// case class IdentType(ident: QualifiedName, args: List[Type]) extends Type
+// case class QualifiedName(names: List[String])
+
 case class TypeCastCheckExp(cast: Boolean, exp: Exp, ty: Type) extends Exp {
+  override def toSMT: String = {
+    if (cast)
+      UtilSMT.error(s"type cast $this")
+    ty match {
+      case IdentType(QualifiedName(name :: Nil),Nil) =>
+        val expSMT = exp.toSMT
+        s"(deref-isa-$name $expSMT)"
+      case _ =>
+        UtilSMT.error(s"type test format $this")
+    }
+  }
+  
   override def toString =
     if (cast) s"$exp as $ty"
     else s"$exp is $ty"

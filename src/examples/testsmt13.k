@@ -15,8 +15,9 @@ class D {
   d : Int
 } 
 
-a : A = C(a :: 1, b :: 2, c :: 3) -- does not type check
+a : A = C(a :: 1, b :: 2, c :: 3)
 
+req a is A
+req a is B
 req a is C
--- req a is B
--- req a is C
+-- req a is D
