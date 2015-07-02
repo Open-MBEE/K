@@ -66,13 +66,8 @@ class DataTypes(ctx: Context) {
 case class DataType(sort: Sort, constructor: FuncDecl, selectors: Map[String, FuncDecl])
 
 object K2Z3 {
-
-<<<<<<< HEAD
   val debug: Boolean = true
-=======
-  val debug: Boolean = false
   val silent : Boolean = false
->>>>>>> 48f38e13c3efde42757a6bbb3ebac7cfa1e663e8
   var cfg: Map[String, String] = Map("model" -> "true", "auto-config" -> "true")
   var ctx: Context = new Context(cfg)
   var idents: MMap[String, (Expr, com.microsoft.z3.StringSymbol)] = MMap()
