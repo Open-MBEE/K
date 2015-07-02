@@ -18,7 +18,7 @@ import scala.collection.mutable.{ ListBuffer => MList }
 object Frontend {
   type OptionMap = Map[Symbol, Any]
 
-  def log(msg: String) = Misc.log("main", msg)
+  def log(msg: String = "") = Misc.log("main", msg)
 
   def parseArgs(map: OptionMap, list: List[String]): OptionMap = {
     def isSwitch(s: String) = (s(0) == '-')
@@ -26,13 +26,13 @@ object Frontend {
       case Nil => map
       case "-f" :: value :: tail =>
         parseArgs(map ++ Map('modelFile -> value), tail)
-      case "-tests" :: tail         => parseArgs(map ++ Map('tests -> true), tail)
-      case "-baseline" :: tail      => parseArgs(map ++ Map('baseline -> true), tail)
-      case "-test" :: tail => parseArgs(map ++ Map('test -> true), tail)
-      case "-v" :: tail             => parseArgs(map ++ Map('verbose -> true), tail)
-      case "-stats" :: tail         => parseArgs(map ++ Map('stats -> true), tail)
-      case "-dot" :: tail           => parseArgs(map ++ Map('dot -> true), tail)
-      case "-json" :: tail          => parseArgs(map ++ Map('printJson -> true), tail)
+      case "-tests" :: tail    => parseArgs(map ++ Map('tests -> true), tail)
+      case "-baseline" :: tail => parseArgs(map ++ Map('baseline -> true), tail)
+      case "-test" :: tail     => parseArgs(map ++ Map('test -> true), tail)
+      case "-v" :: tail        => parseArgs(map ++ Map('verbose -> true), tail)
+      case "-stats" :: tail    => parseArgs(map ++ Map('stats -> true), tail)
+      case "-dot" :: tail      => parseArgs(map ++ Map('dot -> true), tail)
+      case "-json" :: tail     => parseArgs(map ++ Map('printJson -> true), tail)
       case "-mmsJson" :: value :: tail =>
         parseArgs(map ++ Map('mmsJson -> value), tail)
       case "-expressionToJson" :: value :: tail =>
@@ -74,7 +74,7 @@ object Frontend {
             new JSONObject()
           }
         if (baselineObject.has(fileName))
-          compareSingleResultDetail(baselineObject.getJSONObject(fileName), result)
+          compareSingleResultDetail(baselineObject.getJSONObject(fileName), result, testsDir)
         else log(s"Baseline does not contain $fileName. Cannot compare.")
       case _ => ()
     }
@@ -263,12 +263,29 @@ object Frontend {
     println(s"\t$testsMatched/$testsRun tests matched the stored baseline.")
   }
 
-  def compareSingleResultDetail(bo: JSONObject, co: JSONObject) {
+  def compareSingleResultDetail(bo: JSONObject, co: JSONObject, testDir: File) {
+    var resultRows: List[List[String]] = List(List("Name", "ModelEqual", "JSON1Equal", "JSON2Equal", "SMTEqual", "SMTModelEqual"))
+    log()
+    println(Tabulator.format((compareResult(bo, co)._2 :: resultRows).reverse))
+    log()
+    var fw = new FileWriter(new File(testDir, "baseline.smt"))
+    fw.write(bo.getString("smt"))
+    fw.close
+    log(s"Baseline SMT stored in ${testDir.getAbsolutePath}/baseline.smt")
+    fw = new FileWriter(new File(testDir, "current.smt"))
+    fw.write(co.getString("smt"))
+    fw.close
+    log(s"Current SMT stored in ${testDir.getAbsolutePath}/current.smt")
 
-    log(s"Model differences: " + (bo.getString("model") diff co.getString("model")))
-    log(s"SMT differences: " + (bo.getString("smt") diff co.getString("smt")))
-    log(s"SMT Model differences: " + (bo.getString("smtModel") diff co.getString("smtModel")))
-    
+    fw = new FileWriter(new File(testDir, "baseline.smt.model"))
+    fw.write(bo.getString("smtModel"))
+    fw.close
+    log(s"Baseline SMT model stored in ${testDir.getAbsolutePath}/baseline.smt.model")
+    fw = new FileWriter(new File(testDir, "current.smt.model"))
+    fw.write(co.getString("smtModel"))
+    fw.close
+    log(s"Current SMT model stored in ${testDir.getAbsolutePath}/current.smt.model")
+
   }
 
   def compareSingleResult(key: String, bo: JSONObject, co: JSONObject): String = {
