@@ -26,7 +26,7 @@ object Frontend {
       case Nil => map
       case "-f" :: value :: tail =>
         parseArgs(map ++ Map('modelFile -> value), tail)
-      case "-tests" :: tail     => parseArgs(map ++ Map('tests -> true), tail)
+      case "-tests" :: tail    => parseArgs(map ++ Map('tests -> true), tail)
       case "-baseline" :: tail => parseArgs(map ++ Map('baseline -> true), tail)
       case "-v" :: tail        => parseArgs(map ++ Map('verbose -> true), tail)
       case "-stats" :: tail    => parseArgs(map ++ Map('stats -> true), tail)
@@ -75,9 +75,10 @@ object Frontend {
         log("Type checking completed. No errors found.")
       } catch {
         case TypeCheckException => Misc.errorExit("Main", "Given K did not type check.")
-        case _: Throwable       => Misc.errorExit("Main", "Exception encountered during type checking.")
+        case e: Throwable       =>
+          e.printStackTrace()
+          Misc.errorExit("Main", "Exception encountered during type checking.")
       }
-
     }
 
     options.get('printJson) match {
@@ -242,8 +243,13 @@ object Frontend {
     val json2Eq = compareSingleResult("json2", bo, co)
     val smtEq = compareSingleResult("smt", bo, co)
     val smtModelEq = compareSingleResult("smtModel", bo, co)
-    List(bo.getString("name"), s"$modelEq", s"$json1Eq",
-      s"$json2Eq", s"$smtEq", s"$smtModelEq")
+    if (modelEq != "true" || json1Eq != "true" ||
+      json2Eq != "true" || smtEq != "true" || smtModelEq != "true")
+      List(bo.getString("name") + "*", s"$modelEq", s"$json1Eq",
+        s"$json2Eq", s"$smtEq", s"$smtModelEq")
+    else
+      List(bo.getString("name"), s"$modelEq", s"$json1Eq",
+        s"$json2Eq", s"$smtEq", s"$smtModelEq")
   }
 
   def parseMMSJson(file: String): Model = {
