@@ -7,7 +7,7 @@ import javax.xml.bind.annotation.XmlElementDecl.GLOBAL
 object TypeCheckException extends Exception
 
 case object TypeChecker {
-  val debug = false
+  var debug = false
   var silent = false
   def error(msg: String) = {
     if (silent) Misc.silentErrorThrow("TypeChecker", msg, TypeCheckException)
@@ -231,7 +231,7 @@ case class ClassTypeInfo(decl: EntityDecl) extends TypeInfo {
 }
 case class PropertyTypeInfo(decl: PropertyDecl, global: Boolean, classMember: Boolean, owner: EntityDecl) extends TypeInfo {
   override def toString =
-    s"Property: ${decl.name} : ${decl.ty} $global ${if (owner != null) owner.ident}"
+    s"Property: ${decl.name} : ${decl.ty} $global $classMember ${if (owner != null) owner.ident}"
 }
 case class TypeTypeInfo(decl: TypeDecl) extends TypeInfo
 case class ParamTypeInfo(p: Param) extends TypeInfo
@@ -652,19 +652,19 @@ class TypeChecker(model: Model) {
   }
 
   def processBody(body: List[MemberDecl], te: TypeEnv, owner: EntityDecl): TypeEnv = {
-    var newTe = TypeEnv(te.decl, Map())
-    te.map.foreach(f => newTe = newTe.union(f))
+    var newTe = te
     body.foreach { m =>
       m match {
         case pd @ PropertyDecl(_, _, _, _, _, _) =>
           if (!doesTypeExist(newTe, pd.ty)) {
             error(s"Type ${pd.ty} not found. Exiting.")
           }
-          if(te.contains(pd.name)){
-            val typeInfo = te(pd.name)
+          if (te.contains(pd.name)) {
+            val typeInfo = newTe(pd.name)
             typeInfo match {
-              case PropertyTypeInfo(_,false,false,_) => error(s"Redeclaring variable in block. ${pd.name}")
-              case _ => ()
+              case PropertyTypeInfo(_, false, false, _) => error(s"Redeclaring variable in block. ${pd.name}")
+              case ParamTypeInfo(_)                     => error(s"Redeclaring variable in block. ${pd.name}")
+              case _                                    => ()
             }
           }
           pd.expr match {
@@ -677,14 +677,16 @@ class TypeChecker(model: Model) {
             case None => ()
           }
           newTe = newTe.overwrite(pd.name -> PropertyTypeInfo(pd, false, false, owner))
-        case ExpressionDecl(exp@IfExp(cond, tb, eb)) =>
+        case ExpressionDecl(exp @ IfExp(cond, tb, eb)) =>
           if (tb.isInstanceOf[BlockExp]) newTe = processBody(tb.asInstanceOf[BlockExp].body, newTe, owner)
           if (!eb.isEmpty)
             if (eb.get.isInstanceOf[BlockExp]) newTe = processBody(eb.get.asInstanceOf[BlockExp].body, newTe, owner)
-            exp2TypeEnv.put(exp, newTe)
+          exp2TypeEnv.put(exp, newTe)
         case ExpressionDecl(exp) if exp.isInstanceOf[BlockExp] =>
           newTe = processBody(exp.asInstanceOf[BlockExp].body, newTe, owner)
           exp2TypeEnv.put(exp, newTe)
+        case ExpressionDecl(exp) if !exp.isInstanceOf[BlockExp] =>
+          exp2Type.put(exp, getExpType(newTe, exp))
         case _ => ()
       }
     }
@@ -708,7 +710,7 @@ class TypeChecker(model: Model) {
         fres.overwrite(p.name -> ParamTypeInfo(p))
     }
 
-    processBody(fd.body, functionTypeEnv, owner)
+    functionTypeEnv = processBody(fd.body, functionTypeEnv, owner)
 
     // process expressions in function
     var lastT: Type = null
