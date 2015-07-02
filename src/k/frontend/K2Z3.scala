@@ -67,7 +67,7 @@ case class DataType(sort: Sort, constructor: FuncDecl, selectors: Map[String, Fu
 
 object K2Z3 {
 
-  val debug: Boolean = false
+  val debug: Boolean = true
   val silent : Boolean = false
   var cfg: Map[String, String] = Map("model" -> "true", "auto-config" -> "true")
   var ctx: Context = new Context(cfg)
@@ -224,16 +224,16 @@ object K2Z3 {
         }
       }
 
-      log()
-      log("\tTop level objects created:")
-      if (rows.length > 1) log(Tabulator.format(rows.reverse))
-      else log("\tNo instance variables were declared at the top level.")
+      println()
+      println("\tTop level objects created:")
+      if (rows.length > 1) println(Tabulator.format(rows.reverse))
+      else println("\tNo instance variables were declared at the top level.")
 
-      log()
-      log("\tExtra objects created during analysis:")
-      if (extraRows.length > 1) log(Tabulator.format(extraRows.reverse))
-      else log("\tNo extra objects.")
-      log()
+      println()
+      println("\tExtra objects created during analysis:")
+      if (extraRows.length > 1) println(Tabulator.format(extraRows.reverse))
+      else println("\tNo extra objects.")
+      println()
 
       log("-->>")
     }
