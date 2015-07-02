@@ -52,8 +52,9 @@ object UtilSMT {
   }
 
   def error(msg: String) = {
-    if (ASTOptions.silent) Misc.silentErrorThrow("K2SMT", msg, K2SMTException)
-    else Misc.errorThrow("K2SMT", msg, K2SMTException)
+    val msgFull = s"Unsupported: $msg"
+    if (ASTOptions.silent) Misc.silentErrorThrow("K2SMT", msgFull, K2SMTException)
+    else Misc.errorThrow("K2SMT", msgFull, K2SMTException)
   }
   def log(msg: String) = if (!ASTOptions.silent) Misc.log("TypeChecker", msg)
   def logDebug(msg: String) = if (ASTOptions.debug && !ASTOptions.silent) Misc.log("TypeChecker", s"DEBUG $msg")
@@ -88,7 +89,9 @@ object UtilSMT {
       case ExpressionDecl(exp) :: Nil =>
         val expSMT = exp.toSMT
         "  " + ("  " * level) + expSMT + (")" * level)
-      case pd @ PropertyDecl(Nil, name, ty, None, _, exp) :: rest =>
+      case pd @ PropertyDecl(modifiers, name, ty, None, _, exp) :: rest =>
+        if(!modifiers.forall(_ == Val))
+          UtilSMT.error(s"modifier in $pd")
         if (!wellFormedType(ty))
           UtilSMT.error(s"$ty in local property declaration $pd")
         exp match {
@@ -96,7 +99,7 @@ object UtilSMT {
             val expSMT = e.toSMT
             "  " + ("  " * level) + s"(let (($name $expSMT))\n" +
               memberList2SMT(rest, level + 1)
-          case None =>
+          case None=>
             UtilSMT.error(s"expression is missing in local property declaration $pd")
         }
       case _ =>
@@ -927,7 +930,7 @@ case class FunDecl(ident: String,
       val parameters: String = s"(this Ref)" + params.map(_.toSMT).mkString
       val bodySMT = UtilSMT.memberList2SMT(body)
       result += s"(define-fun $className.$ident ($parameters) $resultType\n"
-      result += s"  $bodySMT\n"
+      result += s"$bodySMT\n"
       result += ")"
     }
     result
@@ -1292,6 +1295,9 @@ case class MatchCase(patterns: List[Pattern], exp: Exp) extends Exp {
 }
 
 case class BlockExp(body: List[MemberDecl]) extends Exp {
+  override def toSMT: String = 
+    UtilSMT.memberList2SMT(body)
+  
   override def toString = {
     var result = "{\n"
     moveIn
@@ -1683,9 +1689,6 @@ case class AssertExp(exp: Exp) extends Exp {
 
   }
 }
-
-// case class IdentType(ident: QualifiedName, args: List[Type]) extends Type
-// case class QualifiedName(names: List[String])
 
 case class TypeCastCheckExp(cast: Boolean, exp: Exp, ty: Type) extends Exp {
   override def toSMT: String = {
