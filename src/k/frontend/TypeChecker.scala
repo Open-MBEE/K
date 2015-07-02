@@ -651,6 +651,31 @@ class TypeChecker(model: Model) {
     true
   }
 
+  def updateTypeEnvForBody(body: List[MemberDecl], te: TypeEnv, owner: EntityDecl): TypeEnv = {
+    var newTe = te
+    body.foreach { m =>
+      m match {
+        case pd @ PropertyDecl(_, _, _, _, _, _) =>
+          if (!doesTypeExist(newTe, pd.ty)) {
+            error(s"Type ${pd.ty} not found. Exiting.")
+          }
+
+          pd.expr match {
+            case Some(e) =>
+              val exprType = getExpType(newTe, e)
+              if (!areTypesEqual(exprType, pd.ty, true)) {
+                error(s"Type does not match: ${pd.name}. Expected ${pd.ty}, Found $exprType")
+              }
+              exp2Type.put(e, exprType)
+            case None => ()
+          }
+          newTe = newTe.overwrite(pd.name -> PropertyTypeInfo(pd, false, false, owner))
+        case _ => ()
+      }
+    }
+    newTe
+  }
+
   def processFunction(fd: FunDecl, entityTypeEnv: TypeEnv, owner: EntityDecl) {
     // check if return type exists 
     if (!fd.ty.isEmpty) {
@@ -668,32 +693,10 @@ class TypeChecker(model: Model) {
         fres.overwrite(p.name -> ParamTypeInfo(p))
     }
 
-    var lastT: Type = null
-
-    // process body for properties in function
-    fd.body.foreach { m =>
-      m match {
-        case pd @ PropertyDecl(_, _, _, _, _, _) =>
-          if (!doesTypeExist(functionTypeEnv, pd.ty)) {
-            error(s"Type ${pd.ty} not found. Exiting.")
-          }
-
-          pd.expr match {
-            case Some(e) =>
-              val exprType = getExpType(functionTypeEnv, e)
-              if (!areTypesEqual(exprType, pd.ty, true)) {
-                error(s"Type does not match: ${pd.name}. Expected ${pd.ty}, Found $exprType")
-              }
-              exp2Type.put(e, exprType)
-            case None => ()
-          }
-
-          functionTypeEnv = functionTypeEnv.overwrite(pd.name -> PropertyTypeInfo(pd, false, false, owner))
-        case _ => ()
-      }
-    }
+    functionTypeEnv = updateTypeEnvForBody(fd.body, functionTypeEnv, owner)
 
     // process expressions in function
+    var lastT: Type = null
     for (i <- Range(0, fd.body.length)) {
       val m = fd.body(i)
       val mType = {
@@ -941,14 +944,13 @@ class TypeChecker(model: Model) {
         }
         tbType
       case BlockExp(body) =>
-        var newTypeEnv = te
         var lastType: Type = UnitType
         val bodyTypes = body.foreach {
           b =>
             b match {
-              case ExpressionDecl(e) =>
-                lastType = getExpType(te, e)
-              case _ => error(s"Unsupported member in block: $b")
+              case ExpressionDecl(e)              => lastType = getExpType(te, e)
+              case PropertyDecl(_, _, _, _, _, _) => UnitType
+              case _                              => error(s"Unsupported member in block: $b")
             }
         }
         lastType
