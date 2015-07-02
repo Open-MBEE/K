@@ -147,7 +147,7 @@ object UtilSMT {
   }
 
   def getDeclaringClass(className: String, ident: String): String = {
-    val typeInfo = decl2TypeEnvironment(classes(className)).map(ident)
+    val typeInfo = decl2TypeEnvi(classes(className)).map(ident)
     val declaringEntityDecl = typeInfo match {
       case PropertyTypeInfo(_, _, _, owning) => owning
       case FunctionTypeInfo(_, owning)       => owning
