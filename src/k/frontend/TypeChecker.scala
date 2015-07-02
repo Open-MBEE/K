@@ -7,7 +7,7 @@ import javax.xml.bind.annotation.XmlElementDecl.GLOBAL
 object TypeCheckException extends Exception
 
 case object TypeChecker {
-  val debug = false
+  val debug = true
   var silent = false
   def error(msg: String) = {
     if (silent) Misc.silentErrorThrow("TypeChecker", msg, TypeCheckException)
@@ -652,14 +652,14 @@ class TypeChecker(model: Model) {
   }
 
   def updateTypeEnvForBody(body: List[MemberDecl], te: TypeEnv, owner: EntityDecl): TypeEnv = {
-    var newTe = te
+    var newTe = TypeEnv(te.decl, Map())
+    te.map.foreach(f => newTe = newTe.union(f))
     body.foreach { m =>
       m match {
         case pd @ PropertyDecl(_, _, _, _, _, _) =>
           if (!doesTypeExist(newTe, pd.ty)) {
             error(s"Type ${pd.ty} not found. Exiting.")
           }
-
           pd.expr match {
             case Some(e) =>
               val exprType = getExpType(newTe, e)
@@ -670,6 +670,12 @@ class TypeChecker(model: Model) {
             case None => ()
           }
           newTe = newTe.overwrite(pd.name -> PropertyTypeInfo(pd, false, false, owner))
+        case ExpressionDecl(IfExp(cond, tb, eb)) =>
+          if (tb.isInstanceOf[BlockExp]) newTe = updateTypeEnvForBody(tb.asInstanceOf[BlockExp].body, newTe, owner)
+          if (!eb.isEmpty)
+            if (eb.get.isInstanceOf[BlockExp]) newTe = updateTypeEnvForBody(eb.get.asInstanceOf[BlockExp].body, newTe, owner)
+        case ExpressionDecl(exp) if exp.isInstanceOf[BlockExp] =>
+          newTe = updateTypeEnvForBody(exp.asInstanceOf[BlockExp].body, newTe, owner)
         case _ => ()
       }
     }
