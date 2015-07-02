@@ -7,7 +7,7 @@ import javax.xml.bind.annotation.XmlElementDecl.GLOBAL
 object TypeCheckException extends Exception
 
 case object TypeChecker {
-  val debug = true
+  val debug = false
   var silent = false
   def error(msg: String) = {
     if (silent) Misc.silentErrorThrow("TypeChecker", msg, TypeCheckException)
