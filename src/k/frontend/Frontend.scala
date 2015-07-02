@@ -75,7 +75,7 @@ object Frontend {
         log("Type checking completed. No errors found.")
       } catch {
         case TypeCheckException => Misc.errorExit("Main", "Given K did not type check.")
-        case e: Throwable       =>
+        case e: Throwable =>
           e.printStackTrace()
           Misc.errorExit("Main", "Exception encountered during type checking.")
       }
@@ -151,11 +151,15 @@ object Frontend {
         new JSONObject()
       }
     val currentResultsObject = new JSONObject()
+    var testsRun: Int = 0
+    var testsMatched : Int = 0
 
     kFiles.foreach { file =>
       try {
         println(s"Running test ${file.getName}")
 
+        testsRun = testsRun + 1
+        
         TypeChecker.reset
         UtilSMT.reset
         ASTOptions.silent = true
@@ -199,13 +203,14 @@ object Frontend {
         currentResultsObject.put(file.getName, currentTestJsonObject)
 
         if (baselineObject.has(file.getName)) {
-          resultRows = compareResult(baselineObject.getJSONObject(file.getName),
-            currentTestJsonObject) :: resultRows
+          val result = compareResult(baselineObject.getJSONObject(file.getName), currentTestJsonObject)
+          resultRows = result._2 :: resultRows
+          if (result._1) testsMatched = testsMatched + 1 
         } else {
           resultRows = List(file.getName + "*", "New", "test", "case", "", "") :: resultRows
         }
 
-      } catch {
+      } catch {        
         case TypeCheckException => resultRows = List(file.getName + "*", "Does", "not", "type", "check", "") :: resultRows
         case K2SMTException     => resultRows = List(file.getName + "*", "K2SMT", "error", "", "", "") :: resultRows
         case K2Z3Exception      => resultRows = List(file.getName + "*", "K2Z3", "error", "", "", "") :: resultRows
@@ -222,6 +227,8 @@ object Frontend {
     println("Results:")
     println
     println(Tabulator.format(resultRows.reverse))
+    println
+    println(s"\t$testsMatched/$testsRun tests matched the stored baseline.")
   }
 
   def compareSingleResult(key: String, bo: JSONObject, co: JSONObject): String = {
@@ -237,7 +244,7 @@ object Frontend {
     else "-"
   }
 
-  def compareResult(bo: JSONObject, co: JSONObject): List[String] = {
+  def compareResult(bo: JSONObject, co: JSONObject): (Boolean, List[String]) = {
     val modelEq = compareSingleResult("model", bo, co)
     val json1Eq = compareSingleResult("json1", bo, co)
     val json2Eq = compareSingleResult("json2", bo, co)
@@ -245,11 +252,11 @@ object Frontend {
     val smtModelEq = compareSingleResult("smtModel", bo, co)
     if (modelEq != "true" || json1Eq != "true" ||
       json2Eq != "true" || smtEq != "true" || smtModelEq != "true")
-      List(bo.getString("name") + "*", s"$modelEq", s"$json1Eq",
-        s"$json2Eq", s"$smtEq", s"$smtModelEq")
+      (false, List(bo.getString("name") + "*", s"$modelEq", s"$json1Eq",
+        s"$json2Eq", s"$smtEq", s"$smtModelEq"))
     else
-      List(bo.getString("name"), s"$modelEq", s"$json1Eq",
-        s"$json2Eq", s"$smtEq", s"$smtModelEq")
+      (true, List(bo.getString("name"), s"$modelEq", s"$json1Eq",
+        s"$json2Eq", s"$smtEq", s"$smtModelEq"))
   }
 
   def parseMMSJson(file: String): Model = {

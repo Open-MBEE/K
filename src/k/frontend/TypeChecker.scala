@@ -651,7 +651,7 @@ class TypeChecker(model: Model) {
     true
   }
 
-  def updateTypeEnvForBody(body: List[MemberDecl], te: TypeEnv, owner: EntityDecl): TypeEnv = {
+  def processBody(body: List[MemberDecl], te: TypeEnv, owner: EntityDecl): TypeEnv = {
     var newTe = TypeEnv(te.decl, Map())
     te.map.foreach(f => newTe = newTe.union(f))
     body.foreach { m =>
@@ -659,6 +659,13 @@ class TypeChecker(model: Model) {
         case pd @ PropertyDecl(_, _, _, _, _, _) =>
           if (!doesTypeExist(newTe, pd.ty)) {
             error(s"Type ${pd.ty} not found. Exiting.")
+          }
+          if(te.contains(pd.name)){
+            val typeInfo = te(pd.name)
+            typeInfo match {
+              case PropertyTypeInfo(_,false,false,_) => error(s"Redeclaring variable in block. ${pd.name}")
+              case _ => ()
+            }
           }
           pd.expr match {
             case Some(e) =>
@@ -670,12 +677,14 @@ class TypeChecker(model: Model) {
             case None => ()
           }
           newTe = newTe.overwrite(pd.name -> PropertyTypeInfo(pd, false, false, owner))
-        case ExpressionDecl(IfExp(cond, tb, eb)) =>
-          if (tb.isInstanceOf[BlockExp]) newTe = updateTypeEnvForBody(tb.asInstanceOf[BlockExp].body, newTe, owner)
+        case ExpressionDecl(exp@IfExp(cond, tb, eb)) =>
+          if (tb.isInstanceOf[BlockExp]) newTe = processBody(tb.asInstanceOf[BlockExp].body, newTe, owner)
           if (!eb.isEmpty)
-            if (eb.get.isInstanceOf[BlockExp]) newTe = updateTypeEnvForBody(eb.get.asInstanceOf[BlockExp].body, newTe, owner)
+            if (eb.get.isInstanceOf[BlockExp]) newTe = processBody(eb.get.asInstanceOf[BlockExp].body, newTe, owner)
+            exp2TypeEnv.put(exp, newTe)
         case ExpressionDecl(exp) if exp.isInstanceOf[BlockExp] =>
-          newTe = updateTypeEnvForBody(exp.asInstanceOf[BlockExp].body, newTe, owner)
+          newTe = processBody(exp.asInstanceOf[BlockExp].body, newTe, owner)
+          exp2TypeEnv.put(exp, newTe)
         case _ => ()
       }
     }
@@ -699,7 +708,7 @@ class TypeChecker(model: Model) {
         fres.overwrite(p.name -> ParamTypeInfo(p))
     }
 
-    functionTypeEnv = updateTypeEnvForBody(fd.body, functionTypeEnv, owner)
+    processBody(fd.body, functionTypeEnv, owner)
 
     // process expressions in function
     var lastT: Type = null
