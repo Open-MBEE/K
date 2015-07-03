@@ -1,0 +1,87 @@
+
+\usepackage{multirow}
+%\usepackage[T1]{fontenc}
+%\usepackage[latin9]{inputenc}
+%\usepackage{babel}
+%\usepackage{alltt}
+%\usepackage{comment}
+%\usepackage{multirow}
+%\usepackage{graphicx}
+
+% -----------------
+% --- comments: ---
+% -----------------
+
+\newcommand{\notethis}[1]{
+  \color{red}
+  \vspace{0.3cm}
+  \noindent\makebox[\linewidth]{\rule{\paperwidth}{0.4pt}}\\
+  {\sc NOTE - } #1\\
+  \noindent\makebox[\linewidth]{\rule{\paperwidth}{0.4pt}}\\
+  \vspace{0.3cm}
+  \color{black}
+}
+
+% ------------------
+% --- listings: ---
+% ------------------
+
+\usepackage{listings}
+\usepackage{color}
+\usepackage{amssymb}
+\usepackage{framed}
+
+\definecolor{light-gray}{gray}{0.95}
+
+% --- Scala: ---
+
+\lstdefinelanguage{scala}{
+  morekeywords=
+    {package,import,class,object,trait,extends,with,match,
+     new,if,else,while,for,yield,def,val,var,this,case,
+     type,implicit,private,protected,abstract,final}, 
+  otherkeywords={&,\{,\},_*},
+  literate=
+      {\#\#}{{$\oplus\;$}}2
+      {|->}{{$\longmapsto\;$}}2
+      {-->}{{$\Longrightarrow\;$}}2
+      {->}{{$\rightarrow\;$}}2
+      {~}{{$\sim\;$}}2
+      {>>}{{$\gg$}}2
+      {++}{{$++$}}2
+      {|==}{{$\models$}}2
+  ,
+  sensitive=true, 
+  morecomment=[l]{//}, 
+  morecomment=[s]{/*}{*/},
+  stringstyle=\ttfamily,
+}  
+
+% --- LogScope: ---
+
+\lstdefinelanguage{dautext}{
+  morekeywords=
+    {monitor,always,init,hot,ok,error,if,then,else}, 
+  otherkeywords={=>,<=,>,<,+,++,|,&&,[,],|->}, 
+  literate={->}{{$\rightarrow$}}2{!}{{$\neg$}}2,
+  sensitive=true, 
+  morecomment=[l]{//}, 
+  morecomment=[s]{/*}{*/},
+  stringstyle=\ttfamily,
+}  
+
+% --- Referring to code: ---
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\issue}[2]{{\bf ** #1: #2}}
+
+\newcommand{\antlr}{{ANTLR}}
+\newcommand{\Klang}{{K}}
+%\newcommand{\CSPE}{$\mathit{CSP}_E$}
+\newcommand{\CSP}{{{CSP}}}
+\newcommand{\CSPE}{$\textrm{CSP}_E$}
+\newcommand{\daut}{{Daut}}
+\newcommand{\tracecontract}{{TraceContract}}
+\newcommand{\logfire}{{LogFire}}
+
+\newcommand*{\scaleFactor}{0.75}
