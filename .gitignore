@@ -6,6 +6,7 @@ RemoteSystemsTempFiles
 *~
 *.class
 lib/com.microsoft.z3.jar
+src/papers/fomac-k/.texpadtmp
 src/papers/fomac-k/*.aux
 src/papers/fomac-k/*.bbl
 src/papers/fomac-k/*.blg
