@@ -6,3 +6,8 @@ RemoteSystemsTempFiles
 *~
 *.class
 lib/com.microsoft.z3.jar
+*.aux
+*.bbl
+*.blg
+*.log
+*.pdf
