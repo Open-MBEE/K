@@ -1,3 +1,5 @@
+-- PROJECT-db152ecb-e3ab-4ff8-973e-b0a45cca09bf
+
 package examples.Shapes
 
 class Shape {
@@ -5,53 +7,46 @@ class Shape {
   fun area : Real
 }
 
+class Angle {
+  a : Int
+  req a > 0 && a < 180
+}
+
 class Triangle extends Shape {
 
-  a : Int
-  b : Int
-  c : Int
+  a : Angle
+  b : Angle
+  c : Angle
   base : Int
   height : Int
+  tArea : Real
     
-  req Angles: (a + b + c) = 180
-  
-  req Range: 
-    a < 180 && b < 180 && c < 180 && 
-    a > 0 && b > 0 && c > 0
-
-  ======================================================
+  req Angles: (a.a + b.a + c.a) = 180
   
   ======================================================
-
-  req a = b && b = c
-  req Equilateral: a = b && b = c => a = 60 && b = 60 && c = 60  
-
+  req Equilateral: a.a = b.a && b.a = c.a
+  
   ======================================================
   
+
   ======================================================
   req Isosceles: (b = c) || (a = b) || (a = c)
   ======================================================
+  
+  ======================================================
   The following requirement makes the class unsatisfiable
   if the triangle is Isosceles or Equilateral.  
-  
-  req ObtuseAngle: a >= 90
-
+    
+  req ObtuseAngle: a.a >= 90
   ======================================================
-  
+
   fun area : Real {
     base * height / 2  
   }
   
-  req ValidArea: base * height > 0 && height > 10
-  req ValidAreaFunction: area() > 10
-  
-  fun isIsosceles : Bool {
-    a = b || b = c || a = c
-  }
-  
-  fun isEquilateral : Bool {
-    a = b && b = c
-  }
+  req ValidAreaFunction: area() > 10.0
+
+  req tArea = area()  
 }
 
 class Rectangle extends Shape {
@@ -83,7 +78,8 @@ class Rectangle extends Shape {
     a = b 
   }
 
-  ar = area()
+  -- ar = area()
 }
 
 
+t : Triangle

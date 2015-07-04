@@ -23,3 +23,4 @@ b : Event
 req a.min = 10
 req b.min = 20
 req a.duration.before(b.duration)
+

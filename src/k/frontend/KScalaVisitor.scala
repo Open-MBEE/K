@@ -5,6 +5,7 @@ import k.frontend.ModelBaseVisitor
 import k.frontend.ModelParser
 import java.lang.Float
 import java.lang.Boolean
+import java.math.RoundingMode
 
 class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
 
@@ -338,15 +339,19 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
     if (ctx.IntegerLiteral() != null) {
       IntegerLiteral(Integer.parseInt(ctx.IntegerLiteral().getSymbol().getText()))
     } else if (ctx.RealLiteral() != null) {
-      RealLiteral(java.lang.Float.parseFloat(ctx.RealLiteral().getSymbol().getText()))
+      //RealLiteral(java.lang.Float.parseFloat(ctx.RealLiteral().getSymbol().getText()))
+      val bd = new java.math.BigDecimal(ctx.RealLiteral.getSymbol.getText).
+        setScale(16, java.math.BigDecimal.ROUND_DOWN)
+      RealLiteral(bd)
     } else if (ctx.CharacterLiteral() != null) {
       CharacterLiteral(ctx.CharacterLiteral().getSymbol().getText().charAt(0))
     } else if (ctx.StringLiteral() != null) {
       StringLiteral(ctx.StringLiteral().getSymbol().getText())
     } else if (ctx.ThisLiteral() != null) {
       ThisLiteral
-    } 
-    else {
+    } else if (ctx.NullLiteral() != null) {
+      NullLiteral
+    } else {
       BooleanLiteral(java.lang.Boolean.parseBoolean(ctx.BooleanLiteral().getSymbol().getText()))
     }
   }
@@ -393,7 +398,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
       else if (ctx.children.get(0).getText() == "assoc") AssocToken
       else IdentifierToken(ctx.children.get(0).getText())
     val keyword: Option[String] =
-      if (ctx.Keyword() != null) Some(ctx.Keyword.getText.replaceAll("<", "").replaceAll(">",""))
+      if (ctx.Keyword() != null) Some(ctx.Keyword.getText.replaceAll("<", "").replaceAll(">", ""))
       else None
     var ident: String =
       if (entityToken.isInstanceOf[IdentifierToken])
@@ -429,7 +434,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
     val exps: List[Exp] = ctx.expression().asScala.toList.map(visit(_)).asInstanceOf[List[Exp]]
     exps map (PositionalArgument(_))
   }
- 
+
   override def visitNamedArgList(ctx: ModelParser.NamedArgListContext): AnyRef = {
     visit(ctx.namedArgumentList()).asInstanceOf[List[NamedArgument]]
   }

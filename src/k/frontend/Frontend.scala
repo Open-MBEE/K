@@ -18,7 +18,7 @@ import scala.collection.mutable.{ ListBuffer => MList }
 object Frontend {
   type OptionMap = Map[Symbol, Any]
 
-  def log(msg: String) = Misc.log("main", msg)
+  def log(msg: String = "") = Misc.log("main", msg)
 
   def parseArgs(map: OptionMap, list: List[String]): OptionMap = {
     def isSwitch(s: String) = (s(0) == '-')
@@ -26,8 +26,15 @@ object Frontend {
       case Nil => map
       case "-f" :: value :: tail =>
         parseArgs(map ++ Map('modelFile -> value), tail)
-      case "-v" :: tail     => parseArgs(map ++ Map('verbose -> true), tail)
-      case "-stats" :: tail => parseArgs(map ++ Map('stats -> true), tail)
+      case "-tests" :: tail    => parseArgs(map ++ Map('tests -> true), tail)
+      case "-baseline" :: tail => parseArgs(map ++ Map('baseline -> true), tail)
+      case "-test" :: tail     => parseArgs(map ++ Map('test -> true), tail)
+      case "-v" :: tail        => parseArgs(map ++ Map('verbose -> true), tail)
+      case "-stats" :: tail    => parseArgs(map ++ Map('stats -> true), tail)
+      case "-dot" :: tail      => parseArgs(map ++ Map('dot -> true), tail)
+      case "-json" :: tail     => parseArgs(map ++ Map('printJson -> true), tail)
+      case "-mmsJson" :: value :: tail =>
+        parseArgs(map ++ Map('mmsJson -> value), tail)
       case "-expressionToJson" :: value :: tail =>
         parseArgs(map ++ Map('expression -> value), tail)
       case "-jsonToExpression" :: value :: tail =>
@@ -40,64 +47,369 @@ object Frontend {
 
   def scala_main(args: Array[String]) {
     val options = parseArgs(Map(), args.toList)
+    var model: Model = null
+    var filename: String = null
 
-    val (model: Model, filename: String) =
-      options.get('modelFile) match {
-        case Some(f: String) =>
-          (getModelFromFile(f), Paths.get(f).getFileName.toString)
-        case None => (null, null)
-      }
-
-    if (model != null) {
-      val tc: TypeChecker = new TypeChecker(model)
-      log("Type checking completed. No errors found.")
+    options.get('tests) match {
+      case Some(true) => doTests(options.getOrElse('baseline, false).asInstanceOf[Boolean])
+      case _          => ()
     }
 
-    val smtModel = model.toSMT
+    options.get('test) match {
+      case Some(_) =>
+        log("Please enter the test case to run:")
+        val testCase = readLine.trim
+        val fileName = testCase.asInstanceOf[String]
+        val testsDir = new File(new File(new File(".").getAbsolutePath, "src"), "tests")
+        val file = new File(testsDir, fileName)
+        val result = doTest(file)
+        val baselineFile = new File(testsDir, "baseline.json")
+        val baselineObject =
+          if (baselineFile.exists) {
+            val json = scala.io.Source.fromFile(baselineFile).mkString
+            var tokener: JSONTokener = new JSONTokener(json)
+            var jsonObject: JSONObject = new JSONObject(tokener)
+            jsonObject
+          } else {
+            new JSONObject()
+          }
+        if (baselineObject.has(fileName))
+          compareSingleResultDetail(baselineObject.getJSONObject(fileName), result, testsDir)
+        else log(s"Baseline does not contain $fileName. Cannot compare.")
+      case _ => ()
+    }
 
-    println("--- SMT Model ---")
-    println(smtModel)
-    println("-----------------")
+    options.get('modelFile) match {
+      case Some(f: String) =>
+        model = getModelFromFile(f)
+        filename = Paths.get(f).getFileName.toString
+      case _ => ()
+    }
 
-    K2Z3.solveSMT(smtModel)
+    options.get('mmsJson) match {
+      case Some(file: String) => {
+        model = parseMMSJson(file)
+      }
+      case _ => ()
+    }
+
+    if (model != null) {
+      try {
+        val tc: TypeChecker = new TypeChecker(model)
+        tc.smtCheck
+        log("Type checking completed. No errors found.")
+      } catch {
+        case TypeCheckException => Misc.errorExit("Main", "Given K did not type check.")
+        case e: Throwable =>
+          e.printStackTrace()
+          Misc.errorExit("Main", "Exception encountered during type checking.")
+      }
+    }
+
+    options.get('printJson) match {
+      case Some(_) =>
+        if (model != null) {
+          // Remember old value of option
+          val optionsUseJson1 = ASTOptions.useJson1
+          // MMS method using toJson1
+          ASTOptions.useJson1 = true
+          println("JSON1: " + model.toJson)
+          val modelFromJson = visitJsonObject(model.toJson).asInstanceOf[Model]
+          // MMS method using toJson2
+          ASTOptions.useJson1 = false
+          println("JSON2: " + model.toJson)
+          val modelFromJson2 = visitJsonObject2(model.toJson).asInstanceOf[Model]
+          // Reset old value of option
+          ASTOptions.useJson1 = optionsUseJson1
+        } else
+          println("Model was null!")
+      case _ => ()
+    }
+
+    if (model != null) {
+      val smtModel = model.toSMT
+      if (K2Z3.debug) {
+        println("--- SMT Model ---")
+        println(smtModel)
+        println("-----------------")
+      }
+      K2Z3.solveSMT(model, smtModel, true)
+    }
 
     // print DOT format class diagram
-    if (model != null) printClassDOT(filename, model)
+    options.get('dot) match {
+      case Some(_) => if (model != null) printClassDOT(filename, model)
+      case _       => ()
+    }
 
     options.get('stats) match {
       case Some(_) => printStats(model)
-      case None    => ()
+      case _       => ()
     }
 
     options.get('expression) match {
       case Some(expressionString: String) => {
         println(exp2Json(expressionString))
       }
-      case None => ()
+      case _ => ()
     }
 
-    options.get('printJson) match {
-      case Some(_) =>
-        if (model != null) {
-          //println(model.toString())
-          // Remember old value of option
-          val optionsUseJson1 = Options.useJson1
-          // MMS method using toJson1
-          Options.useJson1 = true
-          val modelJson = model.toJson
-          println("JSON1: " + modelJson.toString(0))
-          val modelFromJson = visitJsonObject(modelJson).asInstanceOf[Model]
-          // MMS method using toJson2
-          Options.useJson1 = false
-          val modelJson2 = model.toJson
-          println("JSON2: " + modelJson2.toString(0))
-          val modelFromJson2 = visitJsonObject2(modelJson2).asInstanceOf[Model]
-          // Reset old value of option
-          Options.useJson1 = Options.useJson1
-        } else
-          println("Model was null!")
-      case None => ()
+  }
+
+  def getFileTree(f: File): Stream[File] =
+    f #:: (if (f.isDirectory) f.listFiles().toStream.flatMap(getFileTree)
+    else Stream.empty)
+
+  def doTest(file: File): JSONObject = {
+    log(s"Running test ${file.getName}")
+    TypeChecker.reset
+    UtilSMT.reset
+    K2Z3.debug = false
+    K2Z3.silent = true
+    ASTOptions.debug = false
+    ASTOptions.silent = true
+    TypeChecker.silent = true
+    TypeChecker.debug = false
+
+    val model = getModelFromFile(file.toString)
+
+    if (model != null) new TypeChecker(model).smtCheck
+
+    val (json1, json2) =
+      if (model != null) {
+        ASTOptions.useJson1 = true
+        val json1 = model.toJson
+        ASTOptions.useJson1 = false
+        val json2 = model.toJson
+        (json1, json2)
+      } else (null, null)
+    val smt =
+      if (model != null) model.toSMT
+      else null
+    val smtModel =
+      if (smt != null) {
+        import scala.actors.Futures._
+        def runWithTimeout[T](timeoutMs: Long)(f: => T): Option[T] = {
+          awaitAll(timeoutMs, future(f)).head.asInstanceOf[Option[T]]
+        }
+        val res = runWithTimeout(10000) { K2Z3.solveSMT(model, smt, false) }
+        if (res.isEmpty) null
+        else K2Z3.z3Model.toString
+      } else null
+
+    val currentTestJsonObject = new JSONObject()
+
+    currentTestJsonObject.put("name", file.getName)
+    currentTestJsonObject.put("model", model.toString)
+    currentTestJsonObject.put("json1", json1)
+    currentTestJsonObject.put("json2", json2)
+    currentTestJsonObject.put("smt", smt)
+    currentTestJsonObject.put("smtModel", smtModel)
+
+  }
+
+  def doTests(saveBaseline: Boolean) {
+
+    var resultRows: List[List[String]] = List(List("Name", "ModelEqual", "JSON1Equal", "JSON2Equal", "SMTEqual", "SMTModelEqual"))
+    val testsDir = new File(new File(new File(".").getAbsolutePath, "src"), "tests")
+    var kFiles = getFileTree(testsDir).filter(_.getName.endsWith(".k"))
+    val baselineFile = new File(testsDir, "baseline.json")
+    val baselineObject =
+      if (baselineFile.exists) {
+        val json = scala.io.Source.fromFile(baselineFile).mkString
+        var tokener: JSONTokener = new JSONTokener(json)
+        var jsonObject: JSONObject = new JSONObject(tokener)
+        jsonObject
+      } else {
+        new JSONObject()
+      }
+    val currentResultsObject = new JSONObject()
+    var testsRun: Int = 0
+    var testsMatched: Int = 0
+
+    kFiles.foreach { file =>
+      try {
+        testsRun = testsRun + 1
+        val currentTestJsonObject = doTest(file)
+
+        currentResultsObject.put(file.getName, currentTestJsonObject)
+
+        if (baselineObject.has(file.getName)) {
+          val result = compareResult(baselineObject.getJSONObject(file.getName), currentTestJsonObject)
+          resultRows = result._2 :: resultRows
+          if (result._1) testsMatched = testsMatched + 1
+        } else {
+          resultRows = List(file.getName + "*", "New", "test", "case", "", "") :: resultRows
+        }
+
+      } catch {
+        case TypeCheckException => resultRows = List(file.getName + "*", "Does", "not", "type", "check", "") :: resultRows
+        case K2SMTException     => resultRows = List(file.getName + "*", "K2SMT", "error", "", "", "") :: resultRows
+        case K2Z3Exception      => resultRows = List(file.getName + "*", "K2Z3", "error", "", "", "") :: resultRows
+        case _: Throwable       => resultRows = List(file.getName + "*", "-", "-", "-", "-", "-") :: resultRows
+      }
     }
+    if (saveBaseline) {
+      val fw = new FileWriter(baselineFile)
+      fw.write(currentResultsObject.toString)
+      fw.close
+      println("Baseline saved.")
+    }
+    println
+    println("Results:")
+    println
+    println(Tabulator.format(resultRows.reverse))
+    println
+    println(s"\t$testsMatched/$testsRun tests matched the stored baseline.")
+  }
+
+  def compareSingleResultDetail(bo: JSONObject, co: JSONObject, testDir: File) {
+    var resultRows: List[List[String]] = List(List("Name", "ModelEqual", "JSON1Equal", "JSON2Equal", "SMTEqual", "SMTModelEqual"))
+    log()
+    println(Tabulator.format((compareResult(bo, co)._2 :: resultRows).reverse))
+    log()
+    var fw = new FileWriter(new File(testDir, "baseline.smt"))
+    fw.write(bo.getString("smt"))
+    fw.close
+    log(s"Baseline SMT stored in ${testDir.getAbsolutePath}/baseline.smt")
+    fw = new FileWriter(new File(testDir, "current.smt"))
+    fw.write(co.getString("smt"))
+    fw.close
+    log(s"Current SMT stored in ${testDir.getAbsolutePath}/current.smt")
+
+    fw = new FileWriter(new File(testDir, "baseline.smt.model"))
+    fw.write(bo.getString("smtModel"))
+    fw.close
+    log(s"Baseline SMT model stored in ${testDir.getAbsolutePath}/baseline.smt.model")
+    fw = new FileWriter(new File(testDir, "current.smt.model"))
+    fw.write(co.getString("smtModel"))
+    fw.close
+    log(s"Current SMT model stored in ${testDir.getAbsolutePath}/current.smt.model")
+
+  }
+
+  def compareSingleResult(key: String, bo: JSONObject, co: JSONObject): String = {
+    if (bo.has(key) && co.has(key)) {
+
+      if (bo.get(key).isInstanceOf[JSONObject] && co.get(key).isInstanceOf[JSONObject])
+        bo.getJSONObject(key).similar(co.getJSONObject(key)).toString
+      else bo.get(key).toString.equals(co.get(key).toString).toString
+    } else if (bo.has(key) && !co.has(key))
+      "false"
+    else if (co.has(key) && !bo.has(key))
+      "Missing in baseline"
+    else "-"
+  }
+
+  def compareResult(bo: JSONObject, co: JSONObject): (Boolean, List[String]) = {
+    val modelEq = compareSingleResult("model", bo, co)
+    val json1Eq = compareSingleResult("json1", bo, co)
+    val json2Eq = compareSingleResult("json2", bo, co)
+    val smtEq = compareSingleResult("smt", bo, co)
+    val smtModelEq = compareSingleResult("smtModel", bo, co)
+    if (modelEq != "true" || json1Eq != "true" ||
+      json2Eq != "true" || smtEq != "true" || smtModelEq != "true")
+      (false, List(bo.getString("name") + "*", s"$modelEq", s"$json1Eq",
+        s"$json2Eq", s"$smtEq", s"$smtModelEq"))
+    else
+      (true, List(bo.getString("name"), s"$modelEq", s"$json1Eq",
+        s"$json2Eq", s"$smtEq", s"$smtModelEq"))
+  }
+
+  def parseMMSJson(file: String): Model = {
+    val json = scala.io.Source.fromFile(file).mkString
+    var tokener: JSONTokener = new JSONTokener(json)
+    var jsonObject: JSONObject = new JSONObject(tokener)
+    val elementsArray = jsonObject.get("elements").asInstanceOf[JSONArray]
+    var packageName: Option[PackageDecl] = None
+    var imports: List[ImportDecl] = List()
+    var annotations: List[AnnotationDecl] = List()
+    var mdecls: List[TopDecl] = List[TopDecl]()
+    var id2Decl: Map[String, TopDecl] = Map()
+
+    // first build the classes 
+    for (i <- Range(0, elementsArray.length())) {
+      val obj = elementsArray.get(i).asInstanceOf[JSONObject]
+      if (obj.keySet.contains("specialization")) {
+        if (obj.getString("name").length == 0) {
+          println("Warning: found unnamed element in JSON: " + obj.getString("sysmlid"))
+        } else {
+          val specializationObject = obj.getJSONObject("specialization")
+          specializationObject.getString("type") match {
+            case "Element" =>
+              val entity = EntityDecl(Nil, ClassToken, None, obj.getString("name"), Nil, Nil, Nil)
+              mdecls = entity :: mdecls
+              id2Decl += (obj.getString("sysmlid") -> entity)
+            case _ => ()
+          }
+        }
+      }
+    }
+
+    // now we can process properties and constraints
+
+    for (i <- Range(0, elementsArray.length())) {
+      val obj = elementsArray.get(i).asInstanceOf[JSONObject]
+      if (obj.keySet.contains("specialization")) {
+        val specializationObject = obj.getJSONObject("specialization")
+        if (obj.getString("name").length == 0 &&
+          specializationObject.getString("type") != "Generalization") {
+          println("Warning: found unnamed element in JSON: " + obj.getString("sysmlid"))
+        } else {
+          specializationObject.getString("type") match {
+            case "Property" =>
+              val owningDecl = id2Decl(obj.getString("owner")).asInstanceOf[EntityDecl]
+              val propertyType =
+                if (specializationObject.get("propertyType") == JSONObject.NULL) IntType
+                else {
+                  val typeDecl = id2Decl(specializationObject.getString("propertyType")).asInstanceOf[EntityDecl]
+                  IdentType(QualifiedName(List(typeDecl.ident)), List())
+                }
+              val property = PropertyDecl(Nil, obj.getString("name"), propertyType, None, None, None)
+              val newDecl = EntityDecl(owningDecl.annotations, owningDecl.entityToken,
+                owningDecl.keyword, owningDecl.ident,
+                owningDecl.typeParams, owningDecl.extending,
+                property :: owningDecl.members)
+              mdecls = mdecls.diff(List(owningDecl))
+              mdecls = newDecl :: mdecls
+
+              id2Decl += (obj.getString("owner") -> newDecl)
+
+            case "Package" => packageName =
+              Some(PackageDecl(QualifiedName(obj.getString("qualifiedName").replace("-", "_").split("/").toList.filterNot { _.isEmpty })))
+            case "Constraint" =>
+              val constraintExpression = specializationObject.getJSONObject("specification").getJSONArray("expressionBody").get(0).asInstanceOf[String]
+              val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(constraintExpression)
+              var m: Model = ksv.visit(tree).asInstanceOf[Model]
+              var exp: Exp = m.decls(0).asInstanceOf[ExpressionDecl].exp
+              val owningDecl = id2Decl(obj.getString("owner")).asInstanceOf[EntityDecl]
+              val constraint = ConstraintDecl(Some(obj.getString("name")), exp)
+              val newDecl = EntityDecl(owningDecl.annotations, owningDecl.entityToken,
+                owningDecl.keyword, owningDecl.ident,
+                owningDecl.typeParams, owningDecl.extending,
+                constraint :: owningDecl.members)
+              mdecls = mdecls.diff(List(owningDecl))
+              mdecls = newDecl :: mdecls
+              id2Decl += (obj.getString("owner") -> newDecl)
+            case "Generalization" =>
+              val owningDecl = id2Decl(specializationObject.getString("source")).asInstanceOf[EntityDecl]
+              val targetDecl = id2Decl(specializationObject.getString("target")).asInstanceOf[EntityDecl]
+              val newDecl = EntityDecl(owningDecl.annotations, owningDecl.entityToken,
+                owningDecl.keyword, owningDecl.ident,
+                owningDecl.typeParams, IdentType(QualifiedName(List(targetDecl.ident)), List()) :: owningDecl.extending, owningDecl.members)
+              mdecls = mdecls.diff(List(owningDecl))
+              mdecls = newDecl :: mdecls
+              id2Decl += (obj.getString("owner") -> newDecl)
+
+            case _ => ()
+          }
+        }
+      }
+    }
+
+    val model = Model(packageName, imports, annotations, mdecls)
+    println(model)
+    model
   }
 
   def printClassDOT(filename: String, model: Model) = {
@@ -262,7 +574,9 @@ object Frontend {
       case "LiteralInteger" =>
         IntegerLiteral(obj.getInt("i"))
       case "LiteralFloatingPoint" =>
-        RealLiteral(java.lang.Float.parseFloat(obj.get("f").toString)) // was: asInstanceOf[String]
+        //RealLiteral(java.lang.Float.parseFloat(obj.get("f").toString)) // was: asInstanceOf[String]
+        val bd = new java.math.BigDecimal(obj.get("f").toString).setScale(8, java.math.BigDecimal.ROUND_UNNECESSARY)
+        RealLiteral(bd)
       case "LiteralCharacter" =>
         CharacterLiteral(obj.get("c").asInstanceOf[Char])
       case "LiteralBoolean" =>
@@ -552,7 +866,11 @@ object Frontend {
           case "IntegerLiteral" =>
             IntegerLiteral(operand.getInt(1))
           case "RealLiteral" => // was FloatingPointLiteral
-            RealLiteral(java.lang.Float.parseFloat(operand.get(1).toString)) // was: operand.getString(1)
+            //RealLiteral(java.lang.Float.parseFloat(operand.get(1).toString)) // was: operand.getString(1)
+            val bd = new java.math.BigDecimal(operand.get(1).toString).setScale(8, java.math.BigDecimal.ROUND_UNNECESSARY)
+            //println(bd.formatted("%f"))
+            RealLiteral(bd)
+
           case "CharacterLiteral" =>
             CharacterLiteral(operand.get(1).asInstanceOf[Char])
           case "BooleanLiteral" =>
@@ -799,7 +1117,7 @@ object Frontend {
     val array = new JSONArray()
     val operand = new JSONArray()
     val root = new JSONObject()
-    Options.useJson1 = true
+    ASTOptions.useJson1 = true
     exp.toJson.toString(4)
   }
 
@@ -812,7 +1130,7 @@ object Frontend {
     val operand = new JSONArray()
     val root = new JSONObject()
 
-    Options.useJson1 = false
+    ASTOptions.useJson1 = false
 
     var elements = exp.toJson
     var specialization = new JSONObject()
