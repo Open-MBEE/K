@@ -1,5 +1,32 @@
 package k.frontend
 
+object Tabulator {
+  def format(table: Seq[Seq[Any]]) = table match {
+    case Seq() => ""
+    case _ =>
+      val sizes = for (row <- table) yield (for (cell <- row) yield if (cell == null) 0 else cell.toString.length)
+      val colSizes = for (col <- sizes.transpose) yield col.max
+      val rows = for (row <- table) yield formatRow(row, colSizes)
+      formatRows(rowSeparator(colSizes), rows)
+  }
+
+  def formatRows(rowSeparator: String, rows: Seq[String]): String = (
+    rowSeparator ::
+    rows.head ::
+    rowSeparator ::
+    //rows.tail.toList.map { x => (x + "\n") ++ rowSeparator } ::: // for row sep
+    rows.tail.toList :::
+    rowSeparator ::
+    List()).mkString("\n")
+
+  def formatRow(row: Seq[Any], colSizes: Seq[Int]) = {
+    val cells = (for ((item, size) <- row.zip(colSizes)) yield if (size == 0) "" else ("%-" + size + "s").format(item))
+    cells.mkString("\t|", "|", "|")
+  }
+
+  def rowSeparator(colSizes: Seq[Int]) = colSizes map { "-" * _ } mkString ("\t+", "+", "+")
+}
+
 object Misc {
 
   def substitute(post: Exp, lhs: String, rhs: Exp): Exp = {
@@ -43,7 +70,7 @@ object Misc {
                 BinExp(p, AND, UnaryExp(NOT, cond)))
           }
         case _ =>
-          error("Util", "Unknown expression in wp: " + e)
+          errorExit("Util", "Unknown expression in wp: " + e)
       })
   }
 
@@ -114,7 +141,7 @@ object Misc {
           TypeCollection(IntType))),
       BinExp(preCondition, IMPL, result))
     K2Z3.SolveExp(finalCheck)
-    K2Z3.PrintModel()
+    //    K2Z3.PrintModel()
   }
 
   def checkEntityConsistency(e: EntityDecl): Boolean = {
@@ -132,15 +159,24 @@ object Misc {
     } else {
       println(s"Class ${e.ident} IS satisfiable!")
       println("Possible instance:")
-      K2Z3.PrintModel()
+      //      K2Z3.PrintModel()
     }
     result
   }
 
-  def error(prefix: String, message: String): Nothing = {
-    println(s"[$prefix] $message")
+  def errorExit(prefix: String, message: String): Nothing = {
+    log(prefix, message)
     System.exit(-1).asInstanceOf[Nothing]
   }
+
+  def errorThrow(prefix: String, message: String, e: Exception) = {
+    log(prefix, message)
+    throw e
+  }
+
+  def silentErrorExit(prefix: String, message: String): Nothing = System.exit(-1).asInstanceOf[Nothing]
+
+  def silentErrorThrow(prefix: String, message: String, e: Exception) = throw e
 
   def log(prefix: String, msg: String) = println(s"[$prefix] $msg")
 
@@ -151,7 +187,7 @@ object Misc {
       case (pt1 @ _, ParenType(pt2))                => return areTypesEqual(pt1, pt2, compatibility)
       case (CartesianType(ct1), CartesianType(ct2)) => return (ct1 zip ct2).forall { t => areTypesEqual(t._1, t._2, compatibility) }
       case (IdentType(it1, it2), IdentType(it3, it4)) =>
-        return it1.equals(it3) && (it2 zip it4).forall { t => areTypesEqual(t._1, t._2, compatibility) }
+        return it1.equals(it3) // TODO 
       case (CollectType(ct1), CollectType(ct2)) =>
         return (ct1 zip ct2).forall { t => areTypesEqual(t._1, t._2, compatibility) }
       case (AnyType, _)                         => return true
@@ -186,5 +222,23 @@ object Misc {
       case IdentType(id, ty) if isCollection(t.asInstanceOf[IdentType]) => ty(0)
       case _ => t
     }
+  }
+
+  def topologicalSort[A](edges: Traversable[(A, A)]): Iterable[A] = {
+    def tsort(toPreds: Map[A, Set[A]], done: Iterable[A]): Iterable[A] = {
+      val (noPreds, hasPreds) = toPreds.partition { _._2.isEmpty }
+      if (noPreds.isEmpty) {
+        if (hasPreds.isEmpty) done else sys.error(hasPreds.toString)
+      } else {
+        val found = noPreds.map { _._1 }
+        tsort(hasPreds.mapValues { _ -- found }, done ++ found)
+      }
+    }
+
+    val toPred = edges.foldLeft(Map[A, Set[A]]()) { (acc, e) =>
+      acc + (e._1 -> acc.getOrElse(e._1, Set())) + (e._2 -> (acc.getOrElse(e._2, Set()) + e._1))
+    }
+
+    tsort(toPred, Seq())
   }
 }

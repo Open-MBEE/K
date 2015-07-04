@@ -1,4 +1,6 @@
 
+-- Test 1: --
+
 class A {
   x : Int
   y : Int
@@ -13,7 +15,7 @@ class A {
 
   req x > 20
 
-  req exists i : Int .  i > 0 && x + i = y -- hence y > x
+  req exists i : Int :-  i > 0 && x + i = y -- hence y > x
 
   req f() # 2
 }

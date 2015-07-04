@@ -1,4 +1,7 @@
 
+-- Currently rejected by type checker since function move returns a State object.
+-- However this should be ok.
+
 class Event {
   id : Int
 }
@@ -30,3 +33,4 @@ class RocketMachine {
   req move(ready, fire) = firing
   req move(firing, turn_off) = off  
 }
+

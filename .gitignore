@@ -6,3 +6,13 @@ RemoteSystemsTempFiles
 *~
 *.class
 lib/com.microsoft.z3.jar
+src/tests/baseline.smt
+src/tests/current.smt
+src/tests/baseline.smt.model
+src/tests/current.smt.model
+.texpadtmp
+*.aux
+*.bbl
+*.blg
+*.log
+*.pdf
