@@ -126,15 +126,15 @@ object Frontend {
       case _ => ()
     }
 
-    if (model != null) {
-      val smtModel = model.toSMT
-      if (K2Z3.debug) {
-        println("--- SMT Model ---")
-        println(smtModel)
-        println("-----------------")
-      }
-      K2Z3.solveSMT(model, smtModel, true)
-    }
+//    if (model != null) {
+//      val smtModel = model.toSMT
+//      if (K2Z3.debug) {
+//        println("--- SMT Model ---")
+//        println(smtModel)
+//        println("-----------------")
+//      }
+//      K2Z3.solveSMT(model, smtModel, true)
+//    }
 
     // print DOT format class diagram
     options.get('dot) match {
@@ -784,99 +784,136 @@ object Frontend {
     RngBinding(patternList.toList, collection)
   }
 
+  
+  
   def visitJsonObject2(o: Any): AnyRef = {
+    visitJsonObject2(o, false)
+  }
+  
+  def visitJsonObject2(o: Any, pullOperandType: Boolean): AnyRef = {
     val obj = o.asInstanceOf[JSONObject]
-    obj.get("type") match {
+    var spec = obj.optJSONObject("specialization")
+    if ( spec != null ) {
+      return visitJsonObject2(spec, pullOperandType)
+    }
+    // i is the index to the first argument
+    val i = if (pullOperandType) 1 else 2
+    val operand: JSONArray = if (!pullOperandType) null else obj.get("operand").asInstanceOf[JSONArray]
+    val theType = if (!pullOperandType) obj.getString("type") 
+          else {
+            operand.getJSONObject(0).getString("element")
+          }
+    val opIsElementValue = 
+      if (!pullOperandType) false 
+      else {
+        var kind = operand.get(0).asInstanceOf[JSONObject].get("type").asInstanceOf[String]
+        kind match { 
+          case "ElementValue" => true
+          case _ => false
+        }
+      }
+    theType match {
+//      case "ElementValue" =>
+//        visitJsonObject2(o, true)
       case "Expression" =>
-        val operand: JSONArray = obj.get("operand").asInstanceOf[JSONArray]
-        val kind = operand.get(0).asInstanceOf[JSONObject].get("type").asInstanceOf[String]
-        kind match {
+        visitJsonObject2(o, true)
+//        val operand: JSONArray = obj.get("operand").asInstanceOf[JSONArray]
+//        var kind = operand.get(0).asInstanceOf[JSONObject].get("type").asInstanceOf[String]
+//        var opIsElementValue = kind match { 
+//          case "ElementValue" => true
+//          case _ => false
+//        }
+//        else {
+//        kind = if (opIsElementValue) operand.getJSONObject(0).getString("element")
+//               else kind
+//        kind match {
           case "BlockExp" =>
             val memberDecls: MList[MemberDecl] = MList()
-            for (i <- Range(1, operand.length())) {
-              memberDecls += visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[MemberDecl]
+            for (j <- Range(i, operand.length())) {
+              memberDecls += visitJsonObject2(operand.getJSONObject(j)).asInstanceOf[MemberDecl]
             }
             BlockExp(memberDecls.toList)
           case "ParenExp" =>
-            ParenExp(visitJsonObject2(operand.getJSONObject(1)).asInstanceOf[Exp])
+            ParenExp(visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp])
           case "DotExp" =>
-            val exp = visitJsonObject2(operand.getJSONObject(1)).asInstanceOf[Exp]
-            val ident = operand.getString(2)
+            val exp = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val ident = operand.getString(i+1)
             DotExp(exp, ident)
-          case "StarExp" => StarExp
+          case "StarExp" | "Star" => StarExp
           case "FunApplExp" =>
-            val exp1 = visitJsonObject2(operand.getJSONObject(1)).asInstanceOf[Exp]
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
             val args =
               if (operand.length > 2) {
                 val argsList: MList[Argument] = MList()
-                for (i <- Range(2, operand.length())) {
-                  argsList += visitJsonObject2(operand.get(i)).asInstanceOf[Argument]
+                for (j <- Range(i+1, operand.length())) {
+                  argsList += visitJsonObject2(operand.get(j)).asInstanceOf[Argument]
                 }
                 argsList.toList
               } else Nil
             FunApplExp(exp1, args)
-          case "WhileExp" =>
-            val cond: Exp = visitJsonObject2(operand.getJSONObject(1)).asInstanceOf[Exp]
-            val body = visitJsonObject2(operand.getJSONObject(2)).asInstanceOf[Exp]
+          case "WhileExp" | "While" =>
+            val cond: Exp = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val body = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
             WhileExp(cond, body)
-          case "ForExp" =>
-            val pattern: Pattern = visitJsonObject2(operand.getJSONObject(1)).asInstanceOf[Pattern]
-            val cond: Exp = visitJsonObject2(operand.getJSONObject(2)).asInstanceOf[Exp]
-            val body = visitJsonObject2(operand.getJSONObject(3)).asInstanceOf[Exp]
+          case "ForExp" | "For" =>
+            val pattern: Pattern = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Pattern]
+            val cond: Exp = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            val body = visitJsonObject2(operand.getJSONObject(i+2)).asInstanceOf[Exp]
             ForExp(pattern, cond, body)
-          case "IfExp" =>
-            val cond = visitJsonObject2(operand.getJSONObject(1)).asInstanceOf[Exp]
-            val trueBranch = visitJsonObject2(operand.getJSONObject(2)).asInstanceOf[Exp]
+          case "IfExp" | "If" | "Conditional" =>
+            val cond = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val trueBranch = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
             val falseBranch =
-              if (operand.length() == 4)
-                Some(visitJsonObject2(operand.getJSONObject(3)).asInstanceOf[Exp])
+              if (operand.length() == i+3)
+                Some(visitJsonObject2(operand.getJSONObject(i+2)).asInstanceOf[Exp])
               else None
             IfExp(cond, trueBranch, falseBranch)
           case "QuantifiedExp" =>
-            val quantifier = visitJsonObject2(operand.getJSONObject(1)).asInstanceOf[Quantifier]
-            val bindings = getRngBindingList(operand.getJSONObject(2)).asInstanceOf[List[RngBinding]]
-            val exp = visitJsonObject2(operand.getJSONObject(3)).asInstanceOf[Exp]
+            val quantifier = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Quantifier]
+            val bindings = getRngBindingList(operand.getJSONObject(i+1)).asInstanceOf[List[RngBinding]]
+            val exp = visitJsonObject2(operand.getJSONObject(i+2)).asInstanceOf[Exp]
             QuantifiedExp(quantifier, bindings, exp)
           case "CollectionComprExp" =>
-            var kind = getCollectionKind(operand.getString(1))
-            var exp1 = visitJsonObject2(operand.get(2)).asInstanceOf[Exp]
-            var exp2 = visitJsonObject2(operand.get(3)).asInstanceOf[Exp]
+            var kind = getCollectionKind(operand.getString(i))
+            var exp1 = visitJsonObject2(operand.get(i+1)).asInstanceOf[Exp]
+            var exp2 = visitJsonObject2(operand.get(i+2)).asInstanceOf[Exp]
             val bindings: MList[RngBinding] = MList()
-            for (i <- Range(4, operand.length())) {
-              bindings += visitJsonObject2(operand.get(i)).asInstanceOf[RngBinding]
+            for (j <- Range(i+3, operand.length())) {
+              bindings += visitJsonObject2(operand.get(j)).asInstanceOf[RngBinding]
             }
             CollectionComprExp(kind, exp1, bindings.toList, exp2)
-          case "LambdaExp" =>
-            val pat = getPattern(operand.getJSONObject(1)).asInstanceOf[Pattern]
-            val exp = visitJsonObject2(operand.getJSONObject(2)).asInstanceOf[Exp]
+          case "LambdaExp" | "Lambda" =>
+            val pat = getPattern(operand.getJSONObject(i)).asInstanceOf[Pattern]
+            val exp = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
             LambdaExp(pat, exp)
-          case "ResultExp" => ResultExp
-          case "TypeCastCheckExp" =>
-            TypeCastCheckExp(operand.getBoolean(1),
-              visitJsonObject2(operand.get(2)).asInstanceOf[Exp],
-              visitJsonObject2(operand.get(3)).asInstanceOf[Type])
-          case "TupleExp" =>
+          case "ResultExp" | "Result" => ResultExp
+          case "TypeCastCheckExp" | "TypeCastCheck" =>
+            TypeCastCheckExp(operand.getBoolean(i),
+              visitJsonObject2(operand.get(i+1)).asInstanceOf[Exp],
+              visitJsonObject2(operand.get(i+2)).asInstanceOf[Type])
+          case "TupleExp" | "Tuple" =>
             val expList: MList[Exp] = MList()
-            for (i <- Range(1, operand.length)) {
-              expList += (visitJsonObject2(operand.get(i)).asInstanceOf[Exp])
+            for (j <- Range(i, operand.length)) {
+              expList += (visitJsonObject2(operand.get(j)).asInstanceOf[Exp])
             }
             TupleExp(expList.toList)
           case "Forall" => Forall
           case "Exists" => Exists
-          case "IntegerLiteral" =>
-            IntegerLiteral(operand.getInt(1))
-          case "RealLiteral" => // was FloatingPointLiteral
+          case "IntegerLiteral" | "LiteralInteger" =>
+            var jo : JSONObject = obj
+            if ( operand != null ) jo = operand.get(i).asInstanceOf[JSONObject]
+            IntegerLiteral(jo.getInt("integer"))
+          case "RealLiteral" | "LiteralReal" => // was FloatingPointLiteral
             //RealLiteral(java.lang.Float.parseFloat(operand.get(1).toString)) // was: operand.getString(1)
-            val bd = new java.math.BigDecimal(operand.get(1).toString).setScale(8, java.math.BigDecimal.ROUND_UNNECESSARY)
+            val bd = new java.math.BigDecimal(obj.get("double").toString).setScale(8, java.math.BigDecimal.ROUND_UNNECESSARY)
             //println(bd.formatted("%f"))
             RealLiteral(bd)
-
-          case "CharacterLiteral" =>
-            CharacterLiteral(operand.get(1).asInstanceOf[Char])
-          case "BooleanLiteral" =>
-            BooleanLiteral(operand.getBoolean(1))
-          case "StringLiteral" =>
-            StringLiteral(operand.getString(1))
+          case "CharacterLiteral" | "LiteralCharacter" =>
+            CharacterLiteral(obj.get("char").asInstanceOf[Char])
+          case "BooleanLiteral" | "LiteralBoolean" =>
+            BooleanLiteral(obj.getBoolean("boolean"))
+          case "StringLiteral" | "LiteralString" =>
+            StringLiteral(obj.getString("string"))
           case "BoolType"   => BoolType
           case "IntType"    => IntType
           case "RealType"   => RealType
@@ -884,19 +921,111 @@ object Frontend {
           case "UnitType"   => UnitType
           case "CharType"   => CharType
           case "IdentType" =>
-            IdentType(visitJsonObject2(operand.get(1)).asInstanceOf[QualifiedName],
+            IdentType(visitJsonObject2(operand.get(i)).asInstanceOf[QualifiedName],
               null) // missing type parameters I think (null)
           case "Multiplicity" =>
-            var exp1 = visitJsonObject2(operand.get(1)).asInstanceOf[Exp]
+            var exp1 = visitJsonObject2(operand.get(i)).asInstanceOf[Exp]
             var exp2 =
-              if (operand.length() == 2)
-                Some(visitJsonObject2(operand.get(1)).asInstanceOf[Exp])
+              if (operand.length() == i+1)
+                Some(visitJsonObject2(operand.get(i)).asInstanceOf[Exp])
               else
                 None
             Multiplicity(exp1, exp2)
+          case "Plus" | "Add"    => 
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            BinExp(exp1, ADD, exp2)
+          case "Sub" | "Minus"   => 
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            BinExp(exp1, SUB, exp2)
+          case "Times" | "Multiply"  => 
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            BinExp(exp1, MUL, exp2)
+          case "Divide"  => 
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            BinExp(exp1, DIV, exp2)
+          case "Modulo"  => 
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            BinExp(exp1, REM, exp2)
+          case "LTE" | "LessEquals"    => 
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            BinExp(exp1, LTE, exp2)
+          case "GTE" | "GreaterEquals"    => 
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            BinExp(exp1, GTE, exp2)
+          case "LT" | "Less"     => 
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            BinExp(exp1, LT, exp2)
+          case "GT" | "Greater"     => 
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            BinExp(exp1, GT, exp2)
+          case "EQ" | "Equals"     => 
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            BinExp(exp1, EQ, exp2)
+          case "NotEQ" | "NEQ" | "NoteEquals" => 
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            BinExp(exp1, NEQ, exp2)
+          case "IsIn"   => 
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            BinExp(exp1, ISIN, exp2)
+          case "NotIn"   => 
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            BinExp(exp1, NOTISIN, exp2)
+          case "Subset"  => 
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            BinExp(exp1, SUBSET, exp2)
+          case "Psubset" => 
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            BinExp(exp1, PSUBSET, exp2)
+          case "Union"   => 
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            BinExp(exp1, SETUNION, exp2)
+          case "Inter"   => 
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            BinExp(exp1, SETINTER, exp2)
+          case "And"     => 
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            BinExp(exp1, AND, exp2)
+          case "Or"      => 
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            BinExp(exp1, OR, exp2)
+          case "Tuples"  => 
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            BinExp(exp1, TUPLEINDEX, exp2)
+          case "Concat"  => 
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            BinExp(exp1, LISTCONCAT, exp2)
+          case "Assign"  => 
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            BinExp(exp1, ASSIGN, exp2)
+          case "Implies" => 
+            val exp1 = visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            BinExp(exp1, IMPL, exp2)
           case "BinExp" =>
             val operator: BinaryOp =
-              operand.getString(1) match {
+              operand.getString(i) match {
                 case "Plus"    => ADD
                 case "Minus"   => SUB
                 case "Times"   => MUL
@@ -924,12 +1053,18 @@ object Frontend {
                   println(operand.get(0).asInstanceOf[JSONObject].get("element"))
                   null
               }
-            val exp1 = visitJsonObject2(operand.getJSONObject(2)).asInstanceOf[Exp]
-            val exp2 = visitJsonObject2(operand.getJSONObject(3)).asInstanceOf[Exp]
+            val exp1 = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
+            val exp2 = visitJsonObject2(operand.getJSONObject(i+2)).asInstanceOf[Exp]
             BinExp(exp1, operator, exp2)
+          case "Neg" | "Negative" | "NEG" => 
+            UnaryExp(NEG, visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp])
+          case "Not"  => 
+            UnaryExp(NOT, visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp])
+          case "Prev" => 
+            UnaryExp(PREV, visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp])
           case "UnaryExp" =>
             val operator: UnaryOp =
-              operand.getString(1) match {
+              operand.getString(i) match {
                 case "Neg"  => NEG
                 case "Not"  => NOT
                 case "Prev" => PREV
@@ -937,25 +1072,42 @@ object Frontend {
                   println("unknown operator " + op)
                   System.exit(-1).asInstanceOf[Nothing]
               }
-            UnaryExp(operator, visitJsonObject2(operand.getJSONObject(2)).asInstanceOf[Exp])
+            UnaryExp(operator, visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp])
           case "PositionalArgument" =>
-            PositionalArgument(visitJsonObject2(operand.getJSONObject(1)).asInstanceOf[Exp])
+            PositionalArgument(visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp])
           case "NamedArgument" =>
-            val ident = operand.getString(1)
-            val exp = visitJsonObject2(operand.getJSONObject(2)).asInstanceOf[Exp]
+            val ident = operand.getString(i)
+            val exp = visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp]
             NamedArgument(ident, exp)
           case "RngBinding" =>
             val patterns: MList[Pattern] = MList()
-            for (i <- Range(2, operand.length())) {
-              patterns += visitJsonObject2(operand.get(i)).asInstanceOf[Pattern]
+            for (j <- Range(i+1, operand.length())) {
+              patterns += visitJsonObject2(operand.get(j)).asInstanceOf[Pattern]
             }
-            val collection = visitJsonObject2(operand.get(1)).asInstanceOf[Collection]
+            val collection = visitJsonObject2(operand.get(i)).asInstanceOf[Collection]
             RngBinding(patterns.toList, collection)
           case "ExpCollection" =>
-            ExpCollection(visitJsonObject2(operand.get(1)).asInstanceOf[Exp])
+            ExpCollection(visitJsonObject2(operand.get(i)).asInstanceOf[Exp])
           case "IdentPattern" =>
-            IdentPattern(operand.get(1).asInstanceOf[String])
-        }
+            IdentPattern(operand.get(i).asInstanceOf[String])
+//          case key @ _ =>
+//            if (opIsElementValue) {
+//              // Assume that this is a reference to some Operation, either a FunctionAppl or Constructor
+//              val exp1 = visitJsonObject2(key).asInstanceOf[Exp]
+//              val args =
+//                if (operand.length > 1) {
+//                  val argsList: MList[Argument] = MList()
+//                  for (i <- Range(1, operand.length())) {
+//                    argsList += visitJsonObject2(operand.get(i)).asInstanceOf[Argument]
+//                  }
+//                  argsList.toList
+//                } else Nil
+//              FunApplExp(exp1, args)
+//            } else {
+//              println("Unknown keys encountered in JSON string! (3) : " + key)
+//              System.exit(-1).asInstanceOf[Nothing]
+//            }
+//        }
       case "IdentExp" | "ElementValue" =>
         IdentExp(obj.get("element").asInstanceOf[String])
       // Non-Expr, similar to regular JSON
@@ -1068,8 +1220,26 @@ object Frontend {
       case "QualifiedName" =>
         QualifiedName(visitJsonArray(obj.get("names").asInstanceOf[JSONArray], (x => x.asInstanceOf[String])).asInstanceOf[List[String]])
       case key @ _ =>
-        println("Unknown keys encountered in JSON string! (2) : " + key)
-        System.exit(-1).asInstanceOf[Nothing]
+        if (opIsElementValue) {//} || (key match { case "ElementValue" => true case _ => false })) {
+          // Assume that this is a reference to some Operation, either a FunctionAppl or Constructor
+          //val exp1 = visitJsonObject2(key).asInstanceOf[Exp]
+          val exp1 = IdentExp(key)//visitJsonObject2(operand.getJSONObject(i)).asInstanceOf[Exp]
+          val args =
+            if (operand.length > 1) {
+              val argsList: MList[Argument] = MList()
+              for (j <- Range(i, operand.length())) {
+                argsList += PositionalArgument(visitJsonObject2(operand.get(j)).asInstanceOf[Exp])
+              }
+              argsList.toList
+            } else Nil
+          FunApplExp(exp1, args)
+        } else {
+          println("Unknown keys encountered in JSON string! (2) : " + key)
+          System.exit(-1).asInstanceOf[Nothing]
+        }
+//      case key @ _ =>
+//        println("Unknown keys encountered in JSON string! (2) : " + key)
+//        System.exit(-1).asInstanceOf[Nothing]
     }
   }
 
