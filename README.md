@@ -4,8 +4,10 @@ K is a textual language intended to be used by modelers, programmers, system des
   - Formal specification languages such as Z, Alloy
   - Programming languages such as Java, Scala, C#, C
   - Dynamic modeling languages such as Mathematica
-  
-Along with the formal textual language, we have created a suite of tools and capabilities that allow K to be used in a setting such as one experienced at NASA. Some of these include:
+
+Our goal is to be able to allow individuals at NASA to easily model as well as program and analyze/verify. We believe that the paradigms of programming and modeling have exactly the same goals and are working on the same basic principles. K is intended to facilitate the merger of the two paradigms.  
+
+Along with the formal textual language, we have created a suite of tools and capabilities that allow K to be used in a setting such as one experiences at NASA. Some of these include:
   - Formal analysis such as type checking
   - Class consistency checking
   - Satisfiability checking and correctness checking using SMT
