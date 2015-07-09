@@ -1,5 +1,12 @@
 package k.frontend
 
+import com.sksamuel.elastic4s.source._
+import org.elasticsearch.common.settings.ImmutableSettings
+import com.sksamuel.elastic4s._
+import com.sksamuel.elastic4s.ElasticClient
+import com.sksamuel.elastic4s.ElasticDsl._
+import org.apache.log4j.{ Level, Logger }
+import scala.util.control.Breaks._
 import org.antlr.runtime.tree.ParseTree
 import k.frontend
 import java.io._
@@ -19,6 +26,7 @@ object Frontend {
   type OptionMap = Map[Symbol, Any]
 
   def log(msg: String = "") = Misc.log("main", msg)
+  def errorExit(msg: String = "") = Misc.errorExit("main", msg)
 
   def parseArgs(map: OptionMap, list: List[String]): OptionMap = {
     def isSwitch(s: String) = (s(0) == '-')
@@ -30,8 +38,10 @@ object Frontend {
       case "-baseline" :: tail => parseArgs(map ++ Map('baseline -> true), tail)
       case "-test" :: tail     => parseArgs(map ++ Map('test -> true), tail)
       case "-v" :: tail        => parseArgs(map ++ Map('verbose -> true), tail)
+      case "-query" :: tail    => parseArgs(map ++ Map('query -> true), tail)
       case "-stats" :: tail    => parseArgs(map ++ Map('stats -> true), tail)
       case "-dot" :: tail      => parseArgs(map ++ Map('dot -> true), tail)
+      case "-latex" :: tail    => parseArgs(map ++ Map('latex -> true), tail)
       case "-json" :: tail     => parseArgs(map ++ Map('printJson -> true), tail)
       case "-mmsJson" :: value :: tail =>
         parseArgs(map ++ Map('mmsJson -> value), tail)
@@ -57,7 +67,7 @@ object Frontend {
 
     options.get('test) match {
       case Some(_) =>
-        log("Please enter the test case to run:")
+        print("[main] Please enter the test case to run:")
         val testCase = readLine.trim
         val fileName = testCase.asInstanceOf[String]
         val testsDir = new File(new File(new File(".").getAbsolutePath, "src"), "tests")
@@ -100,9 +110,7 @@ object Frontend {
         log("Type checking completed. No errors found.")
       } catch {
         case TypeCheckException => Misc.errorExit("Main", "Given K did not type check.")
-        case e: Throwable =>
-          e.printStackTrace()
-          Misc.errorExit("Main", "Exception encountered during type checking.")
+        case e: Throwable       => Misc.errorExit("Main", "Exception encountered during type checking.")
       }
     }
 
@@ -119,6 +127,7 @@ object Frontend {
           ASTOptions.useJson1 = false
           println("JSON2: " + model.toJson)
           val modelFromJson2 = visitJsonObject2(model.toJson).asInstanceOf[Model]
+
           // Reset old value of option
           ASTOptions.useJson1 = optionsUseJson1
         } else
@@ -133,10 +142,20 @@ object Frontend {
         println(smtModel)
         println("-----------------")
       }
-      K2Z3.solveSMT(model, smtModel, true)
+      try {
+        K2Z3.solveSMT(model, smtModel, true)
+      } catch {
+        case K2SMTException => errorExit("K2SMT Exception during SMT solving.")
+        case K2Z3Exception  => errorExit("Z3 Exception during SMT solving.")
+        case _              => errorExit("Unknown Exception during SMT solving.")
+      }
     }
 
-    // print DOT format class diagram
+    options.get('latex) match {
+      case Some(_) => if (model != null) K2Latex.convert(filename, model)
+      case _       => ()
+    }
+
     options.get('dot) match {
       case Some(_) => if (model != null) printClassDOT(filename, model)
       case _       => ()
@@ -154,6 +173,83 @@ object Frontend {
       case _ => ()
     }
 
+    options.get('query) match {
+      case Some(_) => doElastic(model)
+      case _                              => ()
+    }
+
+  }
+
+  def doElastic(model: Model) {
+    log("Setting up query engine...")
+    Logger.getRootLogger.setLevel(Level.OFF)
+    val workDir = "c:\\users\\rahulku\\downloads\\elastictmp5"
+    ASTOptions.useJson1 = true
+    val indexName = "kexamples"
+    val kmodelsType = "kmodel"
+
+    // Initialize embedded client with specified directory 
+    val settings = ImmutableSettings.settingsBuilder()
+      .put("http.enabled", false)
+      .put("path.data", workDir)
+      .build()
+    val client = ElasticClient.local(settings)
+
+    // remove main index if it exists 
+    def removeIndex: Boolean = {
+      try {
+        client.execute {
+          deleteIndex(indexName)
+        }.await
+        true
+      } catch {
+        case _: Exception => false
+      }
+    }
+    removeIndex
+
+    // create main index 
+    val numShards = 1
+    val numReplicas = 0
+    client.execute { create index indexName }.await
+    //    client.execute { create index indexName mappings ("constraints" parent (kmodelsType)) shards numShards replicas numReplicas }.await
+
+    // Report health status 
+    val healthResponse = client.admin.cluster().prepareHealth().setWaitForGreenStatus().execute().actionGet()
+    val healthStatus = healthResponse.getStatus()
+
+    log(s"Indexing model.")
+
+    //client.execute { index into indexName / kmodelsType doc StringDocumentSource(model.toJson.toString) }.await
+    //client.execute { index into indexName / kmodelsType doc ModelSource(model) }.await
+    for (decl <- model.decls) {
+      client.execute { index into indexName / kmodelsType doc StringDocumentSource(decl.toJson.toString) }.await
+      if (decl.isInstanceOf[EntityDecl] && false) {
+        val entity = decl.asInstanceOf[EntityDecl]
+        for (m <- entity.members) {
+          if (m.isInstanceOf[ConstraintDecl])
+            client.execute { index into indexName / "constraints" doc StringDocumentSource(m.toJson.toString) }.await
+        }
+      }
+    }
+    Thread.sleep(3000)
+
+    while (true) {
+      print("[main] Query>")
+      val queryString = readLine.trim
+      if (queryString == "k_exit") break
+      val resp = client.execute { search in indexName / kmodelsType query queryString }.await
+
+      for (hit <- resp.getHits().getHits) {
+        var tokener: JSONTokener = new JSONTokener(hit.getSourceAsString)
+        var jsonObject: JSONObject = new JSONObject(tokener)
+        val decl = visitJsonObject(jsonObject)
+        println("Search Results: " + decl)
+      }
+
+    }
+
+    client.close()
   }
 
   def getFileTree(f: File): Stream[File] =
@@ -575,7 +671,7 @@ object Frontend {
         IntegerLiteral(obj.getInt("i"))
       case "LiteralFloatingPoint" =>
         //RealLiteral(java.lang.Float.parseFloat(obj.get("f").toString)) // was: asInstanceOf[String]
-        val bd = new java.math.BigDecimal(obj.get("f").toString).setScale(8, java.math.BigDecimal.ROUND_UNNECESSARY)
+        val bd = new java.math.BigDecimal(obj.get("f").toString).setScale(8, java.math.BigDecimal.ROUND_DOWN)
         RealLiteral(bd)
       case "LiteralCharacter" =>
         CharacterLiteral(obj.get("c").asInstanceOf[Char])
@@ -867,7 +963,7 @@ object Frontend {
             IntegerLiteral(operand.getInt(1))
           case "RealLiteral" => // was FloatingPointLiteral
             //RealLiteral(java.lang.Float.parseFloat(operand.get(1).toString)) // was: operand.getString(1)
-            val bd = new java.math.BigDecimal(operand.get(1).toString).setScale(8, java.math.BigDecimal.ROUND_UNNECESSARY)
+            val bd = new java.math.BigDecimal(operand.get(1).toString).setScale(8, java.math.BigDecimal.ROUND_DOWN)
             //println(bd.formatted("%f"))
             RealLiteral(bd)
 

@@ -26,6 +26,10 @@ class <Req> Requirements {
 ------------------------------------------
 }
 
+
+=====================================================
+Determine the Gravity Science Constraints
+=====================================================
 class GravSciReqs extends Requirements {
  
   angle_ClipperEarthSun : Real
@@ -51,14 +55,14 @@ class GravSciReqs extends Requirements {
   req ValidLatitude:  ((-40.0) <= latitude_Clipper) && (latitude_Clipper <= 60.0)
 }
 
-  =====================================================
-  Determine the Telecom Strategy & Opportunities Constraints
-  =====================================================
+=====================================================
+Determine the Telecom Strategy & Opportunities Constraints
+=====================================================
 class TelecomReqs extends Requirements {
 
   isDSNsatisfieable : Bool
 
-  @owner("Gravity Science InstrumenTelecom Strategy & Opportunities")
+  @owner("Gravity Science InstrumenTelecom Strategy and Opportunities")
   @name("Gravity Science Capability")
   @text("The mission Operations System shall base gravity science
          measurements on radiometric data provided by the DSN")
@@ -69,9 +73,9 @@ class TelecomReqs extends Requirements {
   req ValidGSCapability: isDSNsatisfieable = true
 }
 
-  =====================================================
-  Determine the Instrument Constraints
-  =====================================================
+=====================================================
+Determine the Instrument Constraints
+=====================================================
 class InstrumentReqs extends Requirements {
 
   GSdatacollection : Bool
@@ -157,10 +161,10 @@ constraint you want to put on the accuracy
 	  20.0 <= YZorthogonalcoverage && YZorthogonalcoverage <= 360.0
  }
 
-  =====================================================
-  Determine the Radio Constraints
-  =====================================================
-class RadioReq extends Requirements {
+=====================================================
+Determine the Radio Constraints PART A
+=====================================================
+class RadioReqsA extends Requirements {
 
   GS_uplink_pt_no : Real
   GS_boresight_pointing_error : Real
@@ -168,12 +172,6 @@ class RadioReq extends Requirements {
   fanbeam_boresight_alignment : Real
   xband_downlink_pt_no : Real
   GS_downlink_pt_no : Real
-  twowayDoppleraccuracy : Real
-  twowayDoppler_PcNo : Real
-  GravSciXband_Coherency : Bool
-  TelecomTurnaroundGS : Bool
-  GS_EIRP : Real
-  GSA_GT : Real
 
   @owner("Radio")
   @name("Gravity Science X-Band U/L Pt/No")
@@ -205,7 +203,7 @@ class RadioReq extends Requirements {
 		 to a mechanical alignment reference (to be determined) 
 		 to within [0.25] deg. Rationale:Driven by required 
 		 performance for X-Band applications. Verif Approach:Test
-		  & Analysis Notes:Note: This allocation in alignment error 
+		  and Analysis Notes:Note: This allocation in alignment error 
 		  is entirely internal to the Telecom antenna hardware. Might 
 		  be absorbed completely into PPP Document. and flowed down 
 		  to a level 5 requirement.")
@@ -239,6 +237,20 @@ class RadioReq extends Requirements {
   @units("dB-Hz")
   req ValidDownlink_pt_no: 0.0 <= GS_downlink_pt_no && 
   	  					   GS_downlink_pt_no <= 10.0 && DSN = 34
+}
+
+=====================================================
+Determine the Radio Constraints - PART B
+=====================================================
+class RadioReqsB extends Requirements {
+
+  DSN : Int = 34
+  twowayDoppleraccuracy : Real
+  twowayDoppler_PcNo : Real
+  GravSciXband_Coherency : Bool
+  TelecomTurnaroundGS : Bool
+  GS_EIRP : Real
+  GSA_GT : Real
 
   @owner("Radio")
   @name("2-way Doppler accuracy")
@@ -282,7 +294,7 @@ class RadioReq extends Requirements {
   	     EIRP, >49.37 dBm (TBC). Assumes the requirement TELE-805,
 		 and max range 6.4 AU. Rationale:Driven by required
 		 performance for Gravity Science measurements. Verif 
-		 Approach:Test & Analysis Notes:As of July 2013 Assumes: 
+		 Approach:Test and Analysis Notes:As of July 2013 Assumes: 
 		 20 w TWTA,3 dB line loss, antenna gain of ~9.4 dB, and one 
 		 34m DSS, with Tsys 33.1K.")
   @afid("CT xx.xxx")
@@ -302,6 +314,7 @@ class RadioReq extends Requirements {
   @ID("594")
   @units("dB/K")
   req ValidGSA_GT: 21.2 < GSA_GT && GSA_GT <= 40.0
+
 }
 
   =====================================================
@@ -315,6 +328,7 @@ class RadioGravSciReqs extends Requirements {
   isoccultatedbyearth : Bool
   europa : Europa
 
+
   @owner("Radio/Gravity Science")
   @name("Gravity Science Altitude")
   @text("Flyby altitudes less than or equal to 100 km")
@@ -322,7 +336,7 @@ class RadioGravSciReqs extends Requirements {
   @maturity("Identified")
   @ID("unnamed18")
   @units("km")
-  req ValidAltitude: 0.0 < altitude && altitude <= 100.0
+  req ValidAltitude: 25.0 < altitude && altitude <= 100.0
 
   @owner("Radio/Gravity Science")
   @name("Measure k2")
@@ -352,8 +366,7 @@ class RadioGravSciReqs extends Requirements {
 --		}
 }
 
---  Redundant with reqs below for Jupiter, Europa, & Clipper classes
---  req Jupiter.sundistance > Europa.sundistance > Clipper.sundistance
+
 
 class Body {
   mass : Real
@@ -366,12 +379,10 @@ class Body {
 
 class Jupiter extends Body {
   @units("kg")
-  --req mass = 1898000000000000000000000000.0 --E27
   req mass = 1.898E27
   @units("km")
   req radius = 69911.0
   @units("km")
-  --req sundistance = 778500000.0
   req sundistance = 7.785E8
   @units("m/s^2")
   req gravity = 24.79
@@ -380,15 +391,10 @@ class Jupiter extends Body {
 }
 
 class Europa extends Body {
-  jupiter : Jupiter
   @units("kg")
- -- req mass = 4799800000000000000000.0 --E22 
   req mass = 4.7998E22
   @units("km")
   req radius = 1560.8
-  @units("km")
-  req (jupiter.sundistance - 607900.0) < sundistance && 
-  	   sundistance < (jupiter.sundistance + 607900.0)
   @units("m/s^2")
   req gravity = 1.314
   @units("g/cm^3")
@@ -396,22 +402,21 @@ class Europa extends Body {
 }
 
 class Clipper extends Body {
-  europa : Europa
   @units("kg")
   req mass = 3100.0
-  @units("km")
-  req (europa.sundistance - 18.0 * europa.radius) < sundistance && 
-  	   sundistance < (europa.sundistance - 1560.8)
+  @units("m/s^2")
+  req gravity = 0.0
+  @units("g/cm^3")
+  req density = 2.70
+
 }
 
 class Earth extends Body {
   @units("kg")
-  --req mass = 5972000000000000000000000.0 --E24
   req mass = 5.972E24
   @units("km")
   req  radius = 6371.0
   @units("km")
-  --req sundistance = 149600000.0
   req sundistance = 1.4966E8
   @units("m/s^2")
   req gravity = 9.807
@@ -419,14 +424,23 @@ class Earth extends Body {
   req density = 5.51
 }
 
---jupiter : Jupiter
---europa : Europa
---clipper : Clipper
---earth : Earth
+class Sun extends Body {
+  @units("kg")
+  req mass = 1.989E30
+  @units("km")
+  req  radius = 695800
+  @units("km")
+  req sundistance = 0.0
+  @units("m/s^2")
+  req gravity = 28.02
+  @units("g/cm^3")
+  req density = 1.41
+}
+
 
 class GravitationalForces { 
-  europa : Europa
-  jupiter : Jupiter
+--  body1 : Body1
+--  body2 : Body2
   --reference GravityFunction.k
 --  distance : Real
 --  acceleration : Real
@@ -434,21 +448,17 @@ class GravitationalForces {
   
   fun squared (x : Real) : Real { x * x } --needs to be in class for now, Rahul working issue
   
-  fun Eur_Jup_Gravity : Real {
-  	  6.74E-11*europa.mass*jupiter.mass/squared(jupiter.sundistance-europa.sundistance)
-  }
+--  fun TwoBodyGravity (Body1 : class, Body2 : class) : Real {
+--  	  6.74E-11*Body1.mass*Body2.mass/squared(Body1.sundistance-Body2.sundistance)
+--  }
 
 --  fun Eur_Jup_Gravity2 : Real { -- For Testing Purposes
 --  	 1222000.6*2.5
 --  }
 }
+===
 
-gf1 : GravitationalForces
-jupiter1 : Jupiter
-earth1 : Earth
-clippe1r : Clipper
-europa1 : Europa
-
+===
 class HyperbolicArc extends Requirements {
 
   incomingascention : Real
@@ -459,8 +469,8 @@ class HyperbolicArc extends Requirements {
   velocity : Real
 
   req ValidVelocity : 0 < velocity
-}
 
+}
 PerfectTraj : HyperbolicArc
 
 ActualTraj : HyperbolicArc
@@ -469,3 +479,76 @@ ActualTraj : HyperbolicArc
 fun Delta : Real {
 	PerfectTraj.velocity - ActualTraj.velocity
 }
+
+
+
+
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+
+=============================
+--MAIN GravityScienceConcept 
+=============================
+
+  JupiterMain : Jupiter
+  EuropaMain : Europa
+  ClipperMain : Clipper
+  EarthMain : Earth
+  SunMain : Sun
+  GravSciReqsMain : GravSciReqs
+  TelecomReqsMain : TelecomReqs
+  InstrumentReqsMain : InstrumentReqs
+  RadioReqsAMain : RadioReqsA
+  RadioReqsBMain : RadioReqsB
+  RadioGravSciReqsMain : RadioGravSciReqs
+
+--ASSOCIATIONS BETWEEN BODIES
+  req EuropaMain.sundistance = JupiterMain.sundistance - 607900.0
+  req ClipperMain.sundistance = (EuropaMain.sundistance - 1560.8 - RadioGravSciReqsMain.altitude)
+  req Distance : JupiterMain.sundistance > EuropaMain.sundistance 
+  	  			  && EuropaMain.sundistance  > ClipperMain.sundistance
+				  && ClipperMain.sundistance > EarthMain.sundistance
+				  && EarthMain.sundistance > SunMain.sundistance
+ BodiesOnSameSideOfSun : Bool 
+ req Aignment1 : BodiesOnSameSideOfSun = true
+
+
+--Checks
+req RadioGravSciReqsMain.altitude = EuropaMain.sundistance - 1560.8 - ClipperMain.sundistance
+--altTest : Real =  RadioGravSciReqsMain.altitude
+--altitudeofclipper : Real = 
+euorpafromjupiter : Real = JupiterMain.sundistance - EuropaMain.sundistance
+ 
+
+
+--Testing
+
+fun squared2 (x : Real) : Real { x * x }
+--fun TwoBodyGravity1 (Body1 : Object, Body2 : Object) : Real {
+--  	  6.74E-11*Body1.mass*Body2.mass/squared(Body1.sundistance-Body2.sundistance)
+--}
+--  JupiterEarth = TwoBodyGravity1(JupiterMain, EarthMain)
+
+fun TwoBodyGravity1(body1 : Body, body2 : Body) : Real {
+  6.74E-11*body1.mass*body2.mass/squared2(body1.sundistance-body2.sundistance)
+}
+
+
+fun TwoBodyGravity2 (mass1 : Real, mass2 : Real, sundistance1 : Real, sundistance2 : Real) : Real {
+  6.74E-11 * mass1 * mass2 / squared2(sundistance1 - sundistance2)
+}
+  
+--JupiterEarth : Real = TwoBodyGravity2(JupiterMain.mass, EarthMain.mass,
+--                                      JupiterMain.sundistance, EarthMain.sundistance)
+--JupiterEarth : Real = TwoBodyGravity1(JupiterMain, EarthMain)
+JupiterEarth : Real
+
+req JupiterEarth = 6.74E-11 * Jmass * Emass / squared2(Jsun - Esun)
+
+Jmass : Real = JupiterMain.mass
+Emass : Real = EarthMain.mass
+Jsun : Real = JupiterMain.sundistance
+Esun : Real = EarthMain.sundistance

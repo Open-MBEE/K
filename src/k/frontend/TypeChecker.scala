@@ -173,8 +173,9 @@ case class TypeEnv(decl: TopDecl, map: Map[String, TypeInfo]) {
               val ofdecl = map(functionName).asInstanceOf[FunctionTypeInfo].decl
               val areReturnTypesEqual = areTypesEqual(fdecl.ty.getOrElse(UnitType),
                 ofdecl.ty.getOrElse(UnitType), false)
-              val areParamsEqual = (fdecl.params zip ofdecl.params).forall { p => areTypesEqual(p._1.ty, p._2.ty, false) }
-              if (!(areReturnTypesEqual && areParamsEqual)) {
+              val areParamsEqual = ofdecl.params.length == fdecl.params.length && (ofdecl.params zip fdecl.params).forall { p => areTypesEqual(p._1.ty, p._2.ty, false) }
+              val onlySecondHasBody  = !fdecl.body.isEmpty 
+              if ((areReturnTypesEqual && areParamsEqual) && fowner != null && onlySecondHasBody) {
                 error(s"${fdecl.ident} redefined with different type.")
               }
             }
@@ -763,7 +764,13 @@ class TypeChecker(model: Model) {
         }
       case DotExp(e, i) =>
         val ti = getExpType(te, e)
+        logDebug(i + " "+ (i=="collect"))
         if (i == "toString") (true, null)
+        else if (i == "collect") (true, null)
+        else if (i == "sum") (true, null)
+        else if (i == "size") (true, null)
+        else if (i == "at") (true, null)
+        else if (i == "subList") (true, null)
         else ti match {
           case it @ IdentType(_, _) =>
             if (Misc.isCollection(it)) {
@@ -783,6 +790,7 @@ class TypeChecker(model: Model) {
 
       case _ => error(s"Unexpected expression found in function application. $exp")
     }
+    logDebug(s"getFunDecl: $exp -> $result")
     return result
   }
 
@@ -910,14 +918,14 @@ class TypeChecker(model: Model) {
           var functionReturnType = getExpType(te, fexp)
           var (collectionFunction, functionDecl) = getFunDecl(te, fexp)
 
-          if (functionDecl == null)
+          if (!collectionFunction && functionDecl == null)
             error(s"Could not find function for $exp.")
 
           // ensure arguments match param types (unless collection function)
-          if (!args.forall { a => a.isInstanceOf[PositionalArgument] })
+          if (!collectionFunction && !args.forall { a => a.isInstanceOf[PositionalArgument] })
             error(s"Cannot use named arguments to a non-constructor function call: $exp")
 
-          if (args.length != functionDecl.params.length)
+          if (!collectionFunction && args.length != functionDecl.params.length)
             error(s"Incorrect number of arguments $exp")
 
           if (!collectionFunction &&
