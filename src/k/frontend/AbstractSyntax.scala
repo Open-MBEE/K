@@ -2138,7 +2138,7 @@ case class RealLiteral(f: java.math.BigDecimal) extends Literal {
     f.formatted("%.16f")
   }
 
-  override def toString = f.toString
+  override def toString = new DecimalFormat("0.#####E0").format(f)
 
   override def toJson1 = {
     val o = new JSONObject()
