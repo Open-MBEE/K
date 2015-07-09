@@ -11,11 +11,15 @@ object K2Latex {
     //file.append("")
     file.append(s"\\title{$name} \\maketitle\n")
 
+    file.append(s"\\section{Introduction}This document is automatically generated from $name.")
+
     // Imports
-    file.append("\\section{Imports}\n")
-    file.append("\\begin{enumerate}\n")
-    model.imports.foreach { i => file.append(s"\\item ${i.name}${if (i.star) "*" else ""}\n") }
-    file.append("\\end{enumerate}\n")
+    if (model.imports.length > 0) {
+      file.append("\\section{Imports}\n")
+      file.append("\\begin{enumerate}\n")
+      model.imports.foreach { i => file.append(s"\\item ${i.name}${if (i.star) "*" else ""}\n") }
+      file.append("\\end{enumerate}\n")
+    }
 
     // Annotations
     file.append("\\section{Defined Annotations}\n")
@@ -39,7 +43,7 @@ object K2Latex {
       if (d.members.filter(_.isInstanceOf[PropertyDecl]).length > 0) {
         file.append("\\begin{itemize}\n")
         for (p @ PropertyDecl(_, _, _, _, _, _) <- d.members) {
-          file.append(s"\\item ${p.name} of type ${p.ty}\n")
+          file.append(s"\\item ${p.name.replace("_", "\\_")} of type ${p.ty}\n")
         }
         file.append("\\end{itemize}\n")
       }
@@ -56,7 +60,7 @@ object K2Latex {
           if (f.params.length > 0) {
             file.append("\\begin{itemize}\n")
             for (p <- f.params) {
-              file.append(s"\\item Argument ${p.name} of type ${p.ty.toString.replace("[", "[[").replace("]", "]]")}\n")
+              file.append(s"\\item Argument ${p.name.replace("_", "\\_")} of type ${p.ty.toString.replace("[", "[[").replace("]", "]]")}\n")
             }
             file.append("\\end{itemize}\n")
           }
@@ -65,16 +69,23 @@ object K2Latex {
       }
 
       // constraints
-      file.append(s"\\subsubsection{Constraints}\n")
       if (d.members.filter(_.isInstanceOf[ConstraintDecl]).length > 0) {
         for (c @ ConstraintDecl(_, _) <- d.members) {
-          for (a <- c.annotations) {
-            if (a.name.equals("doc")) {
-              file.append(s"{${a.exp}}\n")
-            }
-          }
+          file.append(s"\\subsubsection{Constraint: ${c.name.getOrElse("Unnamed").replace("_", "\\_")}}\n")
+          if (c.annotations.length > 0) file.append("\\begin{description}\n")
+          for (a <- c.annotations)
+            if (a.name == "units") file.append(s"\\item [${a.name.toUpperCase}:] $$ ${a.exp.toString.replace("\"", "").replace("_", "\\_")}$$\n")
+            else file.append(s"\\item [${a.name.toUpperCase}:] ${a.exp.toString.replace("\"", "").replace("_", "\\_")}\n")
+          if (c.annotations.length > 0) file.append("\\end{description}\n")
+
           file.append("\\begin{equation}\n")
-          file.append(s"\\boxed{${c.exp.toString.replace("&&", "\\&\\&\\\\")}}\n")
+          file.append(s"\\boxed{\\begin{gathered} ${
+            c.exp.toString.replace("&&", " \\\\ \\wedge \\\\")
+              .replace("_", "\\_")
+              .replace("<=", "\\le")
+              .replace(">=", "\\ge")
+              .replace("*", "\\times")
+          }\\end{gathered}}\n")
           file.append("\\end{equation}\n")
         }
       }
