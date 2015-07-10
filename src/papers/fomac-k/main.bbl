@@ -1,46 +1,4 @@
-\begin{thebibliography}{1}
-
-\bibitem{bensalem-havelund-orlandini-vvps-2014}
-S.~Bensalem, K.~Havelund, and A.~Orlandini.
-\newblock Verification and validation meet planning and scheduling.
-\newblock {\em Software Tools for Technology Transfer (STTT)}, 16(1):1--12,
-  February 2014.
-
-\bibitem{bjoerner-jones-82}
-D.~Bj{\o}rner and C.~B. Jones.
-\newblock {\em Formal Specification and Software Development}.
-\newblock Prentice Hall International, 1982.
-\newblock ISBN 0-13-880733-7.
-
-\bibitem{DafnySite}
-{Dafny website}.
-\newblock \url{http://research.microsoft.com/en-us/projects/dafny}.
-
-\bibitem{havelund-isola-2014}
-K.~Havelund.
-\newblock Monitoring with data automata.
-\newblock In T.~Margaria and B.~Steffen, editors, {\em 6th International
-  Symposium On Leveraging Applications of Formal Methods, Verification and
-  Validation, ISoLA 2014. Track: Statistical Model Checking, Past Present and
-  Future (organized by K. Larsen and A. Legay), Corfu, Greece, October 8-11},
-  LNCS, this volume. Springer, 2014.
-
-\bibitem{IsbernerHS14}
-M.~Isberner, F.~Howar, and B.~Steffen.
-\newblock Learning register automata: from languages to program structures.
-\newblock {\em Machine Learning}, 96(1-2):65--98, 2014.
-
-\bibitem{ScalaSite}
-{Scala website}.
-\newblock \url{http://www.scala-lang.org}.
-
-\bibitem{steffen-isola-2014}
-B.~Steffen.
-\newblock {LNCS} transactions on foundations for mastering change: Preliminary
-  manifesto.
-\newblock In T.~Margaria and B.~Steffen, editors, {\em 6th International
-  Symposium On Leveraging Applications of Formal Methods, Verification and
-  Validation, ISoLA 2014, Corfu, Greece, October 8-11}, LNCS, this volume.
-  Springer, 2014.
+\providecommand{\noopsort}[1]{}
+\begin{thebibliography}{}
 
 \end{thebibliography}

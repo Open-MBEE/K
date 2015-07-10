@@ -1,0 +1,92 @@
+\section{Change}
+\label{sec:change}
+
+% Example 1
+\begin{figure}
+  \centering
+  \begin{tabular}[c]{cc}
+    \begin{subfigure}[c]{0.4\textwidth}
+      \begin{lstlisting}[mathescape]
+        class A {
+          x : Int
+          req x $<$ 0
+        }
+      \end{lstlisting}
+      \caption{Old}
+      \label{fig:old1}
+    \end{subfigure}
+    &
+    \begin{subfigure}[c]{0.4\textwidth}
+      \begin{lstlisting}[mathescape]
+        class A {
+          x : Int
+          req x $<$ 0
+          req x $>$ 0
+        }
+      \end{lstlisting}
+      \caption{New}
+      \label{fig:new1}
+    \end{subfigure}
+    \\
+  \end{tabular}    
+  \caption{Old and new version of a simple example in K}
+  \label{fig:example1}
+\end{figure}
+
+% Example 2
+\begin{figure}
+  \centering
+  \begin{tabular}[c]{cc}
+    \begin{subfigure}[c]{0.4\textwidth}
+      \begin{lstlisting}[mathescape]
+        class A {
+          x : Int
+          req x $<$ 0
+        }
+      \end{lstlisting}
+      \label{fig:old1}
+    \end{subfigure}
+    &
+    \begin{subfigure}[c]{0.4\textwidth}
+      \begin{lstlisting}[mathescape]
+        class B extends A{
+          x : Int
+          req x $>$ 0
+        }
+      \end{lstlisting}
+      \label{fig:new1}
+    \end{subfigure}
+    \\
+  \end{tabular}    
+  \caption{Old and new version of a simple class in K using inheritance.}
+  \label{fig:example1}
+\end{figure}
+
+% Example 3
+\begin{figure}
+  \centering
+  \begin{tabular}[c]{ll}
+    \begin{subfigure}[c]{0.4\textwidth}
+      \begin{lstlisting}[mathescape]
+        class State
+        class Event
+
+      \end{lstlisting}
+      \caption{Old}
+      \label{fig:old1}
+    \end{subfigure}
+    &
+    \begin{subfigure}[c]{0.4\textwidth}
+      \begin{lstlisting}[mathescape]
+        class State
+        class Event
+      \end{lstlisting}
+      \caption{New}
+      \label{fig:new1}
+    \end{subfigure}
+    \\
+  \end{tabular}    
+  \caption{Old and new version of a simple class in K using inheritance.}
+  \label{fig:example1}
+\end{figure}
+
