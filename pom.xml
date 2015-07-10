@@ -32,7 +32,46 @@
           <artifactId>antlr4</artifactId>
           <version>4.5</version>
       </dependency>
+      
+            <dependency>
+                <groupId>Klang</groupId>
+                <artifactId>klang</artifactId>
+                <version>1.0</version>
+                <scope>system</scope>
+                <type>jar</type>
+                <systemPath>${project.basedir}/klang.jar</systemPath>
+            </dependency>
+            <dependency>
+                <groupId>com.microsoft.z3</groupId>
+                <artifactId>com.microsoft.z3</artifactId>
+                <version>1.0</version>
+                <scope>system</scope>
+                <type>jar</type>
+                <systemPath>${project.basedir}/lib/com.microsoft.z3.jar</systemPath>
+            </dependency>
+            <dependency>
+                <groupId>com.microsoft.z3</groupId>
+                <artifactId>libz3java</artifactId>
+                <version>1.0</version>
+                <scope>system</scope>
+                <type>so</type>
+                <systemPath>${project.basedir}/lib/libz3java.so</systemPath>
+            </dependency>
+            <dependency>
+                <groupId>com.microsoft.z3</groupId>
+                <artifactId>libz3</artifactId>
+                <version>1.0</version>
+                <scope>system</scope>
+                <type>so</type>
+                <systemPath>${project.basedir}/lib/libz3.so</systemPath>
+            </dependency>
+
 <!--       <dependency>
+        <groupId>com.microsoft.z3</groupId>
+        <artifactId>com.microsoft.z3</artifactId>
+        <version>4.3.2.5a45711f22d9</version>
+      </dependency>
+ --><!--       <dependency>
 	      <groupId>com.microsoft.z3</groupId>
 	      <artifactId>libz3java</artifactId>
 	      <version>4.3.2</version>
