@@ -34,8 +34,8 @@
       </dependency>
       
             <dependency>
-                <groupId>Klang</groupId>
-                <artifactId>klang</artifactId>
+                <groupId>Klangjar</groupId>
+                <artifactId>klangjar</artifactId>
                 <version>1.0</version>
                 <scope>system</scope>
                 <type>jar</type>
