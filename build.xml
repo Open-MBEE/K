@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Klang" default="makejar" basedir=".">
+  <!-- Customize properties below for your installation. -->
+  <property name="jarFile" value="klang.jar"/>
+  <property name="antlrFile" value="src/antlr-4.4-complete.jar"/>
+  <property name="gitDir" value="${basedir}/.."/>
+  <property name="view_repo" value="${gitDir}/alfresco-view-repo"/>
+  <property name="view_repo_web_lib" value="${view_repo}/target/mms-repo-war/WEB-INF/lib"/>
+  <property name="view_repo_lib" value="${view_repo}/src/main/amp/web/WEB-INF/lib"/>
+  <!-- Customize properties above for your installation. -->
+
+  <target name ="makejar" description="Create a jar of k">
+    <tstamp>
+       <format property="current.time" pattern="MM/dd/yyyy hh:mm:ss aa" />
+    </tstamp>
+    <echo message="started ${current.time}" />
+    <jar destfile="${jarFile}">
+      <fileset includes="**/*.class" dir="bin"/>
+      <!-- <fileset includes="rebel.xml" dir="."/> -->
+    </jar>
+    <antcall target="copyjar"/>
+    <antcall target="copylibs"/>
+    <tstamp>
+       <format property="current.time" pattern="MM/dd/yyyy hh:mm:ss aa" />
+    </tstamp>
+    <echo message="finished ${current.time}" />  
+  </target>
+
+  <target name="copyjar">
+    <tstamp>
+       <format property="current.time" pattern="MM/dd/yyyy hh:mm:ss aa" />
+    </tstamp>
+    <echo message="started ${current.time}" />
+  	<copy todir="${view_repo_web_lib}" file="${jarFile}" failonerror="false"/>
+    <copy todir="${view_repo_lib}" file="${jarFile}" failonerror="false"/>
+    <tstamp>
+       <format property="current.time" pattern="MM/dd/yyyy hh:mm:ss aa" />
+    </tstamp>
+    <echo message="finished ${current.time}" />
+  </target>
+
+  <target name="copylibs">
+    <tstamp>
+       <format property="current.time" pattern="MM/dd/yyyy hh:mm:ss aa" />
+    </tstamp>
+    <echo message="started ${current.time}" />
+    <copy todir="${view_repo_web_lib}"><fileset dir="lib"></fileset></copy>
+    <copy todir="${view_repo_lib}"><fileset dir="lib"></fileset></copy>
+    <copy todir="${view_repo_web_lib}" file="${antlrFile}" failonerror="false"/>
+    <copy todir="${view_repo_lib}" file="${antlrFile}" failonerror="false"/>
+    <!-- <copy todir="${view_repo_web_lib}" file="lib/*" failonerror="false"/>
+    <copy todir="${view_repo_lib}" file="lib/*" failonerror="false"/> -->
+    <tstamp>
+       <format property="current.time" pattern="MM/dd/yyyy hh:mm:ss aa" />
+    </tstamp>
+    <echo message="finished ${current.time}" />
+  </target>
+
+  <target name="timestamp2">
+    <tstamp>
+      <format property="current.time" pattern="MM/dd/yyyy hh:mm:ss aa" />
+    </tstamp>
+    <echo message="${message} ${current.time}" />      
+  </target>
+
+</project>
