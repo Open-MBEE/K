@@ -34,9 +34,72 @@
           <url>http://europambee-build.jpl.nasa.gov:8082/artifactory/libs-release-local</url>
       </repository>
   </repositories>
+
+ <!-- Maven profiles allow you to support both Scala 2.10 and Scala 2.11 with
+the right dependencies for modules specified for each version separately -->
+<profiles>
+<profile>
+<id>scala-2.11</id>
+<activation>
+<activeByDefault>true</activeByDefault>
+</activation>
+<properties>
+<scalaVersion>2.11.7</scalaVersion>
+<!-- change to "2.11" once Scala 2.11.0 final is out -->
+<scalaBinaryVersion>2.11</scalaBinaryVersion>
+</properties>
+<dependencies>
+<dependency>
+<groupId>org.scala-lang</groupId>
+<artifactId>scala-library</artifactId>
+<version>${scalaVersion}</version>
+</dependency>
+<dependency>
+<groupId>org.scala-lang</groupId>
+<artifactId>scala-actors</artifactId>
+<version>${scalaVersion}</version>
+</dependency>
+<dependency>
+<groupId>org.scala-lang.modules</groupId>
+<artifactId>scala-xml_${scalaBinaryVersion}</artifactId>
+<version>1.0.3</version>
+</dependency>
+<dependency>
+<groupId>org.scala-lang.modules</groupId>
+<artifactId>scala-parser-combinators_${scalaBinaryVersion}</artifactId>
+<version>1.0.3</version>
+</dependency>
+<dependency>
+<groupId>org.scala-lang.modules</groupId>
+<artifactId>scala-swing_${scalaBinaryVersion}</artifactId>
+<version>1.0.1</version>
+</dependency>
+</dependencies>
+</profile>
+<profile>
+<id>scala-2.10</id>
+<properties>
+<scalaVersion>2.10.4</scalaVersion>
+<scalaBinaryVersion>2.10</scalaBinaryVersion>
+</properties>
+<dependencies>
+<dependency>
+<groupId>org.scala-lang</groupId>
+<artifactId>scala-library</artifactId>
+<version>${scalaVersion}</version>
+</dependency>
+<dependency>
+<groupId>org.scala-lang</groupId>
+<artifactId>scala-swing</artifactId>
+<version>${scalaVersion}</version>
+</dependency>
+</dependencies>
+</profile>
+</profiles>
+
   <build>
     <sourceDirectory>src</sourceDirectory>
-    <resources>
+    <!-- <resources>
       <resource>
         <directory>src</directory>
         <excludes>
@@ -44,13 +107,13 @@
           <exclude>**/*.scala</exclude>
         </excludes>
       </resource>
-    </resources>
-        <pluginManagement>
+    </resources> -->
+       <!-- <pluginManagement>
             <plugins>
                 <plugin>
                     <groupId>net.alchim31.maven</groupId>
                     <artifactId>scala-maven-plugin</artifactId>
-                    <version>3.2.1</version>
+                    <version>3.2.3-SNAPSHOT</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -58,9 +121,9 @@
                     <version>2.0.2</version>
                 </plugin>
             </plugins>
-        </pluginManagement>
+        </pluginManagement> -->
     <plugins>
-            <plugin>
+            <!-- <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <executions>
@@ -71,7 +134,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin> -->
             
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -81,7 +144,39 @@
           <target/>
         </configuration>
       </plugin>
-    <plugin>
+      
+      
+ <plugin>
+<groupId>org.apache.maven.plugins</groupId>
+<artifactId>maven-compiler-plugin</artifactId>
+<configuration>
+<source>1.6</source>
+<target>1.6</target>
+</configuration>
+</plugin>
+<plugin>
+<groupId>net.alchim31.maven</groupId>
+<artifactId>scala-maven-plugin</artifactId>
+<version>3.1.6</version>
+<executions>
+<execution>
+<goals>
+<goal>compile</goal>
+<goal>testCompile</goal>
+</goals>
+</execution>
+</executions>
+<configuration>
+<args>
+<!-- work-around for https://issues.scala-lang.org/browse/SI-8358 -->
+<arg>-nobootcp</arg>
+</args>
+</configuration>
+</plugin>
+      
+      
+      
+    <!-- <plugin>
       <groupId>org.apache.maven.plugins</groupId>
       <artifactId>maven-source-plugin</artifactId>
       <executions>
@@ -92,33 +187,48 @@
           </goals>
         </execution>
       </executions>
-    </plugin>
+    </plugin> -->
       <!-- <plugin>
         <groupId>org.scala-tools</groupId>
         <artifactId>maven-scala-plugin</artifactId>
         <version>2.14.2-SNAPSHOT</version>
       </plugin> -->
-            <plugin>
+            <!-- <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <!-- <id>scala-compile-first</id> -->
+                        <id>scala-compile-first</id>
                         <phase>process-resources</phase>
                         <goals>
                             <goal>add-source</goal>
-                            <!-- <goal>compile</goal> -->
+                            <goal>compile</goal>
                         </goals>
                     </execution>
-                    <!-- <execution>
+                    <execution>
                         <id>scala-test-compile</id>
                         <phase>process-test-resources</phase>
                         <goals>
                             <goal>testCompile</goal>
                         </goals>
-                    </execution> -->
+                    </execution>
                 </executions>
-            </plugin>
+            </plugin> -->
+    <plugin>
+        <groupId>net.alchim31.maven</groupId>
+        <artifactId>scala-maven-plugin</artifactId>
+        <!-- <version>3.1.3</version> -->
+        <executions>
+            <execution>
+                <goals>
+                    <goal>compile</goal>
+                    <goal>testCompile</goal>
+                </goals>
+            </execution>
+        </executions>
+    </plugin>
+
+            
 <!-- <plugin>
         <groupId>org.scala-tools</groupId>
         <artifactId>maven-scala-plugin</artifactId>
@@ -148,11 +258,11 @@
           <version>4.5</version>
       </dependency>
       
-       <!-- <dependency>
+       <dependency>
          <groupId>org.scala-lang</groupId>
          <artifactId>scala-library</artifactId>
          <version>2.7.2</version>
-       </dependency> -->
+       </dependency>
             <!-- <dependency>
                 <groupId>scala</groupId>
                 <artifactId>scala</artifactId>
@@ -161,14 +271,14 @@
                 <type>jar</type>
                 <systemPath>${project.basedir}/export/scala-library.jar</systemPath>
             </dependency> -->
-            <dependency>
+            <!-- <dependency>
                 <groupId>Klangjar</groupId>
                 <artifactId>klangjar</artifactId>
                 <version>1.0</version>
                 <scope>system</scope>
                 <type>jar</type>
                 <systemPath>${project.basedir}/klang.jar</systemPath>
-            </dependency>
+            </dependency> -->
             <dependency>
                 <groupId>com.microsoft.z3</groupId>
                 <artifactId>com.microsoft.z3</artifactId>
