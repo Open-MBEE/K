@@ -30,16 +30,15 @@
 \usepackage{color}
 \usepackage{amssymb}
 \usepackage{framed}
+\usepackage{graphicx} 
+\usepackage{caption} 
+\captionsetup{compatibility=false}
+\usepackage{subcaption}
 
 \definecolor{light-gray}{gray}{0.95}
 
-% --- Scala: ---
-
-\lstdefinelanguage{scala}{
-  morekeywords=
-    {package,import,class,object,trait,extends,with,match,
-     new,if,else,while,for,yield,def,val,var,this,case,
-     type,implicit,private,protected,abstract,final}, 
+\lstdefinelanguage{K}{
+  morekeywords={package,import,class,extends,with,match,new,if,then,else,while,for,yield,val,var,this,case,type,implicit,private,protected,abstract,final, req, Int, Bool, fun, pre, post},
   otherkeywords={&,\{,\},_*},
   literate=
       {\#\#}{{$\oplus\;$}}2
@@ -56,20 +55,6 @@
   morecomment=[s]{/*}{*/},
   stringstyle=\ttfamily,
 }  
-
-% --- LogScope: ---
-
-\lstdefinelanguage{dautext}{
-  morekeywords=
-    {monitor,always,init,hot,ok,error,if,then,else}, 
-  otherkeywords={=>,<=,>,<,+,++,|,&&,[,],|->}, 
-  literate={->}{{$\rightarrow$}}2{!}{{$\neg$}}2,
-  sensitive=true, 
-  morecomment=[l]{//}, 
-  morecomment=[s]{/*}{*/},
-  stringstyle=\ttfamily,
-}  
-
 % --- Referring to code: ---
 
 \newcommand{\code}[1]{\texttt{#1}}
@@ -85,3 +70,5 @@
 \newcommand{\logfire}{{LogFire}}
 
 \newcommand*{\scaleFactor}{0.75}
+
+\lstset{language=K,numbers=left,numberstyle=\scriptsize,numbersep=-21pt}
