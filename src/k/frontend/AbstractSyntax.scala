@@ -1142,7 +1142,7 @@ case class DotExp(exp: Exp, ident: String) extends Exp {
     val expression = new JSONObject()
     val operand = new JSONArray()
 
-    operand.put(new JSONObject().put("type", "ElementValue").put("element", "DotExp"))
+    operand.put(new JSONObject().put("type", "ElementValue").put("element", "getProperty"))
     operand.put(exp.toJson)
     operand.put(ident)
 
