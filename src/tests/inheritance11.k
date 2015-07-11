@@ -1,3 +1,4 @@
+
 class A {
   a : Int
   b : Int
@@ -6,6 +7,8 @@ class A {
   e : Int
   f : Int
   g : Int
+
+  req a + b + c + d + e + f = 90
 }
 
 class B extends A
@@ -16,8 +19,8 @@ class F extends E
 class G extends F
 class H extends G
 
--- h : A
--- req h is H
 
-h : H = H()
-req h.a + h.b + h.c + h.d + h.e + h.f + h.g = 90
+objectA : A 
+
+req objectA is H
+
