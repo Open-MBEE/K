@@ -171,12 +171,11 @@ case class TypeEnv(decl: TopDecl, map: Map[String, TypeInfo]) {
           case (functionName, FunctionTypeInfo(fdecl, fowner)) =>
             if (map.contains(functionName)) {
               val ofdecl = map(functionName).asInstanceOf[FunctionTypeInfo].decl
-              val areReturnTypesEqual = areTypesEqual(fdecl.ty.getOrElse(UnitType),
-                ofdecl.ty.getOrElse(UnitType), false)
+              val areReturnTypesEqual = areTypesEqual(fdecl.ty.getOrElse(UnitType), ofdecl.ty.getOrElse(UnitType), false)
               val areParamsEqual = ofdecl.params.length == fdecl.params.length && (ofdecl.params zip fdecl.params).forall { p => areTypesEqual(p._1.ty, p._2.ty, false) }
               val onlySecondHasBody  = !fdecl.body.isEmpty 
               if ((areReturnTypesEqual && areParamsEqual) && fowner != null && onlySecondHasBody) {
-                error(s"${fdecl.ident} redefined with different type.")
+                error(s"${fdecl.ident} redefined.")
               }
             }
             newMap += (kv._1 -> kv._2)
