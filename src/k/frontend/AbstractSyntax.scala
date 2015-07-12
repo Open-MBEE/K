@@ -627,16 +627,19 @@ case class EntityDecl(
 
     // constraints for property definitions of the form: x : T = e
     for (PropertyDecl(_, propertyName, ty, _, _, Some(exp)) <- propertyDecls) {
+      val getter = s"$ident!$propertyName"
+      UtilSMT.addGetter(getter)
       if (UtilSMT.isClassName(ty))
-        constraints ::= s"(= (deref ($ident!$propertyName this)) ${exp.toSMT(ident, false)})"
+        constraints ::= s"(= (deref ($getter this)) ${exp.toSMT(ident, false)})"
       else
-        constraints ::= s"(= ($ident!$propertyName this) ${exp.toSMT(ident, false)})"
+        constraints ::= s"(= ($getter this) ${exp.toSMT(ident, false)})"
     }
 
     // constraints for embedded references/parts:
     for (PropertyDecl(_, propertyName, IdentType(QualifiedName(typeName :: Nil), _), _, _, _) <- propertyDecls) {
-      // if (typeName != "Any")
-      constraints ::= s"(deref-isa-$typeName ($ident!$propertyName this))"
+      val getter = s"$ident!$propertyName"
+      UtilSMT.addGetter(getter)
+      constraints ::= s"(deref-isa-$typeName ($getter this))"
     }
 
     // constraints for constraint decls:
