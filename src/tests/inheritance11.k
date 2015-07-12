@@ -8,7 +8,7 @@ class A {
   f : Int
   g : Int
 
-  req a + b + c + d + e + f = 90
+  req a + b + c + d + e + f + g = 90
 }
 
 class B extends A

@@ -1,5 +1,15 @@
 -- Testing layout of fields in datatypes.
 
+===
+
+         A       B         D(bb:B)
+             C             E
+                   F       G
+                       H(tsum:Int)
+                          
+h:H = H(a:1,...,h:8)
+===
+
 class A {
   a : Int
 }
@@ -13,12 +23,11 @@ class C extends A, B {
 }
 
 class D {
-  bb : B
+  bb : B 
   d : Int
 }
 
-class E extends  D {
-  
+class E extends  D {  
   e : Int
 }
 
@@ -27,7 +36,7 @@ class F extends C, E {
 }
 
 class G extends E {
-  -- ee : E
+  ee : E -- before invariant optimization this would not solve.
   g : Int
 }
 
@@ -42,3 +51,4 @@ class H extends F, G {
 h : H = H(a :: 1, b :: 2, c :: 3, d :: 4, e :: 5, f :: 6, g :: 7, h :: 8)
 
 req h.tsum = 36 
+

@@ -1,6 +1,7 @@
 
--- This does not solve due to linked list recursion: it
--- creates a chain of As.
+-- This example used to not solve due to linked list recursion: it
+-- creates a chain of As. However, after the inheritance optimization
+-- it now solves instantly.
 
 class A {
   x : Int
@@ -13,7 +14,7 @@ class <b> B extends A {
   yy : Int
  
   -- req i.x > 10
-  -- i : A 
+  -- i : A -- does not solve with this line activated
 }
 
 b C {
