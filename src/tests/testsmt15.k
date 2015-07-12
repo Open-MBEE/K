@@ -1,6 +1,4 @@
 
--- Does not type check.
-
 class A {
   a : Int
 
