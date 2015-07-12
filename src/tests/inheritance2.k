@@ -1,3 +1,12 @@
+
+==========
+Hiearchy:
+ A
+   B
+   C
+     D
+==========
+
 class A {
   a : Int = 1
 }
