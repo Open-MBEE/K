@@ -1,6 +1,4 @@
 
--- Test 1: --
-
 class A {
   x : Int
   y : Int
@@ -44,3 +42,4 @@ class B {
 
   req a.x != a.y -- is is due to req 2 in A
 }
+
