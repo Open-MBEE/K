@@ -12,3 +12,4 @@ class B extends A {
 
   req y = x + 1
 }
+

@@ -28,3 +28,4 @@ inst1A : A = A(x :: 1,y :: 2)
 inst2A : A = A(y :: 2) 
 
 inst1B : B = B(a1 :: inst1A, z :: 200) 
+

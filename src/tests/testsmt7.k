@@ -1,6 +1,4 @@
 
--- Test 7: --
-
 class A {
   a : Int = 1
   fun f(k:Int):Int { a + k }

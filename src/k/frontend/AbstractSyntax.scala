@@ -97,7 +97,8 @@ object UtilSMT {
       case BoolType | IntType | RealType => true
       case IdentType(_, _)               => true
       case FunctionType(_, _) | SubType(_, _, _) | CharType | StringType | UnitType =>
-        UtilSMT.error(s"$ty in local property declaration")
+        //UtilSMT.error(s"$ty in local property declaration")
+        false
     }
 
   def ignoreMember(memberDecl: MemberDecl): Boolean = {
@@ -107,7 +108,7 @@ object UtilSMT {
     }
   }
 
-  def refines(fd1: FunDecl, fd2: FunDecl): Boolean = {
+  def funDeclRefinement(fd1: FunDecl, fd2: FunDecl): Boolean = {
     val FunDecl(ident1, typeParams1, params1, ty1, spec1, body1) = fd1
     val FunDecl(ident2, typeParams2, params2, ty2, spec2, body2) = fd2
     ident1 == ident2 &&
@@ -120,7 +121,7 @@ object UtilSMT {
       case Nil => Nil
       case fd1 :: rest =>
         val remainder = eliminateDuplicates(rest)
-        if (rest.exists(fd2 => UtilSMT.refines(fd1, fd2)))
+        if (rest.exists(fd2 => UtilSMT.funDeclRefinement(fd1, fd2)))
           remainder
         else
           fd1 :: remainder

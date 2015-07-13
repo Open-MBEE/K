@@ -1,6 +1,4 @@
 
--- k is claimed by type checker to be declared twice, which is wrong.
-
 class A {
   a : Int
 
@@ -17,4 +15,9 @@ class A {
   }
 
   req a = id(10)
+
+  -- verifying result:
+
+  req a = 10
 }
+
