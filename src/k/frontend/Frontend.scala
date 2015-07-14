@@ -67,25 +67,31 @@ object Frontend {
 
     options.get('test) match {
       case Some(_) =>
-        print("[main] Please enter the test case to run:")
-        val testCase = readLine.trim
-        val fileName = testCase.asInstanceOf[String]
-        val testsDir = new File(new File(new File(".").getAbsolutePath, "src"), "tests")
-        val file = new File(testsDir, fileName)
-        val result = doTest(file)
-        val baselineFile = new File(testsDir, "baseline.json")
-        val baselineObject =
-          if (baselineFile.exists) {
-            val json = scala.io.Source.fromFile(baselineFile).mkString
-            var tokener: JSONTokener = new JSONTokener(json)
-            var jsonObject: JSONObject = new JSONObject(tokener)
-            jsonObject
-          } else {
-            new JSONObject()
-          }
-        if (baselineObject.has(fileName))
-          compareSingleResultDetail(baselineObject.getJSONObject(fileName), result, testsDir)
-        else log(s"Baseline does not contain $fileName. Cannot compare.")
+        try {
+          print("[main] Please enter the test case to run:")
+          val testCase = readLine.trim
+          val fileName = testCase.asInstanceOf[String]
+          val testsDir = new File(new File(new File(".").getAbsolutePath, "src"), "tests")
+          val file = new File(testsDir, fileName)
+          val result = doTest(file, true)
+          val baselineFile = new File(testsDir, "baseline.json")
+          val baselineObject =
+            if (baselineFile.exists) {
+              val json = scala.io.Source.fromFile(baselineFile).mkString
+              var tokener: JSONTokener = new JSONTokener(json)
+              var jsonObject: JSONObject = new JSONObject(tokener)
+              jsonObject
+            } else {
+              new JSONObject()
+            }
+          if (baselineObject.has(fileName))
+            compareSingleResultDetail(baselineObject.getJSONObject(fileName), result, testsDir)
+          else log(s"Baseline does not contain $fileName. Cannot compare.")
+        } catch {
+          case TypeCheckException => errorExit("Type Checking exception.")
+          case K2SMTException     => errorExit("K2SMT Exception during SMT solving.")
+          case K2Z3Exception      => errorExit("Z3 Exception during SMT solving.")
+        }
       case _ => ()
     }
 
@@ -145,9 +151,10 @@ object Frontend {
       try {
         K2Z3.solveSMT(model, smtModel, true)
       } catch {
-        case K2SMTException => errorExit("K2SMT Exception during SMT solving.")
-        case K2Z3Exception  => errorExit("Z3 Exception during SMT solving.")
-        case _              => errorExit("Unknown Exception during SMT solving.")
+        case TypeCheckException => errorExit("Type Checking exception.")
+        case K2SMTException     => errorExit("K2SMT Exception during SMT solving.")
+        case K2Z3Exception      => errorExit("Z3 Exception during SMT solving.")
+        case _                  => errorExit("Unknown Exception during SMT solving.")
       }
     }
 
@@ -175,7 +182,7 @@ object Frontend {
 
     options.get('query) match {
       case Some(_) => doElastic(model)
-      case _                              => ()
+      case _       => ()
     }
 
   }
@@ -256,16 +263,16 @@ object Frontend {
     f #:: (if (f.isDirectory) f.listFiles().toStream.flatMap(getFileTree)
     else Stream.empty)
 
-  def doTest(file: File): JSONObject = {
+  def doTest(file: File, debug: Boolean): JSONObject = {
     log(s"Running test ${file.getName}")
     TypeChecker.reset
     UtilSMT.reset
-    K2Z3.debug = false
-    K2Z3.silent = true
-    ASTOptions.debug = false
-    ASTOptions.silent = true
-    TypeChecker.silent = true
-    TypeChecker.debug = false
+    K2Z3.debug = debug
+    K2Z3.silent = !debug
+    ASTOptions.debug = debug
+    ASTOptions.silent = !debug
+    TypeChecker.silent = !debug
+    TypeChecker.debug = debug
 
     val model = getModelFromFile(file.toString)
 
@@ -326,7 +333,7 @@ object Frontend {
     kFiles.foreach { file =>
       try {
         testsRun = testsRun + 1
-        val currentTestJsonObject = doTest(file)
+        val currentTestJsonObject = doTest(file, false)
 
         currentResultsObject.put(file.getName, currentTestJsonObject)
 
