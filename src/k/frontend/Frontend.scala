@@ -67,25 +67,31 @@ object Frontend {
 
     options.get('test) match {
       case Some(_) =>
-        print("[main] Please enter the test case to run:")
-        val testCase = readLine.trim
-        val fileName = testCase.asInstanceOf[String]
-        val testsDir = new File(new File(new File(".").getAbsolutePath, "src"), "tests")
-        val file = new File(testsDir, fileName)
-        val result = doTest(file)
-        val baselineFile = new File(testsDir, "baseline.json")
-        val baselineObject =
-          if (baselineFile.exists) {
-            val json = scala.io.Source.fromFile(baselineFile).mkString
-            var tokener: JSONTokener = new JSONTokener(json)
-            var jsonObject: JSONObject = new JSONObject(tokener)
-            jsonObject
-          } else {
-            new JSONObject()
-          }
-        if (baselineObject.has(fileName))
-          compareSingleResultDetail(baselineObject.getJSONObject(fileName), result, testsDir)
-        else log(s"Baseline does not contain $fileName. Cannot compare.")
+        try {
+          print("[main] Please enter the test case to run:")
+          val testCase = readLine.trim
+          val fileName = testCase.asInstanceOf[String]
+          val testsDir = new File(new File(new File(".").getAbsolutePath, "src"), "tests")
+          val file = new File(testsDir, fileName)
+          val result = doTest(file, true)
+          val baselineFile = new File(testsDir, "baseline.json")
+          val baselineObject =
+            if (baselineFile.exists) {
+              val json = scala.io.Source.fromFile(baselineFile).mkString
+              var tokener: JSONTokener = new JSONTokener(json)
+              var jsonObject: JSONObject = new JSONObject(tokener)
+              jsonObject
+            } else {
+              new JSONObject()
+            }
+          if (baselineObject.has(fileName))
+            compareSingleResultDetail(baselineObject.getJSONObject(fileName), result, testsDir)
+          else log(s"Baseline does not contain $fileName. Cannot compare.")
+        } catch {
+          case TypeCheckException => errorExit("Type Checking exception.")
+          case K2SMTException     => errorExit("K2SMT Exception during SMT solving.")
+          case K2Z3Exception      => errorExit("Z3 Exception during SMT solving.")
+        }
       case _ => ()
     }
 
@@ -145,9 +151,10 @@ object Frontend {
       try {
         K2Z3.solveSMT(model, smtModel, true)
       } catch {
-        case K2SMTException => errorExit("K2SMT Exception during SMT solving.")
-        case K2Z3Exception  => errorExit("Z3 Exception during SMT solving.")
-        case _              => errorExit("Unknown Exception during SMT solving.")
+        case TypeCheckException => errorExit("Type Checking exception.")
+        case K2SMTException     => errorExit("K2SMT Exception during SMT solving.")
+        case K2Z3Exception      => errorExit("Z3 Exception during SMT solving.")
+        case _: Throwable       => errorExit("Unknown Exception during SMT solving.")
       }
     }
 
@@ -175,7 +182,7 @@ object Frontend {
 
     options.get('query) match {
       case Some(_) => doElastic(model)
-      case _                              => ()
+      case _       => ()
     }
 
   }
@@ -256,57 +263,66 @@ object Frontend {
     f #:: (if (f.isDirectory) f.listFiles().toStream.flatMap(getFileTree)
     else Stream.empty)
 
-  def doTest(file: File): JSONObject = {
+  def doTest(file: File, debug: Boolean): JSONObject = {
     log(s"Running test ${file.getName}")
     TypeChecker.reset
     UtilSMT.reset
-    K2Z3.debug = false
-    K2Z3.silent = true
-    ASTOptions.debug = false
-    ASTOptions.silent = true
-    TypeChecker.silent = true
-    TypeChecker.debug = false
-
-    val model = getModelFromFile(file.toString)
-
-    if (model != null) new TypeChecker(model).smtCheck
-
-    val (json1, json2) =
-      if (model != null) {
-        ASTOptions.useJson1 = true
-        val json1 = model.toJson
-        ASTOptions.useJson1 = false
-        val json2 = model.toJson
-        (json1, json2)
-      } else (null, null)
-    val smt =
-      if (model != null) model.toSMT
-      else null
-    val smtModel =
-      if (smt != null) {
-        import scala.actors.Futures._
-        def runWithTimeout[T](timeoutMs: Long)(f: => T): Option[T] = {
-          awaitAll(timeoutMs, future(f)).head.asInstanceOf[Option[T]]
-        }
-        val res = runWithTimeout(10000) { K2Z3.solveSMT(model, smt, false) }
-        if (res.isEmpty) null
-        else K2Z3.z3Model.toString
-      } else null
-
+    K2Z3.debug = debug
+    K2Z3.silent = !debug
+    ASTOptions.debug = debug
+    ASTOptions.silent = !debug
+    TypeChecker.silent = !debug
+    TypeChecker.debug = debug
     val currentTestJsonObject = new JSONObject()
 
-    currentTestJsonObject.put("name", file.getName)
-    currentTestJsonObject.put("model", model.toString)
-    currentTestJsonObject.put("json1", json1)
-    currentTestJsonObject.put("json2", json2)
-    currentTestJsonObject.put("smt", smt)
-    currentTestJsonObject.put("smtModel", smtModel)
+    try {
+      val model = getModelFromFile(file.toString)
 
+      if (model != null) new TypeChecker(model).smtCheck
+
+      val (json1, json2) =
+        if (model != null) {
+          ASTOptions.useJson1 = true
+          val json1 = model.toJson
+          ASTOptions.useJson1 = false
+          val json2 = model.toJson
+          (json1, json2)
+        } else (null, null)
+      val smt =
+        if (model != null) model.toSMT
+        else null
+      val smtModel =
+        if (smt != null) {
+          import scala.actors.Futures._
+          def runWithTimeout[T](timeoutMs: Long)(f: => T): Option[T] = {
+            awaitAll(timeoutMs, future(f)).head.asInstanceOf[Option[T]]
+          }
+          val res = runWithTimeout(5000) { K2Z3.solveSMT(model, smt, debug) }
+          if (res.isEmpty) null
+          else K2Z3.z3Model.toString
+        } else null
+      currentTestJsonObject.put("name", file.getName)
+      currentTestJsonObject.put("model", model.toString)
+      currentTestJsonObject.put("json1", json1)
+      currentTestJsonObject.put("json2", json2)
+      currentTestJsonObject.put("smt", smt)
+      currentTestJsonObject.put("smtModel", smtModel)
+      currentTestJsonObject.put("typeChecks", true)
+    } catch {
+      case TypeCheckException =>
+        currentTestJsonObject.put("name", file.getName)
+        currentTestJsonObject.put("model", "")
+        currentTestJsonObject.put("json1", "")
+        currentTestJsonObject.put("json2", "")
+        currentTestJsonObject.put("smt", "")
+        currentTestJsonObject.put("smtModel", "")
+        currentTestJsonObject.put("typeChecks", false)
+    }
   }
 
   def doTests(saveBaseline: Boolean) {
 
-    var resultRows: List[List[String]] = List(List("Name", "ModelEqual", "JSON1Equal", "JSON2Equal", "SMTEqual", "SMTModelEqual"))
+    var resultRows: List[List[String]] = List(List("Name", "TypeChecksEq (TypeChecks)", "ModelEqual", "JSON1Equal", "JSON2Equal", "SMTEqual", "SMTModelEqual"))
     val testsDir = new File(new File(new File(".").getAbsolutePath, "src"), "tests")
     var kFiles = getFileTree(testsDir).filter(_.getName.endsWith(".k"))
     val baselineFile = new File(testsDir, "baseline.json")
@@ -326,7 +342,7 @@ object Frontend {
     kFiles.foreach { file =>
       try {
         testsRun = testsRun + 1
-        val currentTestJsonObject = doTest(file)
+        val currentTestJsonObject = doTest(file, false)
 
         currentResultsObject.put(file.getName, currentTestJsonObject)
 
@@ -335,14 +351,15 @@ object Frontend {
           resultRows = result._2 :: resultRows
           if (result._1) testsMatched = testsMatched + 1
         } else {
-          resultRows = List(file.getName + "*", "New", "test", "case", "", "") :: resultRows
+          resultRows = List(file.getName + "*", "New", "test", "case", "", "", "") :: resultRows
         }
 
       } catch {
-        case TypeCheckException => resultRows = List(file.getName + "*", "Does", "not", "type", "check", "") :: resultRows
-        case K2SMTException     => resultRows = List(file.getName + "*", "K2SMT", "error", "", "", "") :: resultRows
-        case K2Z3Exception      => resultRows = List(file.getName + "*", "K2Z3", "error", "", "", "") :: resultRows
-        case _: Throwable       => resultRows = List(file.getName + "*", "-", "-", "-", "-", "-") :: resultRows
+        case K2SMTException => resultRows = List(file.getName + "*", "K2SMT", "error", "", "", "", "") :: resultRows
+        case K2Z3Exception  => resultRows = List(file.getName + "*", "K2Z3", "error", "", "", "", "") :: resultRows
+        case e: Throwable   =>
+          log(e.getMessage)
+          resultRows = List(file.getName + "*", "-", "-", "-", "-", "-", "-") :: resultRows
       }
     }
     if (saveBaseline) {
@@ -360,7 +377,7 @@ object Frontend {
   }
 
   def compareSingleResultDetail(bo: JSONObject, co: JSONObject, testDir: File) {
-    var resultRows: List[List[String]] = List(List("Name", "ModelEqual", "JSON1Equal", "JSON2Equal", "SMTEqual", "SMTModelEqual"))
+    var resultRows: List[List[String]] = List(List("Name", "TypeChecksEq (TypeChecks)", "ModelEqual", "JSON1Equal", "JSON2Equal", "SMTEqual", "SMTModelEqual"))
     log()
     println(Tabulator.format((compareResult(bo, co)._2 :: resultRows).reverse))
     log()
@@ -385,30 +402,33 @@ object Frontend {
   }
 
   def compareSingleResult(key: String, bo: JSONObject, co: JSONObject): String = {
-    if (bo.has(key) && co.has(key)) {
-
+    if (bo.has(key) && co.has(key) && co.get(key).toString != "") {
       if (bo.get(key).isInstanceOf[JSONObject] && co.get(key).isInstanceOf[JSONObject])
         bo.getJSONObject(key).similar(co.getJSONObject(key)).toString
       else bo.get(key).toString.equals(co.get(key).toString).toString
     } else if (bo.has(key) && !co.has(key))
       "false"
     else if (co.has(key) && !bo.has(key))
-      "Missing in baseline"
+      "???"
     else "-"
   }
 
   def compareResult(bo: JSONObject, co: JSONObject): (Boolean, List[String]) = {
+    val typeChecksEq = compareSingleResult("typeChecks", bo, co)
     val modelEq = compareSingleResult("model", bo, co)
     val json1Eq = compareSingleResult("json1", bo, co)
     val json2Eq = compareSingleResult("json2", bo, co)
     val smtEq = compareSingleResult("smt", bo, co)
     val smtModelEq = compareSingleResult("smtModel", bo, co)
-    if (modelEq != "true" || json1Eq != "true" ||
+    val typeCheckString =
+      if (typeChecksEq == "true") s"$typeChecksEq (${co.get("typeChecks")})"
+      else s"$typeChecksEq"
+    if (typeChecksEq != "true" || modelEq != "true" || json1Eq != "true" ||
       json2Eq != "true" || smtEq != "true" || smtModelEq != "true")
-      (false, List(bo.getString("name") + "*", s"$modelEq", s"$json1Eq",
+      (false, List(bo.getString("name") + "*", s"$typeCheckString", s"$modelEq", s"$json1Eq",
         s"$json2Eq", s"$smtEq", s"$smtModelEq"))
     else
-      (true, List(bo.getString("name"), s"$modelEq", s"$json1Eq",
+      (true, List(bo.getString("name"), s"$typeCheckString", s"$modelEq", s"$json1Eq",
         s"$json2Eq", s"$smtEq", s"$smtModelEq"))
   }
 
