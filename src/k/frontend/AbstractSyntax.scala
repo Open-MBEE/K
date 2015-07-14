@@ -67,6 +67,7 @@ object UtilSMT {
   var constantsToDeclare: List[(String, Type)] = Nil
   var gettersToDeclare: Set[String] = Set()
   var constantCounter: Int = 0
+  var createdLocals: Set[String] = Set() // locals not detected by type checker
 
   def reset {
     subClassMap = Map()
@@ -114,6 +115,16 @@ object UtilSMT {
     ident1 == ident2 &&
       body1.isEmpty &&
       !(spec2.isEmpty && body2.isEmpty)
+  }
+
+  def compressFunDecls(funDecls: List[FunDecl]): List[FunDecl] = {
+    val reduced: List[FunDecl] = eliminateDuplicates(funDecls)
+    for (curFD @ FunDecl(ident, typeParams, params, ty, spec, body) <- reduced) yield {
+      val relevant: List[FunDecl] = funDecls.filter(fd => fd.ident == ident && !fd.eq(curFD))
+      val superSpec: List[FunSpec] = relevant map (_.spec) flatten
+      val newSpec: List[FunSpec] = superSpec ++ spec
+      FunDecl(ident, typeParams, params, ty, superSpec ++ spec, body)
+    }
   }
 
   def eliminateDuplicates(funDecls: List[FunDecl]): List[FunDecl] = {
@@ -176,6 +187,17 @@ object UtilSMT {
 
   def getterIsUsed(getter: String): Boolean =
     gettersToDeclare.contains(getter)
+
+  def createLocals(locals: List[String]) {
+    createdLocals ++= locals
+  }
+
+  def clearCreatedLocals() {
+    createdLocals = Set()
+  }
+
+  def isCreatedLocal(x: String): Boolean =
+    createdLocals contains x
 
   def generateOmittedConstructorParameters: String = {
     var result = ""
@@ -613,7 +635,7 @@ case class EntityDecl(
 
   def toSMTMethods: String = {
     var result: String = ""
-    val funDecls = UtilSMT.eliminateDuplicates(getAllFunDecls)
+    val funDecls = UtilSMT.compressFunDecls(getAllFunDecls)
     if (!funDecls.isEmpty) {
       result += UtilSMT.headline2(s"Methods for class $ident")
       result += funDecls.map(_.toSMT(ident)).mkString("\n\n")
@@ -942,6 +964,8 @@ case class FunSpec(pre: Boolean, exp: Exp) {
 case class Param(name: String, ty: Type) {
   def toSMT: String = s"($name ${ty.toSMT})"
 
+  def toSMTName: String = name
+
   def toSMTType: String = ty.toSMT
 
   override def toString = s"$name:$ty"
@@ -963,6 +987,9 @@ case class FunDecl(ident: String,
 
   override def toSMT(className: String): String = {
     var result: String = ""
+    val parameterTypes: String = s"Ref " + params.map(_.toSMTType).mkString(" ")
+    val parameters: String = s"(this Ref)" + params.map(_.toSMT).mkString
+    val actuals: String = "this " + params.map(_.toSMTName).mkString
     val resultType: String = ty match {
       case Some(t) =>
         if (!UtilSMT.wellFormedType(t))
@@ -972,14 +999,19 @@ case class FunDecl(ident: String,
       case None =>
         UtilSMT.error(s"Missing return type (= Unit) $this")
     }
+
+    // body:
+
     if (body == Nil) {
-      val parameterTypes: String = s"Ref " + params.map(_.toSMTType).mkString(" ")
-      result += s"(declare-fun $className.$ident ($parameterTypes) $resultType)"
+      result += s"(declare-fun $className.$ident ($parameterTypes) $resultType)\n"
+      result += "\n"
+      result += s"(define-fun $className!$ident ($parameters) $resultType\n"
+      result += s"  ($className.$ident $actuals)\n"
+      result += ")"
     } else {
-      val parameters: String = s"(this Ref)" + params.map(_.toSMT).mkString
-      val bodySMTSubtyping = UtilSMT.memberList2SMT(body, className, true)
+      val bodySMTWithSubtyping = UtilSMT.memberList2SMT(body, className, true)
       result += s"(define-fun $className.$ident ($parameters) $resultType\n"
-      result += s"$bodySMTSubtyping\n"
+      result += s"$bodySMTWithSubtyping\n"
       result += ")\n"
       result += "\n"
       val bodySMTNoSubtyping = UtilSMT.memberList2SMT(body, className, false)
@@ -987,6 +1019,33 @@ case class FunDecl(ident: String,
       result += s"$bodySMTNoSubtyping\n"
       result += ")"
     }
+
+    // specification:
+
+    val preConditions = spec.filter(_.pre)
+    val postConditions = spec.filterNot(_.pre)
+    if (!postConditions.isEmpty) {
+      UtilSMT.createLocals(params.map(_.name))
+      result += "\n\n"
+      val preSMT = preConditions.map(_.exp.toSMT(className, true)).mkString("\n      ") // and false?
+      val postSMT = postConditions.map(_.exp.toSMT(className, true)).mkString("\n      ") // and false?
+      val resultVar = "$result"
+      result += s"(assert (forall ($parameters ($resultVar $resultType))\n"
+      result += s"  (=>\n"
+      result += s"    (and\n"
+      result += s"      (deref-isa-$className this)\n" // isa or is?
+      result += s"      $preSMT\n"
+      result += s"      (= $resultVar ($className!$ident $actuals))\n" // and dot?
+      result += s"    )\n"
+      result += s"    (and\n"
+      result += s"      $postSMT\n"
+      result += s"    )\n"
+      result += s"  )\n"
+      result += s"))"
+      UtilSMT.clearCreatedLocals()
+    }
+
+    // return result:
     result
   }
 
@@ -1117,9 +1176,8 @@ case class ParenExp(exp: Exp) extends Exp {
 }
 
 case class IdentExp(ident: String) extends Exp {
-
   override def toSMT(className: String, subTyping: Boolean): String =
-    if (isLocal(this))
+    if (isLocal(this) || UtilSMT.isCreatedLocal(ident))
       ident
     else {
       val dot: String = if (subTyping) "." else "!"
@@ -1192,8 +1250,7 @@ case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
         s"(lift-$ident mk-$ident)"
       else {
         val argsSMTList: List[String] =
-          for (PropertyDecl(_, id, ty, _, _, _) <- propertyDecls) yield 
-            if (argMap contains id) argMap(id).toSMT(className, subTyping) else UtilSMT.getNewConstant(ty)
+          for (PropertyDecl(_, id, ty, _, _, _) <- propertyDecls) yield if (argMap contains id) argMap(id).toSMT(className, subTyping) else UtilSMT.getNewConstant(ty)
         val argsSMT = argsSMTList.mkString(" ")
         s"(lift-$ident (mk-$ident $argsSMT))"
       }
@@ -1796,9 +1853,8 @@ case class TypeCastCheckExp(cast: Boolean, exp: Exp, ty: Type) extends Exp {
 }
 
 case class ReturnExp(exp: Exp) extends Exp {
-  override def toSMT(className: String, subTyping: Boolean): String = {
+  override def toSMT(className: String, subTyping: Boolean): String =
     exp.toSMT(className, subTyping)
-  }
 
   override def toString = s"return $exp"
 
@@ -1858,7 +1914,10 @@ case object ContinueExp extends Exp {
 }
 
 case object ResultExp extends Exp {
-  override def toString = "result"
+  override def toString = "$result"
+
+  override def toSMT(className: String, subTyping: Boolean): String =
+    "$result"
 
   override def toJson1 = {
     new JSONObject().put("type", "ResultExp")

@@ -1,0 +1,40 @@
+
+class A {
+  a : Int 
+
+  fun f(x : Int): Int
+
+  -- req a = f(10)
+}
+
+class B extends A {
+  b : Int
+
+  fun f(x: Int): Int
+    pre a >= 0
+    pre x > a
+    post $result >= 0
+}
+
+class C extends B {
+  c : Int --= 3
+
+  fun f(x:Int): Int 
+    pre b >= 0
+    pre c >= 0
+    post $result > 0
+ {
+    a + b + c + x
+  }
+}
+
+===
+
+c : C
+
+result : Int = c.f(10)
+
+===
+
+-- req result = 16
+
