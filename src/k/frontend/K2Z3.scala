@@ -68,7 +68,7 @@ case class DataType(sort: Sort, constructor: FuncDecl, selectors: Map[String, Fu
 object K2Z3 {
 
   var debug: Boolean = false
-  var silent : Boolean = false
+  var silent: Boolean = false
   var cfg: Map[String, String] = Map("model" -> "true", "auto-config" -> "true")
   var ctx: Context = new Context(cfg)
   var idents: MMap[String, (Expr, com.microsoft.z3.StringSymbol)] = MMap()
@@ -188,37 +188,34 @@ object K2Z3 {
       heapMap.foreach { kv =>
         val key = kv._1
         val value = kv._2.replace("- ", "-")
-        if (key != "else") {
-          val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
-          if (value.contains("mk-")) {
-            val objectValues = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
-              .split(' ').map(_.trim).filterNot { _.isEmpty }
+        val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
+        if (value.contains("mk-")) {
+          val objectValues = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
+            .split(' ').map(_.trim).filterNot { _.isEmpty }
 
-            className == "TopLevelDeclarations" match {
-              case true =>
-                var topLevelVariables =
-                  model.decls.foldLeft(List[(String, Boolean)]()) { (res, d) =>
-                    d match {
-                      case pd @ PropertyDecl(_, _, _, _, _, _) => (new Tuple2(pd.name, TypeChecker.isPrimitiveType(pd.ty))) :: res
-                      case _                                   => res
-                    }
+          className == "TopLevelDeclarations" match {
+            case true =>
+              var topLevelVariables =
+                model.decls.foldLeft(List[(String, Boolean)]()) { (res, d) =>
+                  d match {
+                    case pd @ PropertyDecl(_, _, _, _, _, _) => (new Tuple2(pd.name, TypeChecker.isPrimitiveType(pd.ty))) :: res
+                    case _                                   => res
                   }
-                var i = 1
-                topLevelVariables.reverse.foreach { k =>
-                  if (k._2) rows = (List(k._1, objectValues(i))) :: rows
-                  else {
-                    val res = printObjectValue(k._1, heapMap, heapMap.getOrElse(objectValues(i), heapMap("else")), visited)
-                    rows = res._2 ++ rows
-                    visited = res._1 + ("Ref " + key)
-                  }
-                  i = i + 1
                 }
-              case _ => {
-                val res = printObjectValue("Ref " + key, heapMap, value, visited)
-                extraRows = res._2 ++ extraRows
-                visited = res._1
+              var i = 1
+              topLevelVariables.reverse.foreach { k =>
+                if (k._2) rows = (List(k._1, objectValues(i))) :: rows
+                else {
+                  val res = printObjectValue(k._1, heapMap, heapMap.getOrElse(objectValues(i), heapMap("else")), visited)
+                  rows = res._2 ++ rows
+                  visited = res._1 + ("Ref " + key)
+                }
+                i = i + 1
               }
-
+            case _ => {
+              val res = printObjectValue("Ref " + key, heapMap, value, visited)
+              extraRows = res._2 ++ extraRows
+              visited = res._1
             }
           }
         }
@@ -257,7 +254,7 @@ object K2Z3 {
       if (printModel) PrintModel(model)
     } catch {
       case e: Throwable =>
-        if(debug) e.printStackTrace()
+        if (debug) e.printStackTrace()
         throw K2Z3Exception
     }
   }
