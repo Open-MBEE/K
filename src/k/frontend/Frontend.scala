@@ -322,7 +322,7 @@ object Frontend {
 
   def doTests(saveBaseline: Boolean) {
 
-    var resultRows: List[List[String]] = List(List("Name", "TypeChecks", "ModelEqual", "JSON1Equal", "JSON2Equal", "SMTEqual", "SMTModelEqual"))
+    var resultRows: List[List[String]] = List(List("Name", "TypeChecksEq (TypeChecks)", "ModelEqual", "JSON1Equal", "JSON2Equal", "SMTEqual", "SMTModelEqual"))
     val testsDir = new File(new File(new File(".").getAbsolutePath, "src"), "tests")
     var kFiles = getFileTree(testsDir).filter(_.getName.endsWith(".k"))
     val baselineFile = new File(testsDir, "baseline.json")
@@ -377,7 +377,7 @@ object Frontend {
   }
 
   def compareSingleResultDetail(bo: JSONObject, co: JSONObject, testDir: File) {
-    var resultRows: List[List[String]] = List(List("Name", "TypeChecks", "ModelEqual", "JSON1Equal", "JSON2Equal", "SMTEqual", "SMTModelEqual"))
+    var resultRows: List[List[String]] = List(List("Name", "TypeChecksEq (TypeChecks)", "ModelEqual", "JSON1Equal", "JSON2Equal", "SMTEqual", "SMTModelEqual"))
     log()
     println(Tabulator.format((compareResult(bo, co)._2 :: resultRows).reverse))
     log()
@@ -402,7 +402,7 @@ object Frontend {
   }
 
   def compareSingleResult(key: String, bo: JSONObject, co: JSONObject): String = {
-    if (bo.has(key) && co.has(key)) {
+    if (bo.has(key) && co.has(key) && co.get(key).toString != "") {
       if (bo.get(key).isInstanceOf[JSONObject] && co.get(key).isInstanceOf[JSONObject])
         bo.getJSONObject(key).similar(co.getJSONObject(key)).toString
       else bo.get(key).toString.equals(co.get(key).toString).toString
