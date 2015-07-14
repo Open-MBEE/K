@@ -537,7 +537,7 @@ case class EntityDecl(
   def toSMTDatatype: String = {
     val propertyDecls = getAllPropertyDecls
     if (propertyDecls.isEmpty) {
-      s"(declare-sort $ident)"
+      s"(declare-sort $ident) (declare-const mk-$ident $ident)"
     } else {
       val constr = s"mk-$ident"
       val fields = propertyDecls.map(_.toSMT).mkString
@@ -1187,10 +1187,16 @@ case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
       val argMap: Map[String, Exp] = (for (NamedArgument(x, exp) <- args) yield (x -> exp)).toMap
       val IdentExp(ident) = exp1
       val entityDecl = getEntityDecl(ident)
-      val argsSMTList: List[String] =
-        for (PropertyDecl(_, id, ty, _, _, _) <- entityDecl.getAllPropertyDecls) yield if (argMap contains id) argMap(id).toSMT(className, subTyping) else UtilSMT.getNewConstant(ty)
-      val argsSMT = argsSMTList.mkString(" ")
-      s"(lift-$ident (mk-$ident $argsSMT))"
+      val propertyDecls = entityDecl.getAllPropertyDecls
+      if (propertyDecls.isEmpty)
+        s"(lift-$ident mk-$ident)"
+      else {
+        val argsSMTList: List[String] =
+          for (PropertyDecl(_, id, ty, _, _, _) <- propertyDecls) yield 
+            if (argMap contains id) argMap(id).toSMT(className, subTyping) else UtilSMT.getNewConstant(ty)
+        val argsSMT = argsSMTList.mkString(" ")
+        s"(lift-$ident (mk-$ident $argsSMT))"
+      }
     } else {
       // function application:
       val expSMT: String =
