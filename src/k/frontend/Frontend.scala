@@ -297,7 +297,7 @@ object Frontend {
           def runWithTimeout[T](timeoutMs: Long)(f: => T): Option[T] = {
             awaitAll(timeoutMs, future(f)).head.asInstanceOf[Option[T]]
           }
-          val res = runWithTimeout(5000) { K2Z3.solveSMT(model, smt, false) }
+          val res = runWithTimeout(5000) { K2Z3.solveSMT(model, smt, debug) }
           if (res.isEmpty) null
           else K2Z3.z3Model.toString
         } else null
