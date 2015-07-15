@@ -1,6 +1,6 @@
 
 class A {
-  a : Int 
+  a : Int = 1
 
   fun f(x : Int): Int
 
@@ -8,7 +8,7 @@ class A {
 }
 
 class B extends A {
-  b : Int
+  b : Int = 2
 
   fun f(x: Int): Int
     pre a >= 0
@@ -17,7 +17,7 @@ class B extends A {
 }
 
 class C extends B {
-  c : Int --= 3
+  c : Int = 3
 
   fun f(x:Int): Int 
     pre b >= 0
@@ -28,13 +28,9 @@ class C extends B {
   }
 }
 
-===
-
 c : C
 
 result : Int = c.f(10)
 
-===
-
--- req result = 16
+req result = 16
 

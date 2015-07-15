@@ -173,7 +173,7 @@ case class TypeEnv(decl: TopDecl, map: Map[String, TypeInfo]) {
               val ofdecl = map(functionName).asInstanceOf[FunctionTypeInfo].decl
               val areReturnTypesEqual = areTypesEqual(fdecl.ty.getOrElse(UnitType), ofdecl.ty.getOrElse(UnitType), false)
               val areParamsEqual = ofdecl.params.length == fdecl.params.length && (ofdecl.params zip fdecl.params).forall { p => areTypesEqual(p._1.ty, p._2.ty, false) }
-              val onlySecondHasBody  = !fdecl.body.isEmpty 
+              val onlySecondHasBody = !fdecl.body.isEmpty
               if ((areReturnTypesEqual && areParamsEqual) && fowner != null && onlySecondHasBody) {
                 error(s"${fdecl.ident} redefined.")
               }
@@ -371,7 +371,15 @@ class TypeChecker(model: Model) {
       }
 
       if (d.isInstanceOf[FunDecl]) {
-        if (!isPrimitiveType(d.asInstanceOf[FunDecl].ty.getOrElse(UnitType))) {
+        val fd = d.asInstanceOf[FunDecl]
+        val lastMemberIsConstructorCall =
+          if (fd.body.length == 0) false
+          else fd.body.last match {
+            case ExpressionDecl(e) => !isConstructorCall(exp2TypeEnv.get(e), e).isEmpty
+            case _                 => false
+          }
+
+        if (!isPrimitiveType(d.asInstanceOf[FunDecl].ty.getOrElse(UnitType)) && lastMemberIsConstructorCall) {
           error(s"Function $d does not return a primitive type. SMT mode disallows this.")
         }
         if (functionContainsReq(d.asInstanceOf[FunDecl])) {
@@ -631,7 +639,7 @@ class TypeChecker(model: Model) {
               case ExpressionDecl(e) =>
                 val exprType = getExpType(entityTypeEnv, e, ed)
                 if (exprType != UnitType) {
-                  error(s"Expression in class does not have unit type: $e")
+                  error(s"Expression in class does not have unit type: $e\nMaybe you need to have the 'req' keyword before the expression?")
                 }
                 exp2Type.put(e, exprType)
               case _ => ()
@@ -678,12 +686,12 @@ class TypeChecker(model: Model) {
           }
           newTe = newTe.overwrite(pd.name -> PropertyTypeInfo(pd, false, false, owner))
         case ExpressionDecl(exp @ IfExp(cond, tb, eb)) =>
-          if (tb.isInstanceOf[BlockExp]){
+          if (tb.isInstanceOf[BlockExp]) {
             exp2TypeEnv.put(tb, processBody(tb.asInstanceOf[BlockExp].body, newTe, owner))
           }
-          if (!eb.isEmpty){
-            if (eb.get.isInstanceOf[BlockExp]){ 
-              exp2TypeEnv.put(eb.get,processBody(eb.get.asInstanceOf[BlockExp].body, newTe, owner)) 
+          if (!eb.isEmpty) {
+            if (eb.get.isInstanceOf[BlockExp]) {
+              exp2TypeEnv.put(eb.get, processBody(eb.get.asInstanceOf[BlockExp].body, newTe, owner))
             }
           }
           exp2TypeEnv.put(exp, newTe)
@@ -753,7 +761,7 @@ class TypeChecker(model: Model) {
 
   }
 
-  def getFunDecl(te: TypeEnv, exp: Exp, owner : EntityDecl): (Boolean, FunDecl) = {
+  def getFunDecl(te: TypeEnv, exp: Exp, owner: EntityDecl): (Boolean, FunDecl) = {
     logDebug(s"getFunDecl: $exp in $te")
 
     val result: (Boolean, FunDecl) = exp match {
@@ -768,7 +776,7 @@ class TypeChecker(model: Model) {
         }
       case DotExp(e, i) =>
         val ti = getExpType(te, e, owner)
-        logDebug(i + " "+ (i=="collect"))
+        logDebug(i + " " + (i == "collect"))
         if (i == "toString") (true, null)
         else if (i == "collect") (true, null)
         else if (i == "size") (true, null)
@@ -797,7 +805,7 @@ class TypeChecker(model: Model) {
     return result
   }
 
-  def getExpType(te: TypeEnv, exp: Exp, owner : EntityDecl): Type = {
+  def getExpType(te: TypeEnv, exp: Exp, owner: EntityDecl): Type = {
     logDebug(s"getExpType: $exp in $te")
     val result: Type = exp match {
       case ResultExp   => AnyType //TODO
@@ -815,7 +823,8 @@ class TypeChecker(model: Model) {
               case None    => UnitType
             }
           case cti @ ClassTypeInfo(decl) =>
-            ClassType(QualifiedName(List(decl.ident)))
+            //ClassType(QualifiedName(List(decl.ident)))
+            IdentType(QualifiedName(List(decl.ident)), List())
           case pti @ PatternTypeInfo(p, t) => t
           case tt @ _ =>
             error(s"Type could not be found for $exp." + tt.getClass)
@@ -970,8 +979,8 @@ class TypeChecker(model: Model) {
         tbType
       case BlockExp(body) =>
         logDebug(s"Get type environment for BlockExp $body ${exp2TypeEnv.containsKey(exp)}")
-        var blockTe = if(exp2TypeEnv.containsKey(exp)) exp2TypeEnv.get(exp) else processBody(body, te, owner)
-                
+        var blockTe = if (exp2TypeEnv.containsKey(exp)) exp2TypeEnv.get(exp) else processBody(body, te, owner)
+
         var lastType: Type = UnitType
         val bodyTypes = body.foreach {
           b =>
