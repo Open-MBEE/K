@@ -1027,18 +1027,19 @@ case class FunDecl(ident: String,
     if (!postConditions.isEmpty) {
       UtilSMT.createLocals(params.map(_.name))
       result += "\n\n"
-      val preSMT = preConditions.map(_.exp.toSMT(className, true)).mkString("\n      ") // and false?
-      val postSMT = postConditions.map(_.exp.toSMT(className, true)).mkString("\n      ") // and false?
+      val preSMT = preConditions.map(_.exp.toSMT(className, false)).mkString("\n        ") // and true?
+      val postSMT = postConditions.map(_.exp.toSMT(className, false)).mkString("\n        ") // and true?
       val resultVar = "$result"
-      result += s"(assert (forall ($parameters ($resultVar $resultType))\n"
-      result += s"  (=>\n"
-      result += s"    (and\n"
-      result += s"      (deref-isa-$className this)\n" // isa or is?
-      result += s"      $preSMT\n"
-      result += s"      (= $resultVar ($className!$ident $actuals))\n" // and dot?
-      result += s"    )\n"
-      result += s"    (and\n"
-      result += s"      $postSMT\n"
+      result += s"(assert (forall ($parameters)\n"
+      result += s"  (let (($resultVar ($className!$ident $actuals)))\n" // and dot?
+      result += s"    (=>\n"
+      result += s"      (and\n"
+      result += s"        (deref-isa-$className this)\n" // isa or is?
+      if (preSMT != "") result += s"        $preSMT\n"
+      result += s"      )\n"
+      result += s"      (and\n"
+      result += s"        $postSMT\n"
+      result += s"      )\n"
       result += s"    )\n"
       result += s"  )\n"
       result += s"))"
