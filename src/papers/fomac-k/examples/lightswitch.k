@@ -1,6 +1,6 @@
 
 class State
-===
+
 class LightSwitchSpec {
 
   off : State
@@ -17,13 +17,13 @@ class LightSwitchSpec {
     state = on  
   }
 }
-===
+
 class LightSwitchImpl {
   fun toggle(state: Int): Int 
     post $result = 0 || $result = 1
   {
     if state = 1 then 0 
-    else -1    
+    else 1    
   }
 
   fun isOn(state: Int): Bool {
@@ -31,17 +31,17 @@ class LightSwitchImpl {
   }
 }
 
-===
 class Main {
   abstract : LightSwitchSpec
   concrete : LightSwitchImpl
   
-  fun abs(concrete:Int):State {
+  fun abs(concrete:Int):State 
+  {
     if concrete = 1 then abstract.on
     else abstract.off
   }
 
---  req forall concreteState: Int :-
---    abstract.toggle(abs(concreteState)) = abs(concrete.toggle(concreteState))
+req forall concreteState: Int :-
+    abstract.toggle(abs(concreteState)) = abs(concrete.toggle(concreteState))
 }
-===
+
