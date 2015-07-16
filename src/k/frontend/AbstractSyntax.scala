@@ -989,7 +989,7 @@ case class FunDecl(ident: String,
     var result: String = ""
     val parameterTypes: String = s"Ref " + params.map(_.toSMTType).mkString(" ")
     val parameters: String = s"(this Ref)" + params.map(_.toSMT).mkString
-    val actuals: String = "this " + params.map(_.toSMTName).mkString
+    val actuals: String = "this " + params.map(_.toSMTName).mkString(" ")
     val resultType: String = ty match {
       case Some(t) =>
         if (!UtilSMT.wellFormedType(t))
