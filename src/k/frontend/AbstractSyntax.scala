@@ -422,6 +422,10 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
     result1 + getters + constants + result2
   }
 
+  def toScala: String = {
+    decls.map(_.toScala).mkString("\n\n")
+  }
+
   override def toString = {
     var result =
       packageName match {
@@ -539,6 +543,7 @@ case class ImportDecl(name: QualifiedName, star: Boolean) {
 
 trait TopDecl {
   def toSMT: String = ???
+  def toScala: String = ???
   def toJson: JSONObject = {
     if (ASTOptions.useJson1) toJson1
     else toJson2
@@ -697,6 +702,21 @@ case class EntityDecl(
 
   def toSMTAssert: String =
     s"(assert (exists ((instanceOf$ident Ref)) (deref-is-$ident instanceOf$ident)))"
+
+  override def toScala: String = {
+    var result: String = s"class $ident"
+    val directSuperClasses = TypeChecker.getDirectSubClasses(ident)
+    if (directSuperClasses.size > 1)
+      UtilSMT.error(s"class $ident has more than one super class")
+    if (directSuperClasses.size == 1) {
+      val superClass = directSuperClasses(0)
+      result += " extends $superClass {\n"
+    } else
+      result += " {\n"
+    result += members.map(_.toScala).mkString("\n\n")
+    result += "}"
+    result
+  }
 
   def getPropertyDecls: List[PropertyDecl] =
     for (m <- members if m.isInstanceOf[PropertyDecl] && !UtilSMT.ignoreMember(m)) yield m.asInstanceOf[PropertyDecl]
@@ -878,6 +898,23 @@ case class PropertyDecl(modifiers: List[PropertyModifier],
                         expr: Option[Exp]) extends MemberDecl {
 
   override def toSMT: String = s"($name ${ty.toSMT})"
+
+  override def toScala = {
+    val modifierSMT: String = if (modifiers.contains(Val)) "val" else "var"
+    val tySMT: String = ty.toScala
+    val exprSMT: String =
+      expr match {
+        case Some(e) => e.toScala
+        case None =>
+          ty match {
+            case IntType | RealType => "0"
+            case BoolType           => "false"
+            case _                  => null
+          }
+      }
+
+    s"$modifierSMT : $tySMT = $exprSMT"
+  }
 
   override def toString = {
     var result = ""
@@ -1144,6 +1181,7 @@ case class ExpressionDecl(exp: Exp) extends MemberDecl {
 
 trait Exp {
   def toSMT(className: String, subTyping: Boolean): String = ???
+  def toScala: String = ???
   def toJson: JSONObject = {
     if (ASTOptions.useJson1) toJson1
     else toJson2
@@ -2431,6 +2469,7 @@ case object Exists extends Quantifier {
 
 trait Type {
   def toSMT: String = ???
+  def toScala: String = ???
   def toJson: JSONObject = {
     if (ASTOptions.useJson1 == true) toJson1
     else toJson2
