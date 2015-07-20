@@ -1,8 +1,6 @@
 package k.frontend
 
 import scala.collection.JavaConverters._
-import k.frontend.ModelBaseVisitor
-import k.frontend.ModelParser
 import java.lang.Float
 import java.lang.Boolean
 import java.math.RoundingMode
