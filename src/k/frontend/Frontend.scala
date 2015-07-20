@@ -366,10 +366,10 @@ object Frontend {
       val fw = new FileWriter(baselineFile)
       fw.write(currentResultsObject.toString)
       fw.close
-      println("Baseline saved.")
+      log("Baseline saved.")
     }
     println
-    println("Results:")
+    log("Results:")
     println
     println(Tabulator.format(resultRows.reverse))
     println
