@@ -1081,7 +1081,7 @@ case class FunDecl(ident: String,
       result += s"  (let (($resultVar ($className!$ident $actuals)))\n" // and dot?
       result += s"    (=>\n"
       result += s"      (and\n"
-      result += s"        (deref-isa-$className this)\n" // isa or is?
+      result += s"        (deref-is-$className this)\n" // isa does not solve, but should it be isa?
       if (preSMT != "") result += s"        $preSMT\n"
       result += s"      )\n"
       result += s"      (and\n"
