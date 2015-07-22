@@ -21,6 +21,7 @@ import org.json.JSONObject
 import k.frontend.ModelParser.ModelContext
 import org.json.JSONTokener
 import scala.collection.mutable.{ ListBuffer => MList }
+import scala.actors.Futures._
 
 object Frontend {
   type OptionMap = Map[Symbol, Any]
@@ -149,7 +150,9 @@ object Frontend {
         println("-----------------")
       }
       try {
-        K2Z3.solveSMT(model, smtModel, true)
+        val res = runWithTimeout(10000) { K2Z3.solveSMT(model, smtModel, true) }
+        if (res.isEmpty) log("Timeout")
+
       } catch {
         case TypeCheckException => errorExit("Type Checking exception.")
         case K2SMTException     => errorExit("K2SMT Exception during SMT solving.")
@@ -293,10 +296,6 @@ object Frontend {
         else null
       val smtModel =
         if (smt != null) {
-          import scala.actors.Futures._
-          def runWithTimeout[T](timeoutMs: Long)(f: => T): Option[T] = {
-            awaitAll(timeoutMs, future(f)).head.asInstanceOf[Option[T]]
-          }
           val res = runWithTimeout(5000) { K2Z3.solveSMT(model, smt, debug) }
           if (res.isEmpty) null
           else K2Z3.z3Model.toString
@@ -318,6 +317,10 @@ object Frontend {
         currentTestJsonObject.put("smtModel", "")
         currentTestJsonObject.put("typeChecks", false)
     }
+  }
+
+  def runWithTimeout[T](timeoutMs: Long)(f: => T): Option[T] = {
+    awaitAll(timeoutMs, future(f)).head.asInstanceOf[Option[T]]
   }
 
   def doTests(saveBaseline: Boolean) {
@@ -357,7 +360,7 @@ object Frontend {
       } catch {
         case K2SMTException => resultRows = List(file.getName + "*", "K2SMT", "error", "", "", "", "") :: resultRows
         case K2Z3Exception  => resultRows = List(file.getName + "*", "K2Z3", "error", "", "", "", "") :: resultRows
-        case e: Throwable   =>
+        case e: Throwable =>
           log(e.getMessage)
           resultRows = List(file.getName + "*", "-", "-", "-", "-", "-", "-") :: resultRows
       }
@@ -445,81 +448,96 @@ object Frontend {
 
     // first build the classes 
     for (i <- Range(0, elementsArray.length())) {
-      val obj = elementsArray.get(i).asInstanceOf[JSONObject]
-      if (obj.keySet.contains("specialization")) {
-        if (obj.getString("name").length == 0) {
-          println("Warning: found unnamed element in JSON: " + obj.getString("sysmlid"))
-        } else {
-          val specializationObject = obj.getJSONObject("specialization")
-          specializationObject.getString("type") match {
-            case "Element" =>
-              val entity = EntityDecl(Nil, ClassToken, None, obj.getString("name"), Nil, Nil, Nil)
-              mdecls = entity :: mdecls
-              id2Decl += (obj.getString("sysmlid") -> entity)
-            case _ => ()
+      try {
+        val obj = elementsArray.get(i).asInstanceOf[JSONObject]
+        if (obj.keySet.contains("specialization")) {
+          if (obj.getString("name").length == 0) {
+            //println("Warning: found unnamed element in JSON: " + obj.getString("sysmlid"))
+          } else {
+            val specializationObject = obj.getJSONObject("specialization")
+            specializationObject.getString("type") match {
+              case "Element" =>
+                val entity = EntityDecl(Nil, ClassToken, None, obj.getString("name").replace(" ", "_"), Nil, Nil, Nil)
+                mdecls = entity :: mdecls
+                id2Decl += (obj.getString("sysmlid") -> entity)
+              case _ => ()
+            }
           }
         }
+      } catch {
+        case _ => ()
       }
+
     }
 
     // now we can process properties and constraints
-
     for (i <- Range(0, elementsArray.length())) {
       val obj = elementsArray.get(i).asInstanceOf[JSONObject]
-      if (obj.keySet.contains("specialization")) {
-        val specializationObject = obj.getJSONObject("specialization")
-        if (obj.getString("name").length == 0 &&
-          specializationObject.getString("type") != "Generalization") {
-          println("Warning: found unnamed element in JSON: " + obj.getString("sysmlid"))
-        } else {
-          specializationObject.getString("type") match {
-            case "Property" =>
-              val owningDecl = id2Decl(obj.getString("owner")).asInstanceOf[EntityDecl]
-              val propertyType =
-                if (specializationObject.get("propertyType") == JSONObject.NULL) IntType
-                else {
-                  val typeDecl = id2Decl(specializationObject.getString("propertyType")).asInstanceOf[EntityDecl]
-                  IdentType(QualifiedName(List(typeDecl.ident)), List())
+      try {
+        if (obj.keySet.contains("specialization")) {
+          val specializationObject = obj.getJSONObject("specialization")
+          if (obj.getString("name").length == 0 &&
+            specializationObject.getString("type") != "Generalization") {
+            //println("Warning: found unnamed element in JSON: " + obj.getString("sysmlid"))
+          } else {
+            specializationObject.getString("type") match {
+              case "Property" =>
+                val owningDecl = id2Decl(obj.getString("owner")).asInstanceOf[EntityDecl]
+                val propertyType =
+                  if (specializationObject.get("propertyType") == JSONObject.NULL) IntType
+                  else {
+                    val typeDecl = id2Decl(specializationObject.getString("propertyType")).asInstanceOf[EntityDecl]
+                    IdentType(QualifiedName(List(typeDecl.ident)), List())
+                  }
+                val property = PropertyDecl(Nil, obj.getString("name").replace(" ", "_"), propertyType, None, None, None)
+                val newDecl = EntityDecl(owningDecl.annotations, owningDecl.entityToken,
+                  owningDecl.keyword, owningDecl.ident,
+                  owningDecl.typeParams, owningDecl.extending,
+                  property :: owningDecl.members)
+                mdecls = mdecls.diff(List(owningDecl))
+                mdecls = newDecl :: mdecls
+
+                id2Decl += (obj.getString("owner") -> newDecl)
+
+              case "Package" => packageName =
+                Some(PackageDecl(QualifiedName(obj.getString("qualifiedName").replace("-", "_").replace(" ", "_").split("/").toList.filterNot { _.isEmpty })))
+              case "Constraint" =>
+                if (specializationObject.getJSONObject("specification").has("expressionBody")) {
+                  val constraintExpressionBody = specializationObject.getJSONObject("specification").getJSONArray("expressionBody")
+
+                  val constraintExpression = if (constraintExpressionBody.length() > 0) { constraintExpressionBody.get(0).asInstanceOf[String] } else BooleanLiteral(true).toString
+                  val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(constraintExpression)
+                  var m: Model = ksv.visit(tree).asInstanceOf[Model]
+                  var exp: Exp = m.decls(0).asInstanceOf[ExpressionDecl].exp
+                  val owningDecl = id2Decl(obj.getString("owner")).asInstanceOf[EntityDecl]
+                  val constraint = ConstraintDecl(Some(obj.getString("name").replace(" ", "_")), exp)
+                  val newDecl = EntityDecl(owningDecl.annotations, owningDecl.entityToken,
+                    owningDecl.keyword, owningDecl.ident,
+                    owningDecl.typeParams, owningDecl.extending,
+                    constraint :: owningDecl.members)
+                  mdecls = mdecls.diff(List(owningDecl))
+                  mdecls = newDecl :: mdecls
+                  id2Decl += (obj.getString("owner") -> newDecl)
+                } else {
+                  log("Constraint is missing expressionBody in specification..." + specializationObject)
                 }
-              val property = PropertyDecl(Nil, obj.getString("name"), propertyType, None, None, None)
-              val newDecl = EntityDecl(owningDecl.annotations, owningDecl.entityToken,
-                owningDecl.keyword, owningDecl.ident,
-                owningDecl.typeParams, owningDecl.extending,
-                property :: owningDecl.members)
-              mdecls = mdecls.diff(List(owningDecl))
-              mdecls = newDecl :: mdecls
+              case "Generalization" =>
+                val owningDecl = id2Decl(specializationObject.getString("source")).asInstanceOf[EntityDecl]
+                val targetDecl = id2Decl(specializationObject.getString("target")).asInstanceOf[EntityDecl]
+                val newDecl = EntityDecl(owningDecl.annotations, owningDecl.entityToken,
+                  owningDecl.keyword, owningDecl.ident,
+                  owningDecl.typeParams, IdentType(QualifiedName(List(targetDecl.ident)), List()) :: owningDecl.extending, owningDecl.members)
+                mdecls = mdecls.diff(List(owningDecl))
+                mdecls = newDecl :: mdecls
+                id2Decl += (obj.getString("owner") -> newDecl)
 
-              id2Decl += (obj.getString("owner") -> newDecl)
-
-            case "Package" => packageName =
-              Some(PackageDecl(QualifiedName(obj.getString("qualifiedName").replace("-", "_").split("/").toList.filterNot { _.isEmpty })))
-            case "Constraint" =>
-              val constraintExpression = specializationObject.getJSONObject("specification").getJSONArray("expressionBody").get(0).asInstanceOf[String]
-              val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(constraintExpression)
-              var m: Model = ksv.visit(tree).asInstanceOf[Model]
-              var exp: Exp = m.decls(0).asInstanceOf[ExpressionDecl].exp
-              val owningDecl = id2Decl(obj.getString("owner")).asInstanceOf[EntityDecl]
-              val constraint = ConstraintDecl(Some(obj.getString("name")), exp)
-              val newDecl = EntityDecl(owningDecl.annotations, owningDecl.entityToken,
-                owningDecl.keyword, owningDecl.ident,
-                owningDecl.typeParams, owningDecl.extending,
-                constraint :: owningDecl.members)
-              mdecls = mdecls.diff(List(owningDecl))
-              mdecls = newDecl :: mdecls
-              id2Decl += (obj.getString("owner") -> newDecl)
-            case "Generalization" =>
-              val owningDecl = id2Decl(specializationObject.getString("source")).asInstanceOf[EntityDecl]
-              val targetDecl = id2Decl(specializationObject.getString("target")).asInstanceOf[EntityDecl]
-              val newDecl = EntityDecl(owningDecl.annotations, owningDecl.entityToken,
-                owningDecl.keyword, owningDecl.ident,
-                owningDecl.typeParams, IdentType(QualifiedName(List(targetDecl.ident)), List()) :: owningDecl.extending, owningDecl.members)
-              mdecls = mdecls.diff(List(owningDecl))
-              mdecls = newDecl :: mdecls
-              id2Decl += (obj.getString("owner") -> newDecl)
-
-            case _ => ()
+              case _ => ()
+            }
           }
         }
+      } catch {
+        //case e if e.isInstanceOf[java.util.NoSuchElementException] => log("Skipping element..." + obj)
+        case _ => log("Skipping element..." + obj)
       }
     }
 
