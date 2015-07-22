@@ -1,17 +1,18 @@
-
-class MathUtil_Spec {
+class Util_Spec {
   fun min(x:Int,y:Int): Int
-    post ($result  = x || $result  = y)
-      && ($result <= x && $result <= y)
+    post 
+      ($result = x || 
+       $result = y) && 
+       $result <= x && 
+       $result <= y
 
   fun abs(x:Int):Int
-    post $result >= 0 && ($result = x || $result = -x)
+    post $result >= 0 && 
+         ($result = x || 
+          $result = -x)
 }
 
-
-
-
-class MathUtil extends MathUtil_Spec {
+class Util extends Util_Spec {
   fun min(x:Int,y:Int): Int {
     if x <= y then x else y
   }

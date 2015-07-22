@@ -1,47 +1,40 @@
-
 class State
 
 class LightSwitchSpec {
-
   off : State
   on  : State
 
-  req off != on
+  fun toggle(s:State):State
+  fun isOn(s:State):Bool{ 
+    s = on 
+  }
 
-  fun toggle(state: State):State
- 
+  req off != on
   req toggle(off) = on
   req toggle(on) = off
-
-  fun isOn(state: State): Bool {
-    state = on  
-  }
 }
 
 class LightSwitchImpl {
-  fun toggle(state: Int): Int 
-    post $result = 0 || $result = 1
-  {
-    if state = 1 then 0 
+  fun toggle(cs: Int): Int {
+    if cs = 1 then 0 
     else 1    
   }
 
-  fun isOn(state: Int): Bool {
-    state = 1
+  fun isOn(cs: Int): Bool {
+    cs = 1
   }
 }
 
 class Main {
-  abstract : LightSwitchSpec
-  concrete : LightSwitchImpl
+  spec : LightSwitchSpec
+  impl : LightSwitchImpl
   
-  fun abs(concrete:Int):State 
-  {
-    if concrete = 1 then abstract.on
-    else abstract.off
+  fun abs(cs:Int):State {
+    if cs = 1 then spec.on else spec.off
   }
 
-req forall concreteState: Int :-
-    abstract.toggle(abs(concreteState)) = abs(concrete.toggle(concreteState))
+  req forall cs: Int :-
+    spec.toggle(abs(cs)) = 
+    abs(impl.toggle(cs))
 }
 
