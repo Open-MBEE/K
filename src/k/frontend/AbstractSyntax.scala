@@ -1071,7 +1071,7 @@ case class FunDecl(ident: String,
 
     val preConditions = spec.filter(_.pre)
     val postConditions = spec.filterNot(_.pre)
-    if (!postConditions.isEmpty) {
+    if (!postConditions.isEmpty && !body.isEmpty) {
       UtilSMT.createLocals(params.map(_.name))
       result += "\n\n"
       val preSMT = preConditions.map(_.exp.toSMT(className, false)).mkString("\n        ") // and true?
