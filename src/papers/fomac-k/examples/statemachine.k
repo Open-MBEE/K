@@ -1,5 +1,3 @@
-package examples.sm
-
 class Event
 class State
 
@@ -19,10 +17,5 @@ class RocketMachine {
   req move(off, turn_on) = ready
   req move(ready, fire) = firing
   req move(firing, turn_off) = ready  
-
-  ====================================================
-  The following makes the state machine unsat because 
-  it introduces non-determinism.
-  ====================================================
-  -- req move(ready, fire) = off    
+  req unsatisfiable : move(ready, fire) = off    
 }
