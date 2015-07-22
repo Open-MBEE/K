@@ -43,6 +43,7 @@ object Frontend {
       case "-stats" :: tail    => parseArgs(map ++ Map('stats -> true), tail)
       case "-dot" :: tail      => parseArgs(map ++ Map('dot -> true), tail)
       case "-latex" :: tail    => parseArgs(map ++ Map('latex -> true), tail)
+      case "-scala" :: tail    => parseArgs(map ++ Map('scala -> true), tail)
       case "-json" :: tail     => parseArgs(map ++ Map('printJson -> true), tail)
       case "-mmsJson" :: value :: tail =>
         parseArgs(map ++ Map('mmsJson -> value), tail)
@@ -60,7 +61,8 @@ object Frontend {
     val options = parseArgs(Map(), args.toList)
     var model: Model = null
     var filename: String = null
-
+    var fullFileName: String = null
+    
     options.get('tests) match {
       case Some(true) => doTests(options.getOrElse('baseline, false).asInstanceOf[Boolean])
       case _          => ()
@@ -100,6 +102,7 @@ object Frontend {
       case Some(f: String) =>
         model = getModelFromFile(f)
         filename = Paths.get(f).getFileName.toString
+        fullFileName = f
       case _ => ()
     }
 
@@ -145,9 +148,13 @@ object Frontend {
     if (model != null) {
       val smtModel = model.toSMT
       if (K2Z3.debug) {
+        println()
         println("--- SMT Model ---")
+        println()
         println(smtModel)
+        println()
         println("-----------------")
+        println()
       }
       try {
         val res = runWithTimeout(10000) { K2Z3.solveSMT(model, smtModel, true) }
@@ -165,7 +172,27 @@ object Frontend {
       case Some(_) => if (model != null) K2Latex.convert(filename, model)
       case _       => ()
     }
-
+   
+    options.get('scala) match {
+      case Some(_) =>
+        if (model != null && fullFileName != null) {
+          val file = new FileWriter(fullFileName + ".scala", false)
+          val scalaProgram = model.toScala
+          file.append(scalaProgram)
+          file.close()
+          if (K2Z3.debug) {
+            println()
+            println("--- Scala Program ---")
+            println()
+            println(scalaProgram)
+            println()
+            println("-----------------")
+            println()
+          }
+        }
+      case _ => ()
+    }
+    
     options.get('dot) match {
       case Some(_) => if (model != null) printClassDOT(filename, model)
       case _       => ()

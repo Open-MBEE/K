@@ -422,6 +422,10 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
     result1 + getters + constants + result2
   }
 
+  def toScala: String = {
+    decls.map(_.toScala).mkString("\n\n")
+  }
+
   override def toString = {
     var result =
       packageName match {
@@ -513,6 +517,14 @@ case class Annotation(name: String, exp: Exp) {
 }
 
 case class QualifiedName(names: List[String]) {
+
+  def toScala: String = {
+    if (names.length != 1)
+      UtilSMT.error("class type name with too long qualified name: $names")
+    else
+      names(0)
+  }
+  
   override def toString = names.mkString(".")
 
   def toJson: JSONObject = {
@@ -539,6 +551,7 @@ case class ImportDecl(name: QualifiedName, star: Boolean) {
 
 trait TopDecl {
   def toSMT: String = ???
+  def toScala: String = ???
   def toJson: JSONObject = {
     if (ASTOptions.useJson1) toJson1
     else toJson2
@@ -697,6 +710,21 @@ case class EntityDecl(
 
   def toSMTAssert: String =
     s"(assert (exists ((instanceOf$ident Ref)) (deref-is-$ident instanceOf$ident)))"
+
+  override def toScala: String = {
+    var result: String = s"class $ident"
+    val directSuperClasses = TypeChecker.getDirectSubClasses(ident)
+    if (directSuperClasses.size > 1)
+      UtilSMT.error(s"class $ident has more than one super class")
+    if (directSuperClasses.size == 1) {
+      val superClass = directSuperClasses(0)
+      result += " extends $superClass {\n"
+    } else
+      result += " {\n"
+    result += members.map(_.toScala).mkString("\n\n")
+    result += "}"
+    result
+  }
 
   def getPropertyDecls: List[PropertyDecl] =
     for (m <- members if m.isInstanceOf[PropertyDecl] && !UtilSMT.ignoreMember(m)) yield m.asInstanceOf[PropertyDecl]
@@ -879,6 +907,23 @@ case class PropertyDecl(modifiers: List[PropertyModifier],
 
   override def toSMT: String = s"($name ${ty.toSMT})"
 
+  override def toScala = {
+    val modifierScala: String = if (modifiers.contains(Val)) "val" else "var"
+    val tyScala: String = ty.toScala
+    val exprScala: String =
+      expr match {
+        case Some(e) => e.toScala
+        case None =>
+          ty match {
+            case IntType | RealType => "0"
+            case BoolType           => "false"
+            case _                  => null
+          }
+      }
+
+    s"$modifierScala : $tyScala = $exprScala"
+  }
+
   override def toString = {
     var result = ""
     if (!modifiers.isEmpty) {
@@ -968,6 +1013,8 @@ case class Param(name: String, ty: Type) {
 
   def toSMTType: String = ty.toSMT
 
+  def toScala: String = s"$name : ${ty.toScala}"
+  
   override def toString = s"$name:$ty"
 
   def toJson = {
@@ -1024,7 +1071,7 @@ case class FunDecl(ident: String,
 
     val preConditions = spec.filter(_.pre)
     val postConditions = spec.filterNot(_.pre)
-    if (!postConditions.isEmpty) {
+    if (!postConditions.isEmpty && !body.isEmpty) {
       UtilSMT.createLocals(params.map(_.name))
       result += "\n\n"
       val preSMT = preConditions.map(_.exp.toSMT(className, false)).mkString("\n        ") // and true?
@@ -1034,7 +1081,7 @@ case class FunDecl(ident: String,
       result += s"  (let (($resultVar ($className!$ident $actuals)))\n" // and dot?
       result += s"    (=>\n"
       result += s"      (and\n"
-      result += s"        (deref-isa-$className this)\n" // isa or is?
+      result += s"        (deref-is-$className this)\n" // isa does not solve, but should it be isa?
       if (preSMT != "") result += s"        $preSMT\n"
       result += s"      )\n"
       result += s"      (and\n"
@@ -1049,6 +1096,30 @@ case class FunDecl(ident: String,
     // return result:
     result
   }
+
+  // @@@\
+
+  override def toScala: String = {
+    var result: String = ""
+    val paramsScala =
+      if (params.isEmpty) 
+        ""      
+      else
+        "(" + params.map(_.toScala).mkString(", ") + ")"
+    val tyScala :String =
+      ty match {
+        case None => ""
+        case Some(t) => s": ${t.toScala}"
+      }
+    result += s"  def $ident$paramsScala$tyScala = {\n"
+    for (memberDecl <- body) {
+      result += s"    ${memberDecl.toScala}\n"      
+    }
+    result += s"  }\n"
+    result
+  }
+
+  // @@@/
 
   override def toString = {
     var result = s"fun $ident"
@@ -1130,6 +1201,8 @@ case class ConstraintDecl(name: Option[String], exp: Exp) extends MemberDecl {
 }
 
 case class ExpressionDecl(exp: Exp) extends MemberDecl {
+  override def toScala: String = exp.toScala
+  
   override def toString = exp.toString
 
   override def toJson1 = {
@@ -1144,6 +1217,7 @@ case class ExpressionDecl(exp: Exp) extends MemberDecl {
 
 trait Exp {
   def toSMT(className: String, subTyping: Boolean): String = ???
+  def toScala: String = ???
   def toJson: JSONObject = {
     if (ASTOptions.useJson1) toJson1
     else toJson2
@@ -1156,6 +1230,8 @@ case class ParenExp(exp: Exp) extends Exp {
   override def toSMT(className: String, subTyping: Boolean): String =
     exp.toSMT(className, subTyping)
 
+  // @@@ REACHED HERE FOR SCALA
+    
   override def toString = s"($exp)"
 
   override def toJson1 = {
@@ -1314,6 +1390,16 @@ case class IfExp(cond: Exp, trueBranch: Exp, falseBranch: Option[Exp]) extends E
     s"(ite $condSMT $trueSMT $falseSMT)"
   }
 
+  override def toScala: String = {
+    val condScala = cond.toScala
+    val trueScala = trueBranch.toScala
+    val falseScala = falseBranch match {
+      case None          => "???"
+      case Some(elseExp) => elseExp.toScala
+    }
+    s"if ($condScala) $trueScala else $falseScala)"
+  }
+  
   override def toString = {
     var result = s"if $cond then\n"
     moveIn
@@ -2431,6 +2517,7 @@ case object Exists extends Quantifier {
 
 trait Type {
   def toSMT: String = ???
+  def toScala: String = ???
   def toJson: JSONObject = {
     if (ASTOptions.useJson1 == true) toJson1
     else toJson2
@@ -2458,6 +2545,7 @@ case object AnyType extends Type {
 case class ClassType(ident: QualifiedName) extends Type {
   override def toString = s"ClassOf($ident)"
   override def toSMT: String = ???
+
   override def toJson1 = {
     val identType = new JSONObject()
     val arguments = new JSONArray()
@@ -2478,6 +2566,8 @@ case class ClassType(ident: QualifiedName) extends Type {
 case class IdentType(ident: QualifiedName, args: List[Type]) extends Type {
   override def toSMT: String = "Ref"
 
+  override def toScala: String = ident.toScala
+  
   override def toString =
     if (args == null || args.isEmpty)
       ident.toString
@@ -2556,6 +2646,8 @@ case class FunctionType(from: Type, to: Type) extends Type {
 case class ParenType(ty: Type) extends Type {
   override def toSMT: String = ty.toSMT
 
+  override def toScala: String = s"(${ty.toScala})"
+  
   override def toString = s"($ty)"
 
   override def toJson1 = {
@@ -2603,6 +2695,8 @@ trait PrimitiveType extends Type
 case object BoolType extends PrimitiveType {
   override def toSMT: String = "Bool"
 
+  override def toScala: String = "Boolean"
+  
   override def toString = "Bool"
 
   override def toJson1 = {
@@ -2637,6 +2731,8 @@ case object CharType extends PrimitiveType {
 case object IntType extends PrimitiveType {
   override def toSMT: String = "Int"
 
+  override def toScala: String = "Int"
+  
   override def toString = "Int"
 
   override def toJson1 = {
@@ -2655,6 +2751,8 @@ case object IntType extends PrimitiveType {
 case object RealType extends PrimitiveType {
   override def toSMT: String = "Real"
 
+  override def toScala: String = "Flot"
+  
   override def toString = "Real"
 
   override def toJson1 = {
@@ -2671,6 +2769,8 @@ case object RealType extends PrimitiveType {
 }
 
 case object StringType extends PrimitiveType {
+  override def toScala: String = "String"
+  
   override def toString = "String"
 
   override def toJson1 = {
