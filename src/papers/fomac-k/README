@@ -15,11 +15,13 @@ what we currently can handle:
 what we currently cannot handle:
 
   associations
-    property modifiers (part, var, val, ordeted, unique)
-    multiplicities
+  property modifiers (part, var, val, ordeted, unique)
+  multiplicities
   sets, bags, sequences
-  predicate subtypes
   programming
+  packages
+
+  predicate subtypes
   type parameters
   type declarations
   function types
