@@ -1,34 +1,22 @@
 
-class A {
-  a : Int = 1
+class MathUtilSpec {
 
-  fun f(x : Int): Int
+  fun min(x:Int,y:Int): Int
+    post ($result  = x || $result  = y)
+      && ($result <= x && $result <= y)
+
+  fun abs(x:Int):Int
+    post $result >= 0 && ($result = x || $result = -x)
 }
 
-class B extends A {
-  b : Int = 2
+class MathUtil extends MathUtilSpec {
 
-  fun f(x: Int): Int
-    pre a >= 0
-    pre x > a
-    post $result >= 0
-}
-
-class C extends B {
-  c : Int = 3
-
-  fun f(x:Int): Int 
-    pre b >= 0
-    pre c >= 0
-    post $result > 0
- {
-    a + b + c + x
+  fun min(x:Int,y:Int): Int {
+    if x <= y then x else y
   }
+
+  fun abs(x:Int):Int {
+    if x < 0 then -x else x
+  }
+
 }
-
-c : C
-
-result : Int = c.f(10)
-
-req result = 16
-
