@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+ <html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="The K Language portal.">
+    <meta name="author" content="">
+
+    <title>The K Language</title>
+  </head>
+
+  <body>
+
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">K</a>
+        </div>
+	
+	<div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="index.html">Home</a></li>
+            <li class="active"><a href="tutorial.html">Tutorial</a></li>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Examples<span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="#" onclick="loadExample(editor,'examples/Shapes.k')">Shapes.k</a></li>
+                <li><a href="#" onclick="loadExample(editor,'examples/sm.k')">sm.k</a></li>
+                <li><a href="#" onclick="loadExample(editor,'examples/borges.k')">borges.k</a></li>
+		<li><a href="#" onclick="loadExample(editor,'examples/prepost.k')">prepost.k</a></li>
+		<li><a href="#" onclick="loadExample(editor,'examples/Fruits.k')">Fruits.k</a></li>
+		<li><a href="#" onclick="loadExample(editor,'examples/lightswitch.k')">lightswitch.k</a></li>
+		<li><a href="#" onclick="loadExample(editor,'examples/scheduling.k')">scheduling.k</a></li>
+		<li><a href="#" onclick="loadExample(editor,'examples/planning-simple.k')">planning-simple.k</a></li>
+                <li role="separator" class="divider"></li>
+                <li><a href="#" onclick="loadExample(editor,'examples/GravityScience.k')">GravityScience.k</a></li>
+                <li><a href="#" onclick="loadExample(editor,'examples/DSN_Pass.k')">DSN_Pass.k</a></li>
+                <!--<li role="separator" class="divider"></li>
+                    <li class="dropdown-header">Nav header</li>
+                <li><a href="#">Separated link</a></li>
+                <li><a href="#">One more separated link</a></li>-->
+                  </ul>
+                </li>
+              </ul>
+            </div>
+      </div>
+    </nav>
+
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+    </div>
+    
+    <div class="container">
+      <!-- Example row of columns -->
+      <div class="row">
+	<div class="col-md-6" style="padding-right:20px; border-right: 2px solid #ccc; overflow:scroll; height:720px;">
+ 	  <h3>Introduction </h3>
+	  <p>
+	    Welcome to K. K is a textual language intended to be used
+	    by modelers, programmers, system designers, and
+	    specification writers. The motivation for K is based on the
+	    need for a language that provides the right set of
+	    constructs and tools to model, verify, and implement. 
+	  </p>
+	  
+	  <h3>Classes, Propreties, Functions, and Inheritance</h3>
+
+	  Classes are a basic method of encapsulating all relevant
+	  information, properties, functions etc. about a single
+	  entity. They provide the simplest approach for abstracting a
+	  concept or concrete entity and representing it in your
+	  model/program. The follwing figure shows an example of
+	  classes being used to model shapes.
+
+	  <p style="border: 1px solid #ccc;">	   
+	    <a class="btn-xs btn" href="#" role="button" onclick="loadExample(editor,'examples/Shapes.k');">Load in editor</a>
+	    <textarea id="in1" name="in1"></textarea>
+	  </p>
+
+	  <h3>Properties</h3>
+	  <p style="border: 1px solid #ccc;">	   
+	    <a class="btn-xs btn" href="#" role="button" onclick="loadExample(editor,'tests/inheritance2.k');">Load in editor</a>
+	    <textarea id="in2" name="in2"></textarea>
+	  </p>
+	  <h3>Constraints</h3>
+	  <p style="border: 1px solid #ccc;">	   
+	    <a class="btn-xs btn" href="#" role="button" onclick="loadExample(editor,'tests/inheritance3.k');">Load in editor</a>
+	    <textarea id="in3" name="in3"></textarea>
+	  </p>
+	  <h3>Associations</h3>
+	  <p></p>
+	  <h3>Inheritance</h3>
+	  <p style="border: 1px solid #ccc;">	   
+	    <a class="btn-xs btn" href="#" role="button" onclick="loadExample(editor,'tests/inheritance4.k');">Load in editor</a>
+	    <textarea id="in4" name="in4"></textarea> 
+	  </p>
+	  <h3>Functions</h3>
+	  <p> </p>
+	  <h3>Primitive Types</h3>
+	  <p></p>
+	  <h3>Expressions</h3>
+	  <p> </p>
+	  <h3>Type Checker</h3>
+	  <p></p>
+	  <h3>Class Consistency Checker</h3>
+	  <p></p>
+	</div>
+	<div class="col-md-6">
+	    <p>
+	      <textarea id="code" name="code"></textarea>
+	    </p>
+	      <hr>
+	    <p>
+  	      <div class="pull-right">   <canvas width="27" height="27" id="myCanvas"></canvas> </div>
+	      <a class="btn btn-warning center-block" href="#" role="button" onclick="doWork()">Analyze</a>
+	    </p>
+	      <hr>
+	    <p>
+	      <textarea id="result" name="result"></textarea>
+	    </p>
+	</div>
+	
+	<hr>
+	
+	<footer>
+	  <p>
+	    &copy; 2015 by the California
+	    Institute of Technology. ALL RIGHTS RESERVED. United States Government
+	    Sponsorship acknowledged. Any commercial use must be negotiated with
+	    the Office of Technology Transfer at the California Institute of
+	    Technology.
+	  </p>
+	</footer>
+      </div> <!-- /container -->
+      
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+    
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+    <link rel="stylesheet" href="CodeMirror-master/lib/codemirror.css">
+    <link rel="stylesheet" href="CodeMirror-master/theme/ttcn.css">
+    <link rel="stylesheet" href="CodeMirror-master/theme/paraiso-light.css">
+    <link rel="stylesheet" href="CodeMirror-master/theme/neat.css">
+    <script src="CodeMirror-master/lib/codemirror.js"></script>
+    <script src="CodeMirror-master/mode/shell/shell.js"></script>
+    <script src="CodeMirror-master/addon/edit/matchbrackets.js"></script>
+    <script src="CodeMirror-master/mode/k/clike.js"></script>
+    <script src="CodeMirror-master/addon/fold/foldcode.js"></script>
+    <script src="CodeMirror-master/addon/fold/foldgutter.js"></script>
+    <script src="CodeMirror-master/addon/fold/brace-fold.js"></script>
+    <script src="CodeMirror-master/addon/fold/xml-fold.js"></script>
+    <script src="CodeMirror-master/addon/fold/comment-fold.js"></script>
+
+    <link rel="stylesheet" href="CodeMirror-master/addon/dialog/dialog.css">
+    <link rel="stylesheet" href="CodeMirror-master/addon/search/matchesonscrollbar.css">
+    <script src="CodeMirror-master/addon/dialog/dialog.js"></script>
+    <script src="CodeMirror-master/addon/search/searchcursor.js"></script>
+    <script src="CodeMirror-master/addon/search/search.js"></script>
+    <script src="CodeMirror-master/addon/scroll/annotatescrollbar.js"></script>
+    <script src="CodeMirror-master/addon/search/matchesonscrollbar.js"></script>
+
+    <script>
+      var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+      lineNumbers: true,
+      matchBrackets: true,
+      theme: "ttcn",
+      mode: "text/x-k",
+      foldGutter: {
+      rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.brace, CodeMirror.fold.comment)
+      },
+      extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+      gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+      });
+
+
+      var in1 = CodeMirror.fromTextArea(document.getElementById("in1"), {
+      lineNumbers: false,
+      theme: "neat",
+      mode: "text/x-k",
+      readOnly: true
+      });
+      var in2 = CodeMirror.fromTextArea(document.getElementById("in2"), {
+      lineNumbers: false,
+      theme: "neat",
+      mode: "text/x-k",
+      readOnly: true
+      });
+      var in3 = CodeMirror.fromTextArea(document.getElementById("in3"), {
+      lineNumbers: false,
+      theme: "neat",
+      mode: "text/x-k",
+      readOnly: true
+      });
+      var in4 = CodeMirror.fromTextArea(document.getElementById("in4"), {
+      lineNumbers: false,
+      theme: "neat",
+      mode: "text/x-k",
+      readOnly: true
+      });
+
+      in1.setSize(null,"100");
+      in2.setSize(null,"100");
+      in3.setSize(null,"100");
+      in4.setSize(null,"100");
+
+      var results = CodeMirror.fromTextArea(document.getElementById("result"), {
+      lineNumbers: false,
+      theme: "paraiso-light",
+      mode: "shell",
+      readOnly: true
+      });
+
+      editor.setValue("");
+      editor.setSize(null,"300");
+
+      results.setSize(null,"300");
+      results.setValue("Results will be displayed here.");
+      results.readOnly = true;
+
+      function loadExample(e,name){
+      results.setValue('');
+      $.ajax({
+       url: "http://niks.jpl.nasa.gov/K/k/" + name,
+      success: function(data, status, xhr) {
+      e.setValue(data);
+      },
+      error: function(data, status, xhr) {
+      alert("Error when loading example. Please try again.");
+      }
+      });
+      return false;
+      }
+
+      $('canvas').hide();
+      
+      var working = 0;
+      function doWork() {
+      if(working == 1) return;
+      working = 1;
+      $('canvas').show();
+      results.setValue('');
+      $.ajax({
+      type: "post",
+      data: editor.getValue(),
+      url: "http://niks.jpl.nasa.gov/k-service",
+      success: function(data, status, xhr) {
+      results.setValue(data);
+      working = 0;
+      $('canvas').hide();
+      },
+      error: function(data, status, xhr) {
+      $('canvas').hide();
+      alert("Error while executing. Please try again.");
+      working = 0;
+      }
+      });
+      return false;
+      }
+      
+      editor.setValue("-- Load sample code from the tutorial by scrolling down, or \n-- from the examples drop down list provided \n--  in the navigation bar.");
+
+      loadExample(in1, "examples/Shapes.k");
+      loadExample(in2, "tests/inheritance2.k");
+      loadExample(in3, "tests/inheritance3.k");
+      loadExample(in4, "tests/inheritance4.k");
+
+
+    </script>
+        <script type="text/javascript">
+            var cog = new Image();
+            function init() {
+                cog.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABsAAAAbCAYAAACN1PRVAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAABK1JREFUeNqMVt1ZGzkUvVfS4IW1l8GO82w6IBXE7mCpAFMB+Pt4Z6iApALcAe4AU0HoAJfg7BPYHinnXmmciX+y0YdmJHnQ0bk/R5cvh5cUyFPwRD4EChgEvGWMB36R3+JaiTkmD5gOs8yNb25uLlerFf1pM2yIGA82TEY7xow1oj4GBU6S6yywPNG4JwDH+XGv0Whs7ndN8n97mmPsLCSYgy7ImPQE/pFDyAF+7L0fgTNFUDBcLal90taD1doQ/T6NT9DnW8zkT+jJuQVYukG3hifCVk/L3JOxMBa8VVlSp9MhHKLaB+zpNo1fdgEpmByuMqUAV5viOQLwXNax9KBAFNEEpN1pUwnQmvl6aTza6zNjrCKaymeyOdYAMgfg18iG4T/qw+AC94zvpzDjcwqOXo3VGH26H0xMZ7jPxgT0R2zUi4BYt6bAfEbJvJFZKA4ODgZ5nhcJLE9mk35X21vWC/TXKmiwr2xszoQd/PQv3t/QCzY2twpqBpb5FKOp+hCgzWaTWq0W1Xx0ij5An9WC5VtiLMwvNBrVaSGMvQk5jHQVPN7sb0HzAtE+QJrNgrcUNEARieWCut0ugR0tl8sKcJ5Ahc3jRviPK8ZGTaaBwGKyT+gTiwM4a3Jrba6MbeVXo5F4kp9shn29ndUYC9vLirGDXzRhrYhD8DME5Hkg22df5rDYS/RXmVIsaP/Q/SXs600YnifTjbeSWliEdTYb3QyTqYfdDKTL4B1KS6tVqf6SgGq3P9BvZGpvNIrPCgVKZlGlCDQDxJiCjVppCab05DJHzb+b1Gm36X80cVjLuzozexs0f6IgRkA5XRhzIixRL1+IzhwdHVHrn1Y9oXe1i10aKT6bGGhg1CKK+cT0zCGCs0oXTIogybJMw/779//o48duMvnO9rzLn+Kz8wgS5Shqo4njpCoOQA5Ajb8adHh4SMvVghaLhYb/HsBip88krNVISSEigOlhjmi0LziNhr6wOsgO9C1339vbGznnNAU2AM9Svk235cqKieKGkldAf7DGvTrjnjJnzyQoMu0ZTuZgUqvmlYR+f39XIE4uqCX1E/rDZpCYmKwOOmivAfYK9KF1AM7EdG4uAMLAOjmQideQXOJQkyUisqYiFRhtSFbxCxj8do0T30dmTvLhC+an0MZZVBHX09tBTG4qFigZEJEChjTIEwtRik81Qa7uOQU0IrYAe7FRjqYw6SlYjgAyN1GmHsFIGPfVnxzFuFITKEkfYK+oWZ5qKlIkcZ7UE92oXBmeIgIxtAO5UtSHqo9uiLW+sme5ejSIRASeAFR4LYy8MMzL1aq3EYWzJF28BgMEzGYpBkrMKelgl+P6uTcVY8NjLYyYPwMTCcufSaouH6al9xNJcjC82vDb9uVZKbrWIumNO+waVsu1TCC+Wxcg6xaSpsZSYM2wLO9/U8qZWH+wztQnsfAxV/E3MIKZVf1FsmJVV8mamhEmxZ0X7sSsABsGv1tZJGejmptU7FBUDYzPAXQBwFEEl+9+stFEroJEci2ELwIMmZuWoSTE9DYYcWVCjlJrZWMpeBhlAEqBiulPE84S3ixU5gSTwGGOdyEVNJXxA8nPevshwABHktBS1YoQ+QAAAABJRU5ErkJggg=='; // Set source path
+                setInterval(draw,10);
+            }
+            var rotation = 0;
+            function draw(){
+                var ctx = document.getElementById('myCanvas').getContext('2d');
+                ctx.globalCompositeOperation = 'destination-over';
+                ctx.save();
+                ctx.clearRect(0,0,27,27);
+                ctx.translate(13.5,13.5); // to get it in the origin
+                rotation +=1;
+                ctx.rotate(rotation*Math.PI/64); //rotate in origin
+                ctx.translate(-13.5,-13.5); //put it back
+                ctx.drawImage(cog,0,0);
+                ctx.restore();
+            }
+            init();
+        </script>
+    
+  </body>
+</html>
