@@ -1,6 +1,53 @@
 \section{Change}
 \label{sec:change}
 
+\subsection{Behavior}
+
+\Klang{} can be used for specifying behavior, as a special case of specifying constraints on properties and functions. The straight forward idea is to use plain mathematical logic to represent behaviors. In the following subsections we illustrate how one can encode two different behavior concepts in \Klang{}: state machines and activity scheduling.
+
+\subsubsection{State Machines}
+
+A state machine is defined by a collection of states,
+a collection of events, and a labeled transition relation (labels are events) between states. This can of course be modeled in numerous ways. Here we shall assume deterministic state machines, and model the transition relation as a function. 
+The \Klang{} model in Figure \ref{fig:statemachine} represents an encoding of a state machine modeling a rocket engine, which can be in one of the states:  \name{off}, \name{ready} or \name{firing}. Events include \name{turn\_on}, \name{fire}, and \name{turn\_off}. The types of states and events (\name{State} and \name{Event}) are modeled as body-less classes. The class \name{RocketEngine}
+models our state machine. It defines the three states as well as the three\
+events as properties of the appropriate types. A requirement expresses that the
+states are all different (a similar requirement should in principle also be provided for events).
+
+The function \name{move} represents the transition relation, and 
+is declared to take two arguments: a state and event, and to return a state. 
+It has no body, meaning that it yet to be defined. The subsequent four  requirements define the 
+\name{move} function. For example the first requirement states that
+in the \name{off} state, on encountering a \name{turn\_on} event, the engine moves to the \name{ready} state. 
+
+The last requirement is inconsistent with the second requirement since \name{move}
+is a function (the transition relation is deterministic), and cannot return two
+different values for the same argument. The \Klang{} solver will detect this
+inconsistency. Without this last requirement, the solver will declare the model satisfiable, and will synthesize the state machine function based on the provided requirements.
+
+\notethis{KH: Wonder whether we need to name all requirements. Could just be simple names, such as r1, r2, ...}
+
+\begin{figure}
+\centering
+\begin{tabular}{c}
+\hline \\
+\lstinputlisting{examples/statemachine.k} \\ \\
+\hline
+\end{tabular}
+\caption{State machine}
+\label{fig:statemachine}
+\end{figure}
+
+\begin{figure}
+\centering
+\begin{tabular}{c}
+\hline \\
+\lstinputlisting{examples/scheduling.k} \\ \\
+\hline
+\end{tabular}
+\caption{Scheduling}
+\label{fig:scheduling}
+\end{figure}
 
 \begin{figure}
   \centering
