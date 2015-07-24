@@ -18,5 +18,6 @@ class RocketEngine {
   req move(off, turn_on) = ready
   req move(ready, fire) = firing
   req move(firing, turn_off) = ready  
-  req unsatisfiable : move(ready, fire) = off    
+
+  req move(ready, fire) = off -- added Monday morning
 }
