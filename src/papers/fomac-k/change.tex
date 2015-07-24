@@ -87,7 +87,11 @@ comment language \cite{jml}.
 Figure \ref{fig:prepost} illustrates this with two class definitions. The left-most
 class \name{Util\_Spec} represents the specification of a mathematics utility module containing two functions, \name{min} for computing the minimum of of
 two values, and \name{abs} for returning the absolute value of a value. Both functions are specified with a post condition stating what is expected to be true
-about the resulting value, denoted by \name{\$result}. The class \name{Util}
+about the resulting value, denoted by \name{\$result}. As an example, the post
+condition for the \name{min} function states that the result is equal to one of
+the arguments, and it is smallest such.
+
+The class \name{Util}
 to the right extends class \name{Util\_Spec} and redefines the functions with
 proper function bodies. The semantics of \Klang{} is such that the refined function bodies will have to satisfy the post conditions. The \Klang{} solver proves this
 automatically in this case.
@@ -115,6 +119,13 @@ automatically in this case.
 \end{figure}
 
 \subsubsection{Data Refinement}
+
+Data refinement consists of changing the data structures used, which will
+cause functions to change as well. Data refinement has for example been
+advocated in the \vdm{} method \cite{vdm}, which is the approach we shall
+illustrate here using \Klang. Our (rather simple) example concerns a light switch,
+which can be turned on and off.  The specification is shown on the left of
+Figure \ref{fig:lightswitch}.
 
 \begin{figure}
   \centering
