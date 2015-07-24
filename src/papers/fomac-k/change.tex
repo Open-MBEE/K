@@ -3,16 +3,23 @@
 
 \subsection{Behavior}
 
-\Klang{} can be used for specifying behavior, as a special case of specifying constraints on properties and functions. The straight forward idea is to use plain mathematical logic to represent behaviors. In the following subsections we illustrate how one can encode two different behavior concepts in \Klang{}: state machines and activity scheduling.
+\Klang{} has to a large extent been used for specifying static structure, similar
+to what can be represented by UML/SysML class diagrams, with requirements
+typically constraining integer and real variables that represent properties of physical nature, such as for example weights and distances.
+\Klang{} can, however, also be used for specifying behavior, using the same
+concepts used for specifying structure, namely classes, properties, functions and
+requirements on these. The idea is in other words to use mathematical logic to represent behaviors. This is an illustration of the pursued objective during 
+the design of \Klang{} to keep the language as small as possible, relying as much as possible on the language of mathematics for expressing problems and solutions. 
+This approach of course has algorithmic consequences when it comes to analyzing models. Our intention is to stay in mathematics as far as the tooling (existing theorem provers) allows us. In the following subsections we illustrate how one can encode two different behavior concepts in \Klang{}, namely state machines and event scheduling.
 
 \subsubsection{State Machines}
 
-A state machine is defined by a collection of states,
+State machines are commonly used to specify the behavior of software as well as hardware systems. They are frequently used at JPL for specifying the behavior of
+embedded flight software software modules controlling, for example, planetary rovers. A state machine is defined by a collection of states,
 a collection of events, and a labeled transition relation (labels are events) between states. This can of course be modeled in numerous ways. Here we shall assume deterministic state machines, and model the transition relation as a function. 
 The \Klang{} model in Figure \ref{fig:statemachine} represents an encoding of a state machine modeling a rocket engine, which can be in one of the states:  \name{off}, \name{ready} or \name{firing}. Events include \name{turn\_on}, \name{fire}, and \name{turn\_off}. The types of states and events (\name{State} and \name{Event}) are modeled as body-less classes. The class \name{RocketEngine}
-models our state machine. It defines the three states as well as the three\
-events as properties of the appropriate types. A requirement expresses that the
-states are all different (a similar requirement should in principle also be provided for events).
+models our state machine. It defines the three states as well as the 
+three events as properties of the appropriate types. A requirement expresses that the states are all different (a similar requirement should in principle also be provided for events).
 
 The function \name{move} represents the transition relation, and 
 is declared to take two arguments: a state and event, and to return a state. 
@@ -20,10 +27,15 @@ It has no body, meaning that it yet to be defined. The subsequent four  requirem
 \name{move} function. For example the first requirement states that
 in the \name{off} state, on encountering a \name{turn\_on} event, the engine moves to the \name{ready} state. 
 
-The last requirement is inconsistent with the second requirement since \name{move}
-is a function (the transition relation is deterministic), and cannot return two
-different values for the same argument. The \Klang{} solver will detect this
-inconsistency. Without this last requirement, the solver will declare the model satisfiable, and will synthesize the state machine function based on the provided requirements.
+The last requirement demanding the engine to move from the \name{ready} state to the \name{off} state on a \name{fire} event was added a Monday morning by a tired
+modeler, and in our context represents a change to the model.
+This requirement, however, is inconsistent with a previous requirement 
+that demands the resulting state to be \name{firing}.
+Since \name{move} is a function (the transition relation is deterministic), and cannot return two
+different values for the same argument, this is detected by the solver. 
+Without this last requirement, the solver will declare the model satisfiable, and will synthesize the state machine function based on the provided requirements.
+Note, however, that not all transitions are modeled, hence the synthesized state
+machine may not be the desired one.
 
 \notethis{KH: Wonder whether we need to name all requirements. Could just be simple names, such as r1, r2, ...}
 
@@ -38,6 +50,10 @@ inconsistency. Without this last requirement, the solver will declare the model 
 \label{fig:statemachine}
 \end{figure}
 
+\subsubsection{Event Scheduling}
+
+... bla bla ... Figure \ref{fig:scheduling} ...
+
 \begin{figure}
 \centering
 \begin{tabular}{c}
@@ -48,6 +64,57 @@ inconsistency. Without this last requirement, the solver will declare the model 
 \caption{Scheduling}
 \label{fig:scheduling}
 \end{figure}
+
+\subsection{Refinement}
+
+Change can be considered as refinement. In the formal methods literature
+refinement usually refers to the situation where one model/program, the specification, and typically abstract of nature, is replaced by a lower 
+level model/program, the implementation. Along with the refinement normally
+goes a proof, that the implementation refines the specification.
+The literature offers many solutions to how specifications, implementations and refinements are expressed as well as proved correct, see for example \cite{vdm,raise}. We shall not here enumerate all of these, but bring forward two examples, one illustrating function refinement, and one illustrating data refinement.
+
+\subsubsection{Function Refinement}
+
+Function refinement consists of making the body of a function more concrete,
+while the signature of the functions stays unchanged. More generally, data 
+structures accessed by the function stay unchanged. One popular approach to this
+is design by contract, where a function is first specified using pre/post conditions, and then later implemented with a function body. This form of refinement is advocated for example in specification languages such as 
+\vdm{} \cite{vdm} and \raiselang{} \cite{raise}, as well as in programming
+languages such as \eiffel{} \cite{eiffel} and \java{} in the form of the \jml{}
+comment language \cite{jml}. 
+
+\Klang{} supports design-by-contract using pre/post conditions. The example in
+Figure \ref{fig:prepost} illustrates this with two class definitions. The left-most
+class \name{Util\_Spec} represents the specification of a mathematics utility module containing two functions, \name{min} for computing the minimum of of
+two values, and \name{abs} for returning the absolute value of a value. Both functions are specified with a post condition stating what is expected to be true
+about the resulting value, denoted by \name{\$result}. The class \name{Util}
+to the right extends class \name{Util\_Spec} and redefines the functions with
+proper function bodies. The semantics of \Klang{} is such that the refined function bodies will have to satisfy the post conditions. The \Klang{} solver proves this
+automatically in this case.
+
+\begin{figure}
+  \centering
+  \begin{tabular}[c]{c|c}
+    \hline \\
+    Specification & Implementation \\
+    \hline\hline \\ \\
+    \begin{subfigure}[c]{0.5\textwidth}
+     \lstinputlisting[lastline=13]{examples/prepost.k}
+      \label{fig:prepost1}
+    \end{subfigure}
+    &
+    \begin{subfigure}[c]{0.5\textwidth}
+      \lstinputlisting[firstline=15,xleftmargin=3.0ex]{examples/prepost.k}
+      \label{fig:prepost2}
+    \end{subfigure}
+    \\ \\
+    \hline
+  \end{tabular}    
+  \caption{Mathematical function refinement}
+  \label{fig:prepost}
+\end{figure}
+
+\subsubsection{Data Refinement}
 
 \begin{figure}
   \centering
@@ -80,26 +147,4 @@ inconsistency. Without this last requirement, the solver will declare the model 
 \end{tabular}
 \caption{Lightswitch refinement proof}
 \label{fig:lightswitch3}
-\end{figure}
-
-\begin{figure}
-  \centering
-  \begin{tabular}[c]{c|c}
-    \hline \\
-    Specification & Implementation \\
-    \hline\hline \\ \\
-    \begin{subfigure}[c]{0.5\textwidth}
-     \lstinputlisting[lastline=13]{examples/prepost.k}
-      \label{fig:prepost1}
-    \end{subfigure}
-    &
-    \begin{subfigure}[c]{0.5\textwidth}
-      \lstinputlisting[firstline=15,xleftmargin=3.0ex]{examples/prepost.k}
-      \label{fig:prepost2}
-    \end{subfigure}
-    \\ \\
-    \hline
-  \end{tabular}    
-  \caption{Mathematical function refinement}
-  \label{fig:prepost}
 \end{figure}
