@@ -226,7 +226,8 @@ specification and an instance \name{impl} are created such that we can refer to 
 of the specification. Finally, the requirement is the \Klang{} formulation of 
 equation (\ref{eq:refinement}) above, ignoring the pre-condition part since all
 pre-conditions in this example are true. The \Klang{} solver proves the
-implementation correct automatically. An incorrect modification of the implementation, such as ...
+implementation correct automatically. An incorrect modification of the implementation, such as for example to change the body of \name{isOn} in 
+the implementation to $cs = 0$ will dually be caught by the solver.
 
 
 \begin{figure}
