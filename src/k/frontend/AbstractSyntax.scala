@@ -80,6 +80,7 @@ object UtilSMT {
     if (ASTOptions.silent) Misc.silentErrorThrow("K2SMT", msgFull, K2SMTException)
     else Misc.errorThrow("K2SMT", msgFull, K2SMTException)
   }
+  // TODO: should these refer to the TypeChecker?:
   def log(msg: String) = if (!ASTOptions.silent) Misc.log("TypeChecker", msg)
   def logDebug(msg: String) = if (ASTOptions.debug && !ASTOptions.silent) Misc.log("TypeChecker", s"DEBUG $msg")
   def warning(msg: String) = Misc.log("TypeChecker", s"Warning $msg")
@@ -268,6 +269,20 @@ object UtilSMT {
     // storedModel = newModel
     newModel
   }
+}
+
+object K2ScalaException extends Exception
+
+object UtilScala {
+  def error(msg: String) = {
+    val msgFull = s"Unsupported: $msg"
+    if (ASTOptions.silent) Misc.silentErrorThrow("K2Scala", msgFull, K2ScalaException)
+    else Misc.errorThrow("K2Scala", msgFull, K2ScalaException)
+  }
+  // TODO: should these refer to the TypeChecker?:
+  def log(msg: String) = if (!ASTOptions.silent) Misc.log("TypeChecker", msg)
+  def logDebug(msg: String) = if (ASTOptions.debug && !ASTOptions.silent) Misc.log("TypeChecker", s"DEBUG $msg")
+  def warning(msg: String) = Misc.log("TypeChecker", s"Warning $msg")  
 }
 
 private[frontend] object ToStringSupport {
@@ -524,7 +539,7 @@ case class QualifiedName(names: List[String]) {
     else
       names(0)
   }
-  
+
   override def toString = names.mkString(".")
 
   def toJson: JSONObject = {
@@ -550,7 +565,7 @@ case class ImportDecl(name: QualifiedName, star: Boolean) {
 }
 
 trait TopDecl {
-  def toSMT: String = ???
+  // def toSMT: String = ???
   def toScala: String = ???
   def toJson: JSONObject = {
     if (ASTOptions.useJson1) toJson1
@@ -721,7 +736,7 @@ case class EntityDecl(
       result += " extends $superClass {\n"
     } else
       result += " {\n"
-    result += members.map(_.toScala).mkString("\n\n")
+    result += members.map(_.toScala).mkString("\n\n") + "\n"
     result += "}"
     result
   }
@@ -905,7 +920,7 @@ case class PropertyDecl(modifiers: List[PropertyModifier],
                         assignment: Option[Boolean],
                         expr: Option[Exp]) extends MemberDecl {
 
-  override def toSMT: String = s"($name ${ty.toSMT})"
+  def toSMT: String = s"($name ${ty.toSMT})"
 
   override def toScala = {
     val modifierScala: String = if (modifiers.contains(Val)) "val" else "var"
@@ -1014,7 +1029,7 @@ case class Param(name: String, ty: Type) {
   def toSMTType: String = ty.toSMT
 
   def toScala: String = s"$name : ${ty.toScala}"
-  
+
   override def toString = s"$name:$ty"
 
   def toJson = {
@@ -1097,29 +1112,34 @@ case class FunDecl(ident: String,
     result
   }
 
-  // @@@\
-
   override def toScala: String = {
+    if (body.isEmpty)
+      UtilScala.error(s"function with no body\n  $this")
     var result: String = ""
     val paramsScala =
-      if (params.isEmpty) 
-        ""      
+      if (params.isEmpty)
+        ""
       else
         "(" + params.map(_.toScala).mkString(", ") + ")"
-    val tyScala :String =
+    val tyScala: String =
       ty match {
-        case None => ""
+        case None    => ""
         case Some(t) => s": ${t.toScala}"
       }
-    result += s"  def $ident$paramsScala$tyScala = {\n"
-    for (memberDecl <- body) {
-      result += s"    ${memberDecl.toScala}\n"      
+    result += s"  def $ident$paramsScala$tyScala ="
+    if (body.size > 1) {
+      result += "  {\n"
+      for (memberDecl <- body) {
+        result += s"    ${memberDecl.toScala}\n"
+      }
+      result += s"  }"
+    } else {
+      result += "\n"
+      val bodyScala = body(0).toScala
+      result += s"    $bodyScala"
     }
-    result += s"  }\n"
     result
   }
-
-  // @@@/
 
   override def toString = {
     var result = s"fun $ident"
@@ -1178,6 +1198,10 @@ case class FunDecl(ident: String,
 case class ConstraintDecl(name: Option[String], exp: Exp) extends MemberDecl {
   override def toSMT(className: String): String = ???
 
+  override def toScala = {
+    ??? // TODO
+  }
+  
   override def toString =
     name match {
       case None =>
@@ -1202,7 +1226,7 @@ case class ConstraintDecl(name: Option[String], exp: Exp) extends MemberDecl {
 
 case class ExpressionDecl(exp: Exp) extends MemberDecl {
   override def toScala: String = exp.toScala
-  
+
   override def toString = exp.toString
 
   override def toJson1 = {
@@ -1231,7 +1255,7 @@ case class ParenExp(exp: Exp) extends Exp {
     exp.toSMT(className, subTyping)
 
   // @@@ REACHED HERE FOR SCALA
-    
+
   override def toString = s"($exp)"
 
   override def toJson1 = {
@@ -1262,6 +1286,8 @@ case class IdentExp(ident: String) extends Exp {
       UtilSMT.addGetter(getter)
       s"($getter this) "
     }
+
+  override def toScala = ident
 
   override def toString = ident
 
@@ -1397,9 +1423,9 @@ case class IfExp(cond: Exp, trueBranch: Exp, falseBranch: Option[Exp]) extends E
       case None          => "???"
       case Some(elseExp) => elseExp.toScala
     }
-    s"if ($condScala) $trueScala else $falseScala)"
+    s"if ($condScala) $trueScala else $falseScala"
   }
-  
+
   override def toString = {
     var result = s"if $cond then\n"
     moveIn
@@ -1626,6 +1652,13 @@ case class BinExp(exp1: Exp, op: BinaryOp, exp2: Exp) extends Exp {
     }
   }
 
+  override def toScala: String = {
+    val exp1Scala = exp1.toScala
+    val exp2Scala = exp2.toScala
+    val opScala = op.toScala
+    s"$exp1Scala $opScala $exp2Scala"
+  }
+
   override def toString = s"$exp1 $op $exp2"
 
   override def toJson1 = {
@@ -1657,6 +1690,12 @@ case class UnaryExp(op: UnaryOp, exp: Exp) extends Exp {
     val opSMT = op.toSMT
     val expSMT = exp.toSMT(className, subTyping)
     s"($opSMT $expSMT)"
+  }
+
+  override def toScala = {
+    val opScala = op.toScala
+    val expScala = exp.toScala
+    s"$opScala $expScala"
   }
 
   override def toString =
@@ -2089,12 +2128,15 @@ case class NamedArgument(ident: String, exp: Exp) extends Argument {
 }
 
 trait BinaryOp {
-  def toSMT: String
+  def toSMT: String = ???
+  def toScala: String = ???
   def toJsonName: String
 }
 
 case object LT extends BinaryOp {
-  def toSMT = "<"
+  override def toSMT = "<"
+
+  override def toScala = "<"
 
   override def toString = "<"
 
@@ -2102,7 +2144,9 @@ case object LT extends BinaryOp {
 }
 
 case object LTE extends BinaryOp {
-  def toSMT = "<="
+  override def toSMT = "<="
+
+  override def toScala = "<="
 
   override def toString = "<="
 
@@ -2110,7 +2154,9 @@ case object LTE extends BinaryOp {
 }
 
 case object GT extends BinaryOp {
-  def toSMT = ">"
+  override def toSMT = ">"
+
+  override def toScala = ">"
 
   override def toString = ">"
 
@@ -2118,7 +2164,9 @@ case object GT extends BinaryOp {
 }
 
 case object GTE extends BinaryOp {
-  def toSMT = ">="
+  override def toSMT = ">="
+
+  override def toScala = ">="
 
   override def toString = ">="
 
@@ -2126,7 +2174,9 @@ case object GTE extends BinaryOp {
 }
 
 case object AND extends BinaryOp {
-  def toSMT = "and"
+  override def toSMT = "and"
+
+  override def toScala = "&&"
 
   override def toString = "&&"
 
@@ -2134,7 +2184,9 @@ case object AND extends BinaryOp {
 }
 
 case object OR extends BinaryOp {
-  def toSMT = "or"
+  override def toSMT = "or"
+
+  override def toScala = "||"
 
   override def toString = "||"
 
@@ -2142,7 +2194,9 @@ case object OR extends BinaryOp {
 }
 
 case object IMPL extends BinaryOp {
-  def toSMT = "=>"
+  override def toSMT = "=>"
+
+  override def toScala = "=>" // TODO: include this in prelude 
 
   override def toString = "=>"
 
@@ -2150,7 +2204,9 @@ case object IMPL extends BinaryOp {
 }
 
 case object IFF extends BinaryOp {
-  def toSMT = "="
+  override def toSMT = "="
+
+  override def toScala = "=="
 
   override def toString = "<=>"
 
@@ -2158,7 +2214,9 @@ case object IFF extends BinaryOp {
 }
 
 case object EQ extends BinaryOp {
-  def toSMT = "="
+  override def toSMT = "="
+
+  override def toScala = "=="
 
   override def toString = "="
 
@@ -2166,7 +2224,7 @@ case object EQ extends BinaryOp {
 }
 
 case object NEQ extends BinaryOp {
-  def toSMT = ???
+  override def toScala = "!="
 
   override def toString = "!="
 
@@ -2174,7 +2232,9 @@ case object NEQ extends BinaryOp {
 }
 
 case object MUL extends BinaryOp {
-  def toSMT = "*"
+  override def toSMT = "*"
+
+  override def toScala = "*"
 
   override def toString = "*"
 
@@ -2182,7 +2242,9 @@ case object MUL extends BinaryOp {
 }
 
 case object DIV extends BinaryOp {
-  def toSMT = "/"
+  override def toSMT = "/"
+
+  override def toScala = "/"
 
   override def toString = "/"
 
@@ -2190,7 +2252,7 @@ case object DIV extends BinaryOp {
 }
 
 case object REM extends BinaryOp {
-  def toSMT = ???
+  override def toScala = "%"
 
   override def toString = "%"
 
@@ -2198,39 +2260,33 @@ case object REM extends BinaryOp {
 }
 
 case object SETINTER extends BinaryOp {
-  def toSMT = ???
-
   override def toString = "inter"
 
   override def toJsonName = "Inter"
 }
 
 case object SETDIFF extends BinaryOp {
-  def toSMT = ???
-
   override def toString = "\\"
 
   override def toJsonName = "SetDiff"
 }
 
 case object LISTCONCAT extends BinaryOp {
-  def toSMT = ???
-
   override def toString = "^"
 
   override def toJsonName = "Concat"
 }
 
 case object TUPLEINDEX extends BinaryOp {
-  def toSMT = ???
-
   override def toString = "#"
 
   override def toJsonName = "TupleIndex"
 }
 
 case object ADD extends BinaryOp {
-  def toSMT = "+"
+  override def toSMT = "+"
+
+  override def toScala = "+"
 
   override def toString = "+"
 
@@ -2238,7 +2294,9 @@ case object ADD extends BinaryOp {
 }
 
 case object SUB extends BinaryOp {
-  def toSMT = "-"
+  override def toSMT = "-"
+
+  override def toScala = "-"
 
   override def toString = "-"
 
@@ -2246,47 +2304,37 @@ case object SUB extends BinaryOp {
 }
 
 case object SETUNION extends BinaryOp {
-  def toSMT = ???
-
   override def toString = "union"
 
   override def toJsonName = "Union"
 }
 
 case object ISIN extends BinaryOp {
-  def toSMT = ???
-
   override def toString = "isin"
 
   override def toJsonName = "IsIn"
 }
 
 case object NOTISIN extends BinaryOp {
-  def toSMT = ???
-
   override def toString = "!isin"
 
   override def toJsonName = "NotIn"
 }
 
 case object SUBSET extends BinaryOp {
-  def toSMT = ???
-
   override def toString = "subset"
 
   override def toJsonName = "Subset"
 }
 
 case object PSUBSET extends BinaryOp {
-  def toSMT = ???
-
   override def toString = "psubset"
 
   override def toJsonName = "PSubset"
 }
 
 case object ASSIGN extends BinaryOp {
-  def toSMT = ???
+  override def toScala = "="
 
   override def toString = ":="
 
@@ -2294,13 +2342,17 @@ case object ASSIGN extends BinaryOp {
 }
 
 trait UnaryOp {
-  def toSMT: String = ???
+  def toSMT: String = ???(s"'$this' is not translated to Z3")
+
+  def toScala: String = ???(s"'$this' is not translated to Scala")
 
   def toJsonName: String // why is it called toJsonName and not toJson?
 }
 
 case object NOT extends UnaryOp {
   override def toSMT = "not"
+
+  override def toScala = "!"
 
   override def toString = "!"
 
@@ -2309,6 +2361,8 @@ case object NOT extends UnaryOp {
 
 case object NEG extends UnaryOp {
   override def toSMT = "-"
+
+  override def toScala = "-"
 
   override def toString = "-"
 
@@ -2326,6 +2380,8 @@ case class IntegerLiteral(i: Int) extends Literal {
   override def toSMT(className: String, subTyping: Boolean): String = {
     i.toString
   }
+
+  override def toScala = i.toString
 
   override def toString = i.toString
 
@@ -2350,6 +2406,8 @@ case class RealLiteral(f: java.math.BigDecimal) extends Literal {
     f.formatted("%.16f")
   }
 
+  override def toScala = f.toString
+
   override def toString = new DecimalFormat("0.#####E0").format(f)
 
   override def toJson1 = {
@@ -2370,6 +2428,8 @@ case class RealLiteral(f: java.math.BigDecimal) extends Literal {
 
 case class CharacterLiteral(c: Char) extends Literal {
   override def toString = c.toString
+
+  override def toScala = c.toString // are the quotes printed as well?
 
   override def toJson1 = {
     val o = new JSONObject()
@@ -2567,7 +2627,7 @@ case class IdentType(ident: QualifiedName, args: List[Type]) extends Type {
   override def toSMT: String = "Ref"
 
   override def toScala: String = ident.toScala
-  
+
   override def toString =
     if (args == null || args.isEmpty)
       ident.toString
@@ -2647,7 +2707,7 @@ case class ParenType(ty: Type) extends Type {
   override def toSMT: String = ty.toSMT
 
   override def toScala: String = s"(${ty.toScala})"
-  
+
   override def toString = s"($ty)"
 
   override def toJson1 = {
@@ -2696,7 +2756,7 @@ case object BoolType extends PrimitiveType {
   override def toSMT: String = "Bool"
 
   override def toScala: String = "Boolean"
-  
+
   override def toString = "Bool"
 
   override def toJson1 = {
@@ -2732,7 +2792,7 @@ case object IntType extends PrimitiveType {
   override def toSMT: String = "Int"
 
   override def toScala: String = "Int"
-  
+
   override def toString = "Int"
 
   override def toJson1 = {
@@ -2752,7 +2812,7 @@ case object RealType extends PrimitiveType {
   override def toSMT: String = "Real"
 
   override def toScala: String = "Flot"
-  
+
   override def toString = "Real"
 
   override def toJson1 = {
@@ -2770,7 +2830,7 @@ case object RealType extends PrimitiveType {
 
 case object StringType extends PrimitiveType {
   override def toScala: String = "String"
-  
+
   override def toString = "String"
 
   override def toJson1 = {
