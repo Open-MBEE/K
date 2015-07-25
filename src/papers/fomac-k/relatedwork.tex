@@ -1,4 +1,54 @@
 
-\section{Change}
+\section{Related Work}
 \label{sec:related-work}
 
+\Klang{} is intended to represent a textual modeling language capable of representing \sysml{} concepts, specifically class diagrams with constraints.
+However, as mentioned in the introduction, it also contains programming constructs.
+As such it can be perceived as a wide-spectrum modeling/programming language.
+
+Wide spectrum specification languages have been investigated to length in the formal 
+methods community. One of the most well-known examples is \vdm{} 
+\cite{vdm78,bjoerner-jones-82,jones90,jones-shaw-90}. \vdm{} in its
+original form \cite{vdm78} provided a combination of procedural programming and
+functional programming and specification using sets, lists and maps (with proper 
+mathematical notation), and higher-order predicate logic. \vdmpp{} 
+\cite{vdmplusplus05} added object-orientation to \vdm{}, which is now part of
+the \vdm{} standard \cite{vdmsl}. The \raiselang{} specification language (\rsl{})
+\cite{raise92} is a wide-spectrum language taking inspiration from \vdm{} as well as 
+from other modeling languages such as \zlang{} and from algebraic specification 
+languages, such as \clear{}. \asml{} \cite{asml05} is a more recent wide-spectrum
+specification language, in many ways similar to \vdm{}, but based on the fundamental concept that operations operate on algebras.
+
+Several high-level programming languages have been developed in recent years,
+including  the early \sml{} (Standard ML) \cite{standard-ml-97}, its derivative
+\ocaml{} \cite{ocaml}, and \haskell{} \cite{haskell}. However, also \java{}
+can be considered high-level due to its libraries of collections (sets, lists, and 
+maps), as well as the iterator concept. \python{} \cite{python} is close to 
+combining object-oriented and functional programming. The 
+\scala{} \cite{scala} language does this to the full extent, as does the
+\fortress{} \cite{fortress}.
+
+Specification constructs have been introduced in programming languages, in the form
+of design-by-contract (pre/post conditions + class invariants). Examples are
+\eiffel{} \cite{eiffel} and \specsharp{} \cite{specsharp}, where contracts are 
+part of the language. \scala{} has library functions for writing pre/post conditions 
+on functional programs \cite{odersky-rv10}. Finally, The \jml{} language \cite{jml} 
+allows to write design-by-contract specifications for \java{} as comments. These are 
+ignored by the standard \java{} compiler, and therefore must be processed with 
+special tools. \eml{} (Extended ML) \cite{sannella-eml-97} takes a slightly different approach to specification and formal development of \sml{} programs.
+\eml{} specifications look just like \sml{} programs except that axioms are allowed in signatures and in place of code in structures and functors. Some \eml{} specifications are executable, since \sml{} function definitions are just axioms of a certain special form. This makes EML a wide-spectrum language which can be used to express every stage in the development of a \sml{} program from the initial high-level specification to the final program itself and including intermediate stages in which specification and program are intermingled.
+
+\notethis{References for Z and Clear.}.
+
+\notethis{Other relevant literature, like C verification tools, diff tools, ...}
+
+\notethis{What we do different.}
+
+
+  
+  
+Model checking software:
+  Java PathFinder 
+    \cite{havelund-jpf-00}
+    \cite{havelund-visser02}  
+  \cite{holzmann-spin-2004}
