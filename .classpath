@@ -26,5 +26,39 @@
 	<classpathentry kind="lib" path="lib/elasticsearch-1.5.0/lucene-sandbox-4.10.4.jar"/>
 	<classpathentry kind="lib" path="lib/elasticsearch-1.5.0/lucene-spatial-4.10.4.jar"/>
 	<classpathentry kind="lib" path="lib/elasticsearch-1.5.0/lucene-suggest-4.10.4.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/servlet-api-3.1.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-alpn-client-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-alpn-server-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-annotations-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-cdi-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-client-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-continuation-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-deploy-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-http-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-io-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-jaas-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-jaspi-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-jmx-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-jndi-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-plus-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-proxy-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-quickstart-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-rewrite-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-schemas-3.1.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-security-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-server-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-servlet-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-servlets-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-util-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-webapp-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-xml-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/start.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jsp/javax.servlet.jsp-api-2.3.1.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jsp/javax.servlet.jsp-2.3.2.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jsp/javax.el-3.0.0.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jsp/javax.servlet.jsp.jstl-1.2.2.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jsp/jetty-jsp-9.2.12.v20150709.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jsp/jetty-jsp-jdt-2.3.3.jar"/>
+	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jsp/org.eclipse.jdt.core-3.8.2.v20130121.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
