@@ -73,7 +73,13 @@ machine may not be the desired one.
 
 \subsubsection{Event Scheduling}
 
-... bla bla ... Figure \ref{fig:scheduling} ...
+Event scheduling is a very common problem faced in a plethora of
+fields and domains. The typical scenario usually involves specifying
+multiple different allowed orderings of events and determining whether
+the specified ordering is satisfiable or not, and if satisfiable,
+possibly generating a timeline for the specified events. The
+Figure~\ref{fig:scheduling} shows one such example encoded using
+\Klang{}.
 
 \begin{figure}
 \centering
@@ -85,6 +91,38 @@ machine may not be the desired one.
 \caption{Scheduling}
 \label{fig:scheduling}
 \end{figure}
+
+The foundation of the scheduling problem is specified by the
+\name{Event} class, which represents a single event that has a start
+and end time (both of these specified using the \code{Int} type). The
+requirements on this class specify that the duration of any event has
+to be non-zero (\code{req} \name{nonZeroDuration}) and the start time
+of all events is greater than zero (\code{req}
+\name{afterBigBang}). Further, the three functions in the \name{Event}
+class encode Allen logic operators using simple mathematical
+expressions on the start and end times of the two events in
+question. Given another event \name{e}, it is now possible to specify
+if the event occurs \name{before}, \name{after}, or is
+\name{contained} by the current event. We do not include the other
+operators for sake of brevity. Using this foundation, it is now
+trivial to specify schedules and events. This is exactly what the
+\name{Schedule} class does. Five events are created as instances of
+the \name{Event} class. The actual schedule is specified as a
+requirement, which expresses the ordering of the events. In this
+particular example, the schedule specifies that the \name{sciWindow}
+must occur before the \name{commWindow} and at least one science
+activity must have taken place. By translating the scheduling
+specification to SMT2 and using a theorem prover, we can now check if
+the provided ordering on the events is satisfiable or not by checking
+if the \name{Schedule} class is satisfiable. A satisfying assignment
+to the class also provides us with a concrete time line of the events.
+It can be common for schedules and events to change as the project
+evolves and reaches maturity. Using such a mechanism for encoding the
+schedule of events provides great power and flexibility. Dealing with
+the changing schedule is easily done by either modifying existing
+constraints in the \name{Schedule} class, or by adding new events and
+constraints. Each change in the schedule is also verified using a
+theorem prover, which adds greater confidence in the change.
 
 \subsection{Refinement}
 
