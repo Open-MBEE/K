@@ -1,8 +1,12 @@
 \section{The K Language}
 
-\subsection{State machines}
-
-
+\Klang{} is a textual language with various constructs for
+programming, modeling, and creating specifications. The primary
+intended use for \Klang{} is to easily create models and
+specifications, and then be able to perform analysis on them. We
+primarily see \Klang{} being used by system modelers who are used to
+expressing their models in SysML/UML. In this section, we briefly
+provide an overview of the \Klang{} language.
 
 \begin{figure}
 \centering
@@ -11,8 +15,109 @@
 \lstinputlisting{examples/shapes.k} \\ \\
 \hline
 \end{tabular}
-\caption{Geometry}
+\caption{A simple model of geometrical shapes expressed using \Klang{}}
 \label{fig:shapes}
 \end{figure}
 
 
+\begin{description}
+
+\item [Comments]: Single line comments can be specified with the
+  prefix $--$ and multi-line comments are specified with $===$ as both
+  the start and end of the multi-line comment.
+
+\item [Primitive Types]: \Klang{} provides the following primitive
+  types: \code{Int}, \code{Real}, \code{Bool}, \code{String},
+  \code{Char}, \code{Unit}
+
+\item [Collections]: \Klang{} provides \code{Set}, \code{Seq}, and
+  \code{Bag} as the three basic collections. \Klang{} also provides
+  support for \name{Tuple} to create Cartesian products. 
+
+\item [Properties]: In \Klang{}, properties can be present within
+  classes or at the outermost level. Each properties must have a name
+  and a type. In the model shown in Figure~\ref{fig:shapes}, class
+  \name{Shape} contains a single property named \name{sides} of type
+  \code{Int}.
+
+\item [Modifiers]: Each property can also have one or more
+  \emph{modifiers} specified for it:
+  \begin{description}
+    \item [val/var] to make the property read only or writable
+    \item [ordered/unique] apply to collections to make them ordered
+      and unique as needed. For example, an \code{ordered Bag} is the
+      same as a \code{Seq} and a \code{unique Bag} is the same as a
+      \code{Set}.
+  \end{description}
+
+\item [Classes]: similar to classes in other languages, the classes in
+  \Klang{} provide the simplest way of performing abstraction. A class
+  can contain properties and functions. For example, class
+  \name{Triangle} contains three properties, which are of type
+  \name{TAngle}.
+  
+\item [Class Constraints]: \Klang{} provides syntax for specifying
+  constraints in a class. This is done using the \code{req} keyword
+  followed by a name (optional), and an expression that specifies the
+  constraint on the class. For example, in class \name{Angle}, the
+  \name{value} of any angle should always be between 0 and 360
+  degrees. Multiple constraints can also be specified. Their effect is
+  the same as if all expressions were conjoined into a single
+  constraint. For example, each instance of the \name{Triangle} class
+  should have exactly three sides and the sum of the angles should be
+  exactly 180 degrees.
+  
+\item [Functions]: A function provides the ability to perform
+  computation. In \Klang{}, functions can take arguments and return
+  the result of the computation of the function. The \name{eq}
+  function in class \name{Angle} compares the given angle's value to
+  its own and returns a \code{Bool}.
+
+\item [Function Specifications]: Each function in \Klang{} can also
+  have a \emph{specification} associated with it. The specification
+  can be either a \code{pre}-condition or a
+  \code{post}-condition. These are discussed in more detail along with
+  an example in Section~\ref{sec:change}.
+  
+\item [Inheritance]: \Klang{} provides the \code{extends} keyword for
+  specifying an inheritance relation. In Figure~\ref{fig:shapes},
+  \name{TAngle} class extends the \name{Angle} class. As a result,
+  \name{TAngle}, not only inherits the properties and functions of
+  \name{Angle}, but also the constraints. \Klang{} also allows for
+  multiple inheritance. Property and function names must be uniquely
+  specified.
+
+\item [Expression Language]: Similar to other high level programming
+  languages such as Java and Scala, \Klang{} provides a rich
+  expression language for specifying behaviors, functions, and
+  constraints. \Klang{} provides multiple operators such as
+  implication, conjunction, disjunction, arithmetic operators,
+  if-then-else statements, for/while loops, blocks, predicate logic
+  with quantifiers etc. 
+
+\item [Annotations] \Klang{} provides the ability to create new
+  annotations by specifying a name and a type for the annotation. The
+  annotations can then be applied by writing an $@$ sign followed by
+  the annotation name immediately before the element that is desired
+  to be annotated. There is no limit on how many annotations can be
+  applied to any entity. 
+
+\end{description}
+
+In addition to the language constructs described here, \Klang{} also
+has support for \name{packages}, \name{side effects}, \name{types},
+\name{associations} -- SysML/UML specific concept, and
+\name{multiplicities}, which can be used for specifying the allowed
+size of a property. To conserve space, these constructs are not
+discussed in further detail.
+
+Currently, the \Klang{} infrastructure comes with a parser that has
+been generated using ANTLR version 4. Using the parser, an AST is
+created that is used for performing type checking. In addition to
+performing type checking, we have also created a translation of
+\Klang{} to SMT2. This is used as a means to perform various checks
+such as function specification satisfiability, class consistency
+checking, and model generation. The entire \Klang{} infrastructure is
+implemented using Scala.
+
+ 
