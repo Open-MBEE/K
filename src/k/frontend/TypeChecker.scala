@@ -707,6 +707,7 @@ class TypeChecker(model: Model) {
   }
 
   def processFunction(fd: FunDecl, entityTypeEnv: TypeEnv, owner: EntityDecl) {
+
     // check if return type exists 
     if (!fd.ty.isEmpty) {
       if (!doesTypeExist(entityTypeEnv, fd.ty.get)) {
@@ -721,6 +722,11 @@ class TypeChecker(model: Model) {
           error(s"Type ${p.ty} not found. Exiting.")
         }
         fres.overwrite(p.name -> ParamTypeInfo(p))
+    }
+
+    // type check spec
+    for (s <- fd.spec) {
+      getExpType(functionTypeEnv, s.exp, owner)
     }
 
     functionTypeEnv = processBody(fd.body, functionTypeEnv, owner)
