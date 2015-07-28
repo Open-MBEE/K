@@ -3,8 +3,6 @@ class A {
   a : Int = 1
 
   fun f(x : Int): Int
-
-  -- req a = f(10)
 }
 
 class B extends A {

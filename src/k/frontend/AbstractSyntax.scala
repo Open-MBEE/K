@@ -200,6 +200,11 @@ object UtilSMT {
   def isCreatedLocal(x: String): Boolean =
     createdLocals contains x
 
+  def isGlobal(identExp: Exp): Boolean = {
+    require(identExp.isInstanceOf[IdentExp])
+    getOwningEntityDecl(identExp) == null
+  }
+
   def generateOmittedConstructorParameters: String = {
     var result = ""
     for ((id, ty) <- constantsToDeclare) {
@@ -282,7 +287,7 @@ object UtilScala {
   // TODO: should these refer to the TypeChecker?:
   def log(msg: String) = if (!ASTOptions.silent) Misc.log("TypeChecker", msg)
   def logDebug(msg: String) = if (ASTOptions.debug && !ASTOptions.silent) Misc.log("TypeChecker", s"DEBUG $msg")
-  def warning(msg: String) = Misc.log("TypeChecker", s"Warning $msg")  
+  def warning(msg: String) = Misc.log("TypeChecker", s"Warning $msg")
 }
 
 private[frontend] object ToStringSupport {
@@ -723,8 +728,12 @@ case class EntityDecl(
     result
   }
 
-  def toSMTAssert: String =
-    s"(assert (exists ((instanceOf$ident Ref)) (deref-is-$ident instanceOf$ident)))"
+  def toSMTAssert: String = {
+    if (ident == "TopLevelDeclarations")
+      "(assert (deref-is-TopLevelDeclarations 0))\n"
+    else
+      s"(assert (exists ((instanceOf$ident Ref)) (deref-is-$ident instanceOf$ident)))"
+  }
 
   override def toScala: String = {
     var result: String = s"class $ident"
@@ -1086,7 +1095,7 @@ case class FunDecl(ident: String,
 
     val preConditions = spec.filter(_.pre)
     val postConditions = spec.filterNot(_.pre)
-    if (!postConditions.isEmpty && !body.isEmpty) {
+    if (!postConditions.isEmpty /*&& !body.isEmpty*/) {
       UtilSMT.createLocals(params.map(_.name))
       result += "\n\n"
       val preSMT = preConditions.map(_.exp.toSMT(className, false)).mkString("\n        ") // and true?
@@ -1201,7 +1210,7 @@ case class ConstraintDecl(name: Option[String], exp: Exp) extends MemberDecl {
   override def toScala = {
     ??? // TODO
   }
-  
+
   override def toString =
     name match {
       case None =>
@@ -1254,7 +1263,7 @@ case class ParenExp(exp: Exp) extends Exp {
   override def toSMT(className: String, subTyping: Boolean): String =
     exp.toSMT(className, subTyping)
 
-  // @@@ REACHED HERE FOR SCALA
+  // @@@ Reach here for Scala translation, which is at experimental stage
 
   override def toString = s"($exp)"
 
@@ -1280,7 +1289,12 @@ case class IdentExp(ident: String) extends Exp {
   override def toSMT(className: String, subTyping: Boolean): String =
     if (isLocal(this) || UtilSMT.isCreatedLocal(ident))
       ident
-    else {
+    else if (UtilSMT.isGlobal(this) && className != UtilSMT.Names.mainClass) {
+      val mainClass: String = UtilSMT.Names.mainClass
+      val getter: String = s"$mainClass!$ident"
+      UtilSMT.addGetter(getter)
+      s"($getter 0)"
+    } else {
       val dot: String = if (subTyping) "." else "!"
       val getter: String = s"$className$dot$ident"
       UtilSMT.addGetter(getter)
@@ -1362,8 +1376,13 @@ case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
       val expSMT: String =
         exp1 match {
           case IdentExp(ident) =>
-            val dot = if (subTyping) "." else "!"
-            s"$className$dot$ident this"
+            if (UtilSMT.isGlobal(exp1) && className != UtilSMT.Names.mainClass) {
+              val mainClass: String = UtilSMT.Names.mainClass
+              s"$mainClass!$ident 0"
+            } else {
+              val dot = if (subTyping) "." else "!"
+              s"$className$dot$ident this"
+            }
           case DotExp(expBeforeDot, ident) =>
             val classOfFunction = exp2Type.get(expBeforeDot).toString
             val expSMT = expBeforeDot.toSMT(className, subTyping)
