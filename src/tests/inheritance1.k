@@ -20,3 +20,4 @@ dobj : D
 
 sum : Int = dobj.x + dobj.y + dobj.z + dobj.i
 
+req sum > dobj.x
