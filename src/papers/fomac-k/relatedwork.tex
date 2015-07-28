@@ -55,13 +55,29 @@ initial high-level specification to the final program itself and
 including intermediate stages in which specification and program are
 intermingled.
 
-Model checking software:
-  Java PathFinder 
-    \cite{havelund-jpf-00}
-    \cite{havelund-visser02}  
-  \cite{holzmann-spin-2004}
+Apart from all the work in the language domain, performing analysis
+and verification of languages has also seen great
+strides.~\cite{holzmann-spin-2004} performs model checking of models
+expressed in Promela and Java
+PathFinder~\cite{havelund-jpf-00,havelund-visser02} performs model
+checking of Java programs. The latter can be used not only for
+expressing models in Java and verifying them, but also for proving
+program properties.~\cite{ball2010slam2} presents results of applying
+static analysis and counter-example guided abstraction refinement to
+device drivers in a large scale industry setting. 
 
-\notethis{Remaining: Alloy, S-VDM, C verification tools, diff tools,
-  what we do different. Should this section have another form, be
-  places somewhere else?}
-
+The great improvements in model checking, static analysis, theorem
+proving, and SMT solvers such as Z3~\cite{de2008z3} have all
+contributed to investigating and dealing with software change. To this
+effect, differential symbolic execution~\cite{person2008differential}
+has been investigated for establishing equivalence between two
+versions of a program.~\cite{lahiri2012symdiff} uses verification
+conditions and SMT solvers for detecting semantic change between two
+closely related versions of a function (program) by discovering inputs
+to a function that cause the outputs to
+change.~\cite{godlin2009regression} deals with \emph{regression
+  verification} and present a technique for doing equivalence checking
+of C programs, by using the older version of the program almost as a
+\emph{specification} for the new version of the program. A large part
+of the inspiration for such work comes from the theorem proving
+community.
