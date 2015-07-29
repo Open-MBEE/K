@@ -1,4 +1,7 @@
 
+ERROR : Int req ERROR < 0 
+fun CHECK(b:Bool):Int {if b then 42 else ERROR}
+
 class A {
   x : Int
   y : Int
@@ -16,6 +19,8 @@ class A {
   req exists i : Int :-  i > 0 && x + i = y -- hence y > x
 
   req f() # 2
+
+  RESULT : Int = CHECK(x > 20 && y > x)
 }
 
 class B {
@@ -41,16 +46,8 @@ class B {
                  -- 23 <= 22 or 24 <= 22
 
   req a.x != a.y -- is is due to req 2 in A
+
+  RESULT : Int = CHECK(sat && a.x <= 22 && z <= 20 && a.x != a.y)
 }
 
-
----- A:
--- x > 20
--- y > x
-
----- B:
--- sat = true
--- a.x <= 22
--- z <= 20
--- a.x != a.y
 
