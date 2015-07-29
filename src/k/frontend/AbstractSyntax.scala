@@ -246,12 +246,22 @@ object UtilSMT {
   }
 
   def isConstructorPredicate(exp: Exp): Boolean = {
-    val result = exp match {
-      case BinExp(exp1, EQ, FunApplExp(exp2, args)) =>
-        isConstructor(exp2)
+    exp match {
+      case BinExp(exp1, EQ, exp2) =>
+        isConstructorAppl(exp2)
       case _ => false
     }
-    result
+  }
+
+  def isConstructorAppl(exp: Exp): Boolean = {
+    exp match {
+      case FunApplExp(function, _) =>
+        isConstructor(function)
+      case IfExp(_, trueBranch, Some(falseBranch)) =>
+        isConstructorAppl(trueBranch) && isConstructorAppl(falseBranch)
+      case _ =>
+        false
+    }
   }
 
   def isClassName(ty: Type): Boolean = {
@@ -685,7 +695,7 @@ case class EntityDecl(
     for (PropertyDecl(_, propertyName, ty, _, _, Some(exp)) <- propertyDecls) {
       val getter = s"$ident!$propertyName"
       UtilSMT.addGetter(getter)
-      if (UtilSMT.isClassName(ty))
+      if (UtilSMT.isClassName(ty) && UtilSMT.isConstructorAppl(exp))
         constraints ::= s"(= (deref ($getter this)) ${exp.toSMT(ident, false)})"
       else
         constraints ::= s"(= ($getter this) ${exp.toSMT(ident, false)})"
@@ -1095,7 +1105,7 @@ case class FunDecl(ident: String,
 
     val preConditions = spec.filter(_.pre)
     val postConditions = spec.filterNot(_.pre)
-    if (!postConditions.isEmpty /*&& !body.isEmpty*/) {
+    if (!postConditions.isEmpty /*&& !body.isEmpty*/ ) {
       UtilSMT.createLocals(params.map(_.name))
       result += "\n\n"
       val preSMT = preConditions.map(_.exp.toSMT(className, false)).mkString("\n        ") // and true?
