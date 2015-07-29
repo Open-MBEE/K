@@ -276,13 +276,12 @@ object UtilSMT {
     var memberDecls: List[MemberDecl] =
       for (decl <- decls if decl.isInstanceOf[MemberDecl]) yield decl.asInstanceOf[MemberDecl]
     val mainClass = EntityDecl(Nil, ClassToken, None, UtilSMT.Names.mainClass, Nil, Nil, memberDecls)
-    var newDecls: List[EntityDecl] =
+    var entityDecls: List[EntityDecl] =
       for (decl <- decls if decl.isInstanceOf[EntityDecl]) yield decl.asInstanceOf[EntityDecl]
-    // newDecls ++= List(mainClass) changed to:
-    newDecls ::= mainClass
-    val newModel = Model(packageName, imports, annotations, newDecls)
+    val entityDeclsSorted = UtilSMT.sortEntityDecls(entityDecls)
+    val entityDeclsWithMain = mainClass :: entityDeclsSorted
+    val newModel = Model(packageName, imports, annotations, entityDeclsWithMain)
     // println(s"---\n$model\n---\n$newModel\n---")
-    // storedModel = newModel
     newModel
   }
 }
@@ -326,7 +325,7 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
 
   def toSMT: String = {
     val model: Model = UtilSMT.transformModel(this)
-    val entityDecls = UtilSMT.sortEntityDecls(model.decls.asInstanceOf[List[EntityDecl]])
+    val entityDecls = model.decls.asInstanceOf[List[EntityDecl]]
 
     var result1: String = "" // text before omitted constructor parameter constants
     var result2: String = "" // text after omitted constructor parameter constants
