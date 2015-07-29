@@ -43,3 +43,14 @@ class B {
   req a.x != a.y -- is is due to req 2 in A
 }
 
+
+---- A:
+-- x > 20
+-- y > x
+
+---- B:
+-- sat = true
+-- a.x <= 22
+-- z <= 20
+-- a.x != a.y
+
