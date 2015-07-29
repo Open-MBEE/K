@@ -278,7 +278,8 @@ object UtilSMT {
     val mainClass = EntityDecl(Nil, ClassToken, None, UtilSMT.Names.mainClass, Nil, Nil, memberDecls)
     var newDecls: List[EntityDecl] =
       for (decl <- decls if decl.isInstanceOf[EntityDecl]) yield decl.asInstanceOf[EntityDecl]
-    newDecls ++= List(mainClass)
+    // newDecls ++= List(mainClass) changed to:
+    newDecls ::= mainClass
     val newModel = Model(packageName, imports, annotations, newDecls)
     // println(s"---\n$model\n---\n$newModel\n---")
     // storedModel = newModel
