@@ -1,6 +1,6 @@
 
--- Currently rejected by type checker since function move returns a State object.
--- However this should be ok.
+ERROR : Int req ERROR < 0
+fun CHECK(b:Bool):Int {if b then 42 else ERROR}
 
 class Event {
   id : Int
@@ -32,5 +32,12 @@ class RocketMachine {
   req move(off, turn_on) = ready
   req move(ready, fire) = firing
   req move(firing, turn_off) = off  
+
+  RESULT : Int = CHECK(
+    off != ready && off != firing && firing != ready &&
+    move(off, turn_on) = ready &&
+    move(ready, fire) = firing &&
+    move(firing, turn_off) = off
+  )
 }
 
