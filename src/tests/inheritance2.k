@@ -28,3 +28,4 @@ dobj : D
 
 sum : Int = dobj.a + dobj.c + dobj.d
 
+-- sum = 8

@@ -31,3 +31,8 @@ req bobj.z = 1
 
 y : Int
 
+--- A:
+-- x > 0
+-- j.yy > 10
+-- bobj: C
+-- bobj.z = 1
