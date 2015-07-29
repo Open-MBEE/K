@@ -11,8 +11,8 @@ class Moon extends Body {
   planet : Planet
 }
 
-jupiter : Planet = Planet(mass :: 1000, distanceToEarth :: 2000)
-europa  : Moon = Moon(mass :: 3000, planet :: jupiter)
+jupiter : Planet = Planet(mass :: 50000, distanceToEarth :: 588000000)
+europa  : Moon = Moon(mass :: 1, planet :: jupiter)
 
 fun getPlanet(moon: Moon) :Planet {
   moon.planet
