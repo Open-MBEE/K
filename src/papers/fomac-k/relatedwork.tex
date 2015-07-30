@@ -27,13 +27,16 @@ but based on the fundamental concept that operations operate on algebras.
 Other fundamental works on refinement include (not a comprehensive list): \cite{wirth-refinement-71,hoare-sanders-refinement-86,morgan-refinement-94,woodcock-sanders-z-96,back-wright-refinement-98,abrial-eventb-10}.
 
 \alloy{} \cite{jackson-alloy-12} added new life to this community by being 
-supported by a SAT solver. In many respects, \Klang{} is close in spirit 
-to \alloy{}, but differs by being supported by an SMT solver (in contrast to
-a SAT solver), resulting in a richer set of constructs, including arithmetic, 
-being exposed to analysis. \Klang{} also combines a type view as found in 
-traditional specification and programming languages, as well as a relational 
+supported by a automated SAT solver. In many respects, \Klang{} is close in spirit 
+to \alloy{}, but differs by being supported by an automated SMT solver 
+(in contrast to a SAT solver), resulting in a richer set of constructs, including arithmetic, being exposed to analysis. \Klang{} also combines a type view as found in traditional specification and programming languages, as well as a relational 
 view, whereas \alloy{} is purely relational. We are of the belief that the notion
-of a type is fundamental to programming as well as to modeling.
+of a type is fundamental to programming as well as to modeling. In contrast
+to automated provers, interactive theorem provers such as
+\pvs{} \cite{cade92-pvs,pvs-website}, \coq \cite{coq-website}, and 
+\isabelle \cite{isabelle-website}, allow the user to steer the proofs. 
+Although this allows to perform more complex proofs, it is also requires more
+skills of the user, and time, which is often a limited resource in software development projects.
 
 Several high-level programming languages have been developed in recent
 years, including the early \sml{} (Standard ML) \cite{standard-ml-97},
@@ -66,6 +69,10 @@ express every stage in the development of a \sml{} program from the
 initial high-level specification to the final program itself and
 including intermediate stages in which specification and program are
 intermingled.
+
+Programming languages are now also being built with verification in mind.
+\dafny{} \cite{leino-lpar-2010} supports specifications that can be used to write functional-correctness conditions for programs.  It is supported by verifier, which is implemented on top of the \boogie{} verification engine, which itself is built on top of \zthree. 
+\whythree{} \cite{filliatre-why3-2011} provides a rich language for specification and programming, called \whyml{}, and relies on external theorem provers, both automated and interactive, to discharge verification conditions. A user can write \whyml{} programs directly and get correct-by-construction \ocaml{} programs through an automated extraction mechanism. 
 
 Apart from all the work in the language domain, performing analysis
 and verification of languages has also seen great

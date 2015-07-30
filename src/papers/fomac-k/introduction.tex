@@ -1,10 +1,40 @@
 
 \section{Introduction}
 
-\uml{} \cite{booch-uml-99}
+This brief paper is a response to a call \cite{steffen-isola-2014} for opinion statements from 
+members of the  editorial
+board of the upcoming journal: {\em LNCS Transactions on Foundations for Mastering Change (FoMaC)}. In the call it says:
 
-Thoughts on combining modeling and programming 
-  Comments on the \raiselang{} language \cite{havelund-losl-08}
+
+\begin{quote}
+{\em FoMaC intends to establish a forum for formal methods-based research that fosters a discipline for rigorously dealing with the nature of today's agile system development, which is characterized by unclear premises, unforeseen change, and the need for fast reaction, in a context of hard to control frame conditions, like third party components, network-problem, and attacks.}
+\end{quote}
+
+
+The phases covered span from meta modeling to modeling and design, implementation, runtime and finally evolution/migration. 
+%
+In the extreme, all software correctness issues can be considered as purely change issues, where the fundamental question is the following: given a program $P$, potentially empty, will the addition of the  program fragment $\Delta$ make $P + \Delta$ satisfy a property $\psi$? Program fragments $\Delta$ can here be understood liberally, as for example edit commands (replace these lines of code with these lines of code), refinements - as in stepwise program refinement suggested for wide-spectrum development languages such as \vdm{} \cite{bjoerner-jones-82}, aspects - as in aspect oriented programming, plans - as in planning (the $\Delta$ is a new plan), etc. As such, in the extreme, the topic of correctness under change can  be considered as the well known topic of correctness. An interesting question is: what is the connection between the concept of change as
+a special topic  and then the more general and traditional software correctness issue?
+
+As is well known, analysis for insurance of correctness as well as security can be performed statically (of code structure) or dynamically (of execution traces). In the realm of static analysis, version control is
+of course a basic very useful technology. One can imagine version control systems being brought to the next level by being integrated with static analysis tools, explicitly supporting program refinement, as well as smart IDEs, which visually highlight changes as they are made in the editor. In general, the integration of specification, programming and verification, as explored for example in \dafny{} \cite{DafnySite}, as well as in the earlier \vdm{} 
+\cite{bjoerner-jones-82},  should in principle make change easier. This includes adoption of high-level programming languages such as \scala{} \cite{ScalaSite}. 
+
+However, we observe that ensuring correctness of software using static methods is extremely challenging, and therefore our systems should be constructed to be robust in the face of errors at {\em runtime}. 
+%
+In the realm of dynamic analysis, one can distinguish between {\em detection} of change during runtime, and {\em causing} change during runtime. Detection of change can occur by monitoring a system's execution while checking its behavior against a formalized specification of expected behavior. Here a system can be considered as emitting a sequence of observable events, which are fed into a monitor, which as a second input takes a specification of expected behavior. The trace is then matched against the specification. Events in practice will
+carry data, and it must be possible to refer to data in specifications  \cite{havelund-isola-2014}. The specification can be written by humans, or it can be learned from nominal executions, also referred to as specification mining \cite{IsbernerHS14}. Properties can be expressed in various specification languages, ranging from state machines, regular expressions, temporal logics, rule-based systems to also include refinement-based notations as discussed previously.
+
+Detection of a property violation can be used to cause a change
+of behavior by triggering fault-protection code, which steers the application out of a bad situation. The simplest possible fault-protection strategy is to reboot the system, a strategy which in practice
+is very common. At the other end of the scale is planning and scheduling techniques, which continuously adapt to the current situation. A planner, upon request, generates a new program (plan) to be executed for the next time period in order to achieve a given goal.  Planning is related to program synthesis. In contrast to planning, program synthesis usually occurs before deployment and has more static nature, but in theory the two topics are closely related. The common theme for planning and synthesis is the exploration of new ways to write programs that make the correctness question, and thereby change question, less of an issue. For a survey relating verification and validation to planning and scheduling, see \cite{bensalem-havelund-orlandini-vvps-2014}. 
+
+\notethis{\uml{} \cite{booch-uml-99}}
+
+\notethis{\cite{havelund-isola-2014}}
+
+\notethis{Thoughts on combining modeling and programming 
+  Comments on the \raiselang{} language \cite{havelund-losl-08}}
   
 \notethis{Our motivation: 1) a real NASA mission to an Alien moon, 2) SysML folks asking for assistance, 3) our desire to control the tool stack.
 We should discuss the choices between picking an existing programming language or specification language and what we have done.}  
