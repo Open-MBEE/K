@@ -9,7 +9,7 @@ contains programming constructs.  As such it can be perceived as a
 wide-spectrum modeling/programming language.
 
 Wide spectrum specification languages have been investigated to length
-in the formal methods community. One of the most well-known examples
+in the formal methods community. One of the well-known examples
 is \vdm{} \cite{vdm78,bjoerner-jones-82,jones90,jones-shaw-90}. \vdm{}
 in its original form \cite{vdm78} provided a combination of procedural
 programming and functional programming and specification using sets,
@@ -20,9 +20,20 @@ standard. The \raiselang{} specification language (\rsl{})
 \cite{raise92} is a wide-spectrum language taking inspiration from
 \vdm{} as well as from other modeling languages such as \zlang{}
 \cite{spivey-Z-1988}, and from algebraic equational specification
-languages. \asml{} \cite{asml05} is a more recent wide-spectrum
-specification language, in many ways similar to \vdm{}, but based on
-the fundamental concept that operations operate on algebras.
+languages. Here refinement is the simpler theory implication: the implementation
+shall imply the specification in a logic sense. \asml{} \cite{asml05} is a 
+more recent wide-spectrum specification language, in many ways similar to \vdm{}, 
+but based on the fundamental concept that operations operate on algebras. 
+Other fundamental works on refinement include (not a comprehensive list): \cite{wirth-refinement-71,hoare-sanders-refinement-86,morgan-refinement-94,woodcock-sanders-z-96,back-wright-refinement-98,abrial-eventb-10}.
+
+\alloy{} \cite{jackson-alloy-12} added new life to this community by being 
+supported by a SAT solver. In many respects, \Klang{} is close in spirit 
+to \alloy{}, but differs by being supported by an SMT solver (in contrast to
+a SAT solver), resulting in a richer set of constructs, including arithmetic, 
+being exposed to analysis. \Klang{} also combines a type view as found in 
+traditional specification and programming languages, as well as a relational 
+view, whereas \alloy{} is purely relational. We are of the belief that the notion
+of a type is fundamental to programming as well as to modeling.
 
 Several high-level programming languages have been developed in recent
 years, including the early \sml{} (Standard ML) \cite{standard-ml-97},
@@ -32,7 +43,8 @@ to its libraries of collections (sets, lists, and maps), as well as
 the iterator concept. \python{} \cite{python} is close to combining
 object-oriented and functional programming. The \scala{} \cite{scala}
 language does this to the full extent, as does the \fortress{}
-\cite{fortress}.
+\cite{fortress}. The close relationship between \scala{} and \vdm{} is discussed in
+\cite{havelund-scala-vdm-12}.
 
 Specification constructs have been introduced in programming
 languages, in the form of design-by-contract (pre/post conditions +
@@ -81,3 +93,6 @@ of C programs, by using the older version of the program almost as a
 \emph{specification} for the new version of the program. A large part
 of the inspiration for such work comes from the theorem proving
 community.
+
+
+
