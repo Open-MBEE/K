@@ -145,32 +145,30 @@ refinements are expressed as well as proved correct, see for example
 
 Function refinement consists of making the body of a function more concrete,
 while the signature (name as well as  argument and result types) of the 
-functions stays unchanged. More generally, data 
+function stays unchanged. More generally, data 
 structures accessed by the function stay unchanged. One popular approach to this
-is design by contract, where a function is first specified using pre/post 
+is design-by-contract, where a function is first specified using pre/post 
 conditions, and then later implemented with a function body. This form of 
 refinement is advocated for example in specification languages such as 
-\vdm{} \cite{vdm} and \raiselang{} \cite{raise}, as well as in programming
-languages such as \eiffel{} \cite{eiffel} and \java{} in the form of the \jml{}
-comment language \cite{jml}. 
+\vdm{} \cite{vdm} and \raiselang{} \cite{raise92,george-raise-2008}, as well as in programming languages such as \eiffel{} \cite{eiffel} and \java{} in the form of the \jml{} comment language \cite{jml}. 
 
 \Klang{} supports design-by-contract using pre/post conditions. The example in
 Figure \ref{fig:prepost} illustrates this with two class definitions. The left-most
 class \name{Util\_Spec} represents the specification of a mathematics utility 
 module containing two functions, \name{min} for computing the minimum of of
-two values, and \name{abs} for returning the absolute value of a value. Both 
+two values, and \name{abs} for returning the absolute value of an integer. Both 
 functions are specified with a post condition stating what is expected to be true
 about the resulting value, denoted by \name{\$result}. As an example, the post
 condition for the \name{min} function states that the result is equal to one of
 the arguments, and it is smallest such.
 
 The class \name{Util}
-to the right extends class \name{Util\_Spec} and redefines the functions with
+to the right extends class \name{Util\_Spec} and refines the functions with
 proper function bodies. The semantics of \Klang{} is such that the refined function 
 bodies will have to satisfy the post conditions. The \Klang{} solver proves this
 automatically in this case. The fact that the implementation class extends 
 (inherits from) the specification class reflects that this form of refinement is a 
-form of theory refinement, where the theory denoted by the implementation implies 
+form of theory refinement, where the theory denoted by the implementation must imply 
 that of the specification: the implementation signature contains that of the 
 specification, and the requirements logically imply those of the specification:
 
@@ -214,7 +212,7 @@ $\Sigma_c$ of concrete states, as well as concrete operations $opn_c : \Sigma_c
 refinement, an abstraction function $abs : \Sigma_c \rightarrow \Sigma_a$ from 
 the type of concrete implementation states to the type of abstract specification 
 states must be provided, and the following property must (amongst others) 
-be proved for each operation $opn$, where $opn_a$ is the abstract version and $opn_c$ is the concrete version, where $pre_a : \Sigma_a \rightarrow \mathbb{B}$
+be proved for each operation $opn$, where $opn_a$ is the abstract version and $opn_c$ is the concrete version, and $pre_a : \Sigma_a \rightarrow \mathbb{B}$
 is the pre-condition of the abstraction operation $opn_a$:
 
 \begin{equation} \label{eq:refinement}
@@ -223,7 +221,7 @@ is the pre-condition of the abstraction operation $opn_a$:
 \end{equation}
 
 \noindent
-Each operation must in other words be proved to update the concrete state
+Each concrete operation must in other words be proved to update the concrete state
 in a manner corresponding to the desired operation on the abstract state.
 We illustrate this approach with a rather simple \Klang{} model of a light switch,
 which can be turned on and off.  The specification is shown on the left of
@@ -264,7 +262,7 @@ does not extend (inherit from) the specification as was the case in the
 mathematical function refinement in Figure \ref{fig:prepost}. Instead, the
 proof corresponding to equation (\ref{eq:refinement}) above is provided
 in the separate class \name{RefinementProof} in Figure \ref{fig:lightswitch-proof}.
-To express the refinement property to be proved an instance \name{spec} of the
+To express the refinement property to be proved, an instance \name{spec} of the
 specification and an instance \name{impl} are created such that we can refer to their respective operations (functions). Then the abstraction function \name{abs} is defined from the concrete state of integers to the abstract state \name{State}
 of the specification. Finally, the requirement is the \Klang{} formulation of 
 equation (\ref{eq:refinement}) above, ignoring the pre-condition part since all
