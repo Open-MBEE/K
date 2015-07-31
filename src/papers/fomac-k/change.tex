@@ -3,10 +3,11 @@
 
 \subsection{Behavior}
 
-\Klang{} has to a large extent been used for specifying static structure, similar
-to what can be represented by UML/SysML class diagrams, with requirements
-typically constraining integer and real variables that represent properties of 
-physical nature, such as for example weights and distances.
+\Klang{} has to a large extent at JPL sofar mostly been used for specifying static 
+structure, similar to what can be represented by UML/SysML class diagrams, with 
+requirements typically constraining integer and real variables that represent 
+properties of physical nature, such as for example weights and distances.
+The shapes model in Figure \ref{fig:shapes} is an example of a model of structure, namely the shape of triangles.
 \Klang{} can, however, also be used for specifying behavior, using the same
 concepts used for specifying structure, namely classes, properties, functions and
 requirements on these. The idea is in other words to use mathematical logic to 
@@ -77,7 +78,7 @@ Event scheduling is a very common problem faced in a plethora of
 fields and domains. The typical scenario usually involves specifying
 multiple different allowed orderings of events and determining whether
 the specified ordering is satisfiable or not, and if satisfiable,
-possibly generating a timeline for the specified events. The
+possibly generating a timeline for the specified events.
 Figure~\ref{fig:scheduling} shows one such example encoded using
 \Klang{}.
 
@@ -97,23 +98,27 @@ The foundation of the scheduling problem is specified by the
 and end time (both of these specified using the \code{Int} type). The
 requirements on this class specify that the duration of any event has
 to be non-zero (\code{req} \name{nonZeroDuration}) and the start time
-of all events is greater than zero (\code{req}
+of all events is greater than or equal to zero (\code{req}
 \name{afterBigBang}). Further, the three functions in the \name{Event}
-class encode Allen logic operators using simple mathematical
-expressions on the start and end times of the two events in
-question. Given another event \name{e}, it is now possible to specify
-if the event occurs \name{before}, \name{after}, or is
-\name{contained} by the current event. We do not include the other
-operators for sake of brevity. Using this foundation, it is now
+class encode Allen logic operators \cite{allen-logic-84} 
+using simple mathematical
+expressions on the start and end times of two events in
+question. The functions specify whether an event occurs
+\name{before} another event $e$, \name{meets} the other event, or
+\name{contains} the other event. We do not include the full set of
+Allen logic operators for sake of brevity. 
+
+Using this foundation, it is now
 trivial to specify schedules and events. This is exactly what the
 \name{Schedule} class does. Five events are created as instances of
 the \name{Event} class. The actual schedule is specified as a
 requirement, which expresses the ordering of the events. In this
 particular example, the schedule specifies that the \name{sciWindow}
-must occur before the \name{commWindow} and at least one science
+(science window) must occur before the \name{commWindow} (communication
+window) and at least one science
 activity must have taken place. By translating the scheduling
-specification to SMT2 and using a theorem prover, we can now check if
-the provided ordering on the events is satisfiable or not by checking
+specification to SMT2 and applying the \zthree{} theorem prover, it can now 
+be checked if the provided ordering on the events is satisfiable or not by checking
 if the \name{Schedule} class is satisfiable. A satisfying assignment
 to the class also provides us with a concrete time line of the events.
 It can be common for schedules and events to change as the project
@@ -124,6 +129,7 @@ constraints in the \name{Schedule} class, or by adding new events and
 constraints. Each change in the schedule is also verified using a
 theorem prover, which adds greater confidence in the change.
 
+
 \subsection{Refinement}
 
 Change can be considered as refinement. In the formal methods literature
@@ -133,14 +139,13 @@ level model/program, the implementation. Along with the refinement normally
 goes a proof, that the implementation refines the specification.
 The literature offers many solutions to how specifications, implementations and 
 refinements are expressed as well as proved correct, see for example 
-\cite{vdm,raise}. We shall not here enumerate all of these, but bring forward two 
-examples, one illustrating function refinement, and one illustrating data 
-refinement.
+\cite{vdm,raise92,george-raise-2008}. We shall not here enumerate all of these, but bring forward two examples, one illustrating function refinement, and one illustrating data refinement.
 
 \subsubsection{Function Refinement}
 
 Function refinement consists of making the body of a function more concrete,
-while the signature of the functions stays unchanged. More generally, data 
+while the signature (name as well as  argument and result types) of the 
+functions stays unchanged. More generally, data 
 structures accessed by the function stay unchanged. One popular approach to this
 is design by contract, where a function is first specified using pre/post 
 conditions, and then later implemented with a function body. This form of 
