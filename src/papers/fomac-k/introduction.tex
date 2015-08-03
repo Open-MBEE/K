@@ -1,71 +1,82 @@
 
 \section{Introduction}
 
-The core topic of this paper is the concept of {\em change}, and how it
-relates to the way we {\em model} as well as {\em program} our systems, and how 
-we can ensure correctness of change using modern verification technology.
-We shall specifically discuss this topic by introducing the wide-spectrum
-modeling and programming language \Klang, under development at NASA's Jet Propulsion 
-Laboratory (JPL), and demonstrate change scenarios and their 
-verification in \Klang.
+The core topic of this paper is the concept of {\em change}, and how
+it relates to the way we {\em model} as well as {\em program} our
+systems, and how we can ensure correctness of change using modern
+verification technology.  We shall specifically discuss this topic by
+introducing the wide-spectrum modeling and programming language
+\Klang, under development at NASA's Jet Propulsion Laboratory (JPL),
+and demonstrate change scenarios and their verification in \Klang.
 
-The first call for opinion statements on the topic of change, with this 
-journal in mind, was published in \cite{steffen-isola-2014}, in which it is 
-characterized as ``{\em a discipline for rigorously dealing with the nature of 
-today's agile system development, which is characterized by unclear premises, 
-unforeseen change, and the need for fast reaction, in a context of hard to 
-control frame conditions, like third party components, network-problem, and 
-attacks}''. 
+The first call for opinion statements on the topic of change, with
+this journal in mind, was published in \cite{steffen-isola-2014}, in
+which it is characterized as ``{\em a discipline for rigorously
+  dealing with the nature of today's agile system development, which
+  is characterized by unclear premises, unforeseen change, and the
+  need for fast reaction, in a context of hard to control frame
+  conditions, like third party components, network-problem, and
+  attacks}''.
 %
-Our view is that change fundamentally can be considered as a software 
-verification problem, where the question is the following: given a program 
-$P_1$, and a new program $P_2$, does $P_2$ implement/refine $P_1$?
-As such, in the extreme, the topic of correctness under change can  potentially be 
-considered as the well known topic of correctness. 
+Our view is that change fundamentally can be considered as a software
+verification problem, where the question is the following: given a
+program $P_1$, and a new program $P_2$, does $P_2$ implement/refine
+$P_1$?  As such, in the extreme, the topic of correctness under change
+can potentially be considered as the well known topic of correctness.
 
-As is well known, analysis of correctness can be performed dynamically by analyzing 
-execution traces. Dynamic methods include such topics 
-as testing, runtime verification, and specification mining, where learned models of 
-previous behavior is compared to models of current behavior (after change). Dynamic 
-methods are known to scale well, which is their attraction, but are also known to 
-yield false negatives: not to report errors that exist, and in some cases (i.e. runtime analysis of data races and deadlocks) to yield 
-false positives (to report errors that do not exist). Our focus
-in this paper is on static analysis of code: where proofs are carried out on the basis 
-of the structure of the code.
+As is well known, analysis of correctness can be performed dynamically
+by analyzing execution traces. Dynamic methods include such topics as
+testing, runtime verification, and specification mining, where learned
+models of previous behavior is compared to models of current behavior
+(after change). Dynamic methods are known to scale well, which is
+their attraction, but are also known to yield false negatives: not to
+report errors that exist, and in some cases (i.e. runtime analysis of
+data races and deadlocks) to yield false positives (to report errors
+that do not exist). Our focus in this paper is on static analysis of
+code: where proofs are carried out on the basis of the structure of
+the code.
 
-The \Klang{} language is being developed at NASA's Jet Propulsion Laboratory (JPL),
-as part of a larger effort at JPL to develop an in-house systems modeling language and 
-associated tool set, referred to as \ems{} (Engineering Modeling System). \ems{} is 
-based on the graphical \sysml{} formalism \cite{sysml}, which is a variant of \uml{} 
-\cite{uml}, both designed by the OMG (Object Management Group) technology standards 
-consortium. \sysml{} is meant for systems development more broadly considered, 
-including physical systems as well as software systems, in contrast to \uml{}, which 
-is mainly meant for software development. 
-\ems{} is being developed (and already in use) to support the design of NASA's 
-upcoming mission to Jupiter's Moon Europa, referred to as the {\em Europa Clipper 
-mission} \cite{europa-clipper}, planned to launch around 2022 at the 
-moment of writing.
+The \Klang{} language is being developed at NASA's Jet Propulsion
+Laboratory (JPL), as part of a larger effort at JPL to develop an
+in-house systems modeling language and associated tool set, referred
+to as \ems{} (Engineering Modeling System). \ems{} is based on the
+graphical \sysml{} formalism \cite{sysml}, which is a variant of
+\uml{} \cite{uml}, both designed by the OMG (Object Management Group)
+technology standards consortium. \sysml{} is meant for systems
+development more broadly considered, including physical systems as
+well as software systems, in contrast to \uml{}, which is mainly meant
+for software development.  \ems{} is being developed (and already in
+use) to support the design of NASA's upcoming mission to Jupiter's
+Moon Europa, referred to as the {\em Europa Clipper mission}
+\cite{europa-clipper}, planned to launch around 2022 at the moment of
+writing.
 
-The \Klang{} language design was initially triggered by a desire from within
-the \ems{} project to create a textual version of \sysml. Although the graphical
-nature of \sysml{} can be attractive from a readability point of view, it 
-suffers from a number of issues, including lack of clear semantics, lack of analysis 
-capabilities, requiring heavy mouse-movement and clicking, and generally demanding
-much more visual space than a textual formalism. The \Klang{} language is in addition 
-inspired by the idea of combining modeling and programming into one
-language. This idea has been, and is being, pursued by others in various forms, including past works on wide-spectrum specification languages. See the
-related work section (Section \ref{sec:related-work}) for a more detailed 
-discussion. It is interesting to observe, that modern programming languages to an increasing degree look and feel like specification languages from the past. 
+The \Klang{} language design was initially triggered by a desire from
+within the \ems{} project to create a textual version of
+\sysml. Although the graphical nature of \sysml{} can be attractive
+from a readability point of view, it suffers from a number of issues,
+including lack of clear semantics, lack of analysis capabilities,
+requiring heavy mouse-movement and clicking, and generally demanding
+much more visual space than a textual formalism. The \Klang{} language
+is in addition inspired by the idea of combining modeling and
+programming into one language. This idea has been, and is being,
+pursued by others in various forms, including past works on
+wide-spectrum specification languages. See the related work section
+(Section \ref{sec:related-work}) for a more detailed discussion. It is
+interesting to observe, that modern programming languages to an
+increasing degree look and feel like specification languages from the
+past.
 
-A constantly returning discussion point in the design of \Klang{} has been whether to 
-actually design a new language or adopt an existing specification or programming 
-language. The decision to design a new language was in part influenced by the felt 
-need (perhaps unwarranted) to control the syntax and the tool development stack,
-including parsers, compilers, etc. Whether this decision was/is correct, an important 
-factor that makes \Klang{} interesting is that it is being designed 
-to meet the needs of a real space mission. As such it can be considered as
-a confirmation of already existing work in the area of specification as well as 
-programming languages.
+A constantly returning discussion point in the design of \Klang{} has
+been whether to actually design a new language or adopt an existing
+specification or programming language. The decision to design a new
+language was in part influenced by the felt need (perhaps unwarranted)
+to control the syntax and the tool development stack, including
+parsers, compilers, etc. Whether this decision was/is correct, an
+important factor that makes \Klang{} interesting is that it is being
+designed to meet the needs of a real space mission. As such it can be
+considered as a confirmation of already existing work in the area of
+specification as well as programming languages.
 
 The contents of the paper is as follows. 
 Section \ref{sec:k} introduces the \Klang{} language, focusing on a small
