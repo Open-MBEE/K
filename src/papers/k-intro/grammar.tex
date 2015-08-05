@@ -1,0 +1,144 @@
+\newpage
+\section{K Grammar}
+\label{app:grammar}
+
+{\scriptsize 
+
+\begin{verbatim}
+model: packageDeclaration?  importDeclaration*  
+       annotationDeclaration*  topDeclaration* EOF;
+
+packageDeclaration:  'package' qualifiedName ;
+
+importDeclaration:  'import' qualifiedName ('.' '*')? ;
+
+annotationDeclaration:  'annotation' Identifier ':' type ;
+
+annotation:  '@' Identifier '(' expression ')' ;
+
+topDeclaration: annotation* entityDeclaration | annotation* memberDeclaration ;
+
+entityDeclaration: ('class'|'assoc'|Identifier) Keyword? Identifier 
+  typeParameters? extending? ('{' block '}')? ;
+
+Keyword:  '<' Identifier '>' ;
+
+typeParameters:  '[' typeParameter (',' typeParameter)* ']' ;
+
+typeParameter:  Identifier (':' typeBound)? ;
+
+typeBound:  type ('+' type)* ;
+      
+extending:  'extends' type (',' type)* ;
+
+block:   blockDeclaration* ;
+
+blockDeclaration:  annotation* memberDeclaration  ;
+
+memberDeclaration:
+ typeDeclaration  | propertyDeclaration  | functionDeclaration
+ | constraint | expression  ;
+
+typeDeclaration:  'type' Identifier (typeParameters? '=' type )? ;
+
+propertyDeclaration:
+  propertyModifier* Identifier ':' type multiplicity? 
+  (('='|':=') expression)? ;
+
+propertyModifier: 'part' | 'var' | 'val' | 'ordered' | 'unique' 
+  | 'source' | 'target';
+
+functionDeclaration:
+  'fun' Identifier typeParameters? ('(' paramList ')')? (':' type)?
+    functionSpecification* ('{' block '}')? ;
+
+paramList:  param (',' param)* ;
+
+param:  Identifier ':' type ;
+
+functionSpecification:  'pre'  expression | 'post' expression ;
+
+constraint:  'req' (Identifier ':')?  expression ;
+
+multiplicity:  '[' expressionOrStar (',' expressionOrStar)? ']' ;
+
+expressionOrStar:  expression | '*' ;
+
+type:
+  primitiveType | classIdentifier typeArguments? | type ('*' type)+       
+  | type '->' type | '(' type ')' 
+  | '{|' Identifier ':' type  SUCHTHAT expression '|}' ;
+
+primitiveType: 'Bool'  | 'Char'  | 'Int' | 'Real' | 'String' | 'Unit' ;
+
+classIdentifier: qualifiedName | 'Class' | collectionKind ;
+
+collectionKind: 'Set' | 'Bag' | 'Seq' ;
+
+typeArguments: '[' type (',' type)* ']' ;
+
+expression: 
+    '(' expression ')' | 'Tuple' '(' expression (',' expression)+ ')' 
+  | literal | Identifier | expression '.' Identifier 
+  | expression '(' argumentList? ')' 
+  | '!' expression | '{' block  '}' 
+  | 'if' expression 'then' expression ('else' expression)? 
+  | 'match' expression 'with' match+  
+  | 'while' expression 'do' expression  
+  | 'for' pattern 'in' expression 'do' expression 
+  | collectionKind '{' expressionList? '}' 
+  | collectionKind '{' expression '..' expression '}' 
+  | collectionKind '{' expression '|' rngBindingList 
+      SUCHTHAT expression '}' 
+  | expression ('*'|'/'|'%'|'inter'|'\\'|'++'|'
+  | expression ('+'|'-'|'union') expression 
+  | expression ('<=' | '>=' | '<' | '>' | '=') expression
+  | expression ('!=' | 'isin'|'!isin'|'subset'|'psubset') expression 
+  | expression ('&&' | '||') expression 
+  | expression ('=>' | '<=>') expression 
+  | expression (':=' | 'is' | 'as') expression 
+  | 'assert' '(' expression ')' 
+  | '-' expression 
+  | qualifiedName '~' 
+  | 'forall' rngBindingList SUCHTHAT expression 
+  | 'exists' rngBindingList SUCHTHAT expression 
+  | pattern '->' expression 
+  | 'continue' | 'break'  | 'return' expression? | '$result' ;
+
+match: 'case' pattern ('|' pattern)* '=>' expression ;
+
+argumentList: positionalArgumentList | namedArgumentList ;
+
+positionalArgumentList: expression (',' expression)* ;
+
+namedArgumentList: namedArgument (',' namedArgument)* ;
+
+namedArgument : Identifier '::' expression ;
+
+collectionOrType: expression  | type ;
+
+rngBindingList: rngBinding (',' rngBinding)* ;
+
+rngBinding: patternList ':' collectionOrType ;
+
+patternList: pattern (',' pattern)* ;
+
+pattern:
+  literal | '_' | Identifier | '(' pattern (',' pattern)+ ')'
+  | pattern ':' type ;
+  
+identifierList: Identifier (',' Identifier)* ;
+
+expressionList: expression (',' expression)* ;
+    
+qualifiedName: Identifier ('.' Identifier)* ;
+
+literal:
+  IntegerLiteral | RealLiteral | CharacterLiteral | StringLiteral
+  | BooleanLiteral | NullLiteral | ThisLiteral ;
+
+SUCHTHAT : ':-' ;
+
+\end{verbatim}
+}
+

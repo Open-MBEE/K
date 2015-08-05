@@ -1,0 +1,124 @@
+
+\section{Related Work}
+\label{sec:related-work}
+
+\Klang{} is intended to represent a textual modeling language capable
+of representing \sysml{} concepts, specifically class diagrams with
+constraints.  However, as mentioned in the introduction, it also
+contains programming constructs.  As such it can be perceived as a
+wide-spectrum modeling/programming language.
+
+Wide spectrum specification languages have been investigated to length
+in the formal methods community. One of the well-known examples is
+\vdm{} \cite{vdm78,bjoerner-jones-82,jones90,jones-shaw-90}. \vdm{} in
+its original form \cite{vdm78} provided a combination of procedural
+programming and functional programming, as well as specification using
+sets, lists and maps (with proper mathematical notation), and
+higher-order predicate logic. \vdmpp{} \cite{vdmplusplus05} added
+object-orientation to \vdm{}, which is now part of the \vdm{}
+standard. The \raiselang{} specification language (\rsl{})
+\cite{raise92} is a wide-spectrum language taking inspiration from
+\vdm{} as well as from other modeling languages such as \zlang{}
+\cite{spivey-Z-1988}, and from algebraic equational specification
+languages. Here refinement is the simpler theory implication: the
+implementation shall imply the specification in a logic sense. \asml{}
+\cite{asml05} is a more recent wide-spectrum specification language,
+in many ways similar to \vdm{}, but based on the fundamental concept
+that operations operate on algebras.  Other fundamental works on
+refinement include (not a comprehensive list):
+\cite{wirth-refinement-71,hoare-sanders-refinement-86,morgan-refinement-94,woodcock-sanders-z-96,back-wright-refinement-98,abrial-eventb-10}.
+
+\alloy{} \cite{jackson-alloy-12} added new life to this community by
+being supported by a automated SAT solver. In many respects, \Klang{}
+is close in spirit to \alloy{}, but differs by being supported by an
+automated SMT solver (in contrast to a SAT solver), resulting in a
+richer set of constructs, including arithmetic, being exposed to
+analysis. \Klang{} also combines a type view as found in traditional
+specification and programming languages, as well as a relational view,
+whereas \alloy{} is purely relational. We are of the belief that the
+notion of a type is fundamental to programming as well as to
+modeling. In contrast to automated provers, interactive theorem
+provers such as \pvs{} \cite{cade92-pvs,pvs-website}, \coq{}
+\cite{coq-website}, and \isabelle{} \cite{isabelle-website}, allow the
+user to steer the proofs.  Although this allows to perform more
+complex proofs, it is also requires more skills of the user, and time,
+which is often a limited resource in software development projects.
+
+Several high-level programming languages have been developed over
+time, including the early \sml{} (Standard ML) \cite{standard-ml-97},
+its derivative \ocaml{} \cite{ocaml}, and \haskell{}
+\cite{haskell}. However, also \java{} can be considered high-level due
+to its libraries of collections (sets, lists, and maps), as well as
+the iterator concept. \python{} \cite{python} is close to combining
+object-oriented and functional programming. \scala{} \cite{scala} does
+this to the full extent. The close relationship between \scala{} and
+\vdm{} is discussed in \cite{havelund-scala-vdm-12}.  \fortress{}
+\cite{fortress} introduced built-in notation for sets, lists, and
+maps, very much resembling the notation in \vdm{}.
+
+Specification constructs have been introduced in programming
+languages, in the form of design-by-contract (pre/post conditions +
+class invariants). Examples are \eiffel{} \cite{eiffel} and
+\specsharp{} \cite{specsharp}, where contracts are part of the
+language. \scala{} has library functions for writing pre/post
+conditions on functional programs \cite{odersky-rv10}. Finally, The
+\jml{} language \cite{jml} allows to write design-by-contract
+specifications for \java{} as comments. These are ignored by the
+standard \java{} compiler, and therefore must be processed with
+special tools. \eml{} (Extended ML) \cite{sannella-eml-97} takes a
+slightly different approach to specification and formal development of
+\sml{} programs.  \eml{} specifications look just like \sml{} programs
+except that axioms are allowed in signatures and in place of code in
+structures and functors. Some \eml{} specifications are executable,
+since \sml{} function definitions are just axioms of a certain special
+form. This makes \eml{} a wide-spectrum language.
+
+Programming languages are now also being built with verification in
+mind.  \dafny{} \cite{leino-lpar-2010} supports specifications that
+can be used to write functional-correctness conditions for programs.
+It is supported by verifier, which is implemented on top of the
+\boogie{} verification engine, which itself is built on top of
+\zthree.  \whythree{} \cite{filliatre-why3-2011} provides a rich
+language for specification and programming, called \whyml{}, and
+relies on external theorem provers, both automated and interactive, to
+discharge verification conditions. A user can write \whyml{} programs
+directly and get correct-by-construction \ocaml{} programs through an
+automated extraction mechanism. Model checking is another form of
+analysis that has been applied to programming languages.  Java
+PathFinder~\cite{havelund-jpf-00,havelund-visser02} performs model
+checking of Java programs. \slam{} \cite{ball2010slam2} performs
+static analysis and counter-example guided abstraction refinement to
+device drivers, and has been applied in a large scale industry
+setting.  \spin{} \cite{holzmann-spin-2004} performs model checking of
+models expressed in the \promela{} language, but can also model check
+\clang{} code directly.
+
+The great improvements in model checking, static analysis, theorem
+proving, and SMT solvers such as Z3~\cite{de2008z3} have all
+contributed to investigating and dealing with software change. To this
+effect, differential symbolic execution~\cite{person2008differential}
+has been investigated for establishing equivalence between two
+versions of a program. The work described in \cite{lahiri2012symdiff}
+uses verification conditions and SMT solvers for detecting semantic
+change between two closely related versions of a function (program),
+by discovering inputs to the function that cause the outputs to
+differ. The work described in \cite{godlin2009regression} deals with
+regression verification and provides a technique for performing
+equivalence checking of C programs, by using the older version of the
+program as a specification for the new version of the program. A large
+part of the inspiration for such work comes from the theorem proving
+community.
+
+An important use of \Klang{} that we have observed so far, which
+differs in the way traditional verification tools are used, is that
+modelers tend to use \Klang{} along with it's solving ability as a
+tool for {\em discovering} the right set of constraints for their
+class before introducing a change. For example, uncertainty about a
+particular variable and it's potential range of valid values can be
+quite common in modeling environments. Since \Klang{} helps discover
+unsatisfiability, modelers use an iterative refinement technique to
+discover the appropriate range of a variable for their needs. \Klang{}
+in this case is providing validation before a change is completely
+committed.
+
+
