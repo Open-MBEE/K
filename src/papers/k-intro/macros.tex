@@ -1,0 +1,109 @@
+\usepackage{multirow}
+%\usepackage[T1]{fontenc}
+%\usepackage[latin9]{inputenc}
+%\usepackage{babel}
+%\usepackage{alltt}
+%\usepackage{comment}
+%\usepackage{multirow}
+%\usepackage{graphicx}
+
+% -----------------
+% --- comments: ---
+% -----------------
+
+\newcommand{\notethis}[1]{
+  \color{red}
+  \vspace{0.3cm}
+  \noindent\makebox[\linewidth]{\rule{\paperwidth}{0.4pt}}\\
+  {\sc NOTE - } #1\\
+  \noindent\makebox[\linewidth]{\rule{\paperwidth}{0.4pt}}\\
+  \vspace{0.3cm}
+  \color{black}
+}
+
+% ------------------
+% --- listings: ---
+% ------------------
+
+\usepackage{listings}
+\usepackage{color}
+\usepackage{amssymb}
+\usepackage{framed}
+\usepackage{graphicx} 
+\usepackage{caption} 
+\captionsetup{compatibility=false}
+\usepackage{subcaption}
+\usepackage{fancyvrb}
+\usepackage{verbatimbox}
+
+\definecolor{light-gray}{gray}{0.95}
+
+\lstdefinelanguage{K}{
+  morekeywords={package,import,class,extends,with,match,new,if,then,else,while,for,yield,val,var,this,case,type,implicit,private,protected,abstract,final, req, Int, Bool, fun, pre, post},
+  otherkeywords={&,\{,\},_*},
+  literate=
+      {\#\#}{{$\oplus\;$}}2
+      {|->}{{$\longmapsto\;$}}2
+      {-->}{{$\Longrightarrow\;$}}2
+      {->}{{$\rightarrow\;$}}2
+      {~}{{$\sim\;$}}2
+      {>>}{{$\gg$}}2
+      {++}{{$++$}}2
+      {|==}{{$\models$}}2
+  ,
+  sensitive=true, 
+  morecomment=[l]{//}, 
+  morecomment=[s]{/*}{*/},
+  stringstyle=\ttfamily,
+}  
+% --- Referring to code: ---
+
+\newcommand{\name}[1]{{\em #1}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\issue}[2]{{\bf ** #1: #2}}
+
+\newcommand{\Klang}{{K}}
+\newcommand{\tracecontract}{{TraceContract}}
+\newcommand{\logfire}{{LogFire}}
+\newcommand{\vdm}{VDM}
+\newcommand{\vdmpp}{\vdm$^{++}$}
+\newcommand{\asml}{Asml}
+\newcommand{\raiselang}{Raise}
+\newcommand{\rsl}{RSL}
+\newcommand{\zlang}{Z}
+\newcommand{\alloy}{Alloy}
+\newcommand{\clear}{Clear}
+\newcommand{\eiffel}{Eiffel}
+\newcommand{\dafny}{Dafny}
+\newcommand{\whythree}{Why3}
+\newcommand{\whyml}{WhyML}
+\newcommand{\eml}{EML}
+\newcommand{\specsharp}{SpeC$^{\#}$}
+\newcommand{\java}{Java}
+\newcommand{\clang}{C}
+\newcommand{\scala}{Scala}
+\newcommand{\sml}{SML}
+\newcommand{\ml}{ML}
+\newcommand{\haskell}{Haskell}
+\newcommand{\fortress}{Fortress}
+\newcommand{\python}{Python}
+\newcommand{\ocaml}{Ocaml}
+\newcommand{\jml}{JML}
+\newcommand{\uml}{UML}
+\newcommand{\sysml}{SysML}
+\newcommand{\ltl}{LTL}
+\newcommand{\pvs}{PVS}
+\newcommand{\isabelle}{Isabelle}
+\newcommand{\coq}{Coq}
+\newcommand{\boogie}{Boogie}
+\newcommand{\zthree}{Z3}
+\newcommand{\ems}{EMS}
+\newcommand{\antlr}{ANTLR}
+\newcommand{\slam}{SLAM}
+\newcommand{\spin}{SPIN}
+\newcommand{\promela}{Promela}{
+
+\newcommand*{\scaleFactor}{0.75}
+
+% \lstset{language=K,numbers=left,numberstyle=\scriptsize,numbersep=-21pt}
+\lstset{language=K}
