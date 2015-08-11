@@ -3,7 +3,6 @@ class A {
   a : Int = 1
 
   fun f(x : Int): Int
-    pre a != 1
 }
 
 class B extends A {
