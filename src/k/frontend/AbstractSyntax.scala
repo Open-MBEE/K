@@ -1105,19 +1105,22 @@ case class FunDecl(ident: String,
 
     val preConditions = spec.filter(_.pre)
     val postConditions = spec.filterNot(_.pre)
-    if (!postConditions.isEmpty /*&& !body.isEmpty*/ ) {
+    if (!postConditions.isEmpty) {
       UtilSMT.createLocals(params.map(_.name))
       result += "\n\n"
-      val preSMT = preConditions.map(_.exp.toSMT(className, false)).mkString("\n        ") // and true?
+      val preSMT = preConditions.map(_.exp.toSMT(className, false)).mkString("\n      ") // and true?
       val postSMT = postConditions.map(_.exp.toSMT(className, false)).mkString("\n        ") // and true?
       val resultVar = "$result"
       result += s"(assert (forall ($parameters)\n"
-      result += s"  (let (($resultVar ($className!$ident $actuals)))\n" // and dot?
-      result += s"    (=>\n"
-      result += s"      (and\n"
-      result += s"        (deref-is-$className this)\n" // isa does not solve, but should it be isa?
-      if (preSMT != "") result += s"        $preSMT\n"
-      result += s"      )\n"
+      result += s"  (=>\n"
+      result += s"    (and\n"
+      result += s"      (deref-is-$className this)\n" // isa does not solve, but should it be isa?
+      for (Param(name, IdentType(QualifiedName(tyName :: Nil), Nil)) <- params) {
+        result += s"      (deref-isa-$tyName $name)\n"
+      }
+      if (preSMT != "") result += s"      $preSMT\n"
+      result += s"    )\n"
+      result += s"    (let (($resultVar ($className!$ident $actuals)))\n" // and dot?
       result += s"      (and\n"
       result += s"        $postSMT\n"
       result += s"      )\n"
