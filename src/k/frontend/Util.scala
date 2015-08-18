@@ -194,8 +194,7 @@ object Misc {
       case (_, AnyType)                         => return true
       case (RealType, IntType) if compatibility => return true
       case (IntType, RealType) if compatibility => return true
-      case _ =>
-        return t1.equals(t2)
+      case _                                    => return t1.equals(t2)
     }
     return false
   }
