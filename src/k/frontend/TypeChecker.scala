@@ -871,6 +871,7 @@ class TypeChecker(model: Model) {
       case BinExp(exp1, op, exp2) =>
         val ty1 = getExpType(te, exp1, owner)
         val ty2 = getExpType(te, exp2, owner)
+        logDebug(s"Types are $exp1:$ty1 and $exp2:$ty2")
         op match {
           case LT | LTE | GT | GTE | AND | IMPL | OR | IFF | NEQ | EQ =>
             if (!areTypesEqual(ty1, ty2, true)) error(s"$exp does not type check. $ty1 and $ty2 are not equivalent.")
@@ -884,7 +885,7 @@ class TypeChecker(model: Model) {
           case ISIN | NOTISIN =>
             val (typesCompat, cType) = Misc.typeTypeCollection(ty1, ty2)
             if (!typesCompat) error(s"$exp does not type check. $ty1 and $ty2 are not compatible.")
-            BoolType
+            ty1
           case SETUNION =>
             val (typesCompat, cType) = Misc.typeTypeCollection(ty1, ty2)
             if (!typesCompat) error(s"$exp does not type check. $ty1 and $ty2 are not compatible.")
@@ -1031,6 +1032,45 @@ class TypeChecker(model: Model) {
         if (getExpType(newTe, e, owner) != BoolType)
           error(s"$exp does not evaluate to Bool")
         BoolType
+      case CollectionEnumExp(kind, exps) =>
+        var expsType: Type = UnitType
+        for (e <- exps) {
+          val eType = getExpType(te, e, owner)
+          if (expsType == UnitType || (expsType == eType)) {
+            expsType = eType
+          } else {
+            error(s"CollectionEnumExp: $exp does not type check.")
+          }
+        }
+        IdentType(QualifiedName(List(kind.toString)), List(expsType))
+      case CollectionRangeExp(kind, e1, e2) =>
+        val e1Type = getExpType(te, e1, owner)
+        val e2Type = getExpType(te, e2, owner)
+        if (e1Type != e2Type) {
+          error(s"CollectionRangeExp: $exp does not type check.")
+        }
+        IdentType(QualifiedName(List(kind.toString)), List(e1Type))
+      case CollectionComprExp(kind, e1, bindings, e2) =>
+        val newTe = bindings.foldLeft(te) { (res, bndg) =>
+          bndg.patterns.foldLeft(res) { (res2, p) =>
+            val collectionType = bndg.collection match {
+              case ExpCollection(collE)   => getExpType(te, collE, owner)
+              case TypeCollection(collTy) => collTy
+            }
+            val singleType = Misc.removeCollection(collectionType)
+            p match {
+              case IdentPattern(ident)      => res2.overwrite(ident -> PatternTypeInfo(p, singleType))
+              case ProductPattern(patterns) => error(s"Currently only identifier and product patterns are supported. $exp")
+              case _                        => error(s"Currently only identifier and product patterns are supported. $exp")
+            }
+          }
+        }
+        val e1Type = getExpType(newTe, e1, owner)
+        val e2Type = getExpType(newTe, e2, owner)
+        if (e1Type != e2Type) {
+          error(s"CollectionComprExp: $exp does not type check.")
+        }
+        IdentType(QualifiedName(List(kind.toString)), List(e1Type))
       case IntegerLiteral(_)   => IntType
       case BooleanLiteral(_)   => BoolType
       case CharacterLiteral(_) => CharType

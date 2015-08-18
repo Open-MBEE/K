@@ -188,34 +188,36 @@ object K2Z3 {
       heapMap.foreach { kv =>
         val key = kv._1
         val value = kv._2.replace("- ", "-")
-        val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
-        if (value.contains("mk-")) {
-          val objectValues = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
-            .split(' ').map(_.trim).filterNot { _.isEmpty }
+        if (value != "null") {
+          val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
+          if (value.contains("mk-")) {
+            val objectValues = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
+              .split(' ').map(_.trim).filterNot { _.isEmpty }
 
-          className == "TopLevelDeclarations" match {
-            case true =>
-              var topLevelVariables =
-                model.decls.foldLeft(List[(String, Boolean)]()) { (res, d) =>
-                  d match {
-                    case pd @ PropertyDecl(_, _, _, _, _, _) => (new Tuple2(pd.name, TypeChecker.isPrimitiveType(pd.ty))) :: res
-                    case _                                   => res
+            className == "TopLevelDeclarations" match {
+              case true =>
+                var topLevelVariables =
+                  model.decls.foldLeft(List[(String, Boolean)]()) { (res, d) =>
+                    d match {
+                      case pd @ PropertyDecl(_, _, _, _, _, _) => (new Tuple2(pd.name, TypeChecker.isPrimitiveType(pd.ty))) :: res
+                      case _                                   => res
+                    }
                   }
+                var i = 1
+                topLevelVariables.reverse.foreach { k =>
+                  if (k._2) rows = (List(k._1, objectValues(i))) :: rows
+                  else {
+                    val res = printObjectValue(k._1, heapMap, heapMap.getOrElse(objectValues(i), heapMap("else")), visited)
+                    rows = res._2 ++ rows
+                    visited = res._1 + ("Ref " + key)
+                  }
+                  i = i + 1
                 }
-              var i = 1
-              topLevelVariables.reverse.foreach { k =>
-                if (k._2) rows = (List(k._1, objectValues(i))) :: rows
-                else {
-                  val res = printObjectValue(k._1, heapMap, heapMap.getOrElse(objectValues(i), heapMap("else")), visited)
-                  rows = res._2 ++ rows
-                  visited = res._1 + ("Ref " + key)
-                }
-                i = i + 1
+              case _ => {
+                val res = printObjectValue("Ref " + key, heapMap, value, visited)
+                extraRows = res._2 ++ extraRows
+                visited = res._1
               }
-            case _ => {
-              val res = printObjectValue("Ref " + key, heapMap, value, visited)
-              extraRows = res._2 ++ extraRows
-              visited = res._1
             }
           }
         }
