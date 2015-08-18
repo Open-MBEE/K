@@ -492,7 +492,7 @@ object Frontend {
           }
         }
       } catch {
-        case _ => ()
+        case _ : Throwable => ()
       }
 
     }
@@ -564,7 +564,7 @@ object Frontend {
         }
       } catch {
         //case e if e.isInstanceOf[java.util.NoSuchElementException] => log("Skipping element..." + obj)
-        case _ => log("Skipping element..." + obj)
+        case _ : Throwable => log("Skipping element..." + obj)
       }
     }
 
