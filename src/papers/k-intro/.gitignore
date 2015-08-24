@@ -5,5 +5,4 @@
 *.bbl
 *.blg
 *.log
-Makefile
 .texpad*
