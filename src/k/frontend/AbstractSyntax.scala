@@ -152,6 +152,8 @@ object UtilSMT {
           UtilSMT.error(s"$ty in local property declaration $pd")
         exp match {
           case Some(e) =>
+            if (UtilSMT.isConstructorAppl(e))
+              UtilSMT.error(s"constructor application $e not allowed in block")
             val expSMT = e.toSMT(className, subtyping)
             "  " + ("  " * level) + s"(let (($name $expSMT))\n" +
               memberList2SMT(rest, className, subtyping, level + 1)
@@ -339,14 +341,22 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
     result1 += "(set-option :smt.macro-finder true)\n"
     result1 += "\n"
 
-    // Generate datatypes:
+    // Generate builtin datatypes:
 
-    result1 += UtilSMT.headline1("Datatypes")
+    result1 += UtilSMT.headline1("Built-in datatypes")
     result1 += "(define-sort Ref () Int)\n"
     result1 += "\n"
     result1 += "(declare-datatypes (T1 T2) ((Tuple2 (mk-Tuple2 (_1 T1)(_2 T2)))))\n"
     result1 += "(declare-datatypes (T1 T2 T3) ((Tuple3 (mk-Tuple3 (_1 T1)(_2 T2)(_3 T3)))))\n"
     result1 += "\n"
+    result1 += "(define-sort Set (T) (Array T Bool))\n"
+    result1 += "(define-sort Bag (T) (Array T Int))\n"
+    result1 += "\n"
+    result1 += "(declare-const emptySetOf_Int (Set Int))\n"
+    // result1 += "(assert (= emptySetOf_Int ((as const (Set Int)) false)))\n" - does not work
+    result1 += "(assert (forall ((x Int)) (= (select emptySetOf_Int x) false)))\n"
+    result1 += "\n"
+    result1 += UtilSMT.headline1("User-defined datatypes")
     for (ed <- entityDecls) {
       result1 += ed.toSMTDatatype + "\n"
     }
@@ -1677,6 +1687,12 @@ case class BinExp(exp1: Exp, op: BinaryOp, exp2: Exp) extends Exp {
           assert(exp2.isInstanceOf[IntegerLiteral], "Tuple index must be an integer literal!")
           val indexFunSMT = s"_$exp2SMT"
           s"($indexFunSMT $exp1SMT)"
+        case ISIN =>
+          s"(select $exp2SMT $exp1SMT)"
+        case NOTISIN =>
+          s"(not (select $exp2SMT $exp1SMT))"
+        case PSUBSET =>
+          s"(and (subset $exp1SMT $exp2SMT) (not (= $exp1SMT $exp2SMT)))"
         case _ =>
           val opSMT = op.toSMT
           s"($opSMT $exp1SMT $exp2SMT)"
@@ -2292,6 +2308,8 @@ case object REM extends BinaryOp {
 }
 
 case object SETINTER extends BinaryOp {
+  override def toSMT = "intersect"
+  
   override def toString = "inter"
 
   override def toJsonName = "Inter"
@@ -2336,12 +2354,15 @@ case object SUB extends BinaryOp {
 }
 
 case object SETUNION extends BinaryOp {
+  override def toSMT = "union"  
+  
   override def toString = "union"
 
   override def toJsonName = "Union"
 }
 
 case object ISIN extends BinaryOp {
+  
   override def toString = "isin"
 
   override def toJsonName = "IsIn"
@@ -2354,12 +2375,14 @@ case object NOTISIN extends BinaryOp {
 }
 
 case object SUBSET extends BinaryOp {
+  override def toSMT = "subset"  
+  
   override def toString = "subset"
 
   override def toJsonName = "Subset"
 }
 
-case object PSUBSET extends BinaryOp {
+case object PSUBSET extends BinaryOp {  
   override def toString = "psubset"
 
   override def toJsonName = "PSubset"
@@ -2656,7 +2679,20 @@ case class ClassType(ident: QualifiedName) extends Type {
 }
 
 case class IdentType(ident: QualifiedName, args: List[Type]) extends Type {
-  override def toSMT: String = "Ref"
+  override def toSMT: String = {
+    (ident.names, args) match {
+      case (name :: Nil, ty :: Nil) if Set("Set", "Bag", "Seq") contains name =>
+        val tySMT = ty.toSMT
+        val kindSMT = name match {
+          case "Set" => "Set"
+          case "Bag" => "Bag"
+          case "Seq" => "List"
+        }
+        s"($kindSMT $tySMT)"
+      case _ =>
+        "Ref"
+    }
+  }
 
   override def toScala: String = ident.toScala
 
