@@ -74,17 +74,23 @@
       </div>
     </nav>
 
-    <!-- Main jumbotron for a primary marketing message or call to action -->
+
     <div class="jumbotron">
+
     </div>
     
     <div class="container">
+
       <!-- Example row of columns -->
       <div class="row">
 	<div class="col-md-6" style="padding-right:20px; border-right: 2px solid #ccc; overflow:scroll; height:720px;">
+
+
+  
  	  <h3>Introduction </h3>
+	  <a name="introduction"></a>
 	  <p>
-	    Welcome to K. K is a textual language intended to be used
+	    Welcome to K! K is a textual language intended to be used
 	    by modelers, programmers, system designers, and
 	    specification writers. The motivation for K is based on
 	    the need for a language that provides the right set of
@@ -116,6 +122,8 @@
 	    other questions/concerns please contact
 	    <a href="mailto:rahulku@jpl.nasa.gov">Rahul.Kumar@jpl.nasa.gov</a>
 	    or <a href="mailto:klaus.havelund@jpl.nasa.gov">Klaus.Havelund@jpl.nasa.gov</a>.
+	    <br><br>
+	    <a href="#faq">Frequently Asked Questions</a>
 	  </p>
 
 	  <h3>Primitive Types</h3> 
@@ -142,7 +150,7 @@
 	    <textarea id="in1" name="in1"></textarea>
 	  </p>
 
-	  <h4>Properties</h4>
+	  <h3>Properties</h3>
 	  <p>
 	    Properties are attributes that you want associated with a
 	    particular concept. For example, each Shape always has a
@@ -150,10 +158,11 @@
 	    sides is a property of class Shape. This declaration can
 	    be found on line 4 of the Shapes example. It should be
 	    noted that properties can be declared inside classes, or
-	    at the outer most level.
+	    at the outer most level. For example, the property 't1' at
+	    line 28 is declared at the outer most class.
 	  </p>
 	  
-	  <h5>Modifiers</h5>
+	  <h4>Modifiers</h4>
 	  <p>
 	    Each property may also have certain modifiers present
 	    before it's name. These are to specify additional
@@ -216,34 +225,156 @@ ordered unique transactions : Set[Transaction]
 </textarea>	      
 	    </p>
 
-	  <h4>Constraints</h4>
+	  <h3>Constraints</h3>
 	  <p>
 	    Constraints, or requirements can be imposed on classes (or
 	    at the outer most level). These are used to restrict the
 	    values of properties. Constraints always evaluate to a
 	    Boolean value - true or false. For example, in the Angle
-	    class, on line 15, we restrict the value of the angle to
+	    class, on line 9, we restrict the value of the angle to
 	    be between 0 and 360 degrees. Now every instance of the
 	    Angle class will have the angle value between 0 and 360
 	    degrees.
 	  </p>
 
-<!--
-	  <h4>Functions</h4>
-	  <p>Functions can be used to express a method for computing a
-	  particular value. For example, each Shape has an associate
-	  area that can be calculated in some particular manner -
-	  usually specific to the shape. For this reason, we declare
-	  that each shape has a function 'area' that returns the
-	  corresponding area of the shape. This function is declare on
-	  line 5 of the Shapes example. Functions can also be declared
-	  at the outer most level, at a global scope. Line 11 declares
-	  a function in class Angle that is used to compare the
-	  current angle to the 'other' angle that is given the
-	  function. Functions are capable of taking parameters of any
-	  type and any count and return a value of the computation. </p>
--->
-	  <h4>Inheritance</h4>
+	  <h3>Functions</h3>
+	  <p>
+	    K supports the definition of functions, which essentially
+	    are named parameterized expressions.  A function can be
+	    applied to a list of arguments and return a
+	    value. Functions can make our models more modular and
+	    allow us refer to the same expression in different
+	    contexts for different parameters, by just calling the
+	    function by name with the right parameters.
+	    
+	    A function definition conists of a function name, a list
+	    of parameters (name and type), a return type, and finally
+	    a body: an expression enclosed in curly brackets {...}
+	    representing the value returned by the function.
+	    
+	    The following example illustrates a class providing three
+	    functions, one for computing the minimal value of two
+	    values, one for computing the maximal value, and one for
+	    computing the absolute value of a value. We have also
+	    provided a class extending the MathFunctions class so we
+	    can call the functions.
+	  </p>
+	  
+	  <p style="border: 1px solid #ccc;">	   
+	    <textarea id="in3" name="in3">
+class MathFunctions {
+  fun min(x:Int,y:Int): Int {
+    if x < y then x else y
+  }
+
+  fun max(x:Int,y:Int): Int {
+    if x < y then y else x
+  }
+
+  fun abs(x:Int):Int {
+    if x < 0 then -x else x
+  }
+}
+
+class UseMathFunctions extends MathFunctions {
+  four : Int = min(4,5)
+  five : Int = max(4,5)
+  six  : Int = abs(10 - 16)
+}
+	    </textarea>
+	  </p>
+	  
+	  <p>
+	    Suppose you want to define a function, whos body is
+	    composite expression consisting of several sub-expressions, as for
+	    example is shown in the following class:
+	  </p>
+	  <p style="border: 1px solid #ccc;">	   
+	    <textarea id="in4" name="in4">
+class Algebra {
+  fun formula(x:Real):Real {
+    2.0 * (x * x * x) + 3.0 * (x * x) + 5.0 * x + 1.0 
+  }
+}
+	    </textarea>
+	  </p>
+	  <p>
+	    We might want to clarify calculation by dividing it into
+	    steps. This can be done by inserting appropriate
+	    property definitions in the body of the function before
+	    the returning expression, as is done in the following
+	    class. Note that this approach has not (important)
+	    effect on the analysis we can perform on this
+	    model. This is only for the purpose of increasing
+	    redability, although it of course can be debated whether
+	    this has been achieved here.
+	  </p>
+	  <p style="border: 1px solid #ccc;">	   
+	    <textarea id="in5" name="in5">
+class AlgebraPlus {
+  fun formula(x:Real):Real {
+    a : Real = 2.0
+    b : Real = 3.0
+    c : Real = 5.0
+    k : Real = 4.0
+    x2: Real = x * x
+    x3: Real = x * x2
+ 
+    a * x3 + b * x2 + c * x + k
+  }
+}
+
+class UseAlgenraPlus extends AlgebraPlus {
+  fourtytwo : Real = formula(2.0)
+}
+	    </textarea>
+	  </p>
+
+	  <h3>Function Specifications</h3>
+	  <p>
+	    Whenever we write a function (or any formal text for that
+	    matter) there is a risk of introducing errors. K supports
+	    a mechanism for potecting against such errors, namely pre
+	    and post conditions, also known as the design-by-contract
+	    known from programming theory.
+	    
+	    The idea is to equip a function definition with an
+	    additional specification of what the expected result must
+	    satisfy (the post conidition) and under what circumstances
+	    this will hold (the pre condition). The following example
+	    illustrates our 'min' function from before, but now
+	    equipped with a post condition stating that the result
+	    must be one of the two arguments, and in addition must be
+	    the smallest of these.
+	  </p>
+
+	  <p style="border: 1px solid #ccc;">	   
+	    <textarea id="in6" name="in6">
+class CorrectMathFunctions {
+  fun min(x:Int,y:Int): Int 
+    pre true
+    post 
+      ($result = x ||  $result = y) && 
+       $result <= x && $result <= y
+  {
+    if x < y then x else y
+  }
+}
+	    </textarea>
+	  </p>
+
+	  <p>
+	    The pre condition is in this case true. It can be left out
+	    in this case, we have just shown it to illustrate the pre
+	    condition concept.
+	    
+	    Try as an experiment to replace the body of this min
+	    function with the body of the max function above, and
+	    observe how the prover detects this by stating that the
+	    model is unsatisfiable.
+	  </p>
+	    
+	  <h3>Inheritance</h3>
 	  <p>
 	    K supports inheritance and multiple inheritance between
 	    classes. Inheritance works in a manner similar to other
@@ -262,7 +393,7 @@ ordered unique transactions : Set[Transaction]
 	    compromised.
 	  </p>
 
-	  <h4>Class Types</h4>
+	  <h3>Class Types</h3>
 	  <p> It should be noted that each declared class also becomes
 	  a 'type' in K's world. For example, class Angle creates a
 	  new type, that can be used as the type for properties or
@@ -282,6 +413,165 @@ ordered unique transactions : Set[Transaction]
 	    for this. It should be available very soon.
 	  </p>
 
+	  <h3>Collections and Tuples</h3>
+	  <p>
+	    So far we have seen examples of the following kinds of
+	    types: primitive types and class types (identifiers
+	    representing classes). The type Int for example represents
+	    the set of integers, and the class Shapes represents the
+	    set of Shapes objects. K offers in addition to these forms
+	    of types also tuples (cartesian product) and collections
+	    (sets, bags and sequences). Let us illustrate this with an
+	    example.
+	    
+	    The following class defines what a line is, first its
+	    semantics as an infinite set of points, and next in terms
+	    of its finite representation as an equation.
+	    
+	    A point is a pair (a tuple) of real numbers. The type
+	    constructor T1 * T2 yields the tuple type consisting of
+	    valus of the form: Tuple(v1,v2) where v1 is of type T1 and
+	    v2 is of type T2. Semantically, a line is an infinite set
+	    of points.
+	    
+	    A line, can be characterized by the finite description
+	    consisting of a function of the form 'y = ax + b' for two
+	    constants a and b. This is here modeled by the two
+	    constants a and b and the function y, which computes the
+	    y-value corresponding to an x-value. We finally state that
+	    the set of points is the set of tuples Tuple(x,y(x)) where
+	    x is a real number.  The constructs Set{...} is a set
+	    comprehension expression and denotes the set of
+	    Tuple(x,y(x)) where is is in Real and such that true holds
+	    (the condition).
+	  </p>
+	  
+	  <p style="border: 1px solid #ccc;">	   
+	    <textarea id="in7" name="in7">
+class Line {
+  points : Set[Real * Real] 
+
+  a : Real
+  b : Real
+
+  fun y(x:Real):Real {
+    a * x + b
+  }
+
+  -- req points = Set{ Tuple(x,y(x)) | x : Real :- true} 
+}
+	    </textarea>
+	  </p>
+
+
+	  <h3>Annotations</h3>
+	  <p>
+	    K supports annotation of class, function, and property definitions as well as constraints 
+	    with additional information. In the following  example, two annotation kinds 'id' and 'doc' 
+	    are defined (annotation kinds must be defined as the first thing after package and import declarations). 
+	    The annotation kind 'id' is defined to have type Int (an integer) while the annotation kind 'doc' is 
+	    defined to have type String. These annotations can now be used to annotate model elements, as shown in 
+	    the following.
+	  </p>
+	  <p style="border: 1px solid #ccc;">	   
+	    <textarea id="in8" name="in8">
+-- annotation id : Int
+-- annotation doc : String
+
+@id(42)
+@doc("The basic shape type.")
+
+class Shape3 {
+  sides : Int
+}
+
+@id(43)
+@doc("represents an angle")
+
+class Angle3 {
+  @doc("the angle")
+  value : Int
+
+  @doc("angle must be well-formed.")
+  req value >= 0 && value <= 360
+}
+	    </textarea>
+	  </p>
+	  <p>
+	    Annotations (the application of an annotation kind) are
+	    written right before the element being annotated (spaces
+	    and newlines are allowed in between).  Here the class
+	    Shape is annotated with an 'id' annotation, carrying the
+	    integer value 42, and with the 'doc' annotation carrying a
+	    documentation string. Likewise, class Angle is annotated
+	    with 'id' 43 and a documentation string. The property
+	    'value' as well as the constraint in class Angle are both
+	    annotated with documentation strings.
+
+	    Annotations are different from comments in that they can
+	    be processed by tools.
+	    
+	  </p>
+
+	  <h3>Keywords</h3>
+	  <p>
+	    K to a limied extent supports creating domain-specific
+	    modeling keywords for defining sub-classes of a
+	    class. Consider the situation where we define a class of
+	    which we want to define one or more sub-classes that
+	    inherit from it. Let's look at a cut down version of the
+	    Shapes example, where we create a Trinangle class and a
+	    Rectangle class sub-classing the Shape class:
+	  </p>
+	  
+	  <p style="border: 1px solid #ccc;">	   
+	    <textarea id="in9" name="in9">
+class Shape {
+  sides : Int
+}
+
+class Triangle extends Shape {
+  req sides = 3
+}
+
+class Rectangle extends Shape {
+  req sides = 4
+}
+	    </textarea>
+	  </p>
+	  
+	  <p>
+	    Writing 'class ... extends Shape' repeatedly may appear
+	    somewhat verbose, and the fact that we are defining shapes
+	    may not stand out clearly in the text. K allows us to
+	    define a 'shape' keyword, and write the above model as
+	    follows, but with the exact same meaning:
+	  </p>
+
+	  <p style="border: 1px solid #ccc;">	   
+	    <textarea id="in10" name="in10">
+class <shape> Shape2 {
+  sides : Int
+}
+
+shape Triangle2 {
+  req sides = 3
+}
+
+shape Rectangle2 {
+  req sides = 4
+}
+	    </textarea>
+	  </p>
+
+	  <p>
+	    The Shape class itself has been defined with the addition
+	    of a keyword 'shape' (can be any name) in angle-brackets
+	    <...>. This allows us to use this keyword to define the
+	    two sub-classes as above, having the meaning as in the
+	    first specifiction.
+	  </p>
+
 	  <h3>Type Checker</h3>
 	  <p>The K type checker will statically perform analysis and
 	  type checking on your code to ensure that certain basic
@@ -289,6 +579,42 @@ ordered unique transactions : Set[Transaction]
 	  performed. These include syntactic and certain semantic
 	  checks. Please note that error messaging is being improved
 	  even as you read this.</p>
+
+	  <h3>Class Consistency Checing Output</h3>
+	  <p>
+	    K is currently integrated with SMT solving techniques to
+	    provide you a proof of whether the classes as specified in
+	    your model are satisfiable and consistent or not. If they
+	    are, and if there are top level instances declared for a
+	    class (for example, 't1' on line 28 of the shapes example
+	    above), an instance specification will be provided as
+	    output. This is one possible solution and not the only
+	    solution. It may be the only solution, if your specified
+	    requirements and constraints only allow one solution.
+
+	    If the class(es) are not satisfiable, K will provide you
+	    an error message saying that the classes are not
+	    satisfiable.
+
+	  </p>
+
+	  <h3>Frequently Asked Questions</h3>
+	  <a name="faq"></a>
+	  <p>
+	    <span class="label label-danger">Q.</span> Can I use this on a Mac/Windows/...?
+	    <br>
+	    <span class="label label-success">A.</span> Yes. We have distributions for Linux, Windows, and Mac. All you require is Java. 
+	  </p>
+	  <p>
+	    <span class="label label-danger">Q.</span> Can I produce multiple instances for 1 class? 
+	    <br>
+	    <span class="label label-success">A.</span> Yes. Just declare multiple instances at the top most level. 
+	  </p>
+	  <p>
+	    <span class="label label-danger">Q.</span> Can I specify a 'distribution' of the solutions for the instances? 
+	    <br>
+	    <span class="label label-success">A.</span> Currently, no. We are hard at work for providing you a solution for this.
+	  </p>
 
 	</div>
 	<div class="col-md-6">
@@ -378,26 +704,112 @@ ordered unique transactions : Set[Transaction]
       lineNumbers: true,
       theme: "neat",
       mode: "text/x-k",
-      readOnly: true
+      readOnly: true,
+      foldGutter: {
+      rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.brace, CodeMirror.fold.comment)
+      },
+      extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+      gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
       });
-/*      var in3 = CodeMirror.fromTextArea(document.getElementById("in3"), {
+      var in3 = CodeMirror.fromTextArea(document.getElementById("in3"), {
       lineNumbers: true,
       theme: "neat",
       mode: "text/x-k",
-      readOnly: true
+            readOnly: true,
+      foldGutter: {
+      rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.brace, CodeMirror.fold.comment)
+      },
+      extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+      gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
       });
       var in4 = CodeMirror.fromTextArea(document.getElementById("in4"), {
       lineNumbers: true,
       theme: "neat",
       mode: "text/x-k",
-      readOnly: true
+      readOnly: true,
+      foldGutter: {
+      rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.brace, CodeMirror.fold.comment)
+      },
+      extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+      gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
       });
-      in3.setSize(null,"100");
-      in4.setSize(null,"100");
+      var in5 = CodeMirror.fromTextArea(document.getElementById("in5"), {
+      lineNumbers: true,
+      theme: "neat",
+      mode: "text/x-k",
+      readOnly: true,
+      foldGutter: {
+      rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.brace, CodeMirror.fold.comment)
+      },
+      extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+      gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+      });
+      var in6 = CodeMirror.fromTextArea(document.getElementById("in6"), {
+      lineNumbers: true,
+      theme: "neat",
+      mode: "text/x-k",
+      readOnly: true,
+      foldGutter: {
+      rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.brace, CodeMirror.fold.comment)
+      },
+      extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+      gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+      });
+      var in7 = CodeMirror.fromTextArea(document.getElementById("in7"), {
+      lineNumbers: true,
+      theme: "neat",
+      mode: "text/x-k",
+      readOnly: true,
+      foldGutter: {
+      rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.brace, CodeMirror.fold.comment)
+      },
+      extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+      gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+      });
+      var in8 = CodeMirror.fromTextArea(document.getElementById("in8"), {
+      lineNumbers: true,
+      theme: "neat",
+      mode: "text/x-k",
+      readOnly: true,
+      foldGutter: {
+      rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.brace, CodeMirror.fold.comment)
+      },
+      extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+      gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+      });
+      var in9 = CodeMirror.fromTextArea(document.getElementById("in9"), {
+      lineNumbers: true,
+      theme: "neat",
+      mode: "text/x-k",
+      readOnly: true,
+      foldGutter: {
+      rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.brace, CodeMirror.fold.comment)
+      },
+      extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+      gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+      });
+      var in10 = CodeMirror.fromTextArea(document.getElementById("in10"), {
+      lineNumbers: true,
+      theme: "neat",
+      mode: "text/x-k",
+      readOnly: true,
+      foldGutter: {
+      rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.brace, CodeMirror.fold.comment)
+      },
+      extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+      gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+      });
 
-*/
-      in1.setSize(null,"300");
-      in2.setSize(null,"110");
+      in1.setSize(null,"570");
+      in2.setSize(null,"130");
+      in3.setSize(null,"430");
+      in4.setSize(null,"140");
+      in5.setSize(null,"350");
+      in6.setSize(null,"230");
+      in7.setSize(null,"270");
+      in8.setSize(null,"430");
+      in9.setSize(null,"250");
+      in10.setSize(null,"250");
   
       var results = CodeMirror.fromTextArea(document.getElementById("result"), {
       lineNumbers: false,
@@ -453,11 +865,9 @@ ordered unique transactions : Set[Transaction]
       return false;
       }
       
-      editor.setValue("-- Load sample code from the tutorial by scrolling down, or \n-- from the examples drop down list provided \n--  in the navigation bar.");
+      editor.setValue("-- Load sample code from the tutorial by scrolling down, or \n-- from the examples drop down list provided \n-- in the navigation bar.");
 
       loadExample(in1, "examples/ShapesTutorial.k");
-      loadExample(in3, "tests/inheritance3.k");
-      loadExample(in4, "tests/inheritance4.k");
 
 
     </script>
