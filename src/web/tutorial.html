@@ -1,6 +1,26 @@
 <!DOCTYPE html>
- <html lang="en">
+<html lang="en">
   <head>
+    <style>
+      .CodeMirror-foldmarker {    
+      font-family: arial;
+      }
+      .CodeMirror-foldgutter {
+      width: .7em;
+      }
+      .CodeMirror-foldgutter-open,
+      .CodeMirror-foldgutter-folded {
+      color: #555;
+      cursor: pointer;
+      }
+      .CodeMirror-foldgutter-open:after {
+      content: "\25BE";
+      }
+      .CodeMirror-foldgutter-folded:after {
+      content: "\25B8";
+      }
+    </style>
+
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -66,52 +86,210 @@
 	  <p>
 	    Welcome to K. K is a textual language intended to be used
 	    by modelers, programmers, system designers, and
-	    specification writers. The motivation for K is based on the
-	    need for a language that provides the right set of
-	    constructs and tools to model, verify, and implement. 
-	  </p>
-	  
-	  <h3>Classes, Propreties, Functions, and Inheritance</h3>
+	    specification writers. The motivation for K is based on
+	    the need for a language that provides the right set of
+	    constructs and tools to model, verify, and
+	    implement. Currently K is integrated with SMT solvers to
+	    be able to:
+	    <ul>
+	      <li> Prove that classes with given constraints are
+	      satisfiable. If your constraints are specified at the
+	      top level without any classes, that is fine as well. The
+	      constraints will be proven satisfiable at the top level.
+	      <li> For each satisfiable class, provide an example of
+	      an instance with satisfying assignments to the
+	      properties. Note, this is not the only possible solution
+	      to the class, rather 1 of the potentially many
+	      solutions. If no solution is possible (i.e. the class is
+	      NOT satisfiable), then K will provide you a
+	      corresponding report.
+	    </ul>
 
+	    In order to use K, one only has to write K code in the
+	    editor and then submit it for analysis using the 'Analyze'
+	    button. If there are errors in the code, they will be
+	    reported in the results window, otherwise the result of
+	    the consistency checking and instance generation will be
+	    reported in a systematic manner.
+
+	    For a binary drop for your development environment or any
+	    other questions/concerns please contact
+	    <a href="mailto:rahulku@jpl.nasa.gov">Rahul.Kumar@jpl.nasa.gov</a>
+	    or <a href="mailto:klaus.havelund@jpl.nasa.gov">Klaus.Havelund@jpl.nasa.gov</a>.
+	  </p>
+
+	  <h3>Primitive Types</h3> 
+
+	  K currently has the following primitive types: Int, Real,
+	  Char, String, Boolean. In addition to the primitive types, K
+	  also provides the Unit literal '()'. Unit can be used to
+	  represent the existence of something without it having any
+	  particular value.
+	  
+	  <h3>Classes</h3>
+	  <p>
 	  Classes are a basic method of encapsulating all relevant
 	  information, properties, functions etc. about a single
 	  entity. They provide the simplest approach for abstracting a
 	  concept or concrete entity and representing it in your
 	  model/program. The follwing figure shows an example of
-	  classes being used to model shapes.
+	  classes being used to model shapes. We will use this figure
+	  to dicuss some basic concepts of K in the tutorial.
+	  </p>
 
 	  <p style="border: 1px solid #ccc;">	   
-	    <a class="btn-xs btn" href="#" role="button" onclick="loadExample(editor,'examples/Shapes.k');">Load in editor</a>
+	    <a class="btn-xs btn-default" href="#" role="button" onclick="loadExample(editor,'examples/ShapesTutorial.k');">Load in editor</a>
 	    <textarea id="in1" name="in1"></textarea>
 	  </p>
 
-	  <h3>Properties</h3>
-	  <p style="border: 1px solid #ccc;">	   
-	    <a class="btn-xs btn" href="#" role="button" onclick="loadExample(editor,'tests/inheritance2.k');">Load in editor</a>
-	    <textarea id="in2" name="in2"></textarea>
+	  <h4>Properties</h4>
+	  <p>
+	    Properties are attributes that you want associated with a
+	    particular concept. For example, each Shape always has a
+	    certain number of sides associated with it. Therefore,
+	    sides is a property of class Shape. This declaration can
+	    be found on line 4 of the Shapes example. It should be
+	    noted that properties can be declared inside classes, or
+	    at the outer most level.
 	  </p>
-	  <h3>Constraints</h3>
-	  <p style="border: 1px solid #ccc;">	   
-	    <a class="btn-xs btn" href="#" role="button" onclick="loadExample(editor,'tests/inheritance3.k');">Load in editor</a>
-	    <textarea id="in3" name="in3"></textarea>
+	  
+	  <h5>Modifiers</h5>
+	  <p>
+	    Each property may also have certain modifiers present
+	    before it's name. These are to specify additional
+	    behaviors. Ceratin of these modifiers can also be combined
+	    together.
+
+	      <table class="table table-bordered">
+		<tbody>
+		  <thead>
+		    <tr>
+		      <th>Modifier</th>
+		      <th>Description</th>
+		    </tr>
+		  <tr>
+		    <td>val</td>
+		    <td>read only property</td>
+		  </tr>
+		  <tr>
+		    <td>var</td>
+		    <td>read and write property</td>
+		  </tr>
+		  <tr>
+		    <td>ordered (collection)</td>
+		    <td>property is dictated by a certain ordering</td>
+		  </tr>
+		  <tr>
+		    <td>unique (collection)</td>
+		    <td>no duplicate members in this property</td>
+		  </tr>
+		  <tr>
+		    <td>part</td>
+		    <td>property is a part of another object</td>
+		  </tr>
+		  <tr>
+		    <td>source</td>
+		    <td>source property of an association</td>
+		  </tr>
+		  <tr>
+		    <td>target</td>
+		    <td>target property of an association</td>
+		  </tr>
+		</tbody>
+              </table>
+
+	      The following code snippet shows various properties
+	      declared with modifiers present in them. 'MY_CONSTANT'
+	      is a variable that is read only, whereas the 'y' Real is
+	      read and write (can be modified). 'ages' is a set of
+	      Integers, and is ordered by some ordering function that
+	      can be specified separately. 'cars' is a bag of unique
+	      Cars etc.
 	  </p>
-	  <h3>Associations</h3>
-	  <p></p>
-	  <h3>Inheritance</h3>
 	  <p style="border: 1px solid #ccc;">	   
-	    <a class="btn-xs btn" href="#" role="button" onclick="loadExample(editor,'tests/inheritance4.k');">Load in editor</a>
-	    <textarea id="in4" name="in4"></textarea> 
+	    <textarea id="in2" name="in2">
+val MY_CONSTANT : Int
+var y : Real
+ordered ages : Set[Int]
+unique cars : Bag[Car]
+ordered unique transactions : Set[Transaction]
+</textarea>	      
+	    </p>
+
+	  <h4>Constraints</h4>
+	  <p>
+	    Constraints, or requirements can be imposed on classes (or
+	    at the outer most level). These are used to restrict the
+	    values of properties. Constraints always evaluate to a
+	    Boolean value - true or false. For example, in the Angle
+	    class, on line 15, we restrict the value of the angle to
+	    be between 0 and 360 degrees. Now every instance of the
+	    Angle class will have the angle value between 0 and 360
+	    degrees.
 	  </p>
-	  <h3>Functions</h3>
-	  <p> </p>
-	  <h3>Primitive Types</h3>
-	  <p></p>
-	  <h3>Expressions</h3>
-	  <p> </p>
+
+<!--
+	  <h4>Functions</h4>
+	  <p>Functions can be used to express a method for computing a
+	  particular value. For example, each Shape has an associate
+	  area that can be calculated in some particular manner -
+	  usually specific to the shape. For this reason, we declare
+	  that each shape has a function 'area' that returns the
+	  corresponding area of the shape. This function is declare on
+	  line 5 of the Shapes example. Functions can also be declared
+	  at the outer most level, at a global scope. Line 11 declares
+	  a function in class Angle that is used to compare the
+	  current angle to the 'other' angle that is given the
+	  function. Functions are capable of taking parameters of any
+	  type and any count and return a value of the computation. </p>
+-->
+	  <h4>Inheritance</h4>
+	  <p>
+	    K supports inheritance and multiple inheritance between
+	    classes. Inheritance works in a manner similar to other
+	    languages such as Java, with the one difference that in K,
+	    child classes not only inherit the properties and
+	    functions of the parent class(es) but also the
+	    constraints. For example, class TAngle inherits from class
+	    Angle. As a result, it already has a function 'eq' and the
+	    property 'value' from class Angle. Additionally, it also
+	    has the requirement that the value is to be between 0 and
+	    360. The TAngle class further restricts the value of the
+	    angle to be less than 180 degrees, which is fine since
+	    this is not conflicting with the parent class
+	    constraints. Whenever constraints are inherited, and added
+	    upon by child classes, class consistency may be
+	    compromised.
+	  </p>
+
+	  <h4>Class Types</h4>
+	  <p> It should be noted that each declared class also becomes
+	  a 'type' in K's world. For example, class Angle creates a
+	  new type, that can be used as the type for properties or
+	  function parameters. Lines 24 and 25 use the TAngle type as
+	  the type for properties 'a' and 'b'. 
+	  </p>
+
+	  <h3>Packages and Imports</h3>
+	  <p>
+	    Optionally, you may include a package declaration such as
+	    the declaration on line 1 of the shapes example. This
+	    declaration specifies the package that this file belongs
+	    to. This is useful when you want to be able to import it
+	    in other K models using the 'import package.xyz'
+	    declaration. Currently our language supports this and we
+	    are working out the finer details of building tool support
+	    for this. It should be available very soon.
+	  </p>
+
 	  <h3>Type Checker</h3>
-	  <p></p>
-	  <h3>Class Consistency Checker</h3>
-	  <p></p>
+	  <p>The K type checker will statically perform analysis and
+	  type checking on your code to ensure that certain basic
+	  conditions are met before any other analysis can be
+	  performed. These include syntactic and certain semantic
+	  checks. Please note that error messaging is being improved
+	  even as you read this.</p>
+
 	</div>
 	<div class="col-md-6">
 	    <p>
@@ -185,37 +363,42 @@
       gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
       });
 
-
       var in1 = CodeMirror.fromTextArea(document.getElementById("in1"), {
-      lineNumbers: false,
+      lineNumbers: true,
       theme: "neat",
       mode: "text/x-k",
-      readOnly: true
+      readOnly: true,
+      foldGutter: {
+      rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.brace, CodeMirror.fold.comment)
+      },
+      extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+      gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
       });
       var in2 = CodeMirror.fromTextArea(document.getElementById("in2"), {
-      lineNumbers: false,
+      lineNumbers: true,
       theme: "neat",
       mode: "text/x-k",
       readOnly: true
       });
-      var in3 = CodeMirror.fromTextArea(document.getElementById("in3"), {
-      lineNumbers: false,
+/*      var in3 = CodeMirror.fromTextArea(document.getElementById("in3"), {
+      lineNumbers: true,
       theme: "neat",
       mode: "text/x-k",
       readOnly: true
       });
       var in4 = CodeMirror.fromTextArea(document.getElementById("in4"), {
-      lineNumbers: false,
+      lineNumbers: true,
       theme: "neat",
       mode: "text/x-k",
       readOnly: true
       });
-
-      in1.setSize(null,"100");
-      in2.setSize(null,"100");
       in3.setSize(null,"100");
       in4.setSize(null,"100");
 
+*/
+      in1.setSize(null,"300");
+      in2.setSize(null,"110");
+  
       var results = CodeMirror.fromTextArea(document.getElementById("result"), {
       lineNumbers: false,
       theme: "paraiso-light",
@@ -272,8 +455,7 @@
       
       editor.setValue("-- Load sample code from the tutorial by scrolling down, or \n-- from the examples drop down list provided \n--  in the navigation bar.");
 
-      loadExample(in1, "examples/Shapes.k");
-      loadExample(in2, "tests/inheritance2.k");
+      loadExample(in1, "examples/ShapesTutorial.k");
       loadExample(in3, "tests/inheritance3.k");
       loadExample(in4, "tests/inheritance4.k");
 
