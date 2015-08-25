@@ -90,13 +90,13 @@
  	  <h3>Introduction </h3>
 	  <a name="introduction"></a>
 	  <p>
-	    Welcome to K! K is a textual language intended to be used
-	    by modelers, programmers, system designers, and
-	    specification writers. The motivation for K is based on
-	    the need for a language that provides the right set of
-	    constructs and tools to model, verify, and
-	    implement. Currently K is integrated with SMT solvers to
-	    be able to:
+	    Welcome to <font color=red>K</font>. K is a textual
+	    language intended to be used by modelers and/or
+	    programmers, for system design and implementation.  The
+	    motivation for K is based on the need for a textual
+	    language that provides the right set of constructs and
+	    tools to model, verify, and implement. Currently K is
+	    integrated with SMT solvers to be able to:
 	    <ul>
 	      <li> Prove that classes with given constraints are
 	      satisfiable. If your constraints are specified at the
@@ -105,7 +105,7 @@
 	      <li> For each satisfiable class, provide an example of
 	      an instance with satisfying assignments to the
 	      properties. Note, this is not the only possible solution
-	      to the class, rather 1 of the potentially many
+	      to the class, rather one of the potentially many
 	      solutions. If no solution is possible (i.e. the class is
 	      NOT satisfiable), then K will provide you a
 	      corresponding report.
@@ -129,10 +129,10 @@
 	  <h3>Primitive Types</h3> 
 
 	  K currently has the following primitive types: Int, Real,
-	  Char, String, Boolean. In addition to the primitive types, K
+	  Char, String, Bool. <!-- In addition to the primitive types, K
 	  also provides the Unit literal '()'. Unit can be used to
 	  represent the existence of something without it having any
-	  particular value.
+	  particular value. -->
 	  
 	  <h3>Classes</h3>
 	  <p>
@@ -166,7 +166,7 @@
 	  <p>
 	    Each property may also have certain modifiers present
 	    before it's name. These are to specify additional
-	    behaviors. Ceratin of these modifiers can also be combined
+	    behaviors. Certain of these modifiers can also be combined
 	    together.
 
 	      <table class="table table-bordered">
@@ -210,18 +210,20 @@
 	      The following code snippet shows various properties
 	      declared with modifiers present in them. 'MY_CONSTANT'
 	      is a variable that is read only, whereas the 'y' Real is
-	      read and write (can be modified). 'ages' is a set of
-	      Integers, and is ordered by some ordering function that
-	      can be specified separately. 'cars' is a bag of unique
-	      Cars etc.
+	      read and write (can be modified). Leaving out the 'var'/'val'
+              modifier is equivalent to providing the 'val' modifier. 
+              'ages' is a bag of Integers, and is ordered (a list essentially).
+              Here the multiplicity '[*]' stands for '0 or more'. 
+              'cars' is a set of Cars. Finally 'transactions'
+              is an ordered set.
 	  </p>
 	  <p style="border: 1px solid #ccc;">	   
 	    <textarea id="in2" name="in2">
 val MY_CONSTANT : Int
 var y : Real
-ordered ages : Set[Int]
-unique cars : Bag[Car]
-ordered unique transactions : Set[Transaction]
+ordered ages : Int [*]
+unique cars : Car [*]
+ordered unique transactions : Transaction [*]
 </textarea>	      
 	    </p>
 
@@ -376,10 +378,10 @@ class CorrectMathFunctions {
 	    
 	  <h3>Inheritance</h3>
 	  <p>
-	    K supports inheritance and multiple inheritance between
+	    K supports inheritance (multiple as well as single) between
 	    classes. Inheritance works in a manner similar to other
 	    languages such as Java, with the one difference that in K,
-	    child classes not only inherit the properties and
+	    sub-classes not only inherit the properties and
 	    functions of the parent class(es) but also the
 	    constraints. For example, class TAngle inherits from class
 	    Angle. As a result, it already has a function 'eq' and the
@@ -389,7 +391,7 @@ class CorrectMathFunctions {
 	    angle to be less than 180 degrees, which is fine since
 	    this is not conflicting with the parent class
 	    constraints. Whenever constraints are inherited, and added
-	    upon by child classes, class consistency may be
+	    upon by sub-classes, class consistency may be
 	    compromised.
 	  </p>
 
