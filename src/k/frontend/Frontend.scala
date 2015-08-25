@@ -24,6 +24,7 @@ import scala.collection.mutable.{ ListBuffer => MList }
 import scala.actors.Futures._
 
 object Frontend {
+  var timeoutValue = 30000
   type OptionMap = Map[Symbol, Any]
 
   def log(msg: String = "") = Misc.log("main", msg)
@@ -35,6 +36,9 @@ object Frontend {
       case Nil => map
       case "-f" :: value :: tail =>
         parseArgs(map ++ Map('modelFile -> value), tail)
+      case "-timeout" :: value :: tail =>
+        timeoutValue = value.toInt
+        parseArgs(map, tail)
       case "-tests" :: tail    => parseArgs(map ++ Map('tests -> true), tail)
       case "-baseline" :: tail => parseArgs(map ++ Map('baseline -> true), tail)
       case "-test" :: tail     => parseArgs(map ++ Map('test -> true), tail)
@@ -157,14 +161,16 @@ object Frontend {
         println()
       }
       try {
-        val res = runWithTimeout(10000) { K2Z3.solveSMT(model, smtModel, true) }
+        val res = runWithTimeout(timeoutValue) { K2Z3.solveSMT(model, smtModel, true) }
         if (res.isEmpty) log("Timeout")
 
       } catch {
         case TypeCheckException => errorExit("Type Checking exception.")
         case K2SMTException     => errorExit("K2SMT Exception during SMT solving.")
         case K2Z3Exception      => errorExit("Z3 Exception during SMT solving.")
-        case _: Throwable       => errorExit("Unknown Exception during SMT solving.")
+        case e : Throwable       =>
+          e.printStackTrace()
+          errorExit("Unknown Exception during SMT solving.")
       }
     }
 
@@ -323,7 +329,7 @@ object Frontend {
         else null
       val smtModel =
         if (smt != null) {
-          val res = runWithTimeout(5000) { K2Z3.solveSMT(model, smt, debug) }
+          val res = runWithTimeout(timeoutValue) { K2Z3.solveSMT(model, smt, debug) }
           if (res.isEmpty) null
           else K2Z3.z3Model.toString
         } else null
@@ -492,7 +498,7 @@ object Frontend {
           }
         }
       } catch {
-        case _ => ()
+        case _ : Throwable => ()
       }
 
     }
@@ -564,7 +570,7 @@ object Frontend {
         }
       } catch {
         //case e if e.isInstanceOf[java.util.NoSuchElementException] => log("Skipping element..." + obj)
-        case _ => log("Skipping element..." + obj)
+        case _ : Throwable => log("Skipping element..." + obj)
       }
     }
 
