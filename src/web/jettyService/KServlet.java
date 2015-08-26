@@ -42,7 +42,7 @@ public class KServlet extends AbstractHandler
 	    bw.close();
 	    StringBuilder sb = new StringBuilder();
 	    String line;
-	    String[] cmd = new String[]{"bash", "-c", "/home/rahulku/k/krun " + file.getAbsolutePath()};
+	    String[] cmd = new String[]{"bash", "-c", "/home/rahulku/k/k " + file.getAbsolutePath()};
 	    Process p = Runtime.getRuntime().exec(cmd);
 	    BufferedReader bri = new BufferedReader
 		(new InputStreamReader(p.getInputStream()));
@@ -57,6 +57,9 @@ public class KServlet extends AbstractHandler
 	    }
 	    bre.close();
 	    p.waitFor();
+	    
+	    if(file.exists()) file.delete();
+	    
 	    return sb.toString();
 	}
 	catch(Exception e){
