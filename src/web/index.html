@@ -1,6 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <style>
+      .CodeMirror-foldmarker {    
+      font-family: arial;
+      }
+      .CodeMirror-foldgutter {
+      width: .7em;
+      }
+      .CodeMirror-foldgutter-open,
+      .CodeMirror-foldgutter-folded {
+      color: #555;
+      cursor: pointer;
+      }
+      .CodeMirror-foldgutter-open:after {
+      content: "\25BE";
+      }
+      .CodeMirror-foldgutter-folded:after {
+      content: "\25B8";
+      }
+    </style> 
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -49,7 +68,17 @@
                     <li><a href="#">One more separated link</a></li>-->
                   </ul>
                 </li>
+
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Download<span class="caret"></span></a>
+                  <ul class="dropdown-menu">
+                    <li><a href="http://niks.jpl.nasa.gov/k/k-osx.tgz" >K for OSX</a></li>
+                    <li><a href="http://niks.jpl.nasa.gov/k/k-win.zip">K for Windows</a></li>
+		  </ul>
+		</li>
+
               </ul>
+
             </div>
       </div>
     </nav>
@@ -123,7 +152,6 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-    
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
     
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
@@ -139,10 +167,10 @@
     <script src="CodeMirror-master/addon/fold/foldgutter.js"></script>
     <script src="CodeMirror-master/addon/fold/brace-fold.js"></script>
     <script src="CodeMirror-master/addon/fold/xml-fold.js"></script>
-    <script src="CodeMirror-master/addon/fold/comment-fold.js"></script>
 
     <link rel="stylesheet" href="CodeMirror-master/addon/dialog/dialog.css">
     <link rel="stylesheet" href="CodeMirror-master/addon/search/matchesonscrollbar.css">
+
     <script src="CodeMirror-master/addon/dialog/dialog.js"></script>
     <script src="CodeMirror-master/addon/search/searchcursor.js"></script>
     <script src="CodeMirror-master/addon/search/search.js"></script>
@@ -156,12 +184,11 @@
       theme: "ttcn",
       mode: "text/x-k",
       foldGutter: {
-      rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.brace, CodeMirror.fold.comment)
+      rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.brace)
       },
       extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
       gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
       });
-
 
       var results = CodeMirror.fromTextArea(document.getElementById("result"), {
       lineNumbers: false,
