@@ -8,8 +8,8 @@ class Event {
   start : Real
   end : Real
   req start >= 0.0 && end > start
-  fun after(e : Event) {
-    start >= e.end
+  fun after(e : Event) : Bool {
+    return start >= e.end
   }
 }
 
@@ -37,9 +37,9 @@ class SpaceCraft extends Object {
 
   req instrumentsWeight = radio.weight + camera.weight
 
-  req notTooHeavy: instrumentWeight <= 1000
+  req notTooHeavy: instrumentsWeight <= 1000
 
-  req radio is SmartRadio
 }
 
 ShRaan : SpaceCraft
+
