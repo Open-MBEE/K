@@ -248,6 +248,45 @@ ordered unique transactions : Transaction [*]
 	    degrees.
 	  </p>
 
+	  <h3>Inheritance</h3>
+	  <p>
+	    K supports inheritance (multiple as well as single) between
+	    classes. Inheritance works in a manner similar to other
+	    languages such as Java, with the one difference that in K,
+	    sub-classes not only inherit the properties and
+	    functions of the parent class(es) but also the
+	    constraints. For example, class TAngle inherits from class
+	    Angle. As a result, it already has a function 'eq' and the
+	    property 'value' from class Angle. Additionally, it also
+	    has the requirement that the value is to be between 0 and
+	    360. The TAngle class further restricts the value of the
+	    angle to be less than 180 degrees, which is fine since
+	    this is not conflicting with the parent class
+	    constraints. Whenever constraints are inherited, and added
+	    upon by sub-classes, class consistency may be
+	    compromised.
+	  </p>
+
+	  <h3>Class Types</h3>
+	  <p> It should be noted that each declared class also becomes
+	  a 'type' in K's world. For example, class Angle creates a
+	  new type, that can be used as the type for properties or
+	  function parameters. Lines 24 and 25 use the TAngle type as
+	  the type for properties 'a' and 'b'. 
+	  </p>
+
+	  <h3>Packages and Imports</h3>
+	  <p>
+	    Optionally, you may include a package declaration such as
+	    the declaration on line 1 of the shapes example. This
+	    declaration specifies the package that this file belongs
+	    to. This is useful when you want to be able to import it
+	    in other K models using the 'import package.xyz'
+	    declaration. Currently our language supports this and we
+	    are working out the finer details of building tool support
+	    for this. It should be available very soon.
+	  </p>
+
 	  <h3>Functions</h3>
 	  <p>
 	    K supports the definition of functions, which essentially
@@ -317,7 +356,7 @@ class Algebra {
 	    class. Note that this approach has not (important)
 	    effect on the analysis we can perform on this
 	    model. This is only for the purpose of increasing
-	    redability, although it of course can be debated whether
+	    readability, although it of course can be debated whether
 	    this has been achieved here.
 	  </p>
 	  <p style="border: 1px solid #ccc;">	   
@@ -345,16 +384,16 @@ class UseAlgenraPlus extends AlgebraPlus {
 	  <p>
 	    Whenever we write a function (or any formal text for that
 	    matter) there is a risk of introducing errors. K supports
-	    a mechanism for potecting against such errors, namely pre
-	    and post conditions, also known as the design-by-contract
-	    known from programming theory.
+	    a mechanism for potecting against such errors when defining
+            functions, namely pre- and post-conditions, also known as
+            design-by-contract in programming theory.
 	    
 	    The idea is to equip a function definition with an
 	    additional specification of what the expected result must
-	    satisfy (the post conidition) and under what circumstances
-	    this will hold (the pre condition). The following example
+	    satisfy (the post-condition) and under what circumstances
+	    this will hold (the pre-condition). The following example
 	    illustrates our 'min' function from before, but now
-	    equipped with a post condition stating that the result
+	    equipped with a post-condition stating that the result
 	    must be one of the two arguments, and in addition must be
 	    the smallest of these.
 	  </p>
@@ -375,68 +414,29 @@ class CorrectMathFunctions {
 	  </p>
 
 	  <p>
-	    The pre condition is in this case true. It can be left out
-	    in this case, we have just shown it to illustrate the pre
-	    condition concept.
+	    The pre-condition is in this case true. It can be left out
+	    in this case, we have just shown it to illustrate the 
+            pre-condition concept.
 	    
 	    Try as an experiment to replace the body of this min
 	    function with the body of the max function above, and
 	    observe how the prover detects this by stating that the
-	    model is unsatisfiable.
+	    model is NOT satisfiable.
 	  </p>
 	    
-	  <h3>Inheritance</h3>
-	  <p>
-	    K supports inheritance (multiple as well as single) between
-	    classes. Inheritance works in a manner similar to other
-	    languages such as Java, with the one difference that in K,
-	    sub-classes not only inherit the properties and
-	    functions of the parent class(es) but also the
-	    constraints. For example, class TAngle inherits from class
-	    Angle. As a result, it already has a function 'eq' and the
-	    property 'value' from class Angle. Additionally, it also
-	    has the requirement that the value is to be between 0 and
-	    360. The TAngle class further restricts the value of the
-	    angle to be less than 180 degrees, which is fine since
-	    this is not conflicting with the parent class
-	    constraints. Whenever constraints are inherited, and added
-	    upon by sub-classes, class consistency may be
-	    compromised.
-	  </p>
-
-	  <h3>Class Types</h3>
-	  <p> It should be noted that each declared class also becomes
-	  a 'type' in K's world. For example, class Angle creates a
-	  new type, that can be used as the type for properties or
-	  function parameters. Lines 24 and 25 use the TAngle type as
-	  the type for properties 'a' and 'b'. 
-	  </p>
-
-	  <h3>Packages and Imports</h3>
-	  <p>
-	    Optionally, you may include a package declaration such as
-	    the declaration on line 1 of the shapes example. This
-	    declaration specifies the package that this file belongs
-	    to. This is useful when you want to be able to import it
-	    in other K models using the 'import package.xyz'
-	    declaration. Currently our language supports this and we
-	    are working out the finer details of building tool support
-	    for this. It should be available very soon.
-	  </p>
-
 	  <h3>Collections and Tuples</h3>
 	  <p>
 	    So far we have seen examples of the following kinds of
 	    types: primitive types and class types (identifiers
 	    representing classes). The type Int for example represents
-	    the set of integers, and the class Shapes represents the
-	    set of Shapes objects. K offers in addition to these forms
+	    the set of integers, and the class Shape represents the
+	    set of Shape objects. K offers in addition to these forms
 	    of types also tuples (cartesian product) and collections
-	    (sets, bags and sequences). Let us illustrate this with an
+	    (sets, bags, and sequences). Let us illustrate this with an
 	    example.
 	    
-	    The following class defines what a line is, first its
-	    semantics as an infinite set of points, and next in terms
+	    The following class defines what a line is (basic geometry), 
+            first its semantics as an infinite set of points, and next in terms
 	    of its finite representation as an equation.
 	    
 	    A point is a pair (a tuple) of real numbers. The type
@@ -453,8 +453,9 @@ class CorrectMathFunctions {
 	    the set of points is the set of tuples Tuple(x,y(x)) where
 	    x is a real number.  The constructs Set{...} is a set
 	    comprehension expression and denotes the set of
-	    Tuple(x,y(x)) where is is in Real and such that true holds
-	    (the condition).
+	    Tuple(x,y(x)) where x is a Real number, and such that true holds
+	    (the condition). In general one can write any Boolean expression
+            as the condition.
 	  </p>
 	  
 	  <p style="border: 1px solid #ccc;">	   
@@ -469,25 +470,29 @@ class Line {
     a * x + b
   }
 
-  -- req points = Set{ Tuple(x,y(x)) | x : Real :- true} 
+  req points = Set{ Tuple(x,y(x)) | x : Real :- true} 
 }
 	    </textarea>
 	  </p>
 
+          <P>
+          <font color=red>Note: currently K does not support analysis of collections! This will be supported soon.</font>
+          </p>
 
 	  <h3>Annotations</h3>
 	  <p>
 	    K supports annotation of class, function, and property definitions as well as constraints 
 	    with additional information. In the following  example, two annotation kinds 'id' and 'doc' 
-	    are defined (annotation kinds must be defined as the first thing after package and import declarations). 
+	    are defined (annotation kinds must be defined as the first thing after any package and import declarations,
+            and before class, property, function, and constraint declarations). 
 	    The annotation kind 'id' is defined to have type Int (an integer) while the annotation kind 'doc' is 
 	    defined to have type String. These annotations can now be used to annotate model elements, as shown in 
 	    the following.
 	  </p>
 	  <p style="border: 1px solid #ccc;">	   
 	    <textarea id="in8" name="in8">
--- annotation id : Int
--- annotation doc : String
+annotation id : Int
+annotation doc : String
 
 @id(42)
 @doc("The basic shape type.")
@@ -520,18 +525,19 @@ class Angle3 {
 	    annotated with documentation strings.
 
 	    Annotations are different from comments in that they can
-	    be processed by tools.
+	    be processed by tools. They have, however, no impact on
+            the analysis performed on K models (at this point in time).
 	    
 	  </p>
 
-	  <h3>Keywords</h3>
+	  <h3>User-defined Keywords</h3>
 	  <p>
-	    K to a limied extent supports creating domain-specific
-	    modeling keywords for defining sub-classes of a
+	    K to a limited extent supports creating domain-specific
+	    keywords for defining sub-classes of a
 	    class. Consider the situation where we define a class of
 	    which we want to define one or more sub-classes that
 	    inherit from it. Let's look at a cut down version of the
-	    Shapes example, where we create a Trinangle class and a
+	    shapes example, where we create a Trinangle class and a
 	    Rectangle class sub-classing the Shape class:
 	  </p>
 	  
@@ -561,15 +567,15 @@ class Rectangle extends Shape {
 
 	  <p style="border: 1px solid #ccc;">	   
 	    <textarea id="in10" name="in10">
-class <shape> Shape2 {
+class <shape> Shape {
   sides : Int
 }
 
-shape Triangle2 {
+shape Triangle {
   req sides = 3
 }
 
-shape Rectangle2 {
+shape Rectangle {
   req sides = 4
 }
 	    </textarea>
@@ -595,13 +601,14 @@ shape Rectangle2 {
 	  <p>
 	    K is currently integrated with SMT solving techniques to
 	    provide you a proof of whether the classes as specified in
-	    your model are satisfiable and consistent or not. If they
-	    are, and if there are top level instances declared for a
+	    your model are satisfiable (consistent) or not. If they
+	    are, an instance for each class will be provided as
+	    output. If there are top level instances declared for a
 	    class (for example, 't1' on line 28 of the shapes example
-	    above), an instance specification will be provided as
-	    output. This is one possible solution and not the only
-	    solution. It may be the only solution, if your specified
-	    requirements and constraints only allow one solution.
+	    above), the instances will be easier to recognize in the output.
+            These instances are only possible solutions and not the only
+	    solutions. An instance may, however, be the only solution, if your specified
+	    requirements (constraints) only allow one solution.
 
 	    If the class(es) are not satisfiable, K will provide you
 	    an error message saying that the classes are not
