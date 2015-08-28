@@ -1,12 +1,20 @@
 \documentclass{llncs}
 
-\title{K: A Wide Spectrum Language for Specifying, Modeling,
-  Programming, and Verifying\thanks{ The work described in this
-    publication was carried out at Jet Propulsion Laboratory,
-    California Institute of Technology, under a contract with the
-    National Aeronautics and Space Administration.}}  
+\title{K: A Wide Spectrum Language for Modeling, Programming, and
+  Analysis\thanks{ The work described in this publication was carried
+    out at Jet Propulsion Laboratory, California Institute of
+    Technology, under a contract with the National Aeronautics and
+    Space Administration.}}
 
-\author{Klaus Havelund \and Rahul Kumar} 
+\author{
+  Klaus Havelund 
+  \and 
+  Rahul Kumar 
+  \and 
+  Chris Delp
+  \and
+  Bradley Clement
+}
 
 \institute{ Jet Propulsion Laboratory\\ 
             California Institute of Technology\\ 
@@ -18,11 +26,81 @@
 
 \maketitle
 
-\notethis{KH: We have to decide whether ``specification'' is different from ``modeling''. I personally don't see a difference, in which case it is unnecessary to mention both words in the title. But we should perhaps have this discussion.}
-
 \input{abstract}
 
 \input{introduction}
+
+\section{K Syntax}
+
+Contains one example that we discuss in detail. 
+
+\begin{figure}
+\centering
+\begin{tabular}{c}
+\hline \\
+\lstinputlisting{examples/fs.k} \\ \\
+\hline
+\end{tabular}
+\caption{A simple model of a spacecraft using \Klang{}.}
+\label{fig:spacecraftSmt}
+\end{figure}
+
+\begin{enumerate}
+\item Classes
+\item Inheritance
+\item Functions
+\item Constraints
+\item undefined functions
+\item Sequences and Sets
+\item Constructor with named arguments
+\item Primitive types
+\item Expressions
+\item Function specifications
+\item Quantification
+\end{enumerate}
+
+\subsection{K Type Checking}
+
+Will use the same example as presented for the syntax.
+
+\section{K to SMT}
+
+Will probably contain one large example, which is then discussed in
+smaller individual bits and pieces, where each contains the K code and
+the SMT code
+
+\begin{figure}
+\centering
+\begin{tabular}{c}
+\hline \\
+\lstinputlisting{examples/spacecraft.k} \\ \\
+\hline
+\end{tabular}
+\caption{A simple model of a spacecraft using \Klang{}.}
+\label{fig:spacecraftSmt}
+\end{figure}
+
+\begin{figure}
+\centering
+\begin{tabular}{c}
+\hline \\
+\lstinputlisting{examples/borgesOutput.k} \\ \\
+\hline
+\end{tabular}
+\caption{Output of the K toolchain for borges.k example.}
+\label{fig:shapes}
+\end{figure}
+
+\subsection{Limitations of SMT Translation}
+
+\section{Usage Scenario In Practice}
+
+The idea here is to tell the story of how people create models in
+MagicDraw, show screenshot maybe, followed by how we can automatically
+translate that to a K model and then do analysis on it. Show the
+entire pipeline.
+
+\section{Discussion}
 
 \input{relatedwork}
 

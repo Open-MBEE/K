@@ -42,7 +42,8 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
       if (ctx.typeParameters() != null)
         visit(ctx.typeParameters()).asInstanceOf[List[TypeParam]]
       else Nil
-    var t: Option[Type] = visit(ctx.`type`()).asInstanceOf[Option[Type]]
+    var t: Option[Type] = 
+      visit(ctx.`type`()).asInstanceOf[Option[Type]]
     TypeDecl(ident, typeParams, t)
   }
 
@@ -56,7 +57,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
 
   override def visitTypeBound(ctx: ModelParser.TypeBoundContext): AnyRef = {
     var typeContexts: List[ModelParser.TypeContext] = (ctx.`type`().asScala).toList
-    TypeBound(typeContexts.map(visit(_)).asInstanceOf[List[Type]])
+    Some(TypeBound(typeContexts.map(visit(_)).asInstanceOf[List[Type]]))
   }
 
   override def visitPrimType(ctx: ModelParser.PrimTypeContext): AnyRef = {
@@ -103,7 +104,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
     var i: String = visit(ctx.Identifier()).asInstanceOf[String]
     var t: Type = visit(ctx.`type`()).asInstanceOf[Type]
     var e: Exp = visit(ctx.expression()).asInstanceOf[Exp]
-    SubType(i, t, e)
+    Some(SubType(i, t, e))
   }
 
   override def visitTypeArguments(ctx: ModelParser.TypeArgumentsContext): AnyRef = {
