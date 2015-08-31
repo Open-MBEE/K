@@ -30,73 +30,11 @@
 
 \input{introduction}
 
-\section{K Syntax}
+\input{k}
 
-Contains one example that we discuss in detail. 
+\input{k2smt}
 
-\begin{figure}
-\centering
-\begin{tabular}{c}
-\hline \\
-\lstinputlisting{examples/fs.k} \\ \\
-\hline
-\end{tabular}
-\caption{A simple model of a spacecraft using \Klang{}.}
-\label{fig:spacecraftSmt}
-\end{figure}
-
-\begin{enumerate}
-\item Classes
-\item Inheritance
-\item Functions
-\item Constraints
-\item undefined functions
-\item Sequences and Sets
-\item Constructor with named arguments
-\item Primitive types
-\item Expressions
-\item Function specifications
-\item Quantification
-\item Bounded types
-\end{enumerate}
-
-\subsection{K Type Checking}
-
-Will use the same example as presented for the syntax.
-
-\section{K to SMT}
-
-Will probably contain one large example, which is then discussed in
-smaller individual bits and pieces, where each contains the K code and
-the SMT code
-
-\begin{figure}
-\centering
-\begin{tabular}{c}
-\hline \\
-\lstinputlisting{examples/spacecraft.k} \\ \\
-\hline
-\end{tabular}
-\caption{A simple model of a spacecraft using \Klang{}.}
-\label{fig:spacecraftSmt}
-\end{figure}
-
-\begin{figure}
-\VerbatimInput{examples/spacecraftOutput.k}
-\caption{Output of the K toolchain for the spacecraft example.}
-\label{fig:shapes}
-\end{figure}
-
-\subsection{Limitations of SMT Translation}
-
-\section{Usage Scenario In Practice}
-
-The idea here is to tell the story of how people create models in
-MagicDraw, show screenshot maybe, followed by how we can automatically
-translate that to a K model and then do analysis on it. Show the
-entire pipeline.
-
-\section{Discussion}
+\input{usage}
 
 \input{relatedwork}
 
