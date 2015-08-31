@@ -1,0 +1,55 @@
+\section{K Syntax}
+
+In this section we introduce the syntax of \Klang{}. We use the
+\Klang{} example in Figure~\ref{fig:fs} as our running example for
+discussing core concepts in \Klang{}.
+
+\begin{figure}
+\centering
+\begin{tabular}{c}
+\hline \\
+\lstinputlisting{examples/fs.k} \\ \\
+\hline
+\end{tabular}
+\caption{A simple model of a spacecraft using \Klang{}.}
+\label{fig:fs}
+\end{figure}
+
+\Klang{} is high level textual language which supports multiple
+paradigms. It allows one to create {\em packages}, {\em classes}, and
+{\em functions}. Packages are collections of classes, which can then
+be {\em imported} by other \Klang{} files. Line 1 in
+Figure~\ref{fig:fs} shows an example of a package
+declaration. \Klang{} inherently provides the following collections:
+
+\begin{description}
+\item [Bag] A collection of items that is not subject to any order
+  or uniqueness constraints.
+\item [Seq] A collection of items that is subject to an ordering, but
+  not any uniqueness constraints.
+\item [Set] A collection of items that is subject to uniqueness
+  constraints, but not any specific ordering.
+\end{description}
+
+
+
+
+
+\begin{enumerate}
+\item Classes
+\item Inheritance
+\item Functions
+\item Constraints
+\item undefined functions
+\item Sequences and Sets
+\item Constructor with named arguments
+\item Primitive types
+\item Expressions
+\item Function specifications
+\item Quantification
+\item Bounded types
+\end{enumerate}
+
+\subsection{K Type Checking}
+
+Will use the same example as presented for the syntax.
