@@ -60,6 +60,16 @@
   numbers=left,   
   numberstyle=\footnotesize, 
 }  
+
+\lstdefinelanguage{SMT}{
+  morekeywords={define,declare,sort,const,fun,datatypes,assert,forall,exists,and,or,ite,Int,Real,Bool},
+  sensitive=true, 
+  morecomment=[l]{;}, 
+  stringstyle=\ttfamily,
+  numbers=left,   
+  numberstyle=\footnotesize, 
+}
+
 % --- Referring to code: ---
 
 \newcommand{\name}[1]{{\em #1}}
