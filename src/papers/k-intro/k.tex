@@ -2,7 +2,10 @@
 
 In this section we introduce the syntax of \Klang{}. We use the
 \Klang{} example in Figure~\ref{fig:fs} as our running example for
-discussing core concepts in \Klang{}.
+discussing core concepts in \Klang{}. The example shows a basic model
+of a flash file system modeled using \Klang{}. It is intended to be a
+basis for discussing language features, and not a complete model of
+the flash file system.
 
 \begin{figure}
 \centering
@@ -16,32 +19,56 @@ discussing core concepts in \Klang{}.
 \end{figure}
 
 \Klang{} is high level textual language which supports multiple
-paradigms. It allows one to create {\em packages}, {\em classes}, and
-{\em functions}. Packages are collections of classes, which can then
-be {\em imported} by other \Klang{} files. Line 1 in
+paradigms. It allows one to create \name{packages}, \name{classes},
+and \name{functions}. Packages are collections of classes, which can
+then be \name{imported} by other \Klang{} files. Line 1 in
 Figure~\ref{fig:fs} shows an example of a package
-declaration. \Klang{} inherently provides the following collections:
+declaration. Classes, similar to other languages provide a means for
+abstracting and collecting properties. In \Klang{} classes may contain
+functions, properties, and constraints (requirements). Lines 8 -- 11
+in Figure~\ref{fig:fs} declare an \code{Entry} class, which contains
+two members: property \code{name} of type \code{String}, and function
+\code{size} that takes no arguments and returns an \code{Int}. For
+function \code{size}, the function implementation is not specified for
+function \code{size}. \code{String} is one of the six primitive types
+provided by \Klang{}: \code{Int}, \code{Real}, \code{String},
+\code{Char}, \code{Unit}, and \code{Boolean}. \Klang{} also provides
+the following collections:
 
 \begin{description}
-\item [Bag] A collection of items that is not subject to any order
+\item [Bag:] collection of items not subject to any order
   or uniqueness constraints.
-\item [Seq] A collection of items that is subject to an ordering, but
-  not any uniqueness constraints.
-\item [Set] A collection of items that is subject to uniqueness
-  constraints, but not any specific ordering.
+\item [Seq:] collection of items subject to an ordering, but
+  no uniqueness constraints.
+\item [Set:] collection of items subject to uniqueness
+  constraints, but no ordering.
 \end{description}
 
-
-
-
+\Klang{} allows classes to inherit from one or more classes. For
+example, class \code{Dir}, specified on lines 13 -- 18 extends the
+\code{Entry} class. As with other languages, inheritance causes the
+child classes to inherit the instance variables and functions of the
+parent classes, but in addition, in \Klang{}, the child classes also
+inherit the constraints from the parent classes. In the case of
+multiple inheritance, \Klang{} requires that the property names be
+unique across all classes. Functions on the other hand may be
+overloaded by changing the function signature. Both class \code{File}
+and \code{Dir} inherit from class \code{Entry} and define a body for
+the \code{size} function. Lines 15 -- 17 in Figure~\ref{fig:fs}
+provide the \code{size} function for the \code{Dir} class. It makes
+use of the \code{sum} function, that is provided by \Klang{} for all
+collections. This is the same function as declared in class
+\code{Entry}. Currently, function bodies cannot be declared more than
+once along an inheritance path. Functions may take an arbitrary number
+of arguments and return a single value. \Klang{} also provides
+\code{Tuple} to group objects together. On line 29, we see a
+constraint being specified for class \code{Block} using the \code{req}
+keyword. The constraint specifies that the size function of
+\code{Block} should always return the same value as specified in the
+global property \code{SIZE\_OF\_BLOCK} (left unspecified). Any number
+of constraints can be specified at the global scope or within classes. 
 
 \begin{enumerate}
-\item Classes
-\item Inheritance
-\item Functions
-\item Constraints
-\item undefined functions
-\item Sequences and Sets
 \item Constructor with named arguments
 \item Primitive types
 \item Expressions
@@ -49,6 +76,8 @@ declaration. \Klang{} inherently provides the following collections:
 \item Quantification
 \item Bounded types
 \end{enumerate}
+
+In class \code{FileSystem}
 
 \subsection{K Type Checking}
 
