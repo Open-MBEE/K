@@ -6,7 +6,8 @@ In this section we introduce the syntax of \Klang{}. We use the
 discussing core concepts in \Klang{}. The example shows a basic model
 of a flash file system modeled using \Klang{}. It is intended to be a
 basis for discussing language features, and not a complete model of
-the flash file system.
+the flash file system. Appendix~\ref{app:grammar} shows the ANTLRv4
+grammar for \Klang{} (with trivial parts removed).
 
 \begin{figure}
 \centering
@@ -45,6 +46,10 @@ the following collections:
   constraints, but no ordering.
 \end{description}
 
+\Klang{} provides {\em subtypes}. Line 5 specifies a subtype
+named \code{Byte}, which is derived from the \code{Int} type but
+restricted to values between 0 and 256.
+
 \Klang{} allows classes to inherit from one or more classes. For
 example, class \code{Dir}, specified on lines 13 -- 18 extends the
 \code{Entry} class. As with other languages, inheritance causes the
@@ -69,17 +74,67 @@ keyword. The constraint specifies that the size function of
 global property \code{SIZE\_OF\_BLOCK} (left unspecified). Any number
 of constraints can be specified at the global scope or within classes. 
 
-\begin{enumerate}
-\item Constructor with named arguments
-\item Primitive types
-\item Expressions
-\item Function specifications
-\item Quantification
-\item Bounded types
-\end{enumerate}
+In class \code{FileSystem}, two functions \code{mkDir} and
+\code{rmDir}. The \code{mkDir} function takes a single argument
+(\code{n} of type \code{String}) and returns a \code{FileSystem}
+object which contains one additional directory entry that has name
+\code{n}. The \code{rmDir} function has no body specified. Both
+functions are defined along with a {\em function
+  specification}. Function specifications are a list of {\em pre} and
+{\em post} conditions that describe the precondition and postcondition
+of the function. Any number of specifications may be provided. Line 38
+specifies the precondition for function \code{mkDir} with the use of
+an {\em existential} quantifier. It specifies that when creating a
+directory in the file system, the given name \code{n} should not exist
+in the current set of entries in the file system. \Klang{} provides
+both {\em existential} and {\em universal} quantification in it's
+expression language. For the same function, line 39 specifies the
+postcondition. \code{\$result} is a reserved word that refers to the
+return value of the function. It can only be used when specifying
+postconditions. The post condition for \code{mkDir} specifies that
+after the function \code{mkDir} has completed execution, there should
+be no change in the resulting \code{FileSystem} object relative to the
+current \code{FileSystem} object, which was used to create the new
+directory. Line 41, which is the body of function \code{mkDir} creates
+a new \code{FileSystem} object by calling the constructor for class
+\code{FileSystem}. The only argument provided to the constructor is a
+\code{Dir} object which contains one additional \code{Dir} entry whose
+name is \code{n}. \Klang{} provides constructors automatically for all
+classes where the arguments are {\em named arguments}. Each named
+argument is of the form \code{member :: value} where the \code{::}
+notation is used as a form of assignment. Multiple named arguments can
+be provided as a comma delimited list. It is not necessary to specify
+a value for all members of a class. Any members that are specified in
+a constructor call will be assigned the specified value, and the rest
+will be given the {\em default} value for their type. Function
+\code{rmDir} is specified with no body, but only function
+specifications. The function specifications require that function
+\code{rmDir} only execute if the provided directory \code{n} exists in
+the current object's contents. The postcondition specifies that the
+resulting \code{FileSystem} object should be either the same size or
+smaller relative to the current object.
 
-In class \code{FileSystem}
+Expressions in \Klang{} are the core of the language. Logical
+expressions in \Klang{} allow one to write assignments, binary
+expressions (such as and, or, implication, and iff), logical negation,
+arithmetic negation, quantification, \code{is} for checking type, and
+\code{as} for type casting. Any expression can use variables, function
+application, lambda functions, and dot expressions. \Klang{} also
+supports control expressions such as \code{if-then-else},
+\code{while}, \code{match}, \code{for}, \code{continue}, \code{break},
+and \code{return}. These expressions are similar to control
+expressions provided in other languages such as Scala or Java. A
+detailed description of the expression language is beyond the scope of
+this paper. Appendix~\ref{app:grammar} provides the complete grammar
+for the expression language.
 
 \subsection{K Type Checking}
 
-Will use the same example as presented for the syntax.
+The \Klang{} type checker performs basic checks on the provided input
+to ensure naming and type consistency. It is used to ensure that all
+expressions are logically sound and reference variables and members
+that exist and are type consistent in the given context. Further, when
+\Klang{} is asked to do analysis of the input using SMT, the type
+checker imposes a stricter set of rules on the provided input to
+ensure that it can be completely and correctly translated to SMT. More
+details are provided in Section~\ref{sec:k2smt}.
