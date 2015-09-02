@@ -128,13 +128,55 @@ detailed description of the expression language is beyond the scope of
 this paper. Appendix~\ref{app:grammar} provides the complete grammar
 for the expression language.
 
+\Klang{} also provides {\em multiplicities} as part of the
+language. The concept is highly influenced by multiplicities that can
+be found in other languages such as UML/SysML. The goal with
+multiplicities is to be able to specify the size of a collection. For
+example, Figure~\ref{fig:mult} shows a \Klang{} model of a
+\code{Person} that can has various member properties and the
+corresponding inferred types for each member property. We will analyze
+each of these individually.
+
+\begin{figure}
+\caption{Example model and inferred types for members of class \code{Person}.}
+\centering
+\begin{tabular}[c]{c|c}
+\begin{subfigure}[c]{0.5\textwidth}
+\hspace{1cm}\scalebox{0.8}{\lstinputlisting{examples/mult.k} }
+\end{subfigure}
+&
+\begin{subfigure}[c]{0.5\textwidth}
+%\includegraphics[scale=0.35]{mult.png}
+\hspace{1cm}\scalebox{0.8}{\lstinputlisting{examples/multr.k} }
+\end{subfigure}
+\\
+\end{tabular}
+\label{fig:mult}
+\end{figure}
+
+Each \code{Person} can have exactly one \code{mother}. This is
+specified by line 4. No explicit multiplicity is specified, but in
+\Klang{}, this is assumed to be a multiplicity of 1. A \code{Person}
+can also have children, which is specified by line 5. Line 6 specifies
+that a \code{Person} may have \code{cars}, which semantically
+translates to a \code{Bag} (\Klang{} default) of \code{Car}, but is
+written using a multiplicity (as opposed to the use of a
+collection). Finally, a person may own many \code{accnts}, which is a
+\code{Set} of \code{BankAccount}, specified to have a multiplicity of
+1 or more. This translates to \code{accnts} being a \code{Bag} of
+\code{Set[BankAccount]} with at least 1 entry and no upper limit. 
+
 \subsection{K Type Checking}
 
 The \Klang{} type checker performs basic checks on the provided input
 to ensure naming and type consistency. It is used to ensure that all
-expressions are logically sound and reference variables and members
-that exist and are type consistent in the given context. Further, when
-\Klang{} is asked to do analysis of the input using SMT, the type
-checker imposes a stricter set of rules on the provided input to
-ensure that it can be completely and correctly translated to SMT. More
-details are provided in Section~\ref{sec:k2smt}.
+expressions are logically sound and reference names (functions,
+members, variables) that exist and are type consistent in the given
+context. Type information for all expressions and any other inferences
+made by the type checker are saved and made available to all other
+analyses/modules in the \Klang{} tool chain. Further, when \Klang{} is
+asked to do analysis of the input using SMT, the type checker imposes
+a stricter set of rules on the provided input to ensure that it can be
+completely and correctly translated to SMT. More details are provided
+in Section~\ref{sec:k2smt}. The type checker is implemented as a Scala
+module.
