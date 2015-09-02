@@ -38,7 +38,7 @@ class FileSystem {
     pre !exists e : dir.contents :- e.name = n
     post $result.dir.size() = dir.size()
   {
-    FileSystem(dir :: dir + Dir(name :: n))          
+    FileSystem(dir :: dir.contents + Dir(name :: n))          
   }
 
   fun rmDir(n: String) : FileSystem
