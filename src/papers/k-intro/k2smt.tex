@@ -9,7 +9,7 @@ standard is used by numerous SMT solvers, allowing comparison
 between systems (for example in competitions). 
 In addition, it allows systems generating SMT-LIB 
 formulas to target any SMT solver processing this standard. In our 
-case we  use the Z3 SMT solver to process the generated formulas, 
+case we  use the Z3 SMT solver \cite{de2008z3} to process the generated formulas, 
 but we anticipate to target other solvers as well in future work.
 
 \subsection{The Source K Model}
@@ -89,7 +89,7 @@ value of the  datatype, while the values can be retrieved using the
 selectors.  The class \code{Object} can be  represented in SMT-LIB 
 as:
 
-\lstset{language=SMT}
+\lstset{language=SMT,numbers=none}
 
 \begin{center}
 \begin{tabular}{c}
@@ -129,7 +129,7 @@ class B {
 
 The following translation of this model to the SMT-LIB datatypes \code{A} and \code{B} is {\bf not} well-founded since it contains a recursion between \code{A} and \code{B} (it is illegal SMT-LIB).
 
-\lstset{language=SMT}
+\lstset{language=SMT,numbers=none}
 
 \begin{center}
 \begin{tabular}{c}
@@ -394,38 +394,65 @@ The body of this function is a conjunction of the conditions
 that have to hold for the \code{SystemManager} object referred to
 by \code{this}. There are four such, three for the property
 definitions in lines 26-28 in Figure \ref{fig:spacecraftSmt},
-and one for the requirement in line 29. Each of the property definitions results in a condition that 
+and one for the requirement in line 29. Each of the property definitions results in a condition that verifies that the property
+is of the right type, in these three cases, that each of the properties \code{}, \code{}, and \code{}, are objects of any sub-class of class \code{Event} (the use of `\code{isa}'), although
+in this case there are no sub-classes of \code{Event}. The last condition, corresponding to the requirement, illustrate how
+methods are called, in the case the method \code{after}.
 
-%\hline
+We are now finally ready to assert the well-formedness of the 
+model. For each class two assertions are generated, one that 
+asserts an existence of an object of the class in the heap, and one 
+asserting that every object of that class in the heap 
+satisfies the invariant of that class:
 
 \begin{center}
 \begin{tabular}{c}
 \begin{lstlisting}
+(assert (exists ((this Ref)) 
+  (deref-is-SystemManager this)))
+
 (assert (forall ((this Ref))
-  (=> (deref-is-SystemManager this) (SystemManager.inv this))
+  (=> 
+    (deref-is-SystemManager this) 
+    (SystemManager.inv this)
+  )
 ))
 \end{lstlisting}
 \end{tabular}
 \end{center}
 
-%\hline
+\subsubsection{Solving the model}
 
-\begin{center}
-\begin{tabular}{c}
-\begin{lstlisting}
-(assert (exists ((instanceOfInstrument Ref)) 
-  (deref-is-Instrument instanceOfInstrument)))
-...
-\end{lstlisting}
-\end{tabular}
-\end{center}
-
-%\hline
+Given the generated SMT-LIB model outlined above, an SMT
+solver following the SMT-LIB standard can be applied and determine 
+whether the model is satisfiable. Our currently used SMT solver is
+Z3. If the model is {\bf not} satisfiable, the 
+solver will just return `not satisfied', hence no information
+indicating why the model is not satisfiable. One can in this case
+analyze subsets of the model, eliminating assertions to discover
+which assertions caused the model to become unsatisfiable, in the best case the minimal set of such assertions. We are working
+on such a violation explanation capability.
 
 \begin{figure}
 \VerbatimInput{examples/spacecraftOutput.k}
 \caption{Output of the K toolchain for the spacecraft example.}
 \label{fig:shapes}
 \end{figure}
+
+If the model on the other hand is satisfiable, an assignment to variables in the model will be retuned by the solver. In our case the model outlined above is satisfiable. The returned assignment is shown in Figure \ref{fig:shapes}. This view has been produced by
+processing the output from Z3, which is less comprehensible.
+%
+The assignment shows the following. The outermost \code{ShRaan}
+property in the heap denotes a \code{SpaceCraft} object. 
+This object contains various fields, for example the \code{weight} 
+property with the value $18$, and the \code{software} property
+which denotes the reference (of type \code{Ref}) $21$. This
+reference in turn denotes a \code{SystemManager} object containing
+three references \code{bootUp} ($25$), \code{initMem} ($26$), and 
+\code{takePicture} ($27$), each of which are events. Due to the
+constraint in line 29 of Figure \ref{fig:spacecraftSmt} these events have been {\em scheduled} such that the taking of the
+picture occurs after the boot as well as the memory initialization.
+This can be seen from the fact that the end times of the boot and
+memory initialization events at references $25$ and $26$ are less than the start time of the take picture event at reference $27$.
 
 \lstset{language=K}
