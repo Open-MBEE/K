@@ -1,5 +1,6 @@
 
 \section{Translating K to SMT-LIB}
+\label{sec:k2smt}
 
 In this section we illustrate the translation from K to the SMT-
 LIB input language. SMT-LIB \cite{smt-lib} is the standard 
@@ -60,8 +61,6 @@ problem we want an answer to is whether our classes are logically consistent. Th
 the case with: `$x < 0 \wedge x > 0$'). From a semantics point of view, it means that for each class there exists at least one instance (object) of that class that satisfies the constraints. 
 The specific satisfiability problem that perhaps interests a
 user most is whether there is an instance of the \code{SpaceCraft} class, which satisfies all the constraints of that class and the classes it refers to.
-
-
 
 \subsection{The Translation to SMT-LIB}
 

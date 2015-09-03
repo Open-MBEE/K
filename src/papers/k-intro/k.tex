@@ -1,8 +1,13 @@
 \section{K Syntax}
+\label{sec:k-syntax}
 
 In this section we introduce the syntax of \Klang{}. We use the
 \Klang{} example in Figure~\ref{fig:fs} as our running example for
-discussing core concepts in \Klang{}.
+discussing core concepts in \Klang{}. The example shows a basic model
+of a flash file system modeled using \Klang{}. It is intended to be a
+basis for discussing language features, and not a complete model of
+the flash file system. Appendix~\ref{app:grammar} shows the ANTLRv4
+grammar for \Klang{} (with trivial parts removed).
 
 \begin{figure}
 \centering
@@ -16,40 +21,162 @@ discussing core concepts in \Klang{}.
 \end{figure}
 
 \Klang{} is high level textual language which supports multiple
-paradigms. It allows one to create {\em packages}, {\em classes}, and
-{\em functions}. Packages are collections of classes, which can then
-be {\em imported} by other \Klang{} files. Line 1 in
+paradigms. It allows one to create \name{packages}, \name{classes},
+and \name{functions}. Packages are collections of classes, which can
+then be \name{imported} by other \Klang{} files. Line 1 in
 Figure~\ref{fig:fs} shows an example of a package
-declaration. \Klang{} inherently provides the following collections:
+declaration. Classes, similar to other languages provide a means for
+abstracting and collecting properties. In \Klang{} classes may contain
+functions, properties, and constraints (requirements). Lines 8 -- 11
+in Figure~\ref{fig:fs} declare an \code{Entry} class, which contains
+two members: property \code{name} of type \code{String}, and function
+\code{size} that takes no arguments and returns an \code{Int}. For
+function \code{size}, the function implementation is not specified for
+function \code{size}. \code{String} is one of the six primitive types
+provided by \Klang{}: \code{Int}, \code{Real}, \code{String},
+\code{Char}, \code{Unit}, and \code{Boolean}. \Klang{} also provides
+the following collections:
 
 \begin{description}
-\item [Bag] A collection of items that is not subject to any order
+\item [Bag:] collection of items not subject to any order
   or uniqueness constraints.
-\item [Seq] A collection of items that is subject to an ordering, but
-  not any uniqueness constraints.
-\item [Set] A collection of items that is subject to uniqueness
-  constraints, but not any specific ordering.
+\item [Seq:] collection of items subject to an ordering, but
+  no uniqueness constraints.
+\item [Set:] collection of items subject to uniqueness
+  constraints, but no ordering.
 \end{description}
 
+\Klang{} provides {\em subtypes}. Line 5 specifies a subtype
+named \code{Byte}, which is derived from the \code{Int} type but
+restricted to values between 0 and 256.
 
+\Klang{} allows classes to inherit from one or more classes. For
+example, class \code{Dir}, specified on lines 13 -- 18 extends the
+\code{Entry} class. As with other languages, inheritance causes the
+child classes to inherit the instance variables and functions of the
+parent classes, but in addition, in \Klang{}, the child classes also
+inherit the constraints from the parent classes. In the case of
+multiple inheritance, \Klang{} requires that the property names be
+unique across all classes. Functions on the other hand may be
+overloaded by changing the function signature. Both class \code{File}
+and \code{Dir} inherit from class \code{Entry} and define a body for
+the \code{size} function. Lines 15 -- 17 in Figure~\ref{fig:fs}
+provide the \code{size} function for the \code{Dir} class. It makes
+use of the \code{sum} function, that is provided by \Klang{} for all
+collections. This is the same function as declared in class
+\code{Entry}. Currently, function bodies cannot be declared more than
+once along an inheritance path. Functions may take an arbitrary number
+of arguments and return a single value. \Klang{} also provides
+\code{Tuple} to group objects together. On line 29, we see a
+constraint being specified for class \code{Block} using the \code{req}
+keyword. The constraint specifies that the size function of
+\code{Block} should always return the same value as specified in the
+global property \code{SIZE\_OF\_BLOCK} (left unspecified). Any number
+of constraints can be specified at the global scope or within classes. 
 
+In class \code{FileSystem}, two functions \code{mkDir} and
+\code{rmDir}. The \code{mkDir} function takes a single argument
+(\code{n} of type \code{String}) and returns a \code{FileSystem}
+object which contains one additional directory entry that has name
+\code{n}. The \code{rmDir} function has no body specified. Both
+functions are defined along with a {\em function
+  specification}. Function specifications are a list of {\em pre} and
+{\em post} conditions that describe the precondition and postcondition
+of the function. Any number of specifications may be provided. Line 38
+specifies the precondition for function \code{mkDir} with the use of
+an {\em existential} quantifier. It specifies that when creating a
+directory in the file system, the given name \code{n} should not exist
+in the current set of entries in the file system. \Klang{} provides
+both {\em existential} and {\em universal} quantification in it's
+expression language. For the same function, line 39 specifies the
+postcondition. \code{\$result} is a reserved word that refers to the
+return value of the function. It can only be used when specifying
+postconditions. The post condition for \code{mkDir} specifies that
+after the function \code{mkDir} has completed execution, there should
+be no change in the resulting \code{FileSystem} object relative to the
+current \code{FileSystem} object, which was used to create the new
+directory. Line 41, which is the body of function \code{mkDir} creates
+a new \code{FileSystem} object by calling the constructor for class
+\code{FileSystem}. The only argument provided to the constructor is a
+\code{Dir} object which contains one additional \code{Dir} entry whose
+name is \code{n}. \Klang{} provides constructors automatically for all
+classes where the arguments are {\em named arguments}. Each named
+argument is of the form \code{member :: value} where the \code{::}
+notation is used as a form of assignment. Multiple named arguments can
+be provided as a comma delimited list. It is not necessary to specify
+a value for all members of a class. Any members that are specified in
+a constructor call will be assigned the specified value, and the rest
+will be given the {\em default} value for their type. Function
+\code{rmDir} is specified with no body, but only function
+specifications. The function specifications require that function
+\code{rmDir} only execute if the provided directory \code{n} exists in
+the current object's contents. The postcondition specifies that the
+resulting \code{FileSystem} object should be either the same size or
+smaller relative to the current object.
 
+Expressions in \Klang{} are the core of the language. Logical
+expressions in \Klang{} allow one to write assignments, binary
+expressions (such as and, or, implication, and iff), logical negation,
+arithmetic negation, quantification, \code{is} for checking type, and
+\code{as} for type casting. Any expression can use variables, function
+application, lambda functions, and dot expressions. \Klang{} also
+supports control expressions such as \code{if-then-else},
+\code{while}, \code{match}, \code{for}, \code{continue}, \code{break},
+and \code{return}. These expressions are similar to control
+expressions provided in other languages such as Scala or Java. A
+detailed description of the expression language is beyond the scope of
+this paper. Appendix~\ref{app:grammar} provides the complete grammar
+for the expression language.
 
-\begin{enumerate}
-\item Classes
-\item Inheritance
-\item Functions
-\item Constraints
-\item undefined functions
-\item Sequences and Sets
-\item Constructor with named arguments
-\item Primitive types
-\item Expressions
-\item Function specifications
-\item Quantification
-\item Bounded types
-\end{enumerate}
+\Klang{} also provides {\em multiplicities} as part of the
+language. The concept is highly influenced by multiplicities that can
+be found in other languages such as UML/SysML. The goal with
+multiplicities is to be able to specify the size of a collection. For
+example, Figure~\ref{fig:mult} shows a \Klang{} model of a
+\code{Person} that can has various member properties and the
+corresponding inferred types for each member property. We will analyze
+each of these individually.
+
+\begin{figure}
+\caption{Example model and inferred types for members of class \code{Person}.}
+\centering
+\begin{tabular}[c]{c|c}
+\begin{subfigure}[c]{0.5\textwidth}
+\hspace{1cm}\scalebox{0.8}{\lstinputlisting{examples/mult.k} }
+\end{subfigure}
+&
+\begin{subfigure}[c]{0.5\textwidth}
+%\includegraphics[scale=0.35]{mult.png}
+\hspace{1cm}\scalebox{0.8}{\lstinputlisting{examples/multr.k} }
+\end{subfigure}
+\\
+\end{tabular}
+\label{fig:mult}
+\end{figure}
+
+Each \code{Person} can have exactly one \code{mother}. This is
+specified by line 4. No explicit multiplicity is specified, but in
+\Klang{}, this is assumed to be a multiplicity of 1. A \code{Person}
+can also have children, which is specified by line 5. Line 6 specifies
+that a \code{Person} may have \code{cars}, which semantically
+translates to a \code{Bag} (\Klang{} default) of \code{Car}, but is
+written using a multiplicity (as opposed to the use of a
+collection). Finally, a person may own many \code{accnts}, which is a
+\code{Set} of \code{BankAccount}, specified to have a multiplicity of
+1 or more. This translates to \code{accnts} being a \code{Bag} of
+\code{Set[BankAccount]} with at least 1 entry and no upper limit. 
 
 \subsection{K Type Checking}
 
-Will use the same example as presented for the syntax.
+The \Klang{} type checker performs basic checks on the provided input
+to ensure naming and type consistency. It is used to ensure that all
+expressions are logically sound and reference names (functions,
+members, variables) that exist and are type consistent in the given
+context. Type information for all expressions and any other inferences
+made by the type checker are saved and made available to all other
+analyses/modules in the \Klang{} tool chain. Further, when \Klang{} is
+asked to do analysis of the input using SMT, the type checker imposes
+a stricter set of rules on the provided input to ensure that it can be
+completely and correctly translated to SMT. More details are provided
+in Section~\ref{sec:k2smt}. The type checker is implemented as a Scala
+module.

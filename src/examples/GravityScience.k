@@ -517,7 +517,8 @@ fun Delta : Real {
 
 
 
-JupiterEarth_Gravity : Real = JupiterMain.TwoBodyGravity1(JupiterMain, EarthMain)
+--JupiterEarth_Gravity : Real = JupiterMain.TwoBodyGravity1(JupiterMain, EarthMain)
+JupiterEarth_Gravity : Real
 JupiterEuropa_Gravity : Real
 --JupiterSpacecraft_Gravity : Real
 JupiterSun_Gravity : Real
