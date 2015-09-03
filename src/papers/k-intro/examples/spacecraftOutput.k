@@ -1,5 +1,4 @@
-[main] Type checking completed. No errors found.
-[K2Z3] <<++
+Type checking completed. No errors found.
 
 Top level objects created:
 +--------+----------------------------------------------------------------+
@@ -15,5 +14,3 @@ Top level objects created:
 |Ref 26  |Event(start::7854.0, end::7855.0)                               |
 |Ref 27  |Event(start::17257.0, end::21593.0)                             |
 +--------+----------------------------------------------------------------+
-
-[K2Z3] -->>
