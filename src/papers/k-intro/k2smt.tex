@@ -74,7 +74,7 @@ refers to.
 
 The SMT-LIB input language (from here on referred to as SMT-LIB) is a
 textual language for typed first order predicate logic plus various
-theories, including for example arithmetic, unintepreted functions,
+theories, including for example arithmetic, uninterpreted functions,
 and arrays. The syntax is LISP-like, meaning for example that function
 calls such as $f(42,false)$ have the form $(f\ 42\ false)$. For the 44
 line K model in Figure \ref{fig:spacecraftSmt}, the translator
@@ -86,16 +86,14 @@ in translating K to SMT-LIB is how to translate classes
 supporting (multiple) {\em inheritance} and {\em recursive} references
 between classes. This will be illustrated in the following.
 
-\subsubsection{Classes, objects, and the heap}
-
-Let's first translate a simple class, such as class \code{Object}.  We
-have chosen to translate classes to the SMT-LIB concept of {\em
-  datatypes}. A datatype in SMT-LIB corresponds to the classical
-notion of an algebraic datatype: a named record, with a constructor
-function that when applied to a sequence of values generates a value
-of the datatype, while the values can be retrieved using
-selector functions.  The class \code{Object} can be represented in SMT-LIB as
-follows.
+\textbf{Classes, objects, and the heap} Let's first translate a simple
+class, such as class \code{Object}.  We have chosen to translate
+classes to the SMT-LIB concept of {\em datatypes}. A datatype in
+SMT-LIB corresponds to the classical notion of an algebraic datatype:
+a named record, with a constructor function that when applied to a
+sequence of values generates a value of the datatype, while the values
+can be retrieved using selector functions.  The class \code{Object}
+can be represented in SMT-LIB as follows.
 
 \lstset{language=SMT,numbers=none}
 
@@ -119,18 +117,14 @@ Consider now the following schematic example of two mutually recursive
 classes, a situation often occurring in SysML modeling (relationships
 between two classes) as well as in programming (i.e. linked lists).
 
-\lstset{language=K}
+\lstset{language=K,numbers=none}
 
 \begin{center}
 \begin{tabular}{c}
 \begin{lstlisting}
-class A {
-  b : B
-}
-
-class B {
-  a : A
-}
+class A {      class B {
+  b : B          a : A
+}              }
 \end{lstlisting}
 \end{tabular}
 \end{center}
@@ -146,8 +140,7 @@ recursion between \code{A} and \code{B} (it is illegal SMT-LIB).
 \begin{lstlisting}
 (declare-datatypes () (
   (A (mk-A (b B)))
-  (B (mk-B (a A)))
-))
+  (B (mk-B (a A)))))
 \end{lstlisting}
 \end{tabular}
 \end{center}
@@ -166,7 +159,7 @@ the type of references, which are just integers.
 \end{tabular}
 \end{center}
 
-We can now in SMT-LIB use \code{Ref} as the type of properties whos 
+We can now in SMT-LIB use \code{Ref} as the type of properties who's 
 type in K is a class, they will now denote references to objects of the class.
 This is illustrated by the following definition of the \code{SpaceCraft} datatype.
 
@@ -176,8 +169,7 @@ This is illustrated by the following definition of the \code{SpaceCraft} datatyp
 (declare-datatypes () ((SpaceCraft 
   (mk-SpaceCraft (weight Int)
                  (instrumentsWeight Real)
-                 (radio Ref)
-                 (camera Ref)
+                 (radio Ref) (camera Ref)
                  (software Ref)))))
 \end{lstlisting}
 \end{tabular}
@@ -201,13 +193,12 @@ corresponds to Java's type \code{Object}.
   (lift-Instrument (sel-Instrument Instrument))
   (lift-SpaceCraft (sel-SpaceCraft SpaceCraft))
   ...
-  null))
-)
+  null)))
 \end{lstlisting}
 \end{tabular}
 \end{center}
 
-Now we can define the heap as a mapping (an array) from references of
+\noindent Now we can define the heap as an array from references of
 type \code{Ref} to \code{Any}.
 
 \begin{center}
@@ -218,17 +209,15 @@ type \code{Ref} to \code{Any}.
 \end{tabular}
 \end{center}
 
-\subsubsection{Accessing the heap}
-
-We first define a function \code{deref}, which when applied to a
-reference returns the \code{Any} object at that entry.
+\textbf{Accessing the heap} We first define a function \code{deref},
+which when applied to a reference returns the \code{Any} object at
+that entry.
 
 \begin{center}
 \begin{tabular}{c}
 \begin{lstlisting}
 (define-fun deref ((ref Ref)) Any
-  (select heap ref)
-)
+  (select heap ref))
 \end{lstlisting}
 \end{tabular}
 \end{center}
@@ -244,12 +233,10 @@ can determine whether an object is constructed with the constructor).
 \begin{tabular}{c}
 \begin{lstlisting}
 (define-fun deref-is-Instrument ((this Ref)) Bool
-  (is-lift-Instrument (deref this))
-)
+  (is-lift-Instrument (deref this)))
 
 (define-fun deref-Instrument ((this Ref)) Instrument
-  (sel-Instrument (deref this))
-)
+  (sel-Instrument (deref this)))
 \end{lstlisting}
 \end{tabular}
 \end{center}
@@ -272,30 +259,25 @@ three alternatives.
   (or
     (deref-is-Instrument this)
     (deref-is-SimpleRadio this)
-    (deref-is-SmartRadio this)
-  )
-)
+    (deref-is-SmartRadio this)))
 \end{lstlisting}
 \end{tabular}
 \end{center}
 
-\subsubsection{Getters of properties in classes}
-
-Functions and requirements access properties. An example is the
-expression \code{weight > 0} in class \code{Instrument}.  These
-accesses are wrapped into {\em getter} functions. As an example, the
-\code{weight} property of the class \code{Instrument} can be accessed
-with a call of the following function, named \code{Instrument!weight}
-(SMT-LIB allows symbols such as `\code{!}'  in names, to be discussed
-further below), on a reference that is assumed to refer to an
-\code{Instrument} object.
+\textbf{Getters of properties in classes} Functions and requirements
+access properties. An example is the expression \code{weight > 0} in
+class \code{Instrument}.  These accesses are wrapped into {\em getter}
+functions. As an example, the \code{weight} property of the class
+\code{Instrument} can be accessed with a call of the following
+function, named \code{Instrument!weight} (SMT-LIB allows symbols such
+as `\code{!}'  in names, to be discussed further below), on a
+reference that is assumed to refer to an \code{Instrument} object.
 
 \begin{center}
 \begin{tabular}{c}
 \begin{lstlisting}
 (define-fun Instrument!weight ((this Ref)) Int
-  (weight (deref-Instrument this))
-)
+  (weight (deref-Instrument this)))
 \end{lstlisting}
 \end{tabular}
 \end{center}
@@ -337,25 +319,22 @@ solver. Even moderately sized expressions with several accesses to
 variables become unsolvable in reasonable time in the presence of such
 conditional expressions. 
 
-
-\subsubsection{Functions}
-
-Functions are translated directly to SMT-LIB functions.  Each
-function is translated in two versions, corresponding to the two
-versions of the getter functions, and named using respectively
-\code{className!functionName} and \code{className.functionName}, to
-suggest which getter functions are called inside the function, again
-depending on the calling context (whether \code{this} refers to the exact
-class or potentially a sub-class). As an example, the following is the
-translation of the \code{after} function in the class \code{Event}, only
-showing one of the two versions, which are the same in this case.
+\textbf{Functions} Functions are translated directly to SMT-LIB
+functions.  Each function is translated in two versions, corresponding
+to the two versions of the getter functions, and named using
+respectively \code{className!functionName} and
+\code{className.functionName}, to suggest which getter functions are
+called inside the function, again depending on the calling context
+(whether \code{this} refers to the exact class or potentially a
+sub-class). As an example, the following is the translation of the
+\code{after} function in the class \code{Event}, only showing one of
+the two versions, which are the same in this case.
 
 \begin{center}
 \begin{tabular}{c}
 \begin{lstlisting}
 (define-fun Event.after ((this Ref)(e Ref)) Bool
-  (>= (Event.start this)  (Event.end e))
-)
+  (>= (Event.start this)  (Event.end e)))
 \end{lstlisting}
 \end{tabular}
 \end{center}
@@ -368,14 +347,14 @@ upon which the function is called. Consider for example a call like:
 to which the parameter \code{this} is bound.  The second parameter is
 the user-provided parameter.
 
-\subsubsection{Invariants and assertions}
+%\subsection{Invariants and assertions}
 
-We are finally able to present how class invariants are generated and
-asserted. These validate the satisfiability of our classes.  The
-invariant for a class is generated as a function that as argument
-takes a \code{this} reference to an object of that class. Let's take
-the example of the \code{SystemManager} class. The generated invariant
-is the following.
+\textbf{Invariants and assertions} We are finally able to present how
+class invariants are generated and asserted. These validate the
+satisfiability of our classes.  The invariant for a class is generated
+as a function that as argument takes a \code{this} reference to an
+object of that class. Let's take the example of the
+\code{SystemManager} class. The generated invariant is the following.
 
 \begin{center}
 \begin{tabular}{c}
@@ -391,10 +370,7 @@ is the following.
         (SystemManager!initMem this)) 
       (Event.after 
         (SystemManager!takePicture this)  
-        (SystemManager!bootUp this))
-    )
-  )
-)
+        (SystemManager!bootUp this)))))
 \end{lstlisting}
 \end{tabular}
 \end{center}
@@ -428,20 +404,16 @@ class.
 (assert (forall ((this Ref))
   (=> 
     (deref-is-SystemManager this) 
-    (SystemManager.inv this)
-  )
-))
+    (SystemManager.inv this))))
 \end{lstlisting}
 \end{tabular}
 \end{center}
 
-\subsubsection{Solving the model}
-
-Given the generated SMT-LIB model outlined above, an SMT solver
-following the SMT-LIB standard can determine whether
-the model is satisfiable. Our currently used SMT solver is Z3. If the
-model is {\bf not} satisfiable, the solver will just return `not
-satisfied', hence no information indicating why the model is not
+\textbf{Solving the model} Given the generated SMT-LIB model outlined
+above, an SMT solver following the SMT-LIB standard can determine
+whether the model is satisfiable. Our currently used SMT solver is
+Z3. If the model is {\bf not} satisfiable, the solver will just return
+`not satisfied', hence no information indicating why the model is not
 satisfiable. One can in this case analyze subsets of the model,
 eliminating assertions to discover which assertions caused the model
 to become unsatisfiable, in the best case the minimal set of such
@@ -449,12 +421,12 @@ assertions. We are working on such a violation explanation capability.
 
 \begin{figure}
 \VerbatimInput{examples/spacecraftOutput.k}
-\caption{Output of the K toolchain for the spacecraft example.}
+\caption{Output of the K tool chain for the spacecraft example.}
 \label{fig:shapes}
 \end{figure}
 
 If the model on the other hand is satisfiable, an assignment to
-variables in the model will be retuned by the solver. In our case the
+variables in the model will be returned by the solver. In our case the
 model outlined above is satisfiable. The returned assignment is shown
 in Figure \ref{fig:shapes}. This view has been produced by processing
 the output from Z3, which is less comprehensible.
