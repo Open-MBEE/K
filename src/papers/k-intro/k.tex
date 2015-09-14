@@ -6,7 +6,7 @@ In this section we introduce the syntax of \Klang{}. We use the
 discussing core concepts in \Klang{}. The example shows a basic model
 of a flash file system modeled using \Klang{}. It is intended to be a
 basis for discussing language features, and not a complete model of
-the flash file system. Appendix~\ref{app:grammar} shows the ANTLRv4
+the flash file system. Appendix~\ref{app:grammar} shows the ANTLR
 grammar for \Klang{} (with trivial parts removed).
 
 \begin{figure}
@@ -185,5 +185,8 @@ tool chain. Further, when \Klang{} is asked to do analysis of the
 input using SMT, the type checker imposes a stricter set of rules on
 the provided input to ensure that it can be completely and correctly
 translated to SMT. More details are provided in
-Section~\ref{sec:k2smt}. The type checker is implemented as a Scala
-module.
+Section~\ref{sec:k2smt}. The type checker is implemented as a stand
+alone module, which is invoked after the AST has been constructed by a
+visitor (interfacing with ANTLR). The implementation is done using
+Scala.
+
