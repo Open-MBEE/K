@@ -134,13 +134,8 @@ be found in other languages such as UML/SysML. The goal with
 multiplicities is to be able to specify the size of a collection. For
 example, Figure~\ref{fig:mult} shows a \Klang{} model of a
 \code{Person} that can has various member properties and the
-corresponding inferred type for each member property. 
-
-\sysml{} models also carry a lot of meta data information in them. To
-accommodate for this, \Klang{} also provides the {\em annotation}
-construct. New annotations can be created and applied to classes,
-expressions, functions etc. Currently, each annotation has a name and
-a type. 
+corresponding inferred type for each member property. We will analyze
+each of these individually.
 
 \begin{figure}
 \caption{Example model and inferred types for members of class \code{Person}.}
@@ -170,6 +165,12 @@ collection). Finally, a person may own many \code{accnts}, which is a
 \code{Set} of \code{BankAccount}, specified to have a multiplicity of
 1 or more. This translates to \code{accnts} being a \code{Bag} of
 \code{Set[BankAccount]} with at least 1 entry and no upper limit. 
+
+\sysml{} models also carry a lot of meta data information in them. To
+accommodate for this, \Klang{} also provides the {\em annotation}
+construct. New annotations can be created and applied to classes,
+expressions, functions etc. Currently, each annotation has a name and
+a type. 
 
 \subsection{K Type Checking}
 
