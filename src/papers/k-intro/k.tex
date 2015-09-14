@@ -137,6 +137,12 @@ example, Figure~\ref{fig:mult} shows a \Klang{} model of a
 corresponding inferred types for each member property. We will analyze
 each of these individually.
 
+\sysml{} models also carry a lot of metadata information in them. To
+accommodate for this, \Klang{} also provides the {\em annotation}
+construct. New annotations can be created and applied to classes,
+expressions, functions etc. Currently, each annotation has a name and
+a type. 
+
 \begin{figure}
 \caption{Example model and inferred types for members of class \code{Person}.}
 \centering
@@ -170,13 +176,14 @@ collection). Finally, a person may own many \code{accnts}, which is a
 
 The \Klang{} type checker performs basic checks on the provided input
 to ensure naming and type consistency. It is used to ensure that all
-expressions are logically sound and reference names (functions,
-members, variables) that exist and are type consistent in the given
-context. Type information for all expressions and any other inferences
-made by the type checker are saved and made available to all other
-analyses/modules in the \Klang{} tool chain. Further, when \Klang{} is
-asked to do analysis of the input using SMT, the type checker imposes
-a stricter set of rules on the provided input to ensure that it can be
-completely and correctly translated to SMT. More details are provided
-in Section~\ref{sec:k2smt}. The type checker is implemented as a Scala
+declarations, expressions, annotations etc. are logically sound and
+reference names (functions, members, variables) that exist and are
+type consistent in the given context. Type information for all
+expressions and any other inferences made by the type checker are
+saved and made available to all other analyses/modules in the \Klang{}
+tool chain. Further, when \Klang{} is asked to do analysis of the
+input using SMT, the type checker imposes a stricter set of rules on
+the provided input to ensure that it can be completely and correctly
+translated to SMT. More details are provided in
+Section~\ref{sec:k2smt}. The type checker is implemented as a Scala
 module.
