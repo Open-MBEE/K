@@ -26,7 +26,8 @@ class SystemManager {
   bootUp : Event
   initMem : Event
   takePicture : Event
-  req takePicture.after(initMem) && takePicture.after(bootUp)
+  req takePicture.after(initMem) && 
+      takePicture.after(bootUp)
 }
 
 class SpaceCraft extends Object {
