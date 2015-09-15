@@ -1,8 +1,8 @@
-class BankAccnt
+class Stock
 class Car
 class Person {
   mother : Person
   children : Set[Person]
   cars : Car [*]
-  accnts : Set[BankAccnt] [1,*]
+  prtflios : Set[Stock] [1,*]
 }

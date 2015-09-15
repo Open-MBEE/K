@@ -4,5 +4,5 @@
 Person
 Set[Person]
 Bag[Car]
-Bag[Set[BankAccnt]] 
-  req accnts.size() >= 1
+Bag[Set[Stock]] 
+  req prtflios.size() >= 1

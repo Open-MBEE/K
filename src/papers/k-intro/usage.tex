@@ -8,7 +8,7 @@ the usage scenarios for the \Klang{} language and tool chain.
 \begin{figure*}
 \centering
 \includegraphics[scale=0.39]{K.png}
-\caption{\Klang{}.}
+\caption{\Klang{} in practice.}
 \label{fig:k}
 \end{figure*}
 
@@ -22,7 +22,7 @@ is provided as an array of JSON objects, where each object contains
 information such as name, type, owner, etc. Typically, the types of
 objects are classes, constraints, expressions, and member
 properties. The \Klang{} tool chain takes this input and converts each
-node in the list of nodes to a corresponding \Klang{} ASST
+node in the list of nodes to a corresponding \Klang{} AST
 object. Since the list of nodes received from the REST API is
 unordered and unstructured, we perform multiple passes on
 the list of nodes. The first pass is performed to create the list of
@@ -44,7 +44,7 @@ available through the model database to a web application.
 
 A second common scenario for using \Klang{} is via the web browser. We
 have created a simple HTML based \Klang{} code editor along with the
-functionality to invoke the type checker and SMT analysis via the web
+functionality to invoke the type checker and SMT analysis from the web
 browser. This page is used for purposes of teaching, learning,
 exploring, and prototyping with \Klang{}. The web page also provides a
 tutorial, documentation, and \Klang{} examples as a guide. 

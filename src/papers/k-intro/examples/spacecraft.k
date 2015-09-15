@@ -1,6 +1,6 @@
 package examples.spacecraft
 
-class Object {
+class Thing {
   weight : Int
 }
 
@@ -13,7 +13,7 @@ class Event {
   }
 }
 
-class Instrument extends Object {
+class Instrument extends Thing {
   power : Real
   req power >= 0.0
   req weight > 0 && weight <= 1000
@@ -30,7 +30,7 @@ class SystemManager {
       takePicture.after(bootUp)
 }
 
-class SpaceCraft extends Object {
+class SpaceCraft extends Thing {
   instrumentsWeight : Real
   radio : Instrument 
   camera : Instrument

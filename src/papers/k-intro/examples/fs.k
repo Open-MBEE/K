@@ -24,7 +24,7 @@ class File extends Entry {
 class Block {
   bytes : Seq[Byte]
   fun size: Int { bytes.size() }
-  req size() = SIZE_OF_BLOCK
+  req size() <= SIZE_OF_BLOCK
 }
 
 class FileSystem {
@@ -36,7 +36,8 @@ class FileSystem {
   {
     newDir = Dir(name :: n)
     nc = dir.contents + newDir
-    FileSystem(dir :: Dir(name :: dir.name, contents :: nc))          
+    FileSystem(dir:: 
+               Dir(name::dir.name, contents::nc))          
   }
 
   fun rmDir(n: String) : FileSystem
