@@ -3,7 +3,7 @@
 
 \Klang{} is a wide spectrum textual language containing concepts such
 as classes, inheritance, functions, and expressions. Expressions in
-\Klang{} are very rich and provide a basis for expressing any first
+\Klang{} are very rich and provide a basis for expressing any higher
 order logic formula succinctly. The language also contains constructs
 such as lists, sets, loops etc. for performing general sequential
 programming, functional programming, and object oriented
@@ -21,30 +21,30 @@ predicate logic in proper mathematical notation. A natural evolution
 of \vdm{} was to introduce object orientation, as shown in
 \vdmpp{}~\cite{vdmplusplus05}. The \raiselang{} specification
 language~\cite{raise92} is another wide spectrum language that takes
-inspiration from \vdm{}, \zlang{}~\cite{spivey-Z-1988} and other
-algebraic specification languages. More recently, \asml{} presented
-in~\cite{asml05} presents a language where all operations always
-operate on algebras. \alloy{}~\cite{jackson-alloy-12} is a language
-intended for describing structure and exploring the design of the
-structure through the specification of constraints. \alloy{} also
-provided seem less integration with a SAT solver. 
+inspiration from \vdm{}, \zlang{}~\cite{spivey-Z-1988} and algebraic
+specification languages. More recently, \asml{} presented
+in~\cite{asml05} presents a language where all operations operate on
+algebras. \alloy{}~\cite{jackson-alloy-12} is a language intended for
+describing structure and exploring the design of the structure through
+the specification of constraints. \alloy{} also provides seemless
+integration with a SAT solver.
 
 In contrast to specification languages, high level programming
 languages have also been developed over time. \sml{} (Standard ML)
 \cite{standard-ml-97}, \ocaml{} \cite{ocaml}, and \haskell{}
 \cite{haskell} belong to the same family of functional programming
 languages with some support for classes and object
-orientation.\python{} \cite{python} also provides a unique perspective
-on combining object oriented and functional programming. In our view,
-\scala{} \cite{scala} does so to the fullest extent. The close
-relationship between \scala{} and \vdm{} is discussed in
-\cite{havelund-scala-vdm-12}.  \fortress{} \cite{fortress} introduced
-built-in notation for sets, lists, and maps, very much resembling the
-notation in \vdm{}.
+orientation. \python{} \cite{python} also provides a unique
+perspective on combining object oriented and functional
+programming. In our view, \scala{} \cite{scala} does so to the fullest
+extent. The close relationship between \scala{} and \vdm{} is
+discussed in \cite{havelund-scala-vdm-12}.  \fortress{}
+\cite{fortress} introduced built-in notation for sets, lists, and
+maps, very much resembling the notation in \vdm{}.
 
 Yet another class of recent languages has investigated introducing
 specification constructs in programming languages in the form of
-design-by-contract (pre/post conditions and class
+design-by-contract (pre/postconditions and class
 invariants). Examples of such languages include \eiffel{}
 \cite{eiffel} and \specsharp{} \cite{specsharp}. \scala{} also
 attempts at providing such constructs, but through the use of library
@@ -79,14 +79,13 @@ complex properties, but tend to be laborious and difficult to use in
 practice.
 
 Past research in formal modeling has also resulted in various attempts
-at combining formal and semi-formal
-languages.~\cite{lausdahl2009connecting} present an approach to
-translate between UML and \vdmpp{} and~\cite{kim2005mda} present
-work on integrating a formal language such as Object-Z with UML in a
-single combined framework. To the best of our knowledge, these
-approaches have not focused on translating constraints and integrating
-with an SMT solver and have been primarily focused on UML (not
-\sysml).
+at combining formal and semi-formal languages. Work
+in~\cite{lausdahl2009connecting} presents an approach to translate
+between UML and \vdmpp{}, and~\cite{kim2005mda} presents work on
+integrating a formal language such as Object-Z with UML in a single
+combined framework. To the best of our knowledge, these approaches
+have not focused on translating constraints and integrating with an
+SMT solver, and have been primarily focused on UML (not \sysml).
 
 \Klang{} is very close in spirit and ideology to many of the
 aforementioned languages, but differs in many respects as well. For
@@ -96,7 +95,8 @@ of prime importance, something \Klang{} is optimized for. \Klang{}
 also provides support for specifying and proving specifications with
 multiple inheritance, something \sysml{} models depend on
 greatly. Integration with SMT solvers has proven to be useful not only
-for proving class satisfiability, but also for modeling finding and
-{\em model exploration}. In model exploration, users manually explore
-the range of satisfiable solutions for the given model using iterative
-refinement techniques (changing constraints manually). 
+for proving class satisfiability, but also for model finding
+(including scheduling) and {\em model exploration}. In model
+exploration, users manually explore the range of satisfiable solutions
+for the given model using iterative refinement techniques (changing
+constraints manually).

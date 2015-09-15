@@ -26,34 +26,34 @@ as well in near term work.
 \end{figure}
 
 The translator currently covers a subset of the K language
-corresponding to the model shown in Figure
+corresponding to the model of a spacecraft shown in Figure
 \ref{fig:spacecraftSmt}. The example illustrates the features of K
 that have been used by engineers at JPL until the time of writing. The
 emphasis of these models is on {\em structure} of artifacts and {\em
-  scheduling} of events. The model models a spacecraft. The class
-\code{Object} is meant to represent entities that have
-weight. Instruments, and its radio sub-classes, as well as the the
-spacecraft itself, are objects, inheriting from this class. The class
-\code{Instrument} defines a \code{power} level consumed. Requirements
-in the form of Boolean constraints are imposed on \code{power} and
-\code{weight}. The \code{SpaceCraft} class makes instances of
-instruments, defines a combined sum \code{instrumentsWeight} and a
-constraint on it with additional requirements. The elements of the
-model discussed above are so-called {\em structural} elements, what
-one would normally see in a SysML class diagram.
+  scheduling} of events. The class \code{Thing} is meant to represent
+entities that have weight. Instruments, and its radio sub-classes, as
+well as the the spacecraft itself, are things, inheriting from this
+class. The class \code{Instrument} defines a \code{power}
+level. Requirements in the form of Boolean constraints are imposed on
+\code{power} and \code{weight}. The \code{SpaceCraft} class makes
+instances of instruments, defines a combined sum
+\code{instrumentsWeight} and a constraint on it with additional
+requirements. The elements of the model discussed above are so-called
+{\em structural} elements, what one would normally see in a SysML
+class diagram.
 
 The spacecraft in addition contains a system manager, representing the
 software on board. For the purpose of illustration, the system manager
 is defined as a small {\em scheduler} of three events: a \code{bootUp}
 event, re-booting the flight software computer, a \code{initMem}
 event, initializing the computer memory, and a \code{takePicture}
-event, taking a picture. An event is a constant of the \code{Event}
+event, taking a picture. An event is an instance of the \code{Event}
 class, which defines an event as having a start time and an end time
 appearing after the start time. In addition, the \code{Event} class
 defines a function \code{after}, which as argument takes another event
-`\code{e}', and returns true if the event (this) occurs after
+`\code{e}', and returns true if the event (\code{this}) occurs after
 `\code{e}'.  The \code{after} function is part of Allen logic
-\cite{allen-logic-84} used by the planning and scheduling community.
+\cite{allen-logic-84}.
 %
 Finally, the model contains an instance \code{ShRaan} of type
 \code{SpaceCraft}.
@@ -87,12 +87,12 @@ supporting (multiple) {\em inheritance} and {\em recursive} references
 between classes. This will be illustrated in the following.
 
 \textbf{Classes, objects, and the heap} Let's first translate a simple
-class, such as class \code{Object}.  We have chosen to translate
+class, such as class \code{Thing}.  We have chosen to translate
 classes to the SMT-LIB concept of {\em datatypes}. A datatype in
 SMT-LIB corresponds to the classical notion of an algebraic datatype:
 a named record, with a constructor function that when applied to a
 sequence of values generates a value of the datatype, while the values
-can be retrieved using selector functions.  The class \code{Object}
+can be retrieved using selector functions.  The class \code{Thing}
 can be represented in SMT-LIB as follows.
 
 \lstset{language=SMT,numbers=none}
@@ -100,17 +100,17 @@ can be represented in SMT-LIB as follows.
 \begin{center}
 \begin{tabular}{c}
 \begin{lstlisting}
-(declare-datatypes () ((Object 
-  (mk-Object (weight Int)))))
+(declare-datatypes () ((Thing 
+  (mk-Thing (weight Int)))))
 \end{lstlisting}
 \end{tabular}
 \end{center}
 
-This declaration declares the datatype \code{Object}, the constructor
-\code{mk-Object}, which can be called on a value \code{w} of type
-\code{Int} as follows: \code{(mk-Object w)}, to produce a value in
-type \code{Object}. Reversely, given a value \code{o} in type
-\code{Object}, we can retrieve the weight by applying the selector
+\noindent This declaration declares the datatype \code{Thing}, the
+constructor \code{mk-Thing}, which can be called on a value \code{w}
+of type \code{Int} as follows: \code{(mk-Thing w)}, to produce a
+value in type \code{Thing}. Reversely, given a value \code{o} in type
+\code{Thing}, we can retrieve the weight by applying the selector
 function \code{weight} to \code{o} as follows: \code{(weight o)}.
 
 Consider now the following schematic example of two mutually recursive
@@ -129,8 +129,8 @@ class A {      class B {
 \end{tabular}
 \end{center}
 
-The following translation of this model to the SMT-LIB datatypes
-\code{A} and \code{B} is {\bf not} well-founded since it contains a
+\noindent The following translation of this model to the SMT-LIB datatypes
+\code{A} and \code{B} is {\bf not} well-founded since it contains
 recursion between \code{A} and \code{B} (it is illegal SMT-LIB).
 
 \lstset{language=SMT,numbers=none}
@@ -145,10 +145,10 @@ recursion between \code{A} and \code{B} (it is illegal SMT-LIB).
 \end{tabular}
 \end{center}
 
-The solution is to operate with references to objects
-rather than objects directly, exactly as done in a runtime system for an
-object-oriented programming language. In other words, we need a
-{\em heap} mapping references to objects. For this purpose must define
+\noindent The solution is to operate with {\em references} to objects rather
+than objects directly, exactly as done in any runtime system for an
+object-oriented programming language. In other words, we need a {\em
+  heap} mapping references to objects. For this purpose must define
 the type of references, which are just integers.
 
 \begin{center}
@@ -159,7 +159,7 @@ the type of references, which are just integers.
 \end{tabular}
 \end{center}
 
-We can now in SMT-LIB use \code{Ref} as the type of properties who's 
+\noindent We can now in SMT-LIB use \code{Ref} as the type of properties who's 
 type in K is a class, they will now denote references to objects of the class.
 This is illustrated by the following definition of the \code{SpaceCraft} datatype.
 
@@ -175,9 +175,9 @@ This is illustrated by the following definition of the \code{SpaceCraft} datatyp
 \end{tabular}
 \end{center}
 
-Observe how the fact that \code{SpaceCraft} inherits from
-\code{Object} is modeled by the inclusion of the \code{weight} field
-from \code{Object}. Inheritance is simply modeled by property
+\noindent Observe how the fact that \code{SpaceCraft} inherits from
+\code{Thing} is modeled by the inclusion of the \code{weight} field
+from \code{Thing}. Inheritance is simply modeled by property
 inclusion in this manner.  In order to define a heap, we need a
 datatype that represents all the objects that can possibly be stored
 in the heap. The following datatype \code{Any} represents all the
@@ -189,7 +189,7 @@ corresponds to Java's type \code{Object}.
 \begin{tabular}{c}
 \begin{lstlisting}
 (declare-datatypes () ((Any
-  (lift-Object (sel-Object Object))
+  (lift-Thing (sel-Thing Thing))
   (lift-Instrument (sel-Instrument Instrument))
   (lift-SpaceCraft (sel-SpaceCraft SpaceCraft))
   ...
@@ -222,12 +222,13 @@ that entry.
 \end{tabular}
 \end{center}
 
-With this function we are now ready to define functions, which can test
-what kind of object is at a certain location in the heap, as well as
-retrieve that object. The following functions perform these two tasks
-for the case of the \code{Instrument} objects (for each datatype
-constructor \code{C}, SMT-LIB generates a \code{is-C} function that
-can determine whether an object is constructed with the constructor).
+\noindent With this function we are now ready to define functions,
+which can test what kind of object is at a certain location in the
+heap, as well as retrieve that object. The following functions perform
+these two tasks for the case of the \code{Instrument} objects (for
+each datatype constructor \code{C}, SMT-LIB generates a \code{is-C}
+function that can determine whether an object is constructed with the
+constructor).
 
 \begin{center}
 \begin{tabular}{c}
@@ -241,16 +242,16 @@ can determine whether an object is constructed with the constructor).
 \end{tabular}
 \end{center}
 
-As we have seen, K classes can contain properties of types that are
-classes. For example the \code{SpaceCraft} class contains a property
-\code{radio} of type \code{Instrument}. In an object-oriented language
-like K with inheritance, such a property can denote any object that is
-of type that either is equal to, or sub-classes \code{Instrument}. In
-order to formulate invariants on objects of class \code{SpaceCraft},
-we therefore need to be able to determine whether a \code{radio} object is equal
-to, or sub-classes \code{Instrument}. This task is performed by the
-following function, the body of which is a disjunction between the
-three alternatives.
+\noindent As we have seen, K classes can contain properties of types
+that are classes. For example the \code{SpaceCraft} class contains a
+property \code{radio} of type \code{Instrument}. In an object-oriented
+language like K with inheritance, such a property can denote any
+object that is of type that either is equal to, or sub-classes
+\code{Instrument}. In order to formulate invariants on objects of
+class \code{SpaceCraft}, we therefore need to be able to determine
+whether a \code{radio} object is equal to, or sub-classes
+\code{Instrument}. This task is performed by the following function,
+the body of which is a disjunction between the three alternatives.
 
 \begin{center}
 \begin{tabular}{c}
@@ -282,19 +283,20 @@ reference that is assumed to refer to an \code{Instrument} object.
 \end{tabular}
 \end{center}
 
-The above definition assumes that the \code{this} reference denotes an
-\code{Instrument} object, and not an object of any sub-class on
-\code{Instrument}, hence the `\code{!}' symbol (for {\em exact!
-  class}) in the name.  This is sufficient when checking
+\noindent The above definition assumes that the \code{this} reference
+denotes an \code{Instrument} object, and not an object of any
+sub-class on \code{Instrument}, hence the `\code{!}' symbol (for {\em
+  exact!  class}) in the name.  This is sufficient when checking
 satisfiability of the class \code{Instrument} class itself. However,
-when checking the satisfiability of, for example, the \code{SpaceCraft}
-class, which {\em contains} a property of type \code{Instrument}, as
-for example \code{radio : Instrument}, we have to assume that
-\code{radio} in addition potentially can refer to any object of a
-class that sub-classes \code{Instrument}, which in this case is either
-\code{SimpleRadio} or \code{SmartRadio}. This is achieved with the
-following alternative getter function, named \code{Instrument.weight},
-for the \code{weight} property of the class \code{Instrument}.
+when checking the satisfiability of, for example, the
+\code{SpaceCraft} class, which {\em contains} a property of type
+\code{Instrument}, as for example \code{radio : Instrument}, we have
+to assume that \code{radio} in addition potentially can refer to any
+object of a class that sub-classes \code{Instrument}, which in this
+case is either \code{SimpleRadio} or \code{SmartRadio}. This is
+achieved with the following alternative getter function, named
+\code{Instrument.weight}, for the \code{weight} property of the class
+\code{Instrument}.
 
 \begin{center}
 \begin{tabular}{c}
@@ -309,15 +311,15 @@ for the \code{weight} property of the class \code{Instrument}.
 \end{tabular}
 \end{center}
 
-Each line in the body ends with a comment after the comment symbol
-`\code{;}' explaining the structure of the LISP version of `${\bf
-  if}\ e_1\ {\bf then}\ e_2\ {\bf else}\ e_3$', which is `$({\bf
+\noindent Each line in the body ends with a comment after the comment
+symbol `\code{;}' explaining the structure of the LISP version of
+`${\bf if}\ e_1\ {\bf then}\ e_2\ {\bf else}\ e_3$', which is `$({\bf
   ite}\ e_1\ e_2\ e_3)$'. The reason for not just using the latter
 more general function \code{Instrument.weight} for all accesses to the
 \code{weight} property is that conditionals make it harder for an SMT
 solver. Even moderately sized expressions with several accesses to
 variables become unsolvable in reasonable time in the presence of such
-conditional expressions. 
+conditional expressions.
 
 \textbf{Functions} Functions are translated directly to SMT-LIB
 functions.  Each function is translated in two versions, corresponding
@@ -339,10 +341,10 @@ the two versions, which are the same in this case.
 \end{tabular}
 \end{center}
 
-The first parameter is a reference (named \code{this}) of type
-\code{Ref}. The \code{this} reference is meant to refer to the object
-upon which the function is called. Consider for example a call like:
-\code{takePicture.after(initMem)} in line 29 of Figure
+\noindent The first parameter is a reference (named \code{this}) of
+type \code{Ref}. The \code{this} reference is meant to refer to the
+object upon which the function is called. Consider for example a call
+like: \code{takePicture.after(initMem)} in line 29 of Figure
 \ref{fig:spacecraftSmt}. Here \code{takePicture} denotes a reference
 to which the parameter \code{this} is bound.  The second parameter is
 the user-provided parameter.
@@ -375,18 +377,18 @@ object of that class. Let's take the example of the
 \end{tabular}
 \end{center}
 
-The body of this function is a conjunction of the conditions that have
-to hold on the \code{SystemManager} object referred to by
-\code{this}. There are four such, three for the property definitions
+\noindent The body of this function is a conjunction of the conditions
+that have to hold on the \code{SystemManager} object referred to by
+\code{this}. There are four such: three for the property definitions
 in lines 26-28 in Figure \ref{fig:spacecraftSmt}, and one for the
 requirement in line 29. Each of the property definitions results in a
 condition that verifies that the property is of the right type, in
-these three cases: that each of the properties \code{bootUp}, \code{initMem}, 
-and \code{takePicture}, are objects of any sub-class of class \code{Event} (the use
-of `\code{isa}'), although in this case there are no sub-classes of
-\code{Event}. The last condition, corresponding to the requirement,
-illustrate how functions are called, in the case the function
-\code{after}.
+these three cases: that each of the properties \code{bootUp},
+\code{initMem}, and \code{takePicture}, are objects of any sub-class
+of class \code{Event} (the use of `\code{isa}'), although in this case
+there are no sub-classes of \code{Event}. The last condition,
+corresponding to the requirement, illustrate how functions are called,
+in the case the function \code{after}.
 
 We are now finally ready to assert the well-formedness of the
 model. For each class two assertions are generated, one that asserts
@@ -413,8 +415,7 @@ class.
 above, an SMT solver following the SMT-LIB standard can determine
 whether the model is satisfiable. Our currently used SMT solver is
 Z3. If the model is {\bf not} satisfiable, the solver will just return
-`not satisfied', hence no information indicating why the model is not
-satisfiable. One can in this case analyze subsets of the model,
+`not satisfied'. One can in this case analyze subsets of the model,
 eliminating assertions to discover which assertions caused the model
 to become unsatisfiable, in the best case the minimal set of such
 assertions. We are working on such a violation explanation capability.
