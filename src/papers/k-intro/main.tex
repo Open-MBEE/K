@@ -1,12 +1,20 @@
 \documentclass{llncs}
 
-\title{K: A Wide Spectrum Language for Specifying, Modeling,
-  Programming, and Verifying\thanks{ The work described in this
-    publication was carried out at Jet Propulsion Laboratory,
-    California Institute of Technology, under a contract with the
-    National Aeronautics and Space Administration.}}  
+\title{K: A Wide Spectrum Language for Modeling, Programming, and
+  Analysis\thanks{ The work described in this publication was carried
+    out at Jet Propulsion Laboratory, California Institute of
+    Technology, under a contract with the National Aeronautics and
+    Space Administration.}}
 
-\author{Klaus Havelund \and Rahul Kumar} 
+\author{
+  Klaus Havelund 
+  \and 
+  Rahul Kumar 
+  \and 
+  Chris Delp
+  \and
+  Bradley Clement
+}
 
 \institute{ Jet Propulsion Laboratory\\ 
             California Institute of Technology\\ 
@@ -18,15 +26,21 @@
 
 \maketitle
 
-\notethis{KH: We have to decide whether ``specification'' is different from ``modeling''. I personally don't see a difference, in which case it is unnecessary to mention both words in the title. But we should perhaps have this discussion.}
-
 \input{abstract}
 
 \input{introduction}
 
+\input{k}
+
+\input{k2smt}
+
+\input{usage}
+
 \input{relatedwork}
 
 \input{conclusion}
+
+\newpage
 
 \bibliographystyle{abbrv}
 \bibliography{biblio}

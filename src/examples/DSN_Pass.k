@@ -91,33 +91,35 @@ Impact : Event
 
 ===
 Assumptions
-  OTMs have a duration of 2 hours
+  OTMs have a duration of 2 hours and must start minimum 4.0 hours after DSN Pass starts
   Ephemeris Update duration is 0.5 hours
   Single occurance events (anamoly, closest approach, impact) have a duration
   		 of 0.001 hours. Must define a duration due to event structure.
- Carrer_1 duration is 5.0 hours in Nominal
+ Carrer_1 duration is 2.0 hours in Nominal
 ===
 
 req Nominal_Anomaly_Impact:
     (--Nominal Approach
-	 requirements.missedpass = false && DSN_Pass_Backup = DSN_Pass_3 &&
+	 requirements.missedpass = false && 
+	 DSN_Pass_Backup = DSN_Pass_3 &&
 	 DSN_Pass_1.success = true &&
 	 DSN_Pass_1.meets(SunPointed_1) &&      
 	 DSN_Pass_1.t1 = 0.0 && 
+	 OTM_Prime.t1 >= DSN_Pass_1.t1 + 4.0 &&
 	 OTM_Prime.success = true &&
 	 OTM_Prime.duration = 2.0 &&
-	 OTM_Prime.during(DSN_Pass_1) && 
+	 OTM_Prime.during(DSN_Pass_1) &&
 	 Carrier_1.success = true &&
-	 Carrier_1.duration = 5.0 && 
+	 Carrier_1.duration = 2.0 && 
 	 Carrier_1.finishes(DSN_Pass_1) &&
 	 SunPointed_1.success = true && 
 	 SunPointed_1.duration = 8.0 &&
-	 SunPointed_1.meets(DSN_Pass_2) && 
-	 DSN_Pass_2.success = true &&
+	 SunPointed_1.meets(DSN_Pass_2) &&
+ 	 DSN_Pass_2.success = true &&
 	 DSN_Pass_2.meets(DSN_Pass_3) && 
 	 MnvrAccy.success = true &&
 	 MnvrAccy.duration = 5.5 && 
-	 MnvrAccy.finishes(DSN_Pass_2) &&
+	 MnvrAccy.during(DSN_Pass_2) &&
 	 DSN_Pass_3.success = true &&
 	 DSN_Pass_3.meets(SunPointed_2) && 
 	 SunPointed_2.success = true &&
@@ -138,7 +140,7 @@ req Nominal_Anomaly_Impact:
  	 ClosestApproach.t1 = 77.0 && 
 	 Impact.success = false &&
 	 Impact.duration = 0.001 &&
-	 Impact.starts(ClosestApproach)
+	 Impact.starts(ClosestApproach) 
 	 --page 9 timeline
     )
 	||
