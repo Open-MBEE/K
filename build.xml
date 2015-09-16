@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- WARNING: Eclipse auto-generated file.
+              Any modifications will be overwritten.
+              To include a user specific buildfile here, simply create one in the same
+              directory with the processing instruction <?eclipse.ant.import?>
+              as the first entry and export the buildfile again. --><project basedir="." default="build" name="Klang">
+    <property environment="env"/>
+    <property name="ECLIPSE_HOME" value="../../../../bin/eclipse/"/>
+    <property name="debuglevel" value="source,lines,vars"/>
+    <property name="target" value="1.7"/>
+    <property name="source" value="1.7"/>
+    <path id="Scala Library container [ 2.11.5 ].libraryclasspath">
+        <pathelement location="${ECLIPSE_HOME}plugins/org.scala-lang.scala-library_2.11.5.v20150101-184742-3fafbc204f.jar"/>
+        <pathelement location="${ECLIPSE_HOME}plugins/org.scala-lang.scala-reflect_2.11.5.v20150101-184742-3fafbc204f.jar"/>
+        <pathelement location="${ECLIPSE_HOME}plugins/org.scala-lang.scala-actors_2.11.5.v20150101-184742-3fafbc204f.jar"/>
+    </path>
+    <path id="Klang.classpath">
+        <pathelement location="bin"/>
+        <path refid="Scala Library container [ 2.11.5 ].libraryclasspath"/>
+        <pathelement location="src/antlr-4.4-complete.jar"/>
+        <pathelement location="lib/com.microsoft.z3.jar"/>
+        <pathelement location="lib"/>
+        <pathelement location="lib/elastic4s_2.11-1.5.2-SNAPSHOT.jar"/>
+        <pathelement location="lib/elasticsearch-1.5.0/elasticsearch-1.5.0.jar"/>
+        <pathelement location="lib/elasticsearch-1.5.0/log4j-1.2.17.jar"/>
+        <pathelement location="lib/elasticsearch-1.5.0/lucene-analyzers-common-4.10.4.jar"/>
+        <pathelement location="lib/elasticsearch-1.5.0/lucene-core-4.10.4.jar"/>
+        <pathelement location="lib/elasticsearch-1.5.0/lucene-expressions-4.10.4.jar"/>
+        <pathelement location="lib/elasticsearch-1.5.0/lucene-grouping-4.10.4.jar"/>
+        <pathelement location="lib/elasticsearch-1.5.0/lucene-highlighter-4.10.4.jar"/>
+        <pathelement location="lib/elasticsearch-1.5.0/lucene-join-4.10.4.jar"/>
+        <pathelement location="lib/elasticsearch-1.5.0/lucene-memory-4.10.4.jar"/>
+        <pathelement location="lib/elasticsearch-1.5.0/lucene-misc-4.10.4.jar"/>
+        <pathelement location="lib/elasticsearch-1.5.0/lucene-queries-4.10.4.jar"/>
+        <pathelement location="lib/elasticsearch-1.5.0/lucene-queryparser-4.10.4.jar"/>
+        <pathelement location="lib/elasticsearch-1.5.0/lucene-sandbox-4.10.4.jar"/>
+        <pathelement location="lib/elasticsearch-1.5.0/lucene-spatial-4.10.4.jar"/>
+        <pathelement location="lib/elasticsearch-1.5.0/lucene-suggest-4.10.4.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/servlet-api-3.1.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-alpn-client-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-alpn-server-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-annotations-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-cdi-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-client-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-continuation-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-deploy-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-http-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-io-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-jaas-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-jaspi-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-jmx-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-jndi-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-plus-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-proxy-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-quickstart-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-rewrite-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-schemas-3.1.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-security-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-server-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-servlet-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-servlets-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-util-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-webapp-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jetty-xml-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/start.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jsp/javax.servlet.jsp-api-2.3.1.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jsp/javax.servlet.jsp-2.3.2.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jsp/javax.el-3.0.0.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jsp/javax.servlet.jsp.jstl-1.2.2.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jsp/jetty-jsp-9.2.12.v20150709.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jsp/jetty-jsp-jdt-2.3.3.jar"/>
+        <pathelement location="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jsp/org.eclipse.jdt.core-3.8.2.v20130121.jar"/>
+    </path>
+    <path id="run.Klang mmsJson.classpath">
+        <path refid="Klang.classpath"/>
+        <pathelement location="../z3/build"/>
+    </path>
+    <path id="run.Klang mmsJson.bootclasspath">
+        <path refid="Scala Library container [ 2.11.5 ].libraryclasspath"/>
+        <fileset dir="${java.home}/lib" includes="*.jar"/>
+        <fileset dir="${java.home}/lib/ext" includes="*.jar"/>
+    </path>
+    <path id="run.Klang temp.classpath">
+        <path refid="Klang.classpath"/>
+        <pathelement location="../z3/build"/>
+    </path>
+    <path id="run.Klang temp.bootclasspath">
+        <path refid="Scala Library container [ 2.11.5 ].libraryclasspath"/>
+        <fileset dir="${java.home}/lib" includes="*.jar"/>
+        <fileset dir="${java.home}/lib/ext" includes="*.jar"/>
+    </path>
+    <path id="run.Klang TEST (1).classpath">
+        <path refid="Klang.classpath"/>
+        <pathelement location="../z3/build"/>
+    </path>
+    <path id="run.Klang TEST (1).bootclasspath">
+        <path refid="Scala Library container [ 2.11.5 ].libraryclasspath"/>
+        <fileset dir="${java.home}/lib" includes="*.jar"/>
+        <fileset dir="${java.home}/lib/ext" includes="*.jar"/>
+    </path>
+    <path id="run.Klang TEST.bootclasspath">
+        <path refid="Scala Library container [ 2.11.5 ].libraryclasspath"/>
+        <fileset dir="${java.home}/lib" includes="*.jar"/>
+        <fileset dir="${java.home}/lib/ext" includes="*.jar"/>
+    </path>
+    <path id="run.Klang TESTS SAVE.classpath">
+        <path refid="Klang.classpath"/>
+        <pathelement location="../z3/build"/>
+    </path>
+    <path id="run.Klang TESTS SAVE.bootclasspath">
+        <path refid="Scala Library container [ 2.11.5 ].libraryclasspath"/>
+        <fileset dir="${java.home}/lib" includes="*.jar"/>
+        <fileset dir="${java.home}/lib/ext" includes="*.jar"/>
+    </path>
+    <path id="run.Klang TESTS.classpath">
+        <path refid="Klang.classpath"/>
+        <pathelement location="../z3/build"/>
+    </path>
+    <path id="run.Klang TESTS.bootclasspath">
+        <path refid="Scala Library container [ 2.11.5 ].libraryclasspath"/>
+        <fileset dir="${java.home}/lib" includes="*.jar"/>
+        <fileset dir="${java.home}/lib/ext" includes="*.jar"/>
+    </path>
+    <target name="init">
+        <mkdir dir="bin"/>
+        <copy includeemptydirs="false" todir="bin">
+            <fileset dir="src">
+                <exclude name="**/*.launch"/>
+                <exclude name="**/*.xtend"/>
+                <exclude name="**/*.java"/>
+            </fileset>
+        </copy>
+    </target>
+    <target name="clean">
+        <delete dir="bin"/>
+    </target>
+    <target depends="clean" name="cleanall"/>
+    <target depends="build-subprojects,build-project" name="build"/>
+    <target name="build-subprojects"/>
+    <target depends="init" name="build-project">
+        <echo message="${ant.project.name}: ${ant.file}"/>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" includeantruntime="false" source="${source}" target="${target}">
+            <src path="src"/>
+            <classpath refid="Klang.classpath"/>
+        </javac>
+    </target>
+    <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects"/>
+    <target description="copy Eclipse compiler jars to ant lib directory" name="init-eclipse-compiler">
+        <copy todir="${ant.library.dir}">
+            <fileset dir="${ECLIPSE_HOME}/plugins" includes="org.eclipse.jdt.core_*.jar"/>
+        </copy>
+        <unzip dest="${ant.library.dir}">
+            <patternset includes="jdtCompilerAdapter.jar"/>
+            <fileset dir="${ECLIPSE_HOME}/plugins" includes="org.eclipse.jdt.core_*.jar"/>
+        </unzip>
+    </target>
+    <target description="compile project with Eclipse compiler" name="build-eclipse-compiler">
+        <property name="build.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter"/>
+        <antcall target="build"/>
+    </target>
+    <target name="Klang mmsJson">
+        <java classname="k.frontend.Main" failonerror="true" fork="yes">
+            <env key="Path" value=".\lib;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\Program Files (x86)\Enterprise Vault\EVClient\;c:\bin\emacs-24.3\bin;C:\bin\Git\cmd;C:\bin\Git\bin;C:\bin\bin;C:\bin\GetGnuWin32\gnuwin32\bin;C:\bin\CMake\bin;C:\Program Files\Java\jdk1.7.0_71\bin;c:\bin\sbt-0.13.6\sbt\bin;C:\Program Files\Microsoft SQL Server\110\Tools\Binn\;C:\Program Files (x86)\Microsoft SDKs\TypeScript\1.0\;c:\bin\WinMerge"/>
+            <jvmarg line="-cp"/>
+            <arg line="-mmsJson  c:\users\rahulku\downloads\k\_17_0_2_3_b9402e9_1375997053972_382166_33338.json"/>
+            <classpath refid="run.Klang mmsJson.classpath"/>
+            <bootclasspath>
+                <path refid="run.Klang mmsJson.bootclasspath"/>
+            </bootclasspath>
+        </java>
+    </target>
+    <target name="Klang temp">
+        <java classname="k.frontend.Main" failonerror="true" fork="yes">
+            <env key="Path" value=".\lib;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\Program Files (x86)\Enterprise Vault\EVClient\;c:\bin\emacs-24.3\bin;C:\bin\Git\cmd;C:\bin\Git\bin;C:\bin\bin;C:\bin\GetGnuWin32\gnuwin32\bin;C:\bin\CMake\bin;C:\Program Files\Java\jdk1.7.0_71\bin;c:\bin\sbt-0.13.6\sbt\bin;C:\Program Files\Microsoft SQL Server\110\Tools\Binn\;C:\Program Files (x86)\Microsoft SDKs\TypeScript\1.0\;c:\bin\WinMerge"/>
+            <jvmarg line="-cp"/>
+            <arg line="-f c:\users\rahulku\s\klang\src\examples\GravityScience.k"/>
+            <classpath refid="run.Klang temp.classpath"/>
+            <bootclasspath>
+                <path refid="run.Klang temp.bootclasspath"/>
+            </bootclasspath>
+        </java>
+    </target>
+    <target name="Klang TEST (1)">
+        <java classname="k.frontend.Main" failonerror="true" fork="yes">
+            <env key="Path" value=".\lib;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\Program Files (x86)\Enterprise Vault\EVClient\;c:\bin\emacs-24.3\bin;C:\bin\Git\cmd;C:\bin\Git\bin;C:\bin\bin;C:\bin\GetGnuWin32\gnuwin32\bin;C:\bin\CMake\bin;C:\Program Files\Java\jdk1.7.0_71\bin;c:\bin\sbt-0.13.6\sbt\bin;C:\Program Files\Microsoft SQL Server\110\Tools\Binn\;C:\Program Files (x86)\Microsoft SDKs\TypeScript\1.0\;c:\bin\WinMerge"/>
+            <jvmarg line="-cp"/>
+            <arg line="-f c:\users\rahulku\s\klang\src\tests\inheritance6.k"/>
+            <classpath refid="run.Klang TEST (1).classpath"/>
+            <bootclasspath>
+                <path refid="run.Klang TEST (1).bootclasspath"/>
+            </bootclasspath>
+        </java>
+    </target>
+    <target name="Klang TEST">
+        <java classname="k.frontend.Main" failonerror="true" fork="yes" newenvironment="true">
+            <env key="Path" value=".\lib;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\Program Files (x86)\Enterprise Vault\EVClient\;c:\bin\emacs-24.3\bin;C:\bin\Git\cmd;C:\bin\Git\bin;C:\bin\bin;C:\bin\GetGnuWin32\gnuwin32\bin;C:\bin\CMake\bin;C:\Program Files\Java\jdk1.7.0_71\bin;c:\bin\sbt-0.13.6\sbt\bin;C:\Program Files\Microsoft SQL Server\110\Tools\Binn\;C:\Program Files (x86)\Microsoft SDKs\TypeScript\1.0\;c:\bin\WinMerge"/>
+            <jvmarg line="-cp"/>
+            <arg line="-test"/>
+            <classpath refid="Klang.classpath"/>
+            <bootclasspath>
+                <path refid="run.Klang TEST.bootclasspath"/>
+            </bootclasspath>
+        </java>
+    </target>
+    <target name="Klang TESTS SAVE">
+        <java classname="k.frontend.Main" failonerror="true" fork="yes">
+            <env key="Path" value=".\lib;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\Program Files (x86)\Enterprise Vault\EVClient\;c:\bin\emacs-24.3\bin;C:\bin\Git\cmd;C:\bin\Git\bin;C:\bin\bin;C:\bin\GetGnuWin32\gnuwin32\bin;C:\bin\CMake\bin;C:\Program Files\Java\jdk1.7.0_71\bin;c:\bin\sbt-0.13.6\sbt\bin;C:\Program Files\Microsoft SQL Server\110\Tools\Binn\;C:\Program Files (x86)\Microsoft SDKs\TypeScript\1.0\;c:\bin\WinMerge"/>
+            <jvmarg line="-cp"/>
+            <arg line="-tests -baseline"/>
+            <classpath refid="run.Klang TESTS SAVE.classpath"/>
+            <bootclasspath>
+                <path refid="run.Klang TESTS SAVE.bootclasspath"/>
+            </bootclasspath>
+        </java>
+    </target>
+    <target name="Klang TESTS">
+        <java classname="k.frontend.Main" failonerror="true" fork="yes">
+            <env key="Path" value=".\lib;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\Program Files (x86)\Enterprise Vault\EVClient\;c:\bin\emacs-24.3\bin;C:\bin\Git\cmd;C:\bin\Git\bin;C:\bin\bin;C:\bin\GetGnuWin32\gnuwin32\bin;C:\bin\CMake\bin;C:\Program Files\Java\jdk1.7.0_71\bin;c:\bin\sbt-0.13.6\sbt\bin;C:\Program Files\Microsoft SQL Server\110\Tools\Binn\;C:\Program Files (x86)\Microsoft SDKs\TypeScript\1.0\;c:\bin\WinMerge"/>
+            <jvmarg line="-cp"/>
+            <arg line="-tests"/>
+            <classpath refid="run.Klang TESTS.classpath"/>
+            <bootclasspath>
+                <path refid="run.Klang TESTS.bootclasspath"/>
+            </bootclasspath>
+        </java>
+    </target>
+</project>

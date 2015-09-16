@@ -1,46 +1,46 @@
-
 package examples.spacecraft
 
 class Thing {
-  ident : Int
   weight : Int
+}
 
-  fun equals(other: Thing) : Bool {
-    ident = other.ident
+class Event {
+  start : Real
+  end : Real
+  req start >= 0.0 && end > start
+  fun after(e : Event) : Bool {
+    return start >= e.end
   }
-
-  req weight > 0 && weight <= 1000
 }
 
 class Instrument extends Thing {
   power : Real
-  
   req power >= 0.0
+  req weight > 0 && weight <= 1000
 }
 
-class Radio extends Instrument {
-  fps : Int
+class SimpleRadio extends Instrument 
+class SmartRadio extends SimpleRadio 
+
+class SystemManager {
+  bootUp : Event
+  initMem : Event
+  takePicture : Event
+  req takePicture.after(initMem) && 
+      takePicture.after(bootUp)
 }
 
 class SpaceCraft extends Thing {
-  radio : Radio
-  instrument1 : Instrument
-  instrument2 : Instrument
+  instrumentsWeight : Real
+  radio : Instrument 
+  camera : Instrument
+  software : SystemManager
 
-  distanceToEarth : Int
+  req instrumentsWeight = radio.weight + camera.weight
 
-  instrumentWeight : Int = instrument1.weight + instrument2.weight
+  req notTooHeavy: instrumentsWeight <= 1000
 
-  req instrumentsDiffer:
-    ! instrument1.equals(instrument2) && 
-    ! instrument1.equals(radio) &&
-    ! instrument2.equals(radio)
-
-  req EarthSafeDistance:
-    distanceToEarth > 50000
-
-  req notTooHeavy: 
-    instrumentWeight <= 500
 }
 
-clipper : SpaceCraft
+ShRaan : SpaceCraft
+
