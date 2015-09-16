@@ -242,7 +242,10 @@ object K2Z3 {
     try {
       reset()
       val boolExp = ctx.parseSMTLIB2String(smtModel, null, null, null, null)
+      
+      
       z3Model = SolveExp(boolExp)
+
       // using println here as an exception because we would 
       // like to copy and use the raw SMT code in rise4fun etc. 
       // using log would introduce an undesired prefix on each line.

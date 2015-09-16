@@ -35,11 +35,13 @@
 \usepackage{subcaption}
 \usepackage{fancyvrb}
 \usepackage{verbatimbox}
+\usepackage{verbatim}
+\usepackage{fancyvrb}
 
 \definecolor{light-gray}{gray}{0.95}
 
 \lstdefinelanguage{K}{
-  morekeywords={package,import,class,extends,with,match,new,if,then,else,while,for,yield,val,var,this,case,type,implicit,private,protected,abstract,final, req, Int, Bool, fun, pre, post},
+  morekeywords={package,import,class,extends,with,match,new,if,then,else,while,for,yield,val,var,this,case,type,implicit,private,protected,abstract,final, req, Int, String, Bool, fun, pre, post},
   otherkeywords={&,\{,\},_*},
   literate=
       {\#\#}{{$\oplus\;$}}2
@@ -55,7 +57,20 @@
   morecomment=[l]{//}, 
   morecomment=[s]{/*}{*/},
   stringstyle=\ttfamily,
-}  
+  numbers=left,   
+  numberstyle=\footnotesize, 
+}
+
+\lstdefinelanguage{SMT}{
+  morekeywords={define,declare,sort,const,fun,datatypes,assert,forall,exists,and,or,ite,select,Int,Real,Bool,Array},
+  sensitive=true, 
+  morecomment=[l]{;}, 
+  stringstyle=\ttfamily,
+%  numbers=none,   
+%  numberstyle=\footnotesize, 
+}
+
+ 
 % --- Referring to code: ---
 
 \newcommand{\name}[1]{{\em #1}}

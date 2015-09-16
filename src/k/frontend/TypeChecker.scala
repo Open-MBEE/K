@@ -786,6 +786,7 @@ class TypeChecker(model: Model) {
         if (i == "toString") (true, null)
         else if (i == "collect") (true, null)
         else if (i == "size") (true, null)
+        else if (i == "sum") (true, null)
         else if (i == "at") (true, null)
         else if (i == "subList") (true, null)
         else ti match {
@@ -843,12 +844,14 @@ class TypeChecker(model: Model) {
               // TODO
               if (i == "collect") CollectType(it.args)
               else if (i == "size") SumType(it.args)
+              else if (i == "sum") SumType(it.args)
               else if (i == "at") SumType(it.args)
               else if (i == "subList") CollectType(it.args)
               else error(s"getExpType: error, type could not be discovered for $exp.")
             } else {
               if (i == "collect") CollectType(List(it))
               else if (i == "size") SumType(it.args)
+              else if (i == "sum") SumType(it.args)
               else if (i == "at") SumType(it.args)
               else if (i == "toString") StringType
               else {
@@ -864,6 +867,7 @@ class TypeChecker(model: Model) {
           case tt @ _ =>
             if (i == "collect") CollectType(List(tt))
             else if (i == "size") SumType(List(tt))
+            else if (i == "sum") SumType(List(tt))
             else if (i == "at") SumType(List(tt))
             else if (i == "toString") StringType
             else tt

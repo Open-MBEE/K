@@ -273,6 +273,9 @@ object UtilSMT {
     }
   }
 
+  def isCollection(typeName: String): Boolean =
+    Set("Set", "Bag", "Seq") contains typeName
+
   def transformModel(model: Model): Model = {
     val Model(packageName, imports, annotations, decls) = model
     var memberDecls: List[MemberDecl] =
@@ -712,7 +715,7 @@ case class EntityDecl(
     }
 
     // constraints for embedded references/parts:
-    for (PropertyDecl(_, propertyName, IdentType(QualifiedName(typeName :: Nil), _), _, _, _) <- propertyDecls) {
+    for (PropertyDecl(_, propertyName, IdentType(QualifiedName(typeName :: Nil), _), _, _, _) <- propertyDecls if !UtilSMT.isCollection(typeName)) {
       val getter = s"$ident!$propertyName"
       UtilSMT.addGetter(getter)
       constraints ::= s"(deref-isa-$typeName ($getter this))"
@@ -2309,7 +2312,7 @@ case object REM extends BinaryOp {
 
 case object SETINTER extends BinaryOp {
   override def toSMT = "intersect"
-  
+
   override def toString = "inter"
 
   override def toJsonName = "Inter"
@@ -2354,15 +2357,15 @@ case object SUB extends BinaryOp {
 }
 
 case object SETUNION extends BinaryOp {
-  override def toSMT = "union"  
-  
+  override def toSMT = "union"
+
   override def toString = "union"
 
   override def toJsonName = "Union"
 }
 
 case object ISIN extends BinaryOp {
-  
+
   override def toString = "isin"
 
   override def toJsonName = "IsIn"
@@ -2375,14 +2378,14 @@ case object NOTISIN extends BinaryOp {
 }
 
 case object SUBSET extends BinaryOp {
-  override def toSMT = "subset"  
-  
+  override def toSMT = "subset"
+
   override def toString = "subset"
 
   override def toJsonName = "Subset"
 }
 
-case object PSUBSET extends BinaryOp {  
+case object PSUBSET extends BinaryOp {
   override def toString = "psubset"
 
   override def toJsonName = "PSubset"
