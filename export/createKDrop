@@ -46,7 +46,7 @@ if [ "$1" = "windows" ]
 then
     cp k.cmd $KDIR/
     mv $KDIR/lib/com.microsoft.z3.windows.jar $KDIR/lib/com.microsoft.z3.jar
-    rm $KDIR/lib/com.microsoft.osx.jar
+    rm $KDIR/lib/com.microsoft.z3.osx.jar
 else
     cp k $KDIR/
     mv $KDIR/lib/com.microsoft.z3.osx.jar $KDIR/lib/com.microsoft.z3.jar
