@@ -27,6 +27,7 @@ object UtilAST {
   def debug(text: String) {
     if (ASTOptions.debug) println(s"[-- debug --: $text]")
   }
+
 }
 import UtilAST._
 import ClassHierarchy._
@@ -35,6 +36,15 @@ import TypeChecker._
 object K2SMTException extends Exception
 
 object UtilSMT {
+
+  var constraintCounter = 0
+  var constraintMessageMap: Map[String, String] = Map()
+
+  def saveConstraintMapping(cPrint: String) {
+    UtilSMT.constraintMessageMap = UtilSMT.constraintMessageMap + (s"x${UtilSMT.constraintCounter}" -> cPrint)
+    UtilSMT.constraintCounter += 1
+  }
+
   def headline1(msg: String): String = {
     val line = "=" * (msg.length + 9)
     var result = s"; $line\n"
@@ -357,7 +367,8 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
     result1 += "\n"
     result1 += "(declare-const emptySetOf_Int (Set Int))\n"
     // result1 += "(assert (= emptySetOf_Int ((as const (Set Int)) false)))\n" - does not work
-    result1 += "(assert (forall ((x Int)) (= (select emptySetOf_Int x) false)))\n"
+    result1 += "(assert (!(forall ((x Int)) (= (select emptySetOf_Int x) false)) :named AXIOM1))\n"
+
     result1 += "\n"
     result1 += UtilSMT.headline1("User-defined datatypes")
     for (ed <- entityDecls) {
@@ -703,59 +714,82 @@ case class EntityDecl(
     var constraints: List[String] = Nil
     val propertyDecls: List[PropertyDecl] = getAllPropertyDecls
     val constraintDecls: List[ConstraintDecl] = getAllConstraintDecls
+    var result: String = ""
+    var constraintCounter = 0
 
     // constraints for property definitions of the form: x : T = e
     for (PropertyDecl(_, propertyName, ty, _, _, Some(exp)) <- propertyDecls) {
       val getter = s"$ident!$propertyName"
       UtilSMT.addGetter(getter)
-      if (UtilSMT.isClassName(ty) && UtilSMT.isConstructorAppl(exp))
-        constraints ::= s"(= (deref ($getter this)) ${exp.toSMT(ident, false)})"
-      else
-        constraints ::= s"(= ($getter this) ${exp.toSMT(ident, false)})"
+      var constraintSMT =
+        if (UtilSMT.isClassName(ty) && UtilSMT.isConstructorAppl(exp))
+          s"(= (deref ($getter this)) ${exp.toSMT(ident, false)})"
+        else
+          s"(= ($getter this) ${exp.toSMT(ident, false)})"
+
+      result += mkInv(ident, constraintSMT, s"$propertyName = $exp")
     }
 
     // constraints for embedded references/parts:
     for (PropertyDecl(_, propertyName, IdentType(QualifiedName(typeName :: Nil), _), _, _, _) <- propertyDecls if !UtilSMT.isCollection(typeName)) {
       val getter = s"$ident!$propertyName"
       UtilSMT.addGetter(getter)
-      constraints ::= s"(deref-isa-$typeName ($getter this))"
+      val constraintSMT = s"(deref-isa-$typeName ($getter this))"
+      result += mkInv(ident, constraintSMT, "_k_ignore_")
     }
 
     // constraints for constraint decls:
-    for (ConstraintDecl(_, exp) <- constraintDecls) {
-      constraints ::= exp.toSMT(ident, false)
+    for (ConstraintDecl(n, exp) <- constraintDecls) {
+      result += mkInv(ident, exp.toSMT(ident, false), exp.toString)
     }
+    result
+  }
 
-    // create resulting string:
-    var result: String = ""
+  def mkInv(ident: String, exp: String, outputString : String): String = {
+    var result = ""
+    
+    result += s"(assert (! (forall ((this Ref))\n"
+    result += s"  (=> (deref-is-$ident this) $exp)\n"
+    result += s") :named x${UtilSMT.constraintCounter}))\n\n"
 
+    UtilSMT.saveConstraintMapping((s"$outputString"))
+    
+    result
+  }
+
+  def mkInvFunction(ident: String, count: Int, constraintSMT: String, n: Option[String], exp: Any): String = {
+    var result = ""
     // The inv function:
-    result += s"(define-fun $ident.inv ((this Ref)) Bool\n"
-    if (constraints.isEmpty) {
-      result += "  true\n"
-    } else {
-      result += s"  (and\n"
-      for (constraint <- constraints.reverse) {
-        result += s"    $constraint\n"
-      }
-      result += s"  )\n"
-    }
+    result += s"(define-fun $ident.inv${count} ((this Ref)) Bool\n"
+    //    result += s"  (and\n"
+    result += s"  $constraintSMT\n"
+    //    result += s"  )\n"
     result += s")\n"
     result += "\n"
 
     // Enforce invariant:    
-    result += s"(assert (forall ((this Ref))\n"
-    result += s"  (=> (deref-is-$ident this) ($ident.inv this))\n"
-    result += s"))"
+    result += s"(assert (! (forall ((this Ref))\n"
+    result += s"  (=> (deref-is-$ident this) ($ident.inv${count} this))\n"
+    result += s") :named x${UtilSMT.constraintCounter}))\n\n"
+
+    if (n.isEmpty)
+      UtilSMT.saveConstraintMapping((s"$exp"))
+    else
+      UtilSMT.saveConstraintMapping((s"${n.getOrElse("")}: $exp"))
 
     result
   }
 
   def toSMTAssert: String = {
-    if (ident == "TopLevelDeclarations")
-      "(assert (deref-is-TopLevelDeclarations 0))\n"
-    else
-      s"(assert (exists ((instanceOf$ident Ref)) (deref-is-$ident instanceOf$ident)))"
+    val res = if (ident == "TopLevelDeclarations") {
+      val r = s"(assert (!(deref-is-TopLevelDeclarations 0) :named xTOP))\n"
+      r
+    } else {
+      val r = s"(assert (!(exists ((instanceOf$ident Ref)) (deref-is-$ident instanceOf$ident)) :named x${UtilSMT.constraintCounter}))"
+      UtilSMT.saveConstraintMapping(s"class $ident is not satisfiable.")
+      r
+    }
+    res
   }
 
   override def toScala: String = {
@@ -1124,7 +1158,7 @@ case class FunDecl(ident: String,
       val preSMT = preConditions.map(_.exp.toSMT(className, false)).mkString("\n      ") // and true?
       val postSMT = postConditions.map(_.exp.toSMT(className, false)).mkString("\n        ") // and true?
       val resultVar = "$result"
-      result += s"(assert (forall ($parameters)\n"
+      result += s"(assert (!(forall ($parameters)\n"
       result += s"  (=>\n"
       result += s"    (and\n"
       result += s"      (deref-is-$className this)\n" // isa does not solve, but should it be isa?
@@ -1139,7 +1173,9 @@ case class FunDecl(ident: String,
       result += s"      )\n"
       result += s"    )\n"
       result += s"  )\n"
-      result += s"))"
+      result += s") :named x${UtilSMT.constraintCounter}))"
+
+      UtilSMT.saveConstraintMapping(s"Function $ident does not satisfy its specification.")
       UtilSMT.clearCreatedLocals()
     }
 

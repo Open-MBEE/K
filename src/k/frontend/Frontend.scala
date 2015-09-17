@@ -66,7 +66,7 @@ object Frontend {
     var model: Model = null
     var filename: String = null
     var fullFileName: String = null
-    
+
     options.get('tests) match {
       case Some(true) => doTests(options.getOrElse('baseline, false).asInstanceOf[Boolean])
       case _          => ()
@@ -124,9 +124,9 @@ object Frontend {
         log("Type checking completed. No errors found.")
       } catch {
         case TypeCheckException => Misc.errorExit("Main", "Given K did not type check.")
-        case e: Throwable       => 
+        case e: Throwable =>
           e.printStackTrace()
-        Misc.errorExit("Main", "Exception encountered during type checking.")
+          Misc.errorExit("Main", "Exception encountered during type checking.")
       }
     }
 
@@ -170,7 +170,7 @@ object Frontend {
         case TypeCheckException => errorExit("Type Checking exception.")
         case K2SMTException     => errorExit("K2SMT Exception during SMT solving.")
         case K2Z3Exception      => errorExit("Z3 Exception during SMT solving.")
-        case e : Throwable       =>
+        case e: Throwable =>
           e.printStackTrace()
           errorExit("Unknown Exception during SMT solving.")
       }
@@ -180,7 +180,7 @@ object Frontend {
       case Some(_) => if (model != null) K2Latex.convert(filename, model)
       case _       => ()
     }
-   
+
     options.get('scala) match {
       case Some(_) =>
         if (model != null && fullFileName != null) {
@@ -200,7 +200,7 @@ object Frontend {
         }
       case _ => ()
     }
-    
+
     options.get('dot) match {
       case Some(_) => if (model != null) printClassDOT(filename, model)
       case _       => ()
@@ -333,7 +333,7 @@ object Frontend {
         if (smt != null) {
           val res = runWithTimeout(timeoutValue) { K2Z3.solveSMT(model, smt, debug) }
           if (res.isEmpty) null
-          else K2Z3.z3Model.toString
+          else if (K2Z3.z3Model != null) K2Z3.z3Model.toString
         } else null
       currentTestJsonObject.put("name", file.getName)
       currentTestJsonObject.put("model", model.toString)
@@ -396,7 +396,7 @@ object Frontend {
         case K2SMTException => resultRows = List(file.getName + "*", "K2SMT", "error", "", "", "", "") :: resultRows
         case K2Z3Exception  => resultRows = List(file.getName + "*", "K2Z3", "error", "", "", "", "") :: resultRows
         case e: Throwable =>
-          log(e.getMessage)
+          log("Exception: " + e.toString)
           resultRows = List(file.getName + "*", "-", "-", "-", "-", "-", "-") :: resultRows
       }
     }
@@ -500,7 +500,7 @@ object Frontend {
           }
         }
       } catch {
-        case _ : Throwable => ()
+        case _: Throwable => ()
       }
 
     }
@@ -572,7 +572,7 @@ object Frontend {
         }
       } catch {
         //case e if e.isInstanceOf[java.util.NoSuchElementException] => log("Skipping element..." + obj)
-        case _ : Throwable => log("Skipping element..." + obj)
+        case _: Throwable => log("Skipping element..." + obj)
       }
     }
 

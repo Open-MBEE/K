@@ -6,6 +6,8 @@ import com.microsoft.z3.{ Symbol => Z3Symbol }
 import collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{ HashMap => MMap }
+import sys.process._
+import java.io._
 
 object Util {
   def ??? : Nothing = null.asInstanceOf[Nothing]
@@ -69,12 +71,18 @@ object K2Z3 {
 
   var debug: Boolean = false
   var silent: Boolean = false
-  var cfg: Map[String, String] = Map("model" -> "true", "auto-config" -> "true")
+  var cfg: Map[String, String] = Map(
+    "model" -> "true",
+    "auto-config" -> "true",
+    "unsat_core" -> "true")
   var ctx: Context = new Context(cfg)
+  var solver: Solver = ctx.mkSolver()
   var idents: MMap[String, (Expr, com.microsoft.z3.StringSymbol)] = MMap()
   var z3Model: com.microsoft.z3.Model = null
   val tc: TypeChecker = new TypeChecker(null)
   var datatypes: DataTypes = null
+  var params = ctx.mkParams
+  params.add("unsat_core", true)
 
   def error(msg: String) = {
     if (silent) Misc.silentErrorThrow("K2Z3", msg, K2Z3Exception)
@@ -86,11 +94,16 @@ object K2Z3 {
 
   def reset() {
     z3Model = null
-    idents = new MMap()
+    idents = new MMap
     ctx = new Context(cfg)
+    params = ctx.mkParams
+    params.add("unsat_core", true)
+    solver = ctx.mkSolver
+    solver.setParameters(params)
   }
 
-  def printObjectValue(name: String, heap: Map[String, String], v: String, visited: Set[String]): (Set[String], List[List[String]]) = {
+  def printObjectValue(name: String, heap: Map[String, String],
+                       v: String, visited: Set[String]): (Set[String], List[List[String]]) = {
 
     if (visited.contains(name)) return (visited, Nil)
 
@@ -241,14 +254,11 @@ object K2Z3 {
   def solveSMT(model: Model, smtModel: String, printModel: Boolean) {
     try {
       reset()
-      val boolExp = ctx.parseSMTLIB2String(smtModel, null, null, null, null)
-      
-      
-      z3Model = SolveExp(boolExp)
 
-      // using println here as an exception because we would 
-      // like to copy and use the raw SMT code in rise4fun etc. 
-      // using log would introduce an undesired prefix on each line.
+      val boolExp = ctx.parseSMTLIB2String(smtModel, null, null, null, null)
+
+      z3Model = SolveExp(boolExp, smtModel)
+
       if (debug) {
         println
         println("--- BEGIN RAW SMT MODEL: ---")
@@ -267,23 +277,37 @@ object K2Z3 {
   def SolveExp(e: Exp): com.microsoft.z3.Model = {
     reset()
     val boolExpr = Expr2Z3(e).asInstanceOf[BoolExpr];
-    SolveExp(boolExpr)
+    SolveExp(boolExpr, "")
   }
 
-  def SolveExp(e: BoolExpr): com.microsoft.z3.Model = {
-    var solver: Solver = ctx.mkSolver()
+  def SolveExp(e: BoolExpr, smtModel: String): com.microsoft.z3.Model = {
 
     solver.add(e)
 
-    solver.setParameters(ctx.mkParams())
-
-    val status = solver.check()
+    val status = solver.check
 
     if (Status.SATISFIABLE == status) {
       z3Model = solver.getModel
     } else if (status == Status.UNSATISFIABLE) {
       log()
       log(s"The given model is NOT satisfiable. ")
+      val smt2 = ("(set-option :produce-unsat-cores true)\n") + (smtModel + "(check-sat) (get-unsat-core) (exit)")
+      val tf = new PrintWriter(new File("t.smt2"))
+      tf.write(smt2)
+      tf.close
+      val res = (("z3 -in " #< s"cat t.smt2")).!!
+      val lines = res.split("\\r?\\n")
+      val assertionNames = lines(1).replace("(", "").replace(")", "").split("\\s")
+        .filter { !_.equals("xTOP") }
+        .map { UtilSMT.constraintMessageMap(_) }.toSet
+      log("UNSAT due to the following reasons: ")
+      println
+      for (
+        an <- assertionNames.filter { !_.equals("_k_ignore_") }
+      ) {
+        println(s"\t$an")
+      }
+      println
       log()
     } else {
       log()
