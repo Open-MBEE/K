@@ -45,4 +45,4 @@ You will need to have access to JDK 1.8+, Scala 2.11+, and any editor of your ch
     -test to bring up the test prompt, which will automatically look for the provided file name in the tests folder
     -tests to execute all tests in test folder
     -tests -save to exeucte on all tests and update the stored baseline
-5. 
+5. The k.jar file needed for exporting can be done by exporting a runnable jar on the k.frontend package.
