@@ -292,10 +292,11 @@ object K2Z3 {
       log()
       log(s"The given model is NOT satisfiable. ")
       val smt2 = ("(set-option :produce-unsat-cores true)\n") + (smtModel + "(check-sat) (get-unsat-core) (exit)")
-      val tf = new PrintWriter(new File("t.smt2"))
+      val file = new File("t.smt2")
+      val tf = new PrintWriter(file)
       tf.write(smt2)
       tf.close
-      val res = (("z3 -in " #< s"cat t.smt2")).!!
+      val res = (("z3 -smt2 t.smt2")).!!
       val lines = res.split("\\r?\\n")
       val assertionNames = lines(1).replace("(", "").replace(")", "").split("\\s")
         .filter { !_.equals("xTOP") }
@@ -309,6 +310,7 @@ object K2Z3 {
       }
       println
       log()
+      file.delete()
     } else {
       log()
       log("Model could not be solved successfully.")

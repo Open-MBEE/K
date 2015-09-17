@@ -432,10 +432,12 @@ object Frontend {
     fw.write(bo.getString("smtModel"))
     fw.close
     log(s"Baseline SMT model stored in ${testDir.getAbsolutePath}/baseline.smt.model")
-    fw = new FileWriter(new File(testDir, "current.smt.model"))
-    fw.write(co.getString("smtModel"))
-    fw.close
-    log(s"Current SMT model stored in ${testDir.getAbsolutePath}/current.smt.model")
+    if (co.has("smtModel")) {
+      fw = new FileWriter(new File(testDir, "current.smt.model"))
+      fw.write(co.get("smtModel").toString)
+      fw.close
+      log(s"Current SMT model stored in ${testDir.getAbsolutePath}/current.smt.model")
+    }
 
   }
 

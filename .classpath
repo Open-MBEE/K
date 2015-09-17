@@ -59,6 +59,6 @@
 	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jsp/jetty-jsp-9.2.12.v20150709.jar"/>
 	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jsp/jetty-jsp-jdt-2.3.3.jar"/>
 	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jsp/org.eclipse.jdt.core-3.8.2.v20130121.jar"/>
-	<classpathentry kind="lib" path="lib/com.microsoft.z3.win32.jar"/>
+	<classpathentry kind="lib" path="lib/com.microsoft.z3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
