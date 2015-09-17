@@ -8,7 +8,6 @@
 	<classpathentry kind="con" path="org.scala-ide.sdt.launching.SCALA_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="src/antlr-4.4-complete.jar"/>
-	<classpathentry kind="lib" path="lib/com.microsoft.z3.jar"/>
 	<classpathentry kind="lib" path="lib"/>
 	<classpathentry kind="lib" path="lib/elastic4s_2.11-1.5.2-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="lib/elasticsearch-1.5.0/elasticsearch-1.5.0.jar"/>
@@ -60,5 +59,6 @@
 	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jsp/jetty-jsp-9.2.12.v20150709.jar"/>
 	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jsp/jetty-jsp-jdt-2.3.3.jar"/>
 	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jsp/org.eclipse.jdt.core-3.8.2.v20130121.jar"/>
+	<classpathentry kind="lib" path="lib/com.microsoft.z3.win32.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
