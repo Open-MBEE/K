@@ -291,6 +291,9 @@ object ClassHierarchy {
 
   def buildHierarchy(d: EntityDecl, types: Map[Type, TopDecl], visited: Set[EntityDecl]): Set[Type] = {
     d.extending.foldLeft(Set[Type]()) { (res, e) =>
+      if(!types.contains(e)){
+        error(s"Could not find ${e.toString}")
+      }
       assert(types(e).isInstanceOf[EntityDecl])
       assert(!visited.contains(types(e).asInstanceOf[EntityDecl]))
       res + e
@@ -545,13 +548,14 @@ class TypeChecker(model: Model) {
                   false
               }).get
 
+              /*
           decl2TypeEnvi += (cte0._1 -> (cte0._2.union((m2.name) -> PropertyTypeInfo(m2, false, true, ed))))
           origTypeEnvironments += (cte0._1 -> (cte0._2.union((m2.name) -> PropertyTypeInfo(m2, false, true, ed))))
           decl2TypeEnvi += (cte1._1 -> (cte1._2.union((m1.name) -> PropertyTypeInfo(m1, false, true, ed))))
           origTypeEnvironments += (cte1._1 -> (cte1._2.union((m1.name) -> PropertyTypeInfo(m1, false, true, ed))))
           decl2TypeEnvi += (d -> classTypeEnv)
           origTypeEnvironments += (d -> classTypeEnv)
-
+*/
         case _ => ()
       }
     }
@@ -562,6 +566,7 @@ class TypeChecker(model: Model) {
     model.decls.foreach { d =>
       d match {
         case ed @ EntityDecl(_, t, _, ident, _, _, _) if t != AssocToken =>
+          logDebug(s"Processing $ident")
           val classTypeEnv = decl2TypeEnvi(d)
           val extending = ClassHierarchy.parentsTransitive(ed)
           val newClassTypeEnv = {
