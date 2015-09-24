@@ -1,26 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <style>
-      .CodeMirror-foldmarker {    
-      font-family: arial;
-      }
-      .CodeMirror-foldgutter {
-      width: .7em;
-      }
-      .CodeMirror-foldgutter-open,
-      .CodeMirror-foldgutter-folded {
-      color: #555;
-      cursor: pointer;
-      }
-      .CodeMirror-foldgutter-open:after {
-      content: "\25BE";
-      }
-      .CodeMirror-foldgutter-folded:after {
-      content: "\25B8";
-      }
-    </style>
-
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -29,80 +9,25 @@
     <meta name="author" content="">
 
     <title>The K Language</title>
+    <style>
+      body { 
+      background: url(img/squared_metal.png) repeat 0 0;
+      } 
+    </style>
   </head>
 
-  <body>
-
-    <nav class="navbar navbar-inverse navbar-fixed-top">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="#">K</a>
-        </div>
-	
-	<div id="navbar" class="navbar-collapse collapse">
-          <ul class="nav navbar-nav">
-            <li><a href="index.html">Home</a></li>
-            <li class="active"><a href="tutorial.html">Tutorial</a></li>
-            <li class="dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Examples<span class="caret"></span></a>
-              <ul class="dropdown-menu">
-                <li><a href="#" onclick="loadExample(editor,'examples/Shapes.k')">Shapes.k</a></li>
-                <li><a href="#" onclick="loadExample(editor,'examples/sm.k')">sm.k</a></li>
-                <li><a href="#" onclick="loadExample(editor,'examples/borges.k')">borges.k</a></li>
-		<li><a href="#" onclick="loadExample(editor,'examples/prepost.k')">prepost.k</a></li>
-		<li><a href="#" onclick="loadExample(editor,'examples/Fruits.k')">Fruits.k</a></li>
-		<li><a href="#" onclick="loadExample(editor,'examples/lightswitch.k')">lightswitch.k</a></li>
-		<li><a href="#" onclick="loadExample(editor,'examples/scheduling.k')">scheduling.k</a></li>
-		<li><a href="#" onclick="loadExample(editor,'examples/planning-simple.k')">planning-simple.k</a></li>
-                <li role="separator" class="divider"></li>
-                <li><a href="#" onclick="loadExample(editor,'examples/GravityScience.k')">GravityScience.k</a></li>
-                <li><a href="#" onclick="loadExample(editor,'examples/DSN_Pass.k')">DSN_Pass.k</a></li>
-                <!--<li role="separator" class="divider"></li>
-                    <li class="dropdown-header">Nav header</li>
-                <li><a href="#">Separated link</a></li>
-                <li><a href="#">One more separated link</a></li>-->
-                  </ul>
-            </li>
-
-            <li class="dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Download<span class="caret"></span></a>
-              <ul class="dropdown-menu">
-                <li><a href="http://niks.jpl.nasa.gov/k/k-osx.tgz" >K for OSX</a></li>
-                <li><a href="http://niks.jpl.nasa.gov/k/k-win.zip">K for Windows</a></li>
-	      </ul>
-	    </li>
-	    
-          </ul>
-        </div>
-      </div>
-    </nav>
-
-
-    <div class="jumbotron">
-
-    </div>
-    
-    <div class="container">
-
-      <!-- Example row of columns -->
+  <body>   
+    <div class="container" style="padding-top:50px;width:80%;">
+      <div id="header"></div>
       <div class="row">
-	<div class="col-md-6" style="padding-right:20px; border-right: 2px solid #ccc; overflow:scroll; height:720px;">
-
-
-  
+	<div class="col-md-6" style="overflow:scroll; height:780px;">
  	  <h3>Introduction </h3>
 	  <a name="introduction"></a>
 	  <p>
-	    Welcome to <font color=red>K</font>. K is a textual
-	    language intended to be used by modelers and/or
-	    programmers, for system design and implementation.  The
-	    motivation for K is based on the need for a textual
+	    Welcome to <font size="5" color="darkorange">&kappa;</font>. K
+	    is a textual language intended to be used by modelers
+	    and/or programmers, for system design and implementation.
+	    The motivation for K is based on the need for a textual
 	    language that provides the right set of constructs and
 	    tools to model, verify, and implement. Currently K is
 	    integrated with SMT solvers to be able to:
@@ -635,41 +560,37 @@ shape Rectangle {
 	  </p>
 
 	</div>
-	<div class="col-md-6">
+	<div class="col-md-6" style="padding-top:50px;">
 	    <p>
 	      <textarea id="code" name="code"></textarea>
 	    </p>
 	      <hr>
 	    <p>
   	      <div class="pull-right">   <canvas width="27" height="27" id="myCanvas"></canvas> </div>
-	      <a class="btn btn-warning center-block" href="#" role="button" onclick="doWork()">Analyze</a>
+	      <center><a class="btn btn-warning" href="#" role="button" onclick="doWork()">Analyze &darr;</a></center>
 	    </p>
 	      <hr>
 	    <p>
 	      <textarea id="result" name="result"></textarea>
 	    </p>
 	</div>
-	
-	<hr>
-	
-	<footer>
-	  <p>
-	    &copy; 2015 by the California
-	    Institute of Technology. ALL RIGHTS RESERVED. United States Government
-	    Sponsorship acknowledged. Any commercial use must be negotiated with
-	    the Office of Technology Transfer at the California Institute of
-	    Technology.
-	  </p>
-	</footer>
       </div> <!-- /container -->
-      
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+      
+    <script>
+      $("#header").load("header.html"); 
+    </script>
 
+    <link rel="stylesheet" href="k.css">
+
+    <!-- Latest compiled and minified CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
     
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.5/cerulean/bootstrap.min.css">
     
+    <!-- Latest compiled and minified JavaScript -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 
     <link rel="stylesheet" href="CodeMirror-master/lib/codemirror.css">
@@ -846,12 +767,12 @@ shape Rectangle {
       function loadExample(e,name){
       results.setValue('');
       $.ajax({
-       url: "http://niks.jpl.nasa.gov/K/k/" + name,
+       url: "http://www.theklanguage.com/k/" + name,
       success: function(data, status, xhr) {
       e.setValue(data);
       },
       error: function(data, status, xhr) {
-      alert("Error when loading example. Please try again.");
+      alert("Error when loading example.");
       }
       });
       return false;
@@ -868,7 +789,7 @@ shape Rectangle {
       $.ajax({
       type: "post",
       data: editor.getValue(),
-      url: "http://niks.jpl.nasa.gov/k-service",
+      url: "http://www.theklanguage.com/k-service",
       success: function(data, status, xhr) {
       results.setValue(data);
       working = 0;
