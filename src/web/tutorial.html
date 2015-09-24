@@ -789,7 +789,7 @@ shape Rectangle {
       $.ajax({
       type: "post",
       data: editor.getValue(),
-      url: "http://niks.jpl.nasa.gov/K/k-service",
+      url: "http://niks.jpl.nasa.gov/k-service",
       success: function(data, status, xhr) {
       results.setValue(data);
       working = 0;
