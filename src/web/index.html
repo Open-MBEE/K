@@ -134,7 +134,7 @@
       function loadExample(e,name){
       results.setValue('');
       $.ajax({
-       url: "http://www.theklanguage.com/k/" + name,
+       url: "http://niks.jpl.nasa.gov/K/k/" + name,
       success: function(data, status, xhr) {
       e.setValue(data);
       },
@@ -156,7 +156,7 @@
       $.ajax({
       type: "post",
       data: editor.getValue(),
-      url: "http://www.theklanguage.com/k-service",
+      url: "http://niks.jpl.nasa.gov/K/k-service",
       success: function(data, status, xhr) {
       results.setValue(data);
       $('canvas').hide();
