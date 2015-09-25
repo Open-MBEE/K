@@ -17,13 +17,16 @@
   </head>
   
   <body>
-    <div class="container" style="padding-top:50px;width:80%;">
+    <div class="container" style="padding-top:150px;width:80%;">
       <div id="header"></div>
       <div class="row">
         <div class="col-md-6" style="border-right: 1px solid #ccc;">
-	  <h3>K Editor</h3>
-          <hr>
-	  <textarea id="code" name="code"></textarea>
+	  <div class="panel panel-warning" style="width:100%;">
+	    <div class="panel-heading">K Editor</div>
+	    <div class="panel-body">
+	      <textarea id="code" name="code"></textarea>
+	    </div>
+	  </div>
 	  <hr>
           <div class="row vertical-align">
             <div class="col-lg-6">
@@ -56,9 +59,12 @@
 	  </div>
         </div>
         <div class="col-md-6">
-	  <h3>Results</h3>
-          <hr>
-	  <textarea id="result" name="result"></textarea>
+	  <div class="panel panel-success" style="width:100%;">
+	    <div class="panel-heading">Results</div>
+	    <div class="panel-body" style="background: #e7e9db;">
+	      <textarea id="result" name="result"></textarea>
+	    </div>
+	  </div>
 	  <hr>
        </div>
       </div>
@@ -156,7 +162,7 @@
       $.ajax({
       type: "post",
       data: editor.getValue(),
-      url: "http://niks.jpl.nasa.gov/K/k-service",
+      url: "http://niks.jpl.nasa.gov/k-service",
       success: function(data, status, xhr) {
       results.setValue(data);
       $('canvas').hide();
