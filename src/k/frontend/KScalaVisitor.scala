@@ -42,7 +42,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
       if (ctx.typeParameters() != null)
         visit(ctx.typeParameters()).asInstanceOf[List[TypeParam]]
       else Nil
-    var t: Option[Type] = 
+    var t: Option[Type] =
       visit(ctx.`type`()).asInstanceOf[Option[Type]]
     TypeDecl(ident, typeParams, t)
   }
@@ -202,8 +202,12 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
 
   override def visitSetEnumExp(ctx: ModelParser.SetEnumExpContext): AnyRef = {
     val ck: CollectionKind = visit(ctx.collectionKind()).asInstanceOf[CollectionKind]
-    val exps: List[Exp] = visit(ctx.expressionList()).asInstanceOf[List[Exp]]
-    CollectionEnumExp(ck, exps)
+    if (ctx.expressionList() == null)
+      CollectionEnumExp(ck, Nil)
+    else {
+      val exps: List[Exp] = visit(ctx.expressionList()).asInstanceOf[List[Exp]]
+      CollectionEnumExp(ck, exps)
+    }
   }
 
   override def visitExpressionList(ctx: ModelParser.ExpressionListContext): AnyRef = {
@@ -241,6 +245,8 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
         case "%"     => REM
         case "inter" => SETINTER
         case "\\"    => SETDIFF
+        case "subset" => SUBSET
+        case "psubset" => PSUBSET
         case "++"    => ADD
         case "#"     => TUPLEINDEX
         case "^"     => LISTCONCAT
@@ -274,6 +280,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
         case "isin"   => ISIN
         case "!isin"  => NOTISIN
         case "subset" => SUBSET
+        case "psubset" => PSUBSET
       }
     BinExp(e0, op, e1)
   }
