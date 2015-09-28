@@ -2195,7 +2195,7 @@ case class StringLiteral(s: String) extends Literal {
 
   override def toJson2 = {
     val value = new JSONObject()
-    value.put("type", "LiteralString").put("string", toString)
+    value.put("type", "LiteralString").put("string", toString.replaceAll("\"", ""))
   }
 }
 
