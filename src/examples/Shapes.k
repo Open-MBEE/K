@@ -1,8 +1,14 @@
+==============================================
+This example models shapes found in geometry. 
+It illustrates use of inheritance, functions, 
+and constraints. 
+==============================================
+
 package examples.Shapes
 
 class Shape {
   sides : Int
-  fun area : Int
+  fun area : Real
 }
 
 class Angle {
@@ -45,6 +51,6 @@ class Obtuse extends Triangle {
   req a.value > 90 || b.value > 90 || c.value > 90
 }
  
-
+-- The following class is unsatisfiable.
 -- class Wrong extends Equilateral, Obtuse
   
