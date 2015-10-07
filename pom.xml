@@ -106,6 +106,7 @@
 				<configuration>
 					<source />
 					<target />
+					<compilerArgument>-proc:none</compilerArgument>
 				</configuration>
 				<executions>
                     <execution>
