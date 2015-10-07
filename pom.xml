@@ -107,6 +107,9 @@
 					<source />
 					<target />
 					<compilerArgument>-proc:none</compilerArgument>
+	                <excludes>
+	                    <exclude>**/*.scala</exclude>
+	                </excludes>
 				</configuration>
 				<executions>
                     <execution>
