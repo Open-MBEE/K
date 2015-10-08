@@ -10,9 +10,11 @@ src/tests/baseline.smt
 src/tests/current.smt
 src/tests/baseline.smt.model
 src/tests/current.smt.model
+src/tests/test.k
 .texpadtmp
 *.aux
 *.bbl
 *.blg
 *.log
 *.pdf
+/tmp

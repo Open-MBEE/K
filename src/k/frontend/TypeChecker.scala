@@ -1020,7 +1020,9 @@ class TypeChecker(model: Model) {
         if (getExpType(newTe, exp, owner) != BoolType)
           error(s"$exp is not of type Bool")
         getExpType(newTe, body, owner)
-      case TypeCastCheckExp(cast, e, ty) => if (cast) ty else BoolType
+      case TypeCastCheckExp(cast, e, ty) =>
+        val eType = getExpType(te, e, owner)
+        if (cast) ty else BoolType
       case QuantifiedExp(q, b, e) =>
 
         // process bindings

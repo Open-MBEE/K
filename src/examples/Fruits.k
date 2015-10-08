@@ -1,3 +1,9 @@
+==========================================
+This example shows how inheritance and 
+requirements can be used to enforce, 
+specify, and disover type related issues.
+==========================================
+
 class Fruit {
   mass : Real
 }
@@ -12,7 +18,7 @@ class Legume extends Fruit {
  
 class Berry extends Fruit
  
-class SeedyFruit extends Fruit, CitrusFruit {
+class SeedyFruit extends CitrusFruit {
   seeds : Int
 }
  
@@ -21,6 +27,6 @@ peanut : Legume
  
 req apple is SeedyFruit
 
--- The following is not possible
---req apple is Berry
+-- The following makes this model UNSAT
+-- req apple is Berry
 
