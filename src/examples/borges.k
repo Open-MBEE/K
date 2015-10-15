@@ -1,3 +1,11 @@
+==============================================
+This example shows how one can encode Allen
+logic using a simple Event class, and then 
+encode a schedule which can be tested for 
+satisfiability and receive a possible schedule 
+in return.
+==============================================
+
 package examples.borges
 
 class <event> Event {
