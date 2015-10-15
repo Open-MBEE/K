@@ -9,7 +9,7 @@ standard is used by numerous SMT solvers, allowing comparison between
 systems (for example in competitions).  In addition, it allows systems
 generating SMT-LIB formulas to target any SMT solver processing this
 standard. In our case we use the Z3 SMT solver \cite{de2008z3} to
-process the generated formulas, but anticipate to target other solvers
+process the generated formulas, but anticipate targeting other solvers
 as well in near term work.
 
 \subsection{The Source K Model}
@@ -31,9 +31,9 @@ corresponding to the model of a spacecraft shown in Figure
 that have been used by engineers at JPL until the time of writing. The
 emphasis of these models is on {\em structure} of artifacts and {\em
   scheduling} of events. The class \code{Thing} is meant to represent
-entities that have weight. Instruments, and its radio sub-classes, as
-well as the the spacecraft itself, are things, inheriting from this
-class. The class \code{Instrument} defines a \code{power}
+entities that have weight. Instruments, its radio sub-classes, and 
+the spacecraft class itself, inherit from 
+class \code{Thing}. The class \code{Instrument} defines a \code{power}
 level. Requirements in the form of Boolean constraints are imposed on
 \code{power} and \code{weight}. The \code{SpaceCraft} class makes
 instances of instruments, defines a combined sum
@@ -52,8 +52,8 @@ class, which defines an event as having a start time and an end time
 appearing after the start time. In addition, the \code{Event} class
 defines a function \code{after}, which as argument takes another event
 `\code{e}', and returns true if the event (\code{this}) occurs after
-`\code{e}'.  The \code{after} function is part of Allen logic
-\cite{allen-logic-84}.
+`\code{e}'.  The definition of the \code{after} function is inspired by 
+Allen logic \cite{allen-logic-84}.
 %
 Finally, the model contains an instance \code{ShRaan} of type
 \code{SpaceCraft}.
@@ -67,8 +67,8 @@ means that for each class there exists at least one instance (object)
 of that class that satisfies the constraints.  The specific
 satisfiability problem that perhaps interests a user most is whether
 there is an instance \code{ShRaan} of the \code{SpaceCraft} class,
-which satisfies all the constraints of that class and the classes it
-refers to.
+which satisfies all the constraints of that class and the classes 
+to which it refers.
 
 \subsection{The Translation to SMT-LIB}
 
@@ -81,7 +81,7 @@ line K model in Figure \ref{fig:spacecraftSmt}, the translator
 generates 333 lines of uncommented SMT-LIB code (additional comments
 are generated to make the output easier for humans to read). We shall
 below highlight subsets from each class of formulas generated, while
-covering all the categories of formulas generated. Our main challenge
+covering each of the categories of formulas generated. Our main challenge
 in translating K to SMT-LIB is how to translate classes 
 supporting (multiple) {\em inheritance} and {\em recursive} references
 between classes. This will be illustrated in the following.
@@ -148,8 +148,8 @@ recursion between \code{A} and \code{B} (it is illegal SMT-LIB).
 \noindent The solution is to operate with {\em references} to objects rather
 than objects directly, exactly as done in any runtime system for an
 object-oriented programming language. In other words, we need a {\em
-  heap} mapping references to objects. For this purpose must define
-the type of references, which are just integers.
+  heap} mapping references to objects. For this purpose we define
+the type of references as integers.
 
 \begin{center}
 \begin{tabular}{c}
@@ -159,7 +159,7 @@ the type of references, which are just integers.
 \end{tabular}
 \end{center}
 
-\noindent We can now in SMT-LIB use \code{Ref} as the type of properties who's 
+\noindent We can now in SMT-LIB use \code{Ref} as the type of properties whose 
 type in K is a class, they will now denote references to objects of the class.
 This is illustrated by the following definition of the \code{SpaceCraft} datatype.
 
@@ -226,7 +226,7 @@ that entry.
 which can test what kind of object is at a certain location in the
 heap, as well as retrieve that object. The following functions perform
 these two tasks for the case of the \code{Instrument} objects (for
-each datatype constructor \code{C}, SMT-LIB generates a \code{is-C}
+each datatype constructor \code{C}, SMT-LIB generates an \code{is-C}
 function that can determine whether an object is constructed with the
 constructor).
 
@@ -445,6 +445,8 @@ that the taking of the picture occurs after the boot as well as after
 the memory initialization.  This can be seen from the fact that the
 end times of the boot and memory initialization events at references
 $25$ and $26$ are less than the start time of the take picture event
-at reference $27$.
+at reference $27$. Note that the values suggested by the SMT solver 
+are not necessarily realistic, although they satisfy the provided
+constraints.
 
 \lstset{language=K}

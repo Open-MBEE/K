@@ -16,7 +16,7 @@ grammar for \Klang{} (with trivial parts removed).
 \lstinputlisting{examples/fs.k} \\ \\
 \hline
 \end{tabular}
-\caption{A simple model of a spacecraft using \Klang{}.}
+\caption{A simple model of a file system using \Klang{}.}
 \label{fig:fs}
 \end{figure}
 
@@ -24,9 +24,10 @@ grammar for \Klang{} (with trivial parts removed).
 paradigms. It allows one to create \name{packages}, which are
 collections of \name{classes}. Packages can be \name{imported} by
 other \Klang{} files. Line 1 in Figure~\ref{fig:fs} shows an example
-of a package declaration. Classes, similar to other languages provide
-a means for abstracting and collecting properties (member instance
-variables). In \Klang{}, classes may contain properties, functions, and
+of a package declaration. Classes, as in other object-oriented languages, provide
+a means for abstracting and grouping properties (member instance
+variables). In \Klang{}, classes may contain properties, functions (there is no
+distinction between functions and methods), and
 constraints (requirements). Lines 7 -- 10 in Figure~\ref{fig:fs}
 declare an \code{Entry} class, which contains two members: property
 \code{name} of type \code{String}, and function \code{size} that takes
@@ -60,17 +61,19 @@ function signature. Both class \code{File} and \code{Dir} inherit from
 class \code{Entry}. Lines 14 -- 16 in Figure~\ref{fig:fs} show the
 implementation for the \code{size} function in the \code{Dir}
 class. It makes use of the \code{sum} function, that is provided by
-\Klang{} for all collections. The \code{size} function is the same as
+\Klang{} for all numerical collections. The \code{size} function is the same as
 declared in class \code{Entry}. Currently, function bodies cannot be
 declared more than once along an inheritance path. Functions may take
 an arbitrary number of arguments and return a single value. \Klang{}
 also provides tuples to group objects together. On line 27, we
 see a constraint being specified for class \code{Block} using the
-\code{req} keyword. The constraint specifies that the size function of
+\code{req} (require) keyword. The constraint specifies that the size function of
 \code{Block} should always return a value that is less than or equal
 to the value specified in the global property \code{SIZE\_OF\_BLOCK}
 (left unspecified). Any number of constraints can be specified at the
-global scope or within classes.
+global scope or within classes. Constraints are Boolean expressions, that
+restrict the values variables can take. Constraints in a class can be considered
+class invariants.
 
 Class \code{FileSystem} contains two functions: \code{mkDir} and
 \code{rmDir}. The \code{mkDir} function takes a single argument
@@ -85,7 +88,7 @@ specifies the precondition for function \code{mkDir} with the use of
 an {\em existential} quantifier. It specifies that when creating a
 directory in the file system, the given name \code{n} should not exist
 in the current set of entries in the file system. \Klang{} provides
-both {\em existential} and {\em universal} quantification in it's
+both {\em existential} and {\em universal} quantification in its
 expression language. For the same function, line 35 specifies the
 postcondition. \code{\$result} is a reserved word that refers to the
 return value of the function. It can only be used when specifying
@@ -103,8 +106,8 @@ constructors automatically for all classes where the arguments are
 assignment. Multiple named arguments can be provided as a comma
 delimited list. It is not necessary to specify a value for all members
 of a class. Any members that are specified in a constructor call are
-assigned the specified value, and the rest are left under
-specified. Line 39 invokes the \code{FileSystem} constructor as well
+assigned the specified value, and the rest are left underspecified. 
+Line 39 invokes the \code{FileSystem} constructor as well
 as the \code{Dir} constructor to create a new \code{FileSystem} object
 that contains an additional directory. Function \code{rmDir} is
 specified with no body, but only function specifications. The function
@@ -115,8 +118,8 @@ contents. The postcondition specifies that the resulting
 relative to the current object.
 
 Expressions in \Klang{} are the core of the language. Logical
-expressions in \Klang{} allow one to write assignments, binary
-expressions (such as and, or, implication, iff etc.), logical negation,
+expressions in \Klang{} allow one to write assignment statements (side-effects), 
+binary expressions (such as and, or, implication, iff etc.), logical negation,
 arithmetic negation, quantification, \code{is} for checking type, and
 \code{as} for type casting. Any expression can use variables, function
 application, lambda functions, and dot expressions. \Klang{} also

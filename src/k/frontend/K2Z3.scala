@@ -69,8 +69,9 @@ case class DataType(sort: Sort, constructor: FuncDecl, selectors: Map[String, Fu
 
 object K2Z3 {
 
-  var debug: Boolean = false
-  var silent: Boolean = false
+  var debug: Boolean = true
+  var debugRawModel: Boolean = false
+  var silent: Boolean = true
   var cfg: Map[String, String] = Map(
     "model" -> "true",
     "auto-config" -> "true",
@@ -259,7 +260,7 @@ object K2Z3 {
 
       z3Model = SolveExp(boolExp, smtModel)
 
-      if (debug) {
+      if (debugRawModel) {
         println
         println("--- BEGIN RAW SMT MODEL: ---")
         println(z3Model)

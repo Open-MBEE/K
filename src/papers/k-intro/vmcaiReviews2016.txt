@@ -1,0 +1,71 @@
+INTRODUCTION:
+
+What is new?
+
+- Model finding
+
+- Remind why the translation is not trivial:
+    - inheritance
+    - recursive datatypes
+    - sets
+  Should also be said in translations section.
+
+- Remind about the objective: the SysML story
+
+K:
+
+- The syntax supports higher-order logic ().
+
+- The distinction between multiplicities and collections is not well explained.  
+
+- Scoping rules are as in Java, C++
+
+K2SMT:
+
+- We only translate a first order subset of K.
+
+- Explain subset we translate.
+
+- Provide time it takes to solve space craft model: 2 seconds
+
+- A/B example: constructors, no need for them. Recursion can exist even without
+  assignment statements.
+
+- Recursive functions.
+
+USAGE:
+
+- Even if the authors cannot share details of the scheduling problems discovered
+  specifically in the Europa project, it would be useful to describe
+  how such problems are formulated and solved in the K language.
+  Solves in 15 seconds.
+  Remember: conclusion.
+
+
+RELATED WORK:
+
+- The translation of K into SMT-LIB could benefit from similar
+  translations that have well developed support for functions,
+  recursion, etc.  For example, why not translate K to Dafny?
+  Dafny: no inheritance (and it is essential).
+
+- Multiplicity and other inter-object constraints have also been explored in the work of 
+  Stephanie Baltzer.
+
+- The paper mentions a lot of related work, but does not say anything
+  about FORMULA, which I think may be the closest related work there
+  is.
+
+CONCLUSION:
+
+- It is a bit difficult to tell where the boundaries are of problems
+  that are solved and challenges to the method that persist (if any).
+
+  Problems:
+  - higher order constructs (such as functions taking functions as arguments)
+  - the heap (an array) makes some computations challenging:
+    -- real arithmetic
+    -- sets
+  - mutually recursive data structures
+  - arrays + universal quantification: 
+

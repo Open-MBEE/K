@@ -16,3 +16,4 @@ src/tests/current.smt.model
 *.blg
 *.log
 *.pdf
+src/examples/testsmt.k

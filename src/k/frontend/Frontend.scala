@@ -55,6 +55,7 @@ object Frontend {
         parseArgs(map ++ Map('expression -> value), tail)
       case "-jsonToExpression" :: value :: tail =>
         parseArgs(map ++ Map('json -> value), tail)
+      case "-postnobody" :: tail => parseArgs(map ++ Map('postnobody -> true), tail)
       case option :: tail =>
         println("Unknown option " + option)
         System.exit(1).asInstanceOf[Nothing]
@@ -67,6 +68,11 @@ object Frontend {
     var filename: String = null
     var fullFileName: String = null
 
+    options.get('postnobody) match {
+      case Some(true) => ASTOptions.checkPostNoBody = true
+      case _ =>
+    }
+    
     options.get('tests) match {
       case Some(true) => doTests(options.getOrElse('baseline, false).asInstanceOf[Boolean])
       case _          => ()
