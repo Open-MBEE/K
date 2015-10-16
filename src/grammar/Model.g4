@@ -170,6 +170,8 @@ expression:
   | collectionKind '{' expressionList? '}' #SetEnumExp
   | collectionKind '{' expression '..' expression '}' #SetRngExp
   | collectionKind '{' expression '|' rngBindingList SUCHTHAT expression '}' #SetCompExp 
+  | expression 'is' type # TypeCheckExp
+  | expression 'as' type # TypeCastExp
   | expression ('*'|'/'|'%'|'inter'|'\\'|'++'|'#'|'^') expression #BinOp1Exp
   | expression ('+'|'-'|'union') expression #BinOp2Exp
   | expression ('<=' | '>=' | '<' | '>' | '=' | '!=' | 'isin'|'!isin'|'subset'|'psubset') expression #BinOp3Exp
@@ -177,8 +179,6 @@ expression:
   | expression '||' expression #OrExp
   | expression ('=>' | '<=>') expression #IFFExp
   | expression ':=' expression #AssignExp
-  | expression 'is' type # TypeCheckExp
-  | expression 'as' type # TypeCastExp
   | 'assert' '(' expression ')' #AssertExp 
   | '-' expression #NegExp
   | qualifiedName '~' #PrevExp

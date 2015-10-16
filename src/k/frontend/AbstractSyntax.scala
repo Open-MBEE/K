@@ -3617,7 +3617,16 @@ trait Collection {
   def toJson2: JSONObject
 }
 
-case class ExpCollection(exp: Exp) extends Collection {
+case class ExpCollection(exp: Exp) extends Collection {  
+  override def toSMT: String = {
+    exp match {
+      case IdentExp(id) if getEntityDecl(id) != null => // user-defined class
+        "Ref" 
+      case _ => // TODO
+        UtilSMT.error(this.toString()) 
+    }
+  }
+  
   override def toString = exp.toString()
 
   override def toJson1 = {
