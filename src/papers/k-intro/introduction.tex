@@ -22,8 +22,8 @@ analysis capabilities, tedious GUI operations, requiring lots
 of visual real estate even for simple models, as well as large volumes
 of technologies. Learning UML and SysML is not just learning very
 large languages, it is also learning a large set of additional tools
-needed to work with models. We formulate the hypothesis that these
-drawbacks are in part due to the lack of a simple textual language, at
+needed to work with models. We formulate the hypothesis that some of these
+drawbacks in part are due to the lack of a simple textual language, at
 a size comparable to a programming language, underlying the
 graphical notations.
 
@@ -46,7 +46,7 @@ specifically its object-oriented variant VDM$^{++}$
 interaction between the graphical formalisms, the formal methods
 modeling languages, and programming languages.
 
-We report on an effort to formally ground SysML in a new textual
+We report on an effort to formally ground SysML in a textual
 formal specification language, named K (Kernel language), designed
 specifically for this purpose.  
 Our initial focus is on specifying and analyzing class diagrams
@@ -59,26 +59,43 @@ such be seen as a wide-spectrum modeling and programming language.
 The K language can be seen as a vehicle for giving semantics to SysML,
 providing analysis capabilities, and even provide an alternative to
 modeling with the mouse: writing textual models in K directly, just
-like one normally writes programs.  We in fact believe that modeling
-can be seen as programming in a language where some parts of the
+like one normally writes programs.  We adhere to the school of thought
+that modeling can be seen as programming in a language where some parts of the
 model (program) at any point in time are executable, and some maybe
 are not (yet).
 
 The idea of merging modeling and programming in one language has been
-studied before, as will be discussed in the related work section. Our
-contribution is the development of \Klang{}, along with the technology
-to automatically translate it to SMT (for proving satisfiability) in
-the presence of multiple inheritance and constraints. This technology
-as part of a larger effort at NASA's Jet Propulsion Laboratory (JPL)
-to develop a SysML model engineering tool set to be used by designers
-of the proposed 2022 mission to Jupiter's Moon Europa, also referred to
-as the Europa Clipper mission concept \cite{europa-clipper}. This tool set,
-named EMS (Engineering Modeling System), supports graphical SysML
-modeling using MagicDraw \cite{magicdraw} as well as textual K
-modeling using any text editor of convenience. 
-%Development of a textual language technology like K in a context asking for it makes it
-%a different experience than seen in most earlier such efforts, whether
-%or not the results will overlap.
+suggested before, as will be discussed in the related work section.
+Although K is not much different from previously suggested formalisms,  
+our contribution is the creation of \Klang{} specifically in support of a
+SysML model engineering tool set under development, to be used by
+designers of the proposed 2022 mission to Jupiter's Moon Europa, also
+referred to as the Europa Clipper mission concept
+\cite{europa-clipper}.  The resulting tool set will support graphical
+SysML modeling using MagicDraw \cite{magicdraw}, as well as
+browser-based model viewing and editing, including of textual K
+models. K is furthermore translated to the input language of the
+SMT-LIB standard, and currently processed with the Z3 SMT solver for
+proving satisfiability of class definitions (are the constraints
+consistent?), and model finding (find variable assignments satisfying
+constraints, for example used in task scheduling).  The contribution here is
+the handling of (multiple) class inheritance, which is typically not supported
+by similar languages translated to SMT-LIB, as well as the allowance
+of recursive class definitions. Multiple inheritance is a crucial part
+of SysML, and therefore of K.
+
+%The idea of merging modeling and programming in one language has been
+%studied before, as will be discussed in the related work section. Our
+%contribution is the development of \Klang{}, along with the technology
+%to automatically translate it to SMT (for proving satisfiability) in
+%the presence of multiple inheritance and constraints. This technology
+%as part of a larger effort at NASA's Jet Propulsion Laboratory (JPL)
+%to develop a SysML model engineering tool set to be used by designers
+%of the proposed 2022 mission to Jupiter's Moon Europa, also referred to
+%as the Europa Clipper mission concept \cite{europa-clipper}. This tool set,
+%named EMS (Engineering Modeling System), supports graphical SysML
+%modeling using MagicDraw \cite{magicdraw} as well as textual K
+%modeling using any text editor of convenience. 
 
 The paper is organized as follows. Section \ref{sec:k-syntax}
 introduces a subset of the K language through an example, which is
