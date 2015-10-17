@@ -350,6 +350,8 @@ object UtilSMT {
 class ObjectGraph {
   private var counter: Int = 1
 
+  def getCounter: Int = counter
+  
   def getHeapEntries(className: String): List[Int] = {
     if (className.equals("TopLevelDeclarations"))
       List(0)
@@ -540,7 +542,13 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
     // --- Combine results. ---
     // ------------------------
 
+    // Former result:
     result1 + getters + constants + result2
+    
+    // Testing:
+    //val max = UtilSMT.objectGraph.getCounter
+    //result1 + getters + constants + result2 +
+    //s"(assert (forall ((this Ref)) (=> (or (< this 0)(> this $max))(= (deref this) null))))"
   }
 
   def toScala: String = {
