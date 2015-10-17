@@ -38,8 +38,7 @@ capabilities. The obvious observation is that it might be fruitful to
 study the interaction between the two classes of formalisms. Consider
 furthermore that programming languages are gaining in abstraction,
 such as for example combining object-oriented and functional
-programming. An example is Scala (the language in which K is
-implemented), which has many commonalities with very early formal
+programming. An example is Scala, which has many commonalities with very early formal
 specification languages, such as for example VDM \cite{vdm78}, and
 specifically its object-oriented variant VDM$^{++}$
 \cite{vdmplusplus05}.  The study should therefore include the
@@ -53,7 +52,8 @@ Our initial focus is on specifying and analyzing class diagrams
 with constraints. K supports object-oriented concepts
 such as classes, multiple inheritance, and object instances. The
 contents of classes can be typed values, including functions, and
-constraints over these. K also contains programming constructs such as
+constraints over these expressed in higher-order predicate logic. 
+K also contains programming constructs such as
 variables, assignment statements, and looping constructs, and can as
 such be seen as a wide-spectrum modeling and programming language.
 The K language can be seen as a vehicle for giving semantics to SysML,
@@ -74,7 +74,7 @@ referred to as the Europa Clipper mission concept
 \cite{europa-clipper}.  The resulting tool set will support graphical
 SysML modeling using MagicDraw \cite{magicdraw}, as well as
 browser-based model viewing and editing, including of textual K
-models. K is furthermore translated to the input language of the
+models. A first-order subset of K is furthermore translated to the input language of the
 SMT-LIB standard, and currently processed with the Z3 SMT solver for
 proving satisfiability of class definitions (are the constraints
 consistent?), and model finding (find variable assignments satisfying

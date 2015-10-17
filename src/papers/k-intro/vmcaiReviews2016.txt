@@ -1,4 +1,6 @@
-INTRODUCTION:
+===========================
+INTRODUCTION: (Klaus: done)
+===========================
 
 What is new?
 
@@ -12,7 +14,9 @@ What is new?
 
 - Remind about the objective: the SysML story
 
+==
 K:
+==
 
 - The syntax supports higher-order logic ().
 
@@ -20,7 +24,9 @@ K:
 
 - Scoping rules are as in Java, C++
 
-K2SMT:
+====================
+K2SMT (Klaus: done):
+====================
 
 - We only translate a first order subset of K.
 
@@ -56,7 +62,9 @@ RELATED WORK:
   about FORMULA, which I think may be the closest related work there
   is.
 
-CONCLUSION:
+=========================
+CONCLUSION (Klaus: done):
+=========================
 
 - It is a bit difficult to tell where the boundaries are of problems
   that are solved and challenges to the method that persist (if any).

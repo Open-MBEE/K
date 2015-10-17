@@ -9,7 +9,7 @@ class Event {
   end : Real
   req start >= 0.0 && end > start
   fun after(e : Event) : Bool {
-    return start >= e.end
+    start >= e.end
   }
 }
 

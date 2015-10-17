@@ -25,9 +25,27 @@ as well in near term work.
 \label{fig:spacecraftSmt}
 \end{figure}
 
-The translator currently covers a subset of the K language
+The translator currently covers a first-order logic subset of the K language,
 corresponding to the model of a spacecraft shown in Figure
-\ref{fig:spacecraftSmt}. The example illustrates the features of K
+\ref{fig:spacecraftSmt}. 
+%
+The translated subset includes classes, multiple inheritance,
+properties of primitive types (\code{Bool}, \code{Int}, and
+\code{Real}), user-defined class types, and tuple types (cartesian
+product), functions, pre/post conditions, and constraints.  Functions,
+pre/post conditions, and constrainsts can be specified in a rich
+expression language supporting conditionals, class constructors, dot
+notation for accesing properties in objects, and universal and
+existential quantification.  Sets are under development but not
+covered here. Currently not translated constructs include type
+parameterized classes, statements with side-effects (assignment) and
+their corresponding looping constructs, functions as first class
+citizens, type abbreviations and predicate subtypes, as well as
+multiplicities, which will be treated as collection types.
+Recursive functions can currently not be defined using function definitions, but
+can be specified by providing function signatures plus separate constraints.
+
+The example illustrates the features of K
 that have been used by engineers at JPL until the time of writing. The
 emphasis of these models is on {\em structure} of artifacts and {\em
   scheduling} of events. The class \code{Thing} is meant to represent
@@ -64,11 +82,16 @@ consistent. That is, whether the constraints of each class are
 consistent (do not evaluate to {\em false} such as for example is the
 case with: `$x < 0 \wedge x > 0$'). From a semantics point of view, it
 means that for each class there exists at least one instance (object)
-of that class that satisfies the constraints.  The specific
-satisfiability problem that perhaps interests a user most is whether
-there is an instance \code{ShRaan} of the \code{SpaceCraft} class,
-which satisfies all the constraints of that class and the classes 
-to which it refers.
+of that class that satisfies the constraints.  An SMT solver demonstrates
+satisfiability by finding a model satisfying the constraints
+(model finding). This model furthermore represents a schedule of the events in
+the system manager.
+
+%The specific
+%satisfiability problem that perhaps interests a user most is whether
+%there is an instance \code{ShRaan} of the \code{SpaceCraft} class,
+%which satisfies all the constraints of that class and the classes 
+%to which it refers.
 
 \subsection{The Translation to SMT-LIB}
 
@@ -116,6 +139,9 @@ function \code{weight} to \code{o} as follows: \code{(weight o)}.
 Consider now the following schematic example of two mutually recursive
 classes, a situation often occurring in SysML modeling (relationships
 between two classes) as well as in programming (i.e. linked lists).
+Note that due to the declarative nature of K, it is possible to initialize
+objects of such classes in a recursive manner even without programming with side-effects.
+If no constructors are applied, the solver will assign objects.
 
 \lstset{language=K,numbers=none}
 
@@ -428,7 +454,8 @@ assertions. We are working on such a violation explanation capability.
 
 If the model on the other hand is satisfiable, an assignment to
 variables in the model will be returned by the solver. In our case the
-model outlined above is satisfiable. The returned assignment is shown
+model outlined above is satisfiable and solves in 2 seconds. 
+The returned assignment is shown
 in Figure \ref{fig:shapes}. This view has been produced by processing
 the output from Z3, which is less comprehensible.
 %
