@@ -46,6 +46,8 @@ object UtilSMT {
 
   var variableCounter: Int = 0
 
+  var heapInitializerConstants: List[(Int, String, String)] = Nil // index into heap, class name, constant
+
   def newVariable(): String = {
     variableCounter += 1
     s"var_$variableCounter"
@@ -351,7 +353,7 @@ class ObjectGraph {
   private var counter: Int = 1
 
   def getCounter: Int = counter
-  
+
   def getHeapEntries(className: String): List[Int] = {
     if (className.equals("TopLevelDeclarations"))
       List(0)
@@ -506,13 +508,37 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
     }
     result2 += "\n"
 
-    // Generate assertions:
+    // Generate heap:
 
-    // result2 += UtilSMT.headline1("Object existence assertions")
-    // for (ed <- entityDecls) {
-    //   result2 += ed.toSMTAssert + "\n"
-    // }
-    // result2 += "\n"
+    result2 += UtilSMT.headline1("Generate heap")
+    result2 += s"(assert\n"
+    result2 += s"  (=\n"
+    result2 += s"    heap\n"
+    val storeOperations = "(store" * UtilSMT.heapInitializerConstants.size
+    result2 += s"    $storeOperations\n"
+    result2 += s"      ((as const (Array Ref Any)) null)\n"
+    for ((index,className,constName) <- UtilSMT.heapInitializerConstants.reverse) {
+      result2 += s"        $index (lift-$className $constName))\n"      
+    }
+    result2 += s"  )\n"
+    result2 += s")\n"
+    result2 += "\n"    
+    
+    // ---
+    //(assert
+    //  (=
+    //    heap
+    //    (store(store(store(store(store(store(store
+    //      ((as const (Array Ref Any)) null)
+    //       0 (lift-TopLevelDeclarations top))
+    //      1 (lift-A a1))
+    //      2 (lift-A a2))
+    //      3 (lift-A a3))
+    //      4 (lift-B b1))
+    //      5 (lift-B b2))
+    //      6 (lift-B b3))
+    //  )
+    //)    
 
     // -----------------------------------
     // --- Back to the middle section. ---
@@ -542,13 +568,13 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
     // --- Combine results. ---
     // ------------------------
 
-    // Former result:
+    // Correct result:
     result1 + getters + constants + result2
-    
+
     // Testing:
-    //val max = UtilSMT.objectGraph.getCounter
-    //result1 + getters + constants + result2 +
-    //s"(assert (forall ((this Ref)) (=> (or (< this 0)(> this $max))(= (deref this) null))))"
+    // val max = UtilSMT.objectGraph.getCounter
+    // result1 + getters + constants + result2 +
+    // s"(assert (forall ((this Ref)) (=> (or (< this 0)(> this $max))(= (deref this) null))))"
   }
 
   def toScala: String = {
@@ -813,16 +839,14 @@ case class EntityDecl(
     // generate instances:
 
     for (index <- heapEntries) {
-      result += s"(assert (deref-is-$ident $index))\n"
+      val const = s"const-$index-$ident"
+      result += s"(declare-const $const $ident)\n"
+      UtilSMT.heapInitializerConstants ::= (index, ident, const)
     }
     result += "\n"
 
-    // if (ident == "TopLevelDeclarations") {
-    //   result += s"(assert (deref-is-TopLevelDeclarations 0))\n"
-    // } else {
-    //   for (index <- heapEntries) {
-    //     result += s"(assert (deref-is-$ident $index))\n"
-    //   }
+    // for (index <- heapEntries) {
+    //   result += s"(assert (deref-is-$ident $index))\n"
     // }
     // result += "\n"
 
@@ -857,18 +881,6 @@ case class EntityDecl(
     }
     result
   }
-
-  // def toSMTAssert: String = {
-  //   val res = if (ident == "TopLevelDeclarations") {
-  //     val r = s"(assert (!(deref-is-TopLevelDeclarations 0) :named xTOP))\n"
-  //     r
-  //   } else {
-  //     val r = s"(assert (!(exists ((instanceOf$ident Ref)) (deref-is-$ident instanceOf$ident)) :named x${UtilSMT.constraintCounter}))"
-  //     UtilSMT.saveConstraintMapping(s"class $ident is not satisfiable.")
-  //     r
-  //   }
-  //   res
-  // }
 
   override def toScala: String = {
     var result: String = s"class $ident"
@@ -3625,16 +3637,16 @@ trait Collection {
   def toJson2: JSONObject
 }
 
-case class ExpCollection(exp: Exp) extends Collection {  
+case class ExpCollection(exp: Exp) extends Collection {
   override def toSMT: String = {
     exp match {
       case IdentExp(id) if getEntityDecl(id) != null => // user-defined class
-        "Ref" 
+        "Ref"
       case _ => // TODO
-        UtilSMT.error(this.toString()) 
+        UtilSMT.error(this.toString())
     }
   }
-  
+
   override def toString = exp.toString()
 
   override def toJson1 = {

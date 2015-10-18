@@ -36,6 +36,8 @@ object Frontend {
       case Nil => map
       case "-f" :: value :: tail =>
         parseArgs(map ++ Map('modelFile -> value), tail)
+      case "-fraw" :: value :: tail =>
+        parseArgs(map ++ Map('rawSMTFile -> value), tail)
       case "-timeout" :: value :: tail =>
         timeoutValue = value.toInt
         parseArgs(map, tail)
@@ -67,6 +69,7 @@ object Frontend {
     var model: Model = null
     var filename: String = null
     var fullFileName: String = null
+    var rawSMT: String = null
 
     options.get('postnobody) match {
       case Some(true) => ASTOptions.checkPostNoBody = true
@@ -116,6 +119,13 @@ object Frontend {
       case _ => ()
     }
 
+    options.get('rawSMTFile) match {
+      case Some(f: String) =>
+        rawSMT = getRawSMTFromFile(f)
+        K2Z3.debugRawModel = true
+      case _ => ()
+    }    
+    
     options.get('mmsJson) match {
       case Some(file: String) => {
         model = parseMMSJson(file)
@@ -182,6 +192,30 @@ object Frontend {
       }
     }
 
+    if (rawSMT != null) {
+      if (K2Z3.debug) {
+        println()
+        println("--- SMT Model ---")
+        println()
+        println(rawSMT)
+        println()
+        println("-----------------")
+        println()
+      }
+      try {
+        val res = runWithTimeout(timeoutValue) { K2Z3.solveSMT(null, rawSMT, false) }
+        if (res.isEmpty) log("Timeout")
+
+      } catch {
+        case TypeCheckException => errorExit("Type Checking exception.")
+        case K2SMTException     => errorExit("K2SMT Exception during SMT solving.")
+        case K2Z3Exception      => errorExit("Z3 Exception during SMT solving.")
+        case e: Throwable =>
+          e.printStackTrace()
+          errorExit("Unknown Exception during SMT solving.")
+      }
+    }    
+    
     options.get('latex) match {
       case Some(_) => if (model != null) K2Latex.convert(filename, model)
       case _       => ()
@@ -1279,7 +1313,18 @@ object Frontend {
     var m: Model = ksv.visit(tree).asInstanceOf[Model]
     m
   }
-
+  
+  /**
+   * Read an SMT formula directly from a file.
+   * Useful for making SMT experiments without rise4fun.com
+   */
+  def getRawSMTFromFile(f: String): String = {
+    var path: Path = Paths.get(f)
+    var bytes: Array[Byte] = Files.readAllBytes(path)
+    var fileContents: String = new String(bytes, "UTF-8")
+    fileContents
+  }
+  
   def getModelFromString(f: String): Model = {
     val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(f)
     var m: Model = ksv.visit(tree).asInstanceOf[Model]
