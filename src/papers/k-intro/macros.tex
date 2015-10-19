@@ -1,4 +1,5 @@
 \usepackage{multirow}
+\usepackage{multicol}
 %\usepackage[T1]{fontenc}
 %\usepackage[latin9]{inputenc}
 %\usepackage{babel}
@@ -25,6 +26,7 @@
 % --- listings: ---
 % ------------------
 
+\usepackage{url}
 \usepackage{listings}
 \usepackage{color}
 \usepackage{amssymb}
@@ -37,11 +39,13 @@
 \usepackage{verbatimbox}
 \usepackage{verbatim}
 \usepackage{fancyvrb}
+\usepackage{apalike}
+\usepackage{SCITEPRESS}
 
 \definecolor{light-gray}{gray}{0.95}
 
 \lstdefinelanguage{K}{
-  morekeywords={package,import,class,extends,with,match,new,if,then,else,while,for,yield,val,var,this,case,type,implicit,private,protected,abstract,final, req, Int, String, Bool, fun, pre, post},
+  morekeywords={package,import,class,unique,extends,with,match,new,if,then,else,while,for,yield,val,var,this,case,type,implicit,private,protected,abstract,final, req, Int, String, Bool, fun, pre, post},
   otherkeywords={&,\{,\},_*},
   literate=
       {\#\#}{{$\oplus\;$}}2
@@ -74,7 +78,7 @@
 % --- Referring to code: ---
 
 \newcommand{\name}[1]{{\em #1}}
-\newcommand{\code}[1]{\texttt{#1}}
+%\newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\issue}[2]{{\bf ** #1: #2}}
 
 \newcommand{\Klang}{{K}}

@@ -1,4 +1,4 @@
-\section{Introduction to \Klang{}}
+\section{INTRODUCTION TO \Klang{}}
 \label{sec:k-syntax}
 
 In this section we introduce the \Klang{} language. We use the
@@ -10,32 +10,36 @@ the flash file system. Appendix~\ref{app:grammar} shows the ANTLR
 grammar for \Klang{} (with trivial parts removed).
 
 \begin{figure}
-\centering
-\begin{tabular}{c}
-\hline \\
-\lstinputlisting{examples/fs.k} \\ \\
-\hline
-\end{tabular}
-\caption{A simple model of a file system using \Klang{}.}
-\label{fig:fs}
+  \centering
+  \begin{tabular}{c}
+    %\hline \\
+    \small
+    \lstinputlisting{examples/fs.k}
+    % \hline
+    \end{tabular}
+  \vspace{0.2cm}
+  \caption{A simple model of a file system using \Klang{}.}
+  \label{fig:fs}
 \end{figure}
-
+  
 \Klang{} is a high level textual language which supports multiple
 paradigms. It allows one to create \name{packages}, which are
 collections of \name{classes}. Packages can be \name{imported} by
 other \Klang{} files. Line 1 in Figure~\ref{fig:fs} shows an example
-of a package declaration. Classes, as in other object-oriented languages, provide
-a means for abstracting and grouping properties (member instance
-variables). In \Klang{}, classes may contain properties, functions (there is no
-distinction between functions and methods), and
-constraints (requirements). Lines 7 -- 10 in Figure~\ref{fig:fs}
-declare an \code{Entry} class, which contains two members: property
-\code{name} of type \code{String}, and function \code{size} that takes
-no arguments and returns an \code{Int}. The function implementation is
-not specified for function \code{size}. \code{String} is one of the
-six primitive types provided by \Klang{}: \code{Int}, \code{Real},
-\code{String}, \code{Char}, \code{Unit}, and \code{Boolean}. \Klang{}
-also provides the following collections:
+of a package declaration. Classes, as in other object-oriented
+languages, provide a means for abstracting and grouping properties
+(member instance variables). In \Klang{}, classes may contain
+properties, functions (there is no distinction between functions and
+methods), and constraints (requirements). Scoping rules in \Klang{}
+are similar to languages such as Java and C++. Lines 9 -- 12 in
+Figure~\ref{fig:fs} declare an \code{Entry} class, which contains two
+members: property \code{name} of type \code{String}, and function
+\code{size} that takes no arguments and returns an \code{Int}. The
+function implementation is not specified for function
+\code{size}. \code{String} is one of the six primitive types provided
+by \Klang{}: \code{Int}, \code{Real}, \code{String}, \code{Char},
+\code{Unit}, and \code{Boolean}. \Klang{} also provides the following
+collections:
 
 \begin{description}
 \item [Bag:] collection of items not subject to any order
@@ -50,7 +54,7 @@ also provides the following collections:
 a subtype named \code{Byte}, which is derived from the \code{Int} type
 but restricted to values between 0 and 256. \Klang{} allows classes to
 inherit from one or more classes. For example, class \code{Dir},
-specified on lines 12 -- 17 extends the \code{Entry} class. As with
+specified on lines 14 -- 20 extends the \code{Entry} class. As with
 other languages, inheritance causes the child classes to inherit the
 instance variables and functions of the parent classes, but in
 addition, in \Klang{}, the child classes also inherit the constraints
@@ -58,117 +62,126 @@ from the parent classes. In the case of multiple inheritance, \Klang{}
 requires that the property names be unique across all
 classes. Functions on the other hand may be overloaded by changing the
 function signature. Both class \code{File} and \code{Dir} inherit from
-class \code{Entry}. Lines 14 -- 16 in Figure~\ref{fig:fs} show the
+class \code{Entry}. Lines 16 -- 19 in Figure~\ref{fig:fs} show the
 implementation for the \code{size} function in the \code{Dir}
 class. It makes use of the \code{sum} function, that is provided by
-\Klang{} for all numerical collections. The \code{size} function is the same as
-declared in class \code{Entry}. Currently, function bodies cannot be
-declared more than once along an inheritance path. Functions may take
-an arbitrary number of arguments and return a single value. \Klang{}
-also provides tuples to group objects together. On line 27, we
-see a constraint being specified for class \code{Block} using the
-\code{req} (require) keyword. The constraint specifies that the size function of
-\code{Block} should always return a value that is less than or equal
-to the value specified in the global property \code{SIZE\_OF\_BLOCK}
-(left unspecified). Any number of constraints can be specified at the
-global scope or within classes. Constraints are Boolean expressions, that
-restrict the values variables can take. Constraints in a class can be considered
-class invariants.
+\Klang{} for all numerical collections. The \code{size} function is
+the same as declared in class \code{Entry}. Currently, function bodies
+cannot be declared more than once along an inheritance path. Functions
+may take an arbitrary number of arguments and return a single
+value. \Klang{} also provides tuples to group objects together. On
+line 32, we see a constraint being specified for class \code{Block}
+using the \code{req} (require) keyword. The constraint specifies that
+the size function of \code{Block} should always return a value that is
+less than or equal to the value specified in the global property
+\code{SIZE\_OF\_BLOCK} (left unspecified). Any number of constraints
+can be specified at the global scope or within classes. Constraints
+are Boolean expressions, that restrict the values variables can
+take. Constraints in a class can be considered class invariants.
 
-Class \code{FileSystem} contains two functions: \code{mkDir} and
-\code{rmDir}. The \code{mkDir} function takes a single argument
-(\code{n} of type \code{String}) and returns a \code{FileSystem}
-object which contains one additional directory entry that has name
-\code{n}. The \code{rmDir} function has no body specified. Both
-functions are defined along with a {\em function
+Class \code{FS} (for \code{FileSystem}) contains two functions:
+\code{mkDir} and \code{rmDir}. The \code{mkDir} function takes a
+single argument (\code{n} of type \code{String}) and returns a
+\code{FS} object which contains one additional directory entry that
+has name \code{n}. The \code{rmDir} function has no body
+specified. Both functions are defined along with a {\em function
   specification}. Function specifications are a list of {\em pre} and
 {\em post} conditions that describe the precondition and postcondition
-of the function. Any number of specifications may be provided. Line 34
+of the function. Any number of specifications may be provided. Line 39
 specifies the precondition for function \code{mkDir} with the use of
 an {\em existential} quantifier. It specifies that when creating a
 directory in the file system, the given name \code{n} should not exist
 in the current set of entries in the file system. \Klang{} provides
 both {\em existential} and {\em universal} quantification in its
-expression language. For the same function, line 35 specifies the
+expression language. For the same function, line 42 specifies the
 postcondition. \code{\$result} is a reserved word that refers to the
 return value of the function. It can only be used when specifying
 postconditions. The post condition for \code{mkDir} specifies that
-function \code{mkDir} returns a \code{FileSystem} object that has the
-same size as the current \code{FileSystem} object, which was used to
-create the new directory. Line 36, which is the body of function
-\code{mkDir} creates a new \code{FileSystem} object by calling the
-constructor for class \code{FileSystem}. The only argument provided to
-the constructor is a \code{Dir} object which contains one additional
-\code{Dir} entry whose name is \code{n}. \Klang{} provides
-constructors automatically for all classes where the arguments are
-{\em named arguments}. Each named argument is of the form \code{member
-  :: value} where the \code{::} notation is used as a form of
-assignment. Multiple named arguments can be provided as a comma
-delimited list. It is not necessary to specify a value for all members
-of a class. Any members that are specified in a constructor call are
-assigned the specified value, and the rest are left underspecified. 
-Line 39 invokes the \code{FileSystem} constructor as well
-as the \code{Dir} constructor to create a new \code{FileSystem} object
+function \code{mkDir} returns a \code{FS} object that has the same
+size as the current \code{FS} object, which was used to create the new
+directory. Line 44, which is the body of function \code{mkDir} creates
+a new \code{FS} object by calling the constructor for class
+\code{FS}. The only argument provided to the constructor is a
+\code{Dir} object which contains one additional \code{Dir} entry whose
+name is \code{n}. \Klang{} provides constructors automatically for all
+classes where the arguments are {\em named arguments}. Each named
+argument is of the form \code{member :: value} where the \code{::}
+notation is used as a form of assignment. Multiple named arguments can
+be provided as a comma delimited list. It is not necessary to specify
+a value for all members of a class. Any members that are specified in
+a constructor call are assigned the specified value, and the rest are
+left underspecified.  Line 48 invokes the \code{FS} constructor as
+well as the \code{Dir} constructor to create a new \code{FS} object
 that contains an additional directory. Function \code{rmDir} is
 specified with no body, but only function specifications. The function
 specifications require that function \code{rmDir} only execute if the
 provided directory \code{n} exists in the current object's
-contents. The postcondition specifies that the resulting
-\code{FileSystem} object should be either the same size or smaller
-relative to the current object.
+contents. The postcondition specifies that the resulting \code{FS}
+object should be either the same size or smaller relative to the
+current object.
 
 Expressions in \Klang{} are the core of the language. Logical
-expressions in \Klang{} allow one to write assignment statements (side-effects), 
-binary expressions (such as and, or, implication, iff etc.), logical negation,
-arithmetic negation, quantification, \code{is} for checking type, and
-\code{as} for type casting. Any expression can use variables, function
-application, lambda functions, and dot expressions. \Klang{} also
-supports control expressions such as \code{if-then-else},
-\code{while}, \code{match}, \code{for}, \code{continue}, \code{break},
-and \code{return}. These expressions are similar to control
-expressions provided in other languages such as Scala or Java. A
-detailed description of the expression language is beyond the scope of
-this paper. Appendix~\ref{app:grammar} provides the complete grammar
-for the expression language.
+expressions in \Klang{} allow one to write assignment statements
+(side-effects), binary expressions (such as and, or, implication, iff
+etc.), logical negation, arithmetic negation, quantification,
+\code{is} for checking type, and \code{as} for type casting. Any
+expression can use variables, function application, lambda functions,
+and dot expressions. \Klang{} also supports control expressions such
+as \code{if-then-else}, \code{while}, \code{match}, \code{for},
+\code{continue}, \code{break}, and \code{return}. These expressions
+are similar to control expressions provided in other languages such as
+Scala or Java. A detailed description of the expression language is
+beyond the scope of this paper. Appendix~\ref{app:grammar} provides
+the complete grammar for the expression language.
 
 \Klang{} also provides {\em multiplicities} as part of the
-language. The concept is highly influenced by multiplicities that can
-be found in graphical formalisms such as UML/SysML. The goal with
-multiplicities is to be able to specify the size of a collection. For
-example, Figure~\ref{fig:mult} shows a \Klang{} model of a
-\code{Person} that has various member properties, and the
-corresponding inferred type for each member property. We will analyze
-each of these individually.
+language. Multiplicities in \Klang{} are greatly influenced by similar
+concepts in graphical formalisms such as UML/SysML. In \Klang{},
+multiplicities can be used as a short hand for specifying collections
+and also restricting the size of collections. Figure~\ref{fig:mult}
+shows a \Klang{} model of a \code{Person} that has various member
+properties, and the corresponding inferred type for each member
+property. We will analyze each of these individually.
 
-\begin{figure}
-\centering
-\caption{Example model (left) and inferred types (right) for members
-  of class \code{Person}.}  
-\begin{tabular}[c]{c|c}
-\begin{subfigure}[c]{0.5\textwidth}
-\hspace{1cm}\scalebox{0.8}{\lstinputlisting{examples/mult.k} }
-\end{subfigure}
-&
-\begin{subfigure}[c]{0.5\textwidth}
-%\includegraphics[scale=0.35]{mult.png}
-\hspace{1cm}\scalebox{0.8}{\lstinputlisting{examples/multr.k} }
-\end{subfigure}
-\\
-\end{tabular}
-\label{fig:mult}
-\end{figure}
+\begin{figure*}
+  \centering
+  \begin{tabular}[c]{c|c}
+    \begin{subfigure}[c]{0.5\textwidth}
+      \centering
+      \begin{tabular}{c}
+        \small
+        \lstinputlisting{examples/mult.k}
+      \end{tabular}
+    \end{subfigure}
+    \hspace{-0.5cm}
+    &
+    \begin{subfigure}[c]{0.5\textwidth}
+      \centering
+      \begin{tabular}{c}
+        \small
+        \lstinputlisting{examples/multr.k}
+      \end{tabular}
+    \end{subfigure}
+    \\
+  \end{tabular}
+  \vspace{0.1cm}
+  \caption{Example model (left) and inferred types (right) for members
+    of class \code{Person}.}  
+  \label{fig:mult}
+\end{figure*}
 
 Each \code{Person} can have exactly one \code{mother}. This is
 specified by line 4. No explicit multiplicity is specified, which is
 assumed to be a multiplicity of 1. A \code{Person} can also have
 \code{children}, which is specified by line 5. Line 6 specifies that a
-\code{Person} has \code{cars}, which semantically translates to a
-\code{Bag} (\Klang{} default) of \code{Car}, but is written using a
-multiplicity (as opposed to the use of a collection). Finally, a
-person may own many \code{prtflios}, which is a \code{Set} of
-\code{Stock}, specified to have a multiplicity of 1 or
-more. This translates to \code{prtflios} being a \code{Bag} of
-\code{Set[Stock]} with at least 1 entry and no upper limit.
+\code{Person} may have many \code{cars}. It is written using a
+modifier and a multiplicity, which semantically translates to a
+\code{Set} (\Klang{} default for a multiplicity is \code{Bag}) of
+\code{Car}. Finally, a person may own zero or more
+\code{prtflios}, which is a \code{Set} of \code{Stock}, specified to
+have a multiplicity of 1 or more. This translates to \code{prtflios}
+being a \code{Bag} of \code{Set[Stock]} with at least 1 entry and no
+upper limit.
 
 \sysml{} models also carry a lot of meta data information in them. To
 accommodate for this, \Klang{} also provides the {\em annotation}

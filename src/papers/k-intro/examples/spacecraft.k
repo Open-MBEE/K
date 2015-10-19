@@ -1,45 +1,51 @@
-package examples.spacecraft
-
-class Thing {
-  weight : Int
-}
+class Thing {weight : Int}
 
 class Event {
   start : Real
   end : Real
-  req start >= 0.0 && end > start
-  fun after(e : Event) : Bool {
+  req start >= 0.0 && 
+      end > start
+  fun after(e : Event) 
+        : Bool {
     start >= e.end
   }
 }
 
-class Instrument extends Thing {
+class Instr 
+      extends Thing {
   power : Real
   req power >= 0.0
-  req weight > 0 && weight <= 1000
+  req weight > 0 && 
+      weight <= 1000
 }
 
-class SimpleRadio extends Instrument 
-class SmartRadio extends SimpleRadio 
+class SmplRadio 
+      extends Instr
+class SmrtRadio 
+      extends SmplRadio 
 
-class SystemManager {
+class SysMngr {
   bootUp : Event
   initMem : Event
-  takePicture : Event
-  req takePicture.after(initMem) && 
-      takePicture.after(bootUp)
+  tkPic : Event
+  req tkPic.after(initMem) 
+      && 
+      tkPic.after(bootUp)
 }
 
-class SpaceCraft extends Thing {
-  instrumentsWeight : Real
-  radio : Instrument 
-  camera : Instrument
-  software : SystemManager
+class SpaceCraft 
+      extends Thing {
+  instrWeight : Real
+  radio : Instr
+  camera : Instr
+  software : SysMngr
 
-  req instrumentsWeight = radio.weight + camera.weight
+  req instrWeight = 
+        radio.weight + 
+        camera.weight
 
-  req notTooHeavy: instrumentsWeight <= 1000
-
+  req notTooHeavy: 
+        instrWeight <= 999
 }
 
 ShRaan : SpaceCraft
