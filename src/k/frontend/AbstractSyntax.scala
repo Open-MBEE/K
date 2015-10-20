@@ -14,8 +14,9 @@ object ASTOptions {
   var debug: Boolean = false
   var silent: Boolean = false
   var useJson1: Boolean = true
-  var numberOfInstances: Int = 5
+  var numberOfInstances: Int = 1
   var checkPostNoBody: Boolean = false
+  var heapInitializedToNull: Boolean = true
 }
 
 object UtilAST {
@@ -508,37 +509,23 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
     }
     result2 += "\n"
 
-    // Generate heap:
+    if (ASTOptions.heapInitializedToNull) {
+      // Generate heap:
 
-    result2 += UtilSMT.headline1("Generate heap")
-    result2 += s"(assert\n"
-    result2 += s"  (=\n"
-    result2 += s"    heap\n"
-    val storeOperations = "(store" * UtilSMT.heapInitializerConstants.size
-    result2 += s"    $storeOperations\n"
-    result2 += s"      ((as const (Array Ref Any)) null)\n"
-    for ((index,className,constName) <- UtilSMT.heapInitializerConstants.reverse) {
-      result2 += s"        $index (lift-$className $constName))\n"      
+      result2 += UtilSMT.headline1("Generate heap")
+      result2 += s"(assert\n"
+      result2 += s"  (=\n"
+      result2 += s"    heap\n"
+      val storeOperations = "(store" * UtilSMT.heapInitializerConstants.size
+      result2 += s"    $storeOperations\n"
+      result2 += s"      ((as const (Array Ref Any)) null)\n"
+      for ((index, className, constName) <- UtilSMT.heapInitializerConstants.reverse) {
+        result2 += s"        $index (lift-$className $constName))\n"
+      }
+      result2 += s"  )\n"
+      result2 += s")\n"
+      result2 += "\n"
     }
-    result2 += s"  )\n"
-    result2 += s")\n"
-    result2 += "\n"    
-    
-    // ---
-    //(assert
-    //  (=
-    //    heap
-    //    (store(store(store(store(store(store(store
-    //      ((as const (Array Ref Any)) null)
-    //       0 (lift-TopLevelDeclarations top))
-    //      1 (lift-A a1))
-    //      2 (lift-A a2))
-    //      3 (lift-A a3))
-    //      4 (lift-B b1))
-    //      5 (lift-B b2))
-    //      6 (lift-B b3))
-    //  )
-    //)    
 
     // -----------------------------------
     // --- Back to the middle section. ---
@@ -838,17 +825,19 @@ case class EntityDecl(
 
     // generate instances:
 
-    for (index <- heapEntries) {
-      val const = s"const-$index-$ident"
-      result += s"(declare-const $const $ident)\n"
-      UtilSMT.heapInitializerConstants ::= (index, ident, const)
+    if (ASTOptions.heapInitializedToNull) {
+      for (index <- heapEntries) {
+        val const = s"const-$index-$ident"
+        result += s"(declare-const $const $ident)\n"
+        UtilSMT.heapInitializerConstants ::= (index, ident, const)
+      }
+      result += "\n"
+    } else {
+      for (index <- heapEntries) {
+        result += s"(assert (deref-is-$ident $index))\n"
+      }
+      result += "\n"
     }
-    result += "\n"
-
-    // for (index <- heapEntries) {
-    //   result += s"(assert (deref-is-$ident $index))\n"
-    // }
-    // result += "\n"
 
     // constraints for property definitions of the form: x : T = e
     for (PropertyDecl(_, propertyName, ty, _, _, Some(exp)) <- propertyDecls) {
