@@ -1,5 +1,4 @@
-
-\section{Translating K to SMT-LIB}
+\section{TRANSLATING \Klang{} to SMT-LIB}
 \label{sec:k2smt}
 
 In this section we illustrate the translation from K to the SMT- LIB
@@ -17,17 +16,18 @@ as well in near term work.
 \begin{figure}
 \centering
 \begin{tabular}{c}
-\hline \\
+%\hline \\
+\small
 \lstinputlisting{examples/spacecraft.k} \\ \\
-\hline
+%\hline
 \end{tabular}
 \caption{A simple \Klang{} model of a spacecraft}
 \label{fig:spacecraftSmt}
 \end{figure}
 
-The translator currently covers a first-order logic subset of the K language,
-corresponding to the model of a spacecraft shown in Figure
-\ref{fig:spacecraftSmt}. 
+The translator currently covers a first-order logic subset of the K
+language, corresponding to the model of a spacecraft shown in Figure
+\ref{fig:spacecraftSmt}.
 %
 The translated subset includes classes, multiple inheritance,
 properties of primitive types (\code{Bool}, \code{Int}, and
@@ -51,7 +51,7 @@ emphasis of these models is on {\em structure} of artifacts and {\em
   scheduling} of events. The class \code{Thing} is meant to represent
 entities that have weight. Instruments, its radio sub-classes, and 
 the spacecraft class itself, inherit from 
-class \code{Thing}. The class \code{Instrument} defines a \code{power}
+class \code{Thing}. The class \code{Instr} defines a \code{power}
 level. Requirements in the form of Boolean constraints are imposed on
 \code{power} and \code{weight}. The \code{SpaceCraft} class makes
 instances of instruments, defines a combined sum
@@ -64,7 +64,7 @@ The spacecraft in addition contains a system manager, representing the
 software on board. For the purpose of illustration, the system manager
 is defined as a small {\em scheduler} of three events: a \code{bootUp}
 event, re-booting the flight software computer, a \code{initMem}
-event, initializing the computer memory, and a \code{takePicture}
+event, initializing the computer memory, and a \code{tkPic}
 event, taking a picture. An event is an instance of the \code{Event}
 class, which defines an event as having a start time and an end time
 appearing after the start time. In addition, the \code{Event} class
@@ -122,6 +122,7 @@ can be represented in SMT-LIB as follows.
 
 \begin{center}
 \begin{tabular}{c}
+\small
 \begin{lstlisting}
 (declare-datatypes () ((Thing 
   (mk-Thing (weight Int)))))
@@ -147,10 +148,11 @@ If no constructors are applied, the solver will assign objects.
 
 \begin{center}
 \begin{tabular}{c}
+\small
 \begin{lstlisting}
-class A {      class B {
+class A {   class B {
   b : B          a : A
-}              }
+}           }
 \end{lstlisting}
 \end{tabular}
 \end{center}
@@ -163,6 +165,7 @@ recursion between \code{A} and \code{B} (it is illegal SMT-LIB).
 
 \begin{center}
 \begin{tabular}{c}
+\small
 \begin{lstlisting}
 (declare-datatypes () (
   (A (mk-A (b B)))
@@ -179,6 +182,7 @@ the type of references as integers.
 
 \begin{center}
 \begin{tabular}{c}
+\small
 \begin{lstlisting}
 (define-sort Ref () Int)
 \end{lstlisting}
@@ -191,12 +195,14 @@ This is illustrated by the following definition of the \code{SpaceCraft} datatyp
 
 \begin{center}
 \begin{tabular}{c}
+\small
 \begin{lstlisting}  
 (declare-datatypes () ((SpaceCraft 
-  (mk-SpaceCraft (weight Int)
-                 (instrumentsWeight Real)
-                 (radio Ref) (camera Ref)
-                 (software Ref)))))
+  (mk-SpaceCraft 
+      (weight Int)
+      (instrumentsWeight Real)
+      (radio Ref) (camera Ref)
+      (software Ref)))))
 \end{lstlisting}
 \end{tabular}
 \end{center}
@@ -213,11 +219,15 @@ corresponds to Java's type \code{Object}.
 
 \begin{center}
 \begin{tabular}{c}
+\small
 \begin{lstlisting}
 (declare-datatypes () ((Any
-  (lift-Thing (sel-Thing Thing))
-  (lift-Instrument (sel-Instrument Instrument))
-  (lift-SpaceCraft (sel-SpaceCraft SpaceCraft))
+  (lift-Thing 
+    (sel-Thing Thing))
+  (lift-Instr 
+    (sel-Instr Instr))
+  (lift-SpaceCraft 
+    (sel-SpaceCraft SpaceCraft))
   ...
   null)))
 \end{lstlisting}
@@ -229,6 +239,7 @@ type \code{Ref} to \code{Any}.
 
 \begin{center}
 \begin{tabular}{c}
+\small
 \begin{lstlisting}
 (declare-const heap (Array Ref Any))
 \end{lstlisting}
@@ -241,6 +252,7 @@ that entry.
 
 \begin{center}
 \begin{tabular}{c}
+\small
 \begin{lstlisting}
 (define-fun deref ((ref Ref)) Any
   (select heap ref))
@@ -251,90 +263,103 @@ that entry.
 \noindent With this function we are now ready to define functions,
 which can test what kind of object is at a certain location in the
 heap, as well as retrieve that object. The following functions perform
-these two tasks for the case of the \code{Instrument} objects (for
+these two tasks for the case of the \code{Instr} objects (for
 each datatype constructor \code{C}, SMT-LIB generates an \code{is-C}
 function that can determine whether an object is constructed with the
 constructor).
 
 \begin{center}
 \begin{tabular}{c}
+\small
 \begin{lstlisting}
-(define-fun deref-is-Instrument ((this Ref)) Bool
-  (is-lift-Instrument (deref this)))
+(define-fun deref-is-Instr 
+  ((this Ref)) Bool
+  (is-lift-Instr (deref this)))
 
-(define-fun deref-Instrument ((this Ref)) Instrument
-  (sel-Instrument (deref this)))
+(define-fun deref-Instr 
+  ((this Ref)) Instr
+  (sel-Instr (deref this)))
 \end{lstlisting}
 \end{tabular}
 \end{center}
 
 \noindent As we have seen, K classes can contain properties of types
 that are classes. For example the \code{SpaceCraft} class contains a
-property \code{radio} of type \code{Instrument}. In an object-oriented
+property \code{radio} of type \code{Instr}. In an object-oriented
 language like K with inheritance, such a property can denote any
 object that is of type that either is equal to, or sub-classes
-\code{Instrument}. In order to formulate invariants on objects of
+\code{Instr}. In order to formulate invariants on objects of
 class \code{SpaceCraft}, we therefore need to be able to determine
 whether a \code{radio} object is equal to, or sub-classes
-\code{Instrument}. This task is performed by the following function,
+\code{Instr}. This task is performed by the following function,
 the body of which is a disjunction between the three alternatives.
 
 \begin{center}
 \begin{tabular}{c}
+\small
 \begin{lstlisting}
-(define-fun deref-isa-Instrument ((this Ref)) Bool
+(define-fun deref-isa-Instr 
+  ((this Ref)) Bool
   (or
-    (deref-is-Instrument this)
-    (deref-is-SimpleRadio this)
-    (deref-is-SmartRadio this)))
+    (deref-is-Instr this)
+    (deref-is-SmplRadio this)
+    (deref-is-SmrtRadio this)))
 \end{lstlisting}
 \end{tabular}
 \end{center}
 
 \textbf{Getters of properties in classes} Functions and requirements
 access properties. An example is the expression \code{weight > 0} in
-class \code{Instrument}.  These accesses are wrapped into {\em getter}
+class \code{Instr}.  These accesses are wrapped into {\em getter}
 functions. As an example, the \code{weight} property of the class
-\code{Instrument} can be accessed with a call of the following
-function, named \code{Instrument!weight} (SMT-LIB allows symbols such
+\code{Instr} can be accessed with a call of the following
+function, named \code{Instr!weight} (SMT-LIB allows symbols such
 as `\code{!}'  in names, to be discussed further below), on a
-reference that is assumed to refer to an \code{Instrument} object.
+reference that is assumed to refer to an \code{Instr} object.
 
 \begin{center}
 \begin{tabular}{c}
+\small
 \begin{lstlisting}
-(define-fun Instrument!weight ((this Ref)) Int
-  (weight (deref-Instrument this)))
+(define-fun Instr!weight 
+  ((this Ref)) Int
+  (weight (deref-Instr this)))
 \end{lstlisting}
 \end{tabular}
 \end{center}
 
 \noindent The above definition assumes that the \code{this} reference
-denotes an \code{Instrument} object, and not an object of any
-sub-class on \code{Instrument}, hence the `\code{!}' symbol (for {\em
+denotes an \code{Instr} object, and not an object of any
+sub-class on \code{Instr}, hence the `\code{!}' symbol (for {\em
   exact!  class}) in the name.  This is sufficient when checking
-satisfiability of the class \code{Instrument} class itself. However,
+satisfiability of the class \code{Instr} class itself. However,
 when checking the satisfiability of, for example, the
 \code{SpaceCraft} class, which {\em contains} a property of type
-\code{Instrument}, as for example \code{radio : Instrument}, we have
+\code{Instr}, as for example \code{radio : Instr}, we have
 to assume that \code{radio} in addition potentially can refer to any
-object of a class that sub-classes \code{Instrument}, which in this
-case is either \code{SimpleRadio} or \code{SmartRadio}. This is
+object of a class that sub-classes \code{Instr}, which in this
+case is either \code{SmplRadio} or \code{SmartRadio}. This is
 achieved with the following alternative getter function, named
-\code{Instrument.weight}, for the \code{weight} property of the class
-\code{Instrument}.
+\code{Instr.weight}, for the \code{weight} property of the class
+\code{Instr}.
 
 \begin{center}
-\begin{tabular}{c}
+\small
 \begin{lstlisting}
-(define-fun Instrument.weight ((this Ref)) Int
-  (ite (deref-is-Instrument this)         ; if
-    (weight (deref-Instrument this))      ; then
-    (ite (deref-is-SimpleRadio this)      ; else if
-      (weight (deref-SimpleRadio this))   ; then
-      (weight (deref-SmartRadio this))))) ; else
+(define-fun Instr.weight 
+  ((this Ref)) Int
+  ; if
+  (ite (deref-is-Instr this)         
+    ; then
+    (weight (deref-Instr this))      
+    ; else if
+    (ite (deref-is-SmplRadio this)      
+      ; then
+      (weight (deref-SmplRadio this))   
+      ; else
+      (weight (deref-SmrtRadio this))
+    )))
 \end{lstlisting}
-\end{tabular}
 \end{center}
 
 \noindent Each line in the body ends with a comment after the comment
@@ -360,8 +385,10 @@ the two versions, which are the same in this case.
 
 \begin{center}
 \begin{tabular}{c}
+\small
 \begin{lstlisting}
-(define-fun Event.after ((this Ref)(e Ref)) Bool
+(define-fun Event.after 
+  ((this Ref)(e Ref)) Bool
   (>= (Event.start this)  (Event.end e)))
 \end{lstlisting}
 \end{tabular}
@@ -370,8 +397,8 @@ the two versions, which are the same in this case.
 \noindent The first parameter is a reference (named \code{this}) of
 type \code{Ref}. The \code{this} reference is meant to refer to the
 object upon which the function is called. Consider for example a call
-like: \code{takePicture.after(initMem)} in line 29 of Figure
-\ref{fig:spacecraftSmt}. Here \code{takePicture} denotes a reference
+like: \code{tkPic.after(initMem)} in line 31 of Figure
+\ref{fig:spacecraftSmt}. Here \code{tkPic} denotes a reference
 to which the parameter \code{this} is bound.  The second parameter is
 the user-provided parameter.
 
@@ -382,36 +409,41 @@ class invariants are generated and asserted. These validate the
 satisfiability of our classes.  The invariant for a class is generated
 as a function that as argument takes a \code{this} reference to an
 object of that class. Let's take the example of the
-\code{SystemManager} class. The generated invariant is the following.
+\code{SysMngr} class. The generated invariant is the following.
 
 \begin{center}
 \begin{tabular}{c}
+\small
 \begin{lstlisting}
-(define-fun SystemManager.inv ((this Ref)) Bool
+(define-fun SysMngr.inv 
+  ((this Ref)) Bool
   (and
-    (deref-isa-Event (SystemManager!bootUp this))
-    (deref-isa-Event (SystemManager!initMem this))
-    (deref-isa-Event (SystemManager!takePicture this))
+    (deref-isa-Event 
+      (SysMngr!bootUp this))
+    (deref-isa-Event 
+      (SysMngr!initMem this))
+    (deref-isa-Event 
+      (SysMngr!tkPic this))
     (and 
       (Event.after 
-        (SystemManager!takePicture this)  
-        (SystemManager!initMem this)) 
+        (SysMngr!tkPic this)  
+        (SysMngr!initMem this)) 
       (Event.after 
-        (SystemManager!takePicture this)  
-        (SystemManager!bootUp this)))))
+        (SysMngr!tkPic this)  
+        (SysMngr!bootUp this)))))
 \end{lstlisting}
 \end{tabular}
 \end{center}
 
 \noindent The body of this function is a conjunction of the conditions
-that have to hold on the \code{SystemManager} object referred to by
+that have to hold on the \code{SysMngr} object referred to by
 \code{this}. There are four such: three for the property definitions
-in lines 26-28 in Figure \ref{fig:spacecraftSmt}, and one for the
-requirement in line 29. Each of the property definitions results in a
+in lines 28 -- 30 in Figure \ref{fig:spacecraftSmt}, and one for the
+requirement on line 31. Each of the property definitions results in a
 condition that verifies that the property is of the right type, in
 these three cases: that each of the properties \code{bootUp},
-\code{initMem}, and \code{takePicture}, are objects of any sub-class
-of class \code{Event} (the use of `\code{isa}'), although in this case
+\code{initMem}, and \code{tkPic}, are objects of any sub-class of
+class \code{Event} (the use of `\code{isa}'), although in this case
 there are no sub-classes of \code{Event}. The last condition,
 corresponding to the requirement, illustrate how functions are called,
 in the case the function \code{after}.
@@ -420,22 +452,35 @@ We are now finally ready to assert the well-formedness of the
 model. For each class two assertions are generated, one that asserts
 the existence of an object of the class in the heap, and one asserting
 that every object of that class in the heap satisfies the invariant of
-that class. Below are these two assertions for the \code{SystemManager}
+that class. Below are these two assertions for the \code{SysMngr}
 class.
 
 \begin{center}
 \begin{tabular}{c}
+\small
 \begin{lstlisting}
 (assert (exists ((this Ref)) 
-  (deref-is-SystemManager this)))
+  (deref-is-SysMngr this)))
 
 (assert (forall ((this Ref))
   (=> 
-    (deref-is-SystemManager this) 
-    (SystemManager.inv this))))
+    (deref-is-SysMngr this) 
+    (SysMngr.inv this))))
 \end{lstlisting}
 \end{tabular}
 \end{center}
+
+\begin{figure*}[!t]
+\centering
+  \lstset{language=SMT,numbers=none}
+  \small
+  \begin{tabular}{c}
+    \lstinputlisting{examples/spacecraftOutput.k}% 
+    %\VerbatimInput{examples/spacecraftOutput.k}
+  \end{tabular}
+  \caption{Output of the K tool chain for the spacecraft example.}
+  \label{fig:shapes}
+\end{figure*}
 
 \textbf{Solving the model} Given the generated SMT-LIB model outlined
 above, an SMT solver following the SMT-LIB standard can determine
@@ -445,12 +490,6 @@ Z3. If the model is {\bf not} satisfiable, the solver will just return
 eliminating assertions to discover which assertions caused the model
 to become unsatisfiable, in the best case the minimal set of such
 assertions. We are working on such a violation explanation capability.
-
-\begin{figure}
-\VerbatimInput{examples/spacecraftOutput.k}
-\caption{Output of the K tool chain for the spacecraft example.}
-\label{fig:shapes}
-\end{figure}
 
 If the model on the other hand is satisfiable, an assignment to
 variables in the model will be returned by the solver. In our case the
@@ -464,9 +503,9 @@ property in the heap denotes a \code{SpaceCraft} object.  This object
 contains various fields, for example the \code{weight} property with
 the value $18$, and the \code{software} property, which denotes the
 reference (of type \code{Ref}) $21$. This reference in turn denotes a
-\code{SystemManager} object containing three references \code{bootUp}
-($25$), \code{initMem} ($26$), and \code{takePicture} ($27$), each of
-which are events. Due to the constraint in line 29 of Figure
+\code{SysMngr} object containing three references \code{bootUp}
+($25$), \code{initMem} ($26$), and \code{tkPic} ($27$), each of
+which are events. Due to the constraint in line 31 of Figure
 \ref{fig:spacecraftSmt} these events have been {\em scheduled} such
 that the taking of the picture occurs after the boot as well as after
 the memory initialization.  This can be seen from the fact that the

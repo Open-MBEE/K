@@ -14,9 +14,9 @@ What is new?
 
 - Remind about the objective: the SysML story
 
-==
-K:
-==
+=================
+K (Rahul: done):
+=================
 
 - The syntax supports higher-order logic ().
 
@@ -39,7 +39,9 @@ K2SMT (Klaus: done):
 
 - Recursive functions.
 
-USAGE:
+====================
+USAGE (Rahul: done):
+====================
 
 - Even if the authors cannot share details of the scheduling problems discovered
   specifically in the Europa project, it would be useful to describe
@@ -47,16 +49,17 @@ USAGE:
   Solves in 15 seconds.
   Remember: conclusion.
 
-
-RELATED WORK:
+===========================
+RELATED WORK (Rahul: done):
+===========================
 
 - The translation of K into SMT-LIB could benefit from similar
   translations that have well developed support for functions,
   recursion, etc.  For example, why not translate K to Dafny?
   Dafny: no inheritance (and it is essential).
 
-- Multiplicity and other inter-object constraints have also been explored in the work of 
-  Stephanie Baltzer.
+- Multiplicity and other inter-object constraints have also been
+  explored in the work of Stephanie Baltzer.
 
 - The paper mentions a lot of related work, but does not say anything
   about FORMULA, which I think may be the closest related work there

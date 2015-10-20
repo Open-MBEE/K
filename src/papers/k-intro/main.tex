@@ -1,35 +1,27 @@
-\documentclass{llncs}
+\documentclass[a4paper, twoside]{article}
 
-%\title{K: A Wide Spectrum Language for Modeling, Programming, and Analysis\thanks{ 
+\input{macros}
+
+\begin{document}
+
+\title{K: A Wide Spectrum Language for Modeling, Programming, and Analysis\thanks{ 
 %\title{Towards a Textual Language for SysML\thanks{ 
-\title{Towards a Textual Language for\\ Model Based Systems Engineering\thanks{ 
+%\title{Towards a Textual Language for\\ Model Based Systems Engineering\thanks{ 
 The research was carried out at the Jet Propulsion
 Laboratory, California Institute of Technology, under a contract
 with the National Aeronautics and Space
 Administration. \copyright\ 2015 California Institute of
 Technology. Government sponsorship acknowledged.}}
 
-\author{
-  Klaus Havelund 
-  \and 
-  Rahul Kumar 
-  \and 
-  Chris Delp
-  \and
-  Bradley Clement
-}
-
-\institute{ Jet Propulsion Laboratory\\ 
-            California Institute of Technology\\ 
-            California, USA }
-
-\input{macros}
-
-\begin{document}
-
-\maketitle
+\author{\authorname{Klaus Havelund, Rahul Kumar, Chris Delp and
+    Bradley Clement} \affiliation{ Jet Propulsion Laboratory,
+    California Institute of Technology, California, USA }
+  \email{\{klaus.havelund, rahul.kumar, Christopher.L.Delp,
+    Bradley.J.Clement\}@jpl.nasa.gov} }
 
 \input{abstract}
+
+\onecolumn \maketitle \normalsize \vfill
 
 \input{introduction}
 
@@ -43,13 +35,13 @@ Technology. Government sponsorship acknowledged.}}
 
 \input{conclusion}
 
-\newpage
+%\newpage
 
-\bibliographystyle{abbrv}
-\bibliography{biblio}
+\bibliographystyle{apalike}
+{\small \bibliography{biblio}}
 
-\appendix
+%\appendix
 
-\input{grammar}
+%\input{grammar}
 
 \end{document}

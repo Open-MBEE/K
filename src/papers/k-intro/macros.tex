@@ -1,47 +1,30 @@
-\usepackage{multirow}
-%\usepackage[T1]{fontenc}
-%\usepackage[latin9]{inputenc}
-%\usepackage{babel}
-%\usepackage{alltt}
-%\usepackage{comment}
-%\usepackage{multirow}
-%\usepackage{graphicx}
-
-% -----------------
-% --- comments: ---
-% -----------------
-
-\newcommand{\notethis}[1]{
-  \color{red}
-  \vspace{0.3cm}
-  \noindent\makebox[\linewidth]{\rule{\paperwidth}{0.4pt}}\\
-  {\sc NOTE - } #1\\
-  \noindent\makebox[\linewidth]{\rule{\paperwidth}{0.4pt}}\\
-  \vspace{0.3cm}
-  \color{black}
-}
-
-% ------------------
-% --- listings: ---
-% ------------------
-
+\usepackage{apalike}
+\usepackage{SCITEPRESS}     
+\usepackage{url}
 \usepackage{listings}
 \usepackage{color}
-\usepackage{amssymb}
-\usepackage{framed}
 \usepackage{graphicx} 
-\usepackage{caption} 
-\captionsetup{compatibility=false}
 \usepackage{subcaption}
 \usepackage{fancyvrb}
-\usepackage{verbatimbox}
 \usepackage{verbatim}
 \usepackage{fancyvrb}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{epsfig}
+\usepackage{amssymb}
+\usepackage{amstext}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{multicol}
+\usepackage{multirow}
+\usepackage{pslatex}
+
 
 \definecolor{light-gray}{gray}{0.95}
 
 \lstdefinelanguage{K}{
-  morekeywords={package,import,class,extends,with,match,new,if,then,else,while,for,yield,val,var,this,case,type,implicit,private,protected,abstract,final, req, Int, String, Bool, fun, pre, post},
+  morekeywords={package,import,class,unique,extends,with,match,new,if,then,else,while,for,yield,val,var,this,case,type,implicit,private,protected,abstract,final, req, Int, String, Bool, fun, pre, post},
   otherkeywords={&,\{,\},_*},
   literate=
       {\#\#}{{$\oplus\;$}}2
@@ -74,7 +57,7 @@
 % --- Referring to code: ---
 
 \newcommand{\name}[1]{{\em #1}}
-\newcommand{\code}[1]{\texttt{#1}}
+%\newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\issue}[2]{{\bf ** #1: #2}}
 
 \newcommand{\Klang}{{K}}

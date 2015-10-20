@@ -1,4 +1,4 @@
-\section{Related Work}
+\section{RELATED WORK}
 \label{sec:related-work}
 
 \Klang{} is a wide spectrum textual language containing concepts such
@@ -26,8 +26,12 @@ specification languages. More recently, \asml{} presented
 in~\cite{asml05} presents a language where all operations operate on
 algebras. \alloy{}~\cite{jackson-alloy-12} is a language intended for
 describing structure and exploring the design of the structure through
-the specification of constraints. \alloy{} also provides seemless
-integration with a SAT solver.
+the specification of constraints. \alloy{} also provides seem less
+integration with a SAT solver. FORMULA~\cite{jackson2009specifying}
+also presents a language for logic programming where the model is then
+analyzed by SMT solvers. FORMULA focuses on non-functional
+requirements for incremental refinement purposes and design
+exploration. 
 
 In contrast to specification languages, high level programming
 languages have also been developed over time. \sml{} (Standard ML)
@@ -63,21 +67,23 @@ built with verification as a primary goal. \dafny{}
 the program that can be used to specify functional correctness
 constraints for programs. These constraints and specifications are
 verified using the \boogie{}~\cite{barnett2006boogie} verifier that
-uses \zthree{} as the underlying SMT solver. Similarly, \specsharp{}
-also provides support for verifying the user provided
-specifications. \whythree{} \cite{filliatre-why3-2011} provides a rich
-language for specification and programming, called
-\whyml{}. \whythree{} relies on external theorem provers (automatic
-and interactive) to then verify the specification. Additionally, using
-\whyml{}, one can also generate \ocaml{} programs using a correct by
-construction automatic extraction procedure. In contrast to using
-automated provers, interactive theorem provers such as \pvs{}
-\cite{cade92-pvs,pvs-website}, \coq{} \cite{coq-website}, and
-\isabelle{} \cite{isabelle-website}, also provide languages to create
-specifications and provide constraints, which can then be discharged
-via a user guided process. Such tools allow for proving much more
-complex properties, but tend to be laborious and difficult to use in
-practice.
+uses \zthree{} as the underlying SMT solver. \dafny{} is an excellent
+language for performing verification, but lacks support for
+inheritance and class invariants, which are a necessity for the kind
+of models we deal with. Similarly, \specsharp{} also provides support
+for verifying the user provided specifications. \whythree{}
+\cite{filliatre-why3-2011} provides a rich language for specification
+and programming, called \whyml{}. \whythree{} relies on external
+theorem provers (automatic and interactive) to then verify the
+specification. Additionally, using \whyml{}, one can also generate
+\ocaml{} programs using a correct by construction automatic extraction
+procedure. In contrast to using automated provers, interactive theorem
+provers such as \pvs{} \cite{cade92-pvs,pvs-website}, \coq{}
+\cite{coq-website}, and \isabelle{} \cite{isabelle-website}, also
+provide languages to create specifications and provide constraints,
+which can then be discharged via a user guided process. Such tools
+allow for proving much more complex properties, but tend to be
+laborious and difficult to use in practice.
 
 Past research in formal modeling has also resulted in various attempts
 at combining formal and semi-formal languages. Work
