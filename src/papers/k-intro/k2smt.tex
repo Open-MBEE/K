@@ -26,8 +26,8 @@ in the near term.
 \end{figure}
 
 The translator currently covers a first-order logic subset of the K
-language, corresponding to the model of a spacecraft shown in Figure
-\ref{fig:spacecraftSmt}.
+language, corresponding to the model of a \code{SpaceCraft} shown in
+Figure \ref{fig:spacecraftSmt}.
 %
 The translated subset includes classes, multiple inheritance,
 properties of primitive types (\code{Bool}, \code{Int}, and
@@ -63,15 +63,15 @@ diagram.
 The spacecraft in addition contains a system manager, representing the
 software on board. For the purpose of illustration, the system manager
 is defined as a small {\em scheduler} of three events: a \code{bootUp}
-event, re-booting the flight software computer, a \code{initMem}
-event, initializing the computer memory, and a \code{tkPic}
-event, taking a picture. An event is an instance of the \code{Event}
-class, which defines an event as having a start time and an end time
+event, re-booting the flight software computer, an \code{initMem}
+event, initializing the computer memory, and a \code{tkPic} event,
+taking a picture. An event is an instance of the \code{Event} class,
+which defines an event as having a start time and an end time
 appearing after the start time. In addition, the \code{Event} class
 defines a function \code{after}, which as argument takes another event
 `\code{e}', and returns true if the event (\code{this}) occurs after
-`\code{e}'.  The definition of the \code{after} function is inspired by 
-Allen logic \cite{allen-logic-84}.
+`\code{e}'.  The definition of the \code{after} function is inspired
+by Allen logic \cite{allen-logic-84}.
 %
 Finally, the model contains an instance \code{ShRaan} of type
 \code{SpaceCraft}.
@@ -363,15 +363,15 @@ achieved with the following alternative getter function, named
 \end{lstlisting}
 \end{center}
 
-\noindent Each line in the body ends with a comment after the comment
-symbol `\code{;}' explaining the structure of the LISP version of
-`${\bf if}\ e_1\ {\bf then}\ e_2\ {\bf else}\ e_3$', which is `$({\bf
-  ite}\ e_1\ e_2\ e_3)$'. The reason for not just using the latter
-more general function \code{Instrument.weight} for all accesses to the
-\code{weight} property is that conditionals make it harder for an SMT
-solver. Even moderately sized expressions with several accesses to
-variables become unsolvable in reasonable time in the presence of such
-conditional expressions.
+\noindent Each line in the body is preceeded with a comment using the
+comment symbol `\code{;}', explaining the structure of the LISP
+version of `${\bf if}\ e_1\ {\bf then}\ e_2\ {\bf else}\ e_3$', which
+is `$({\bf ite}\ e_1\ e_2\ e_3)$'. The reason for not just using the
+latter more general function \code{Instrument.weight} for all accesses
+to the \code{weight} property is that conditionals make it harder for
+an SMT solver. Even moderately sized expressions with several accesses
+to variables become unsolvable in reasonable time in the presence of
+such conditional expressions.
 
 \textbf{Functions} Functions are translated directly to SMT-LIB
 functions.  Each function is translated in two versions, corresponding
@@ -492,13 +492,12 @@ assertions. We are working on such a violation explanation capability.
   \label{fig:shapes}
 \end{figure*}
 
-
 If the model on the other hand is satisfiable, an assignment to
 variables in the model will be returned by the solver. In our case the
-model outlined above is satisfiable and solves in 2 seconds. 
-The returned assignment is shown
-in Figure \ref{fig:shapes}. This view has been produced by processing
-the output from Z3, which is less comprehensible.
+model outlined above is satisfiable and solves in 2 seconds.  The
+returned assignment is shown in Figure \ref{fig:shapes}. This view has
+been produced by processing the output from Z3, which is less
+comprehensible.
 %
 The assignment shows the following. The outermost \code{ShRaan}
 property in the heap denotes a \code{SpaceCraft} object.  This object

@@ -3,10 +3,10 @@
 
 In this section we introduce the \Klang{} language. We use the
 \Klang{} model in Figure~\ref{fig:fs} as our running example for
-discussing core concepts in \Klang{}. The example shows a basic model
-of a file system modeled using \Klang{}. It is intended to be a
-basis for discussing language features, and not a complete model of
-the flash file system. 
+discussing core concepts in \Klang{}. The example shows a model of a
+file system modeled using \Klang{}. It is intended to be a basis for
+discussing language features, and not a complete model of a flash file
+system.
 
 \begin{figure}
   \centering
@@ -104,7 +104,7 @@ a new \code{FS} object by calling the constructor for class
 \code{Dir} object which contains one additional \code{Dir} entry whose
 name is \code{n}. \Klang{} provides constructors automatically for all
 classes where the arguments are {\em named arguments}. Each named
-argument is of the form \code{member :: value} where the \code{::}
+argument is of the form \code{member :: value} where the `\code{::}'
 notation is used as a form of assignment. Multiple named arguments can
 be provided as a comma delimited list. It is not necessary to specify
 a value for all members of a class. Any members that are specified in
@@ -169,17 +169,17 @@ property. We will analyze each of these individually.
 \end{figure*}
 
 Each \code{Person} can have exactly one \code{mother}. This is
-specified by line 4. No explicit multiplicity is specified, which is
-assumed to be a multiplicity of 1. A \code{Person} can also have
-\code{children}, which is specified by line 5. Line 6 specifies that a
-\code{Person} may have many \code{cars}. It is written using a
-modifier and a multiplicity, which semantically translates to a
-\code{Set} (\Klang{} default for a multiplicity is \code{Bag}) of
-\code{Car}. Finally, a person may own zero or more
-\code{prtflios}, which is a \code{Set} of \code{Stock}, specified to
-have a multiplicity of 1 or more. This translates to \code{prtflios}
-being a \code{Bag} of \code{Set[Stock]} with at least 1 entry and no
-upper limit.
+specified by line 4. No explicit multiplicity is specified, which
+makes it a singleton.  A \code{Person} can also have many unique
+\code{children}, which is specified by line 5 using the \code{Set}
+collection. Line 6 specifies that a \code{Person} may have many
+\code{cars}. It is written using a modifier and a multiplicity, which
+semantically translates to a \code{Set} (\Klang{} default for a
+multiplicity is \code{Bag}) of \code{Car}. Finally, a person may own
+zero or more \code{prtflios}, where each entry itself is a \code{Set}
+of \code{Stock}, specified to have a multiplicity of 0 or more. This
+translates to \code{prtflios} being a \code{Bag} of \code{Set[Stock]}
+with at least 1 entry and no upper limit.
 
 \sysml{} models can also carry meta data information in them
 (sometimes introduced by tools). To accommodate for this, \Klang{}
