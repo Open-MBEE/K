@@ -3,6 +3,6 @@
 
 Person
 Set[Person]
-Bag[Car]
+Set[Car]
 Bag[Set[Stock]] 
-  req prtflios.size() >= 1
+  req prtflios.size() >= 0

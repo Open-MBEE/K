@@ -11,9 +11,12 @@ import scala.collection.mutable.Stack
 // for expressions, toJson2 is LISP style... 
 
 object ASTOptions {
-  var debug = false
-  var silent = false
-  var useJson1 = true
+  var debug: Boolean = false
+  var silent: Boolean = false
+  var useJson1: Boolean = true
+  var numberOfInstances: Int = 1
+  var checkPostNoBody: Boolean = false
+  var heapInitializedToNull: Boolean = true
 }
 
 object UtilAST {
@@ -39,6 +42,17 @@ object UtilSMT {
 
   var constraintCounter = 0
   var constraintMessageMap: Map[String, String] = Map()
+
+  var objectGraph: ObjectGraph = null
+
+  var variableCounter: Int = 0
+
+  var heapInitializerConstants: List[(Int, String, String)] = Nil // index into heap, class name, constant
+
+  def newVariable(): String = {
+    variableCounter += 1
+    s"var_$variableCounter"
+  }
 
   def saveConstraintMapping(cPrint: String) {
     UtilSMT.constraintMessageMap = UtilSMT.constraintMessageMap + (s"x${UtilSMT.constraintCounter}" -> cPrint)
@@ -201,8 +215,12 @@ object UtilSMT {
   def getterIsUsed(getter: String): Boolean =
     gettersToDeclare.contains(getter)
 
-  def createLocals(locals: List[String]) {
+  def createLocals(locals: Set[String]) {
     createdLocals ++= locals
+  }
+
+  def removeCreatedLocals(locals: Set[String]) {
+    createdLocals --= locals
   }
 
   def clearCreatedLocals() {
@@ -215,6 +233,15 @@ object UtilSMT {
   def isGlobal(identExp: Exp): Boolean = {
     require(identExp.isInstanceOf[IdentExp])
     getOwningEntityDecl(identExp) == null
+  }
+
+  def getSetMemberTypeOf(setExp: Exp): Type = {
+    val ty = exp2Type.get(setExp)
+    ty match {
+      case IdentType(QualifiedName("Set" :: Nil), elemty :: Nil) =>
+        elemty
+      case _ => UtilSMT.error(s"Set type expected, found $setExp : $ty")
+    }
   }
 
   def generateOmittedConstructorParameters: String = {
@@ -276,6 +303,14 @@ object UtilSMT {
     }
   }
 
+  def isComplexSetCompr(exp: Exp): Boolean = {
+    exp match {
+      case CollectionComprExp(SetKind, exp1, _, _) =>
+        !exp1.isInstanceOf[IdentExp]
+      case _ => false // TODO: also take sequences and bags into consideration
+    }
+  }
+
   def isClassName(ty: Type): Boolean = {
     ty match {
       case IdentType(QualifiedName(_ :: Nil), _) => true
@@ -285,6 +320,20 @@ object UtilSMT {
 
   def isCollection(typeName: String): Boolean =
     Set("Set", "Bag", "Seq") contains typeName
+
+  def removeRngBindingsFor(idents: Set[String], bindings: List[RngBinding]): List[RngBinding] = {
+    var result: List[RngBinding] = Nil
+    for (RngBinding(patterns, collection) <- bindings) {
+      val remainingPatterns = patterns.filter {
+        case IdentPattern(ident) => !idents.contains(ident)
+        case _                   => UtilSMT.error(this.toString)
+      }
+      if (!remainingPatterns.isEmpty) {
+        result ++= List(RngBinding(remainingPatterns, collection))
+      }
+    }
+    result
+  }
 
   def transformModel(model: Model): Model = {
     val Model(packageName, imports, annotations, decls) = model
@@ -299,6 +348,27 @@ object UtilSMT {
     // println(s"---\n$model\n---\n$newModel\n---")
     newModel
   }
+}
+
+class ObjectGraph {
+  private var counter: Int = 1
+
+  def getCounter: Int = counter
+
+  def getHeapEntries(className: String): List[Int] = {
+    if (className.equals("TopLevelDeclarations"))
+      List(0)
+    else {
+      val nrOfInstances = getNrOfInstances(className)
+      val newCounter = (counter + nrOfInstances)
+      val range = counter until newCounter // does not include newCounter
+      counter = newCounter
+      range.toList
+    }
+  }
+
+  private def getNrOfInstances(className: String): Int =
+    ASTOptions.numberOfInstances
 }
 
 object K2ScalaException extends Exception
@@ -338,9 +408,15 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
                  annotations: List[AnnotationDecl],
                  decls: List[TopDecl]) {
 
+  UtilSMT.objectGraph = new ObjectGraph
+
   def toSMT: String = {
     val model: Model = UtilSMT.transformModel(this)
-    val entityDecls = model.decls.asInstanceOf[List[EntityDecl]]
+    val entityDecls = model.decls.asInstanceOf[List[EntityDecl]].filterNot {
+      case ed => ed.annotations exists {
+        case Annotation(name, _) => name.equals("ignore")
+      }
+    }
 
     var result1: String = "" // text before omitted constructor parameter constants
     var result2: String = "" // text after omitted constructor parameter constants
@@ -363,11 +439,7 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
     result1 += "(declare-datatypes (T1 T2 T3) ((Tuple3 (mk-Tuple3 (_1 T1)(_2 T2)(_3 T3)))))\n"
     result1 += "\n"
     result1 += "(define-sort Set (T) (Array T Bool))\n"
-    result1 += "(define-sort Bag (T) (Array T Int))\n"
-    result1 += "\n"
-    result1 += "(declare-const emptySetOf_Int (Set Int))\n"
-    // result1 += "(assert (= emptySetOf_Int ((as const (Set Int)) false)))\n" - does not work
-    result1 += "(assert (!(forall ((x Int)) (= (select emptySetOf_Int x) false)) :named AXIOM1))\n"
+    // result1 += "(define-sort Bag (T) (Array T Int))\n"
 
     result1 += "\n"
     result1 += UtilSMT.headline1("User-defined datatypes")
@@ -437,13 +509,23 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
     }
     result2 += "\n"
 
-    // Generate assertions:
+    if (ASTOptions.heapInitializedToNull) {
+      // Generate heap:
 
-    result2 += UtilSMT.headline1("Object existence assertions")
-    for (ed <- entityDecls) {
-      result2 += ed.toSMTAssert + "\n"
+      result2 += UtilSMT.headline1("Generate heap")
+      result2 += s"(assert\n"
+      result2 += s"  (=\n"
+      result2 += s"    heap\n"
+      val storeOperations = "(store" * UtilSMT.heapInitializerConstants.size
+      result2 += s"    $storeOperations\n"
+      result2 += s"      ((as const (Array Ref Any)) null)\n"
+      for ((index, className, constName) <- UtilSMT.heapInitializerConstants.reverse) {
+        result2 += s"        $index (lift-$className $constName))\n"
+      }
+      result2 += s"  )\n"
+      result2 += s")\n"
+      result2 += "\n"
     }
-    result2 += "\n"
 
     // -----------------------------------
     // --- Back to the middle section. ---
@@ -473,7 +555,13 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
     // --- Combine results. ---
     // ------------------------
 
+    // Correct result:
     result1 + getters + constants + result2
+
+    // Testing:
+    // val max = UtilSMT.objectGraph.getCounter
+    // result1 + getters + constants + result2 +
+    // s"(assert (forall ((this Ref)) (=> (or (< this 0)(> this $max))(= (deref this) null))))"
   }
 
   def toScala: String = {
@@ -615,13 +703,13 @@ trait TopDecl {
 }
 
 case class EntityDecl(
-  var annotations: List[Annotation],
-  entityToken: EntityToken,
-  keyword: Option[String],
-  ident: String,
-  typeParams: List[TypeParam],
-  extending: List[Type],
-  members: List[MemberDecl]) extends TopDecl {
+    var annotations: List[Annotation],
+    entityToken: EntityToken,
+    keyword: Option[String],
+    ident: String,
+    typeParams: List[TypeParam],
+    extending: List[Type],
+    members: List[MemberDecl]) extends TopDecl {
 
   def toSMTDatatype: String = {
     val propertyDecls = getAllPropertyDecls
@@ -715,7 +803,41 @@ case class EntityDecl(
     val propertyDecls: List[PropertyDecl] = getAllPropertyDecls
     val constraintDecls: List[ConstraintDecl] = getAllConstraintDecls
     var result: String = ""
-    var constraintCounter = 0
+    var invFunctionCount: Int = 0
+    val heapEntries: List[Int] = UtilSMT.objectGraph.getHeapEntries(ident)
+
+    def mkInvFunAndAssert(ident: String, constraintSMT: String, outputString: String): String = {
+      invFunctionCount += 1
+      val functionName = s"$ident.inv$invFunctionCount"
+      var result = ""
+      result += s"(define-fun $functionName ((this Ref)) Bool\n"
+      result += s"  $constraintSMT\n"
+      result += s")\n"
+      result += "\n"
+      for (index <- heapEntries) {
+        val assertName = s"x${UtilSMT.constraintCounter}"
+        result += s"(assert (! ($functionName $index) :named $assertName))\n"
+        UtilSMT.saveConstraintMapping((s"$outputString"))
+      }
+      result += "\n"
+      result
+    }
+
+    // generate instances:
+
+    if (ASTOptions.heapInitializedToNull) {
+      for (index <- heapEntries) {
+        val const = s"const-$index-$ident"
+        result += s"(declare-const $const $ident)\n"
+        UtilSMT.heapInitializerConstants ::= (index, ident, const)
+      }
+      result += "\n"
+    } else {
+      for (index <- heapEntries) {
+        result += s"(assert (deref-is-$ident $index))\n"
+      }
+      result += "\n"
+    }
 
     // constraints for property definitions of the form: x : T = e
     for (PropertyDecl(_, propertyName, ty, _, _, Some(exp)) <- propertyDecls) {
@@ -727,7 +849,7 @@ case class EntityDecl(
         else
           s"(= ($getter this) ${exp.toSMT(ident, false)})"
 
-      result += mkInv(ident, constraintSMT, s"$propertyName = $exp")
+      result += mkInvFunAndAssert(ident, constraintSMT, s"$propertyName : $ty = $exp")
     }
 
     // constraints for embedded references/parts:
@@ -735,61 +857,18 @@ case class EntityDecl(
       val getter = s"$ident!$propertyName"
       UtilSMT.addGetter(getter)
       val constraintSMT = s"(deref-isa-$typeName ($getter this))"
-      result += mkInv(ident, constraintSMT, "_k_ignore_")
+      result += mkInvFunAndAssert(ident, constraintSMT, "_k_ignore_")
     }
 
     // constraints for constraint decls:
     for (ConstraintDecl(n, exp) <- constraintDecls) {
-      result += mkInv(ident, exp.toSMT(ident, false), exp.toString)
+      val name = n match {
+        case None      => ""
+        case Some(str) => s" [$str]"
+      }
+      result += mkInvFunAndAssert(ident, exp.toSMT(ident, false), exp.toString + name)
     }
     result
-  }
-
-  def mkInv(ident: String, exp: String, outputString : String): String = {
-    var result = ""
-    
-    result += s"(assert (! (forall ((this Ref))\n"
-    result += s"  (=> (deref-is-$ident this) $exp)\n"
-    result += s") :named x${UtilSMT.constraintCounter}))\n\n"
-
-    UtilSMT.saveConstraintMapping((s"$outputString"))
-    
-    result
-  }
-
-  def mkInvFunction(ident: String, count: Int, constraintSMT: String, n: Option[String], exp: Any): String = {
-    var result = ""
-    // The inv function:
-    result += s"(define-fun $ident.inv${count} ((this Ref)) Bool\n"
-    //    result += s"  (and\n"
-    result += s"  $constraintSMT\n"
-    //    result += s"  )\n"
-    result += s")\n"
-    result += "\n"
-
-    // Enforce invariant:    
-    result += s"(assert (! (forall ((this Ref))\n"
-    result += s"  (=> (deref-is-$ident this) ($ident.inv${count} this))\n"
-    result += s") :named x${UtilSMT.constraintCounter}))\n\n"
-
-    if (n.isEmpty)
-      UtilSMT.saveConstraintMapping((s"$exp"))
-    else
-      UtilSMT.saveConstraintMapping((s"${n.getOrElse("")}: $exp"))
-
-    result
-  }
-
-  def toSMTAssert: String = {
-    val res = if (ident == "TopLevelDeclarations") {
-      val r = s"(assert (!(deref-is-TopLevelDeclarations 0) :named xTOP))\n"
-      r
-    } else {
-      val r = s"(assert (!(exists ((instanceOf$ident Ref)) (deref-is-$ident instanceOf$ident)) :named x${UtilSMT.constraintCounter}))"
-      UtilSMT.saveConstraintMapping(s"class $ident is not satisfiable.")
-      r
-    }
-    res
   }
 
   override def toScala: String = {
@@ -945,7 +1024,8 @@ case class TypeBound(types: List[Type]) {
 }
 
 trait MemberDecl extends TopDecl {
-  def toSMT(className: String): String = ???
+  def toSMT(className: String): String =
+    UtilSMT.error(this.toString)
   var annotations: List[Annotation] = null
 }
 
@@ -1152,32 +1232,57 @@ case class FunDecl(ident: String,
 
     val preConditions = spec.filter(_.pre)
     val postConditions = spec.filterNot(_.pre)
+
     // TODO: currently we do not do anything for a function
     // if the body is empty.
     if (body != Nil && !postConditions.isEmpty) {
-      UtilSMT.createLocals(params.map(_.name))
+      UtilSMT.createLocals(params.map(_.name).toSet)
       result += "\n\n"
       val preSMT = preConditions.map(_.exp.toSMT(className, false)).mkString("\n      ") // and true?
       val postSMT = postConditions.map(_.exp.toSMT(className, false)).mkString("\n        ") // and true?
       val resultVar = "$result"
-      result += s"(assert (!(forall ($parameters)\n"
-      result += s"  (=>\n"
-      result += s"    (and\n"
-      result += s"      (deref-is-$className this)\n" // isa does not solve, but should it be isa?
-      for (Param(name, IdentType(QualifiedName(tyName :: Nil), Nil)) <- params) {
-        result += s"      (deref-isa-$tyName $name)\n"
+      if (body != Nil) {
+        result += s"(assert (!(forall ($parameters)\n"
+        result += s"  (=>\n"
+        result += s"    (and\n"
+        result += s"      (deref-is-$className this)\n" // isa does not solve, but should it be isa?
+        for (Param(name, IdentType(QualifiedName(tyName :: Nil), Nil)) <- params) {
+          result += s"      (deref-isa-$tyName $name)\n"
+        }
+        if (preSMT != "") result += s"      $preSMT\n"
+        result += s"    )\n"
+        result += s"    (let (($resultVar ($className!$ident $actuals)))\n" // and dot?
+        result += s"      (and\n"
+        result += s"        $postSMT\n"
+        result += s"      )\n"
+        result += s"    )\n"
+        result += s"  )\n"
+        result += s") :named x${UtilSMT.constraintCounter}))"
+        UtilSMT.saveConstraintMapping(s"Function $ident does not satisfy its specification.")
+      } else if (ASTOptions.checkPostNoBody) {
+        if (!params.isEmpty) {
+          val explicitParametersSMT = params.map(_.toSMT).mkString
+          result += s"(assert (!(forall ($explicitParametersSMT)"
+        }
+        result += s"(exists ((result $resultType))\n"
+        result += s"  (=>\n"
+        result += s"    (and\n"
+        result += s"      true\n"
+        for (Param(name, IdentType(QualifiedName(tyName :: Nil), Nil)) <- params) {
+          result += s"      (deref-isa-$tyName $name)\n"
+        }
+        if (preSMT != "") result += s"      $preSMT\n"
+        result += s"    )\n"
+        result += s"    (let (($resultVar result))\n"
+        result += s"      (and\n"
+        result += s"        $postSMT\n"
+        result += s"      )\n"
+        result += s"    )\n"
+        result += s"  )\n"
+        if (!params.isEmpty) result += ")"
+        result += s") :named x${UtilSMT.constraintCounter}))"
+        UtilSMT.saveConstraintMapping(s"Function $ident's specification is not satisfiable.")
       }
-      if (preSMT != "") result += s"      $preSMT\n"
-      result += s"    )\n"
-      result += s"    (let (($resultVar ($className!$ident $actuals)))\n" // and dot?
-      result += s"      (and\n"
-      result += s"        $postSMT\n"
-      result += s"      )\n"
-      result += s"    )\n"
-      result += s"  )\n"
-      result += s") :named x${UtilSMT.constraintCounter}))"
-
-      UtilSMT.saveConstraintMapping(s"Function $ident does not satisfy its specification.")
       UtilSMT.clearCreatedLocals()
     }
 
@@ -1269,7 +1374,8 @@ case class FunDecl(ident: String,
 }
 
 case class ConstraintDecl(name: Option[String], exp: Exp) extends MemberDecl {
-  override def toSMT(className: String): String = ???
+  override def toSMT(className: String): String =
+    UtilSMT.error(this.toString)
 
   override def toScala = {
     ??? // TODO
@@ -1313,7 +1419,24 @@ case class ExpressionDecl(exp: Exp) extends MemberDecl {
 }
 
 trait Exp {
-  def toSMT(className: String, subTyping: Boolean): String = ???
+  def freeVariables: Set[String] = Set()
+
+  def substitute(substitution: Map[String, Exp]): Exp =
+    UtilSMT.error(this.toString)
+
+  def copyType(oldExp: Exp): Exp = {
+    exp2Type.put(this, exp2Type.get(oldExp))
+    this
+  }
+
+  def containsSetComprhension: Boolean = false
+
+  def toSMT(className: String, subTyping: Boolean): String =
+    UtilSMT.error(this.toString)
+
+  def toSMTSetContains(className: String, subTyping: Boolean)(element: Exp): String =
+    UtilSMT.error(this.toString)
+
   def toScala: String = ???
   def toJson: JSONObject = {
     if (ASTOptions.useJson1) toJson1
@@ -1324,10 +1447,21 @@ trait Exp {
 }
 
 case class ParenExp(exp: Exp) extends Exp {
+  override def freeVariables: Set[String] = exp.freeVariables
+
+  override def substitute(substitution: Map[String, Exp]): Exp =
+    ParenExp(exp.substitute(substitution)) copyType this
+
+  override def containsSetComprhension: Boolean =
+    exp.containsSetComprhension
+
   override def toSMT(className: String, subTyping: Boolean): String =
     exp.toSMT(className, subTyping)
 
-  // @@@ Reach here for Scala translation, which is at experimental stage
+  override def toSMTSetContains(className: String, subTyping: Boolean)(element: Exp): String =
+    exp.toSMTSetContains(className, subTyping)(element)
+
+  // TODO: Reached here for Scala translation, which is at experimental stage
 
   override def toString = s"($exp)"
 
@@ -1350,7 +1484,12 @@ case class ParenExp(exp: Exp) extends Exp {
 }
 
 case class IdentExp(ident: String) extends Exp {
-  override def toSMT(className: String, subTyping: Boolean): String =
+  override def freeVariables: Set[String] = Set(ident)
+
+  override def substitute(substitution: Map[String, Exp]): Exp =
+    if (substitution contains ident) substitution(ident).copyType(this) else this
+
+  override def toSMT(className: String, subTyping: Boolean): String = {
     if (isLocal(this) || UtilSMT.isCreatedLocal(ident))
       ident
     else if (UtilSMT.isGlobal(this) && className != UtilSMT.Names.mainClass) {
@@ -1362,8 +1501,15 @@ case class IdentExp(ident: String) extends Exp {
       val dot: String = if (subTyping) "." else "!"
       val getter: String = s"$className$dot$ident"
       UtilSMT.addGetter(getter)
-      s"($getter this) "
+      s"($getter this)" // deleted space after ')'. I think it does not break anything (KH).
     }
+  }
+
+  override def toSMTSetContains(className: String, subTyping: Boolean)(element: Exp): String = {
+    val identSMT = toSMT(className, subTyping)
+    val elementSMT = element.toSMT(className, subTyping)
+    s"(select $identSMT $elementSMT)"
+  }
 
   override def toScala = ident
 
@@ -1385,6 +1531,12 @@ case class IdentExp(ident: String) extends Exp {
 }
 
 case class DotExp(exp: Exp, ident: String) extends Exp {
+  override def freeVariables: Set[String] = exp.freeVariables
+
+  override def substitute(substitution: Map[String, Exp]): Exp = {
+    val expRenamed = exp.substitute(substitution)
+    DotExp(expRenamed, ident) copyType this
+  }
 
   override def toSMT(className: String, subTyping: Boolean): String = {
     val expSMT = exp.toSMT(className, subTyping)
@@ -1392,6 +1544,12 @@ case class DotExp(exp: Exp, ident: String) extends Exp {
     val getter = s"$classNameOfExp.$ident"
     UtilSMT.addGetter(getter)
     s"($getter $expSMT)"
+  }
+
+  override def toSMTSetContains(className: String, subTyping: Boolean)(element: Exp): String = {
+    val dotSMT = toSMT(className, subTyping)
+    val elementSMT = element.toSMT(className, subTyping)
+    s"(select $dotSMT $elementSMT)"
   }
 
   override def toString = s"$exp.$ident"
@@ -1420,6 +1578,16 @@ case class DotExp(exp: Exp, ident: String) extends Exp {
 // KH: first argument should be 'exp' really.
 
 case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
+  override def freeVariables: Set[String] = {
+    val freeArgVariables = args.flatMap(_.freeVariables).toSet
+    exp1.freeVariables union freeArgVariables
+  }
+
+  override def substitute(substitution: Map[String, Exp]): Exp = {
+    val argsRenamed = args.map(_.substitute(substitution)).asInstanceOf[List[Argument]]
+    FunApplExp(exp1, argsRenamed) copyType this
+  }
+
   override def toSMT(className: String, subTyping: Boolean): String = {
     if (isConstructor(exp1)) {
       // constructor application:
@@ -1457,6 +1625,12 @@ case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
     }
   }
 
+  override def toSMTSetContains(className: String, subTyping: Boolean)(element: Exp): String = {
+    val funSMT = toSMT(className, subTyping)
+    val elementSMT = element.toSMT(className, subTyping)
+    s"(select $funSMT $elementSMT)"
+  }
+
   override def toString = {
     var result = exp1.toString
     if (args != null)
@@ -1489,12 +1663,47 @@ case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
 }
 
 case class IfExp(cond: Exp, trueBranch: Exp, falseBranch: Option[Exp]) extends Exp {
+  override def freeVariables: Set[String] =
+    cond.freeVariables union
+      trueBranch.freeVariables union
+      (falseBranch match {
+        case None    => Set()
+        case Some(e) => e.freeVariables
+      })
+
+  override def substitute(substitution: Map[String, Exp]): Exp = {
+    val condRenamed = cond.substitute(substitution)
+    val trueBranchRenamed = trueBranch.substitute(substitution)
+    val falseBranchRenamed = falseBranch match {
+      case None    => falseBranch
+      case Some(e) => Some(e.substitute(substitution))
+    }
+    IfExp(condRenamed, trueBranchRenamed, falseBranchRenamed) copyType this
+  }
+
+  override def containsSetComprhension: Boolean =
+    trueBranch.containsSetComprhension ||
+      (falseBranch match {
+        case None    => false
+        case Some(e) => e.containsSetComprhension
+      })
+
   override def toSMT(className: String, subTyping: Boolean): String = {
     val condSMT = cond.toSMT(className, subTyping)
     val trueSMT = trueBranch.toSMT(className, subTyping)
     val falseSMT = falseBranch match {
-      case None          => "???"
+      case None          => UtilSMT.error(this.toString)
       case Some(elseExp) => elseExp.toSMT(className, subTyping)
+    }
+    s"(ite $condSMT $trueSMT $falseSMT)"
+  }
+
+  override def toSMTSetContains(className: String, subTyping: Boolean)(element: Exp): String = {
+    val condSMT = cond.toSMT(className, subTyping)
+    val trueSMT = trueBranch.toSMTSetContains(className, subTyping)(element)
+    val falseSMT = falseBranch match {
+      case None          => UtilSMT.error(this.toString)
+      case Some(elseExp) => elseExp.toSMTSetContains(className, subTyping)(element)
     }
     s"(ite $condSMT $trueSMT $falseSMT)"
   }
@@ -1715,29 +1924,122 @@ case class ForExp(pattern: Pattern, exp: Exp, body: Exp) extends Exp {
 }
 
 case class BinExp(exp1: Exp, op: BinaryOp, exp2: Exp) extends Exp {
+  override def freeVariables: Set[String] =
+    exp1.freeVariables union exp2.freeVariables
+
+  override def substitute(substitution: Map[String, Exp]): Exp = {
+    val exp1Renamed = exp1.substitute(substitution)
+    val exp2Renamed = exp2.substitute(substitution)
+    BinExp(exp1Renamed, op, exp2Renamed) copyType this
+  }
+
+  private def assertQuantification(quantifier: String, typeMap: Map[String, Type], op: String, smt1: String, smt2: String): String = {
+    val bindingsSMT = (for ((id, ty) <- typeMap) yield s"($id ${ty.toSMT})").mkString
+    s"($quantifier ($bindingsSMT) ($op $smt1 $smt2))"
+  }
+
   override def toSMT(className: String, subTyping: Boolean): String = {
-    val exp1SMT = exp1.toSMT(className, subTyping)
-    val exp2SMT = exp2.toSMT(className, subTyping)
-    if (UtilSMT.isConstructorPredicate(this)) {
-      s"(= (deref $exp1SMT) $exp2SMT)"
-    } else {
-      op match {
-        case NEQ =>
-          s"(not (= $exp1SMT $exp2SMT))"
-        case TUPLEINDEX =>
-          assert(exp2.isInstanceOf[IntegerLiteral], "Tuple index must be an integer literal!")
-          val indexFunSMT = s"_$exp2SMT"
-          s"($indexFunSMT $exp1SMT)"
-        case ISIN =>
-          s"(select $exp2SMT $exp1SMT)"
-        case NOTISIN =>
-          s"(not (select $exp2SMT $exp1SMT))"
-        case PSUBSET =>
-          s"(and (subset $exp1SMT $exp2SMT) (not (= $exp1SMT $exp2SMT)))"
-        case _ =>
-          val opSMT = op.toSMT
-          s"($opSMT $exp1SMT $exp2SMT)"
+    if (!exp1.containsSetComprhension && !exp2.containsSetComprhension) {
+      val exp1SMT = exp1.toSMT(className, subTyping)
+      val exp2SMT = exp2.toSMT(className, subTyping)
+      if (UtilSMT.isConstructorPredicate(this)) {
+        s"(= (deref $exp1SMT) $exp2SMT)"
+      } else {
+        op match {
+          case NEQ =>
+            s"(not (= $exp1SMT $exp2SMT))"
+          case TUPLEINDEX =>
+            assert(exp2.isInstanceOf[IntegerLiteral], "Tuple index must be an integer literal!")
+            val indexFunSMT = s"_$exp2SMT"
+            s"($indexFunSMT $exp1SMT)"
+          case ISIN =>
+            s"(select $exp2SMT $exp1SMT)"
+          case NOTISIN =>
+            s"(not (select $exp2SMT $exp1SMT))"
+          case PSUBSET =>
+            s"(and (subset $exp1SMT $exp2SMT) (not (= $exp1SMT $exp2SMT)))"
+          case _ =>
+            val opSMT = op.toSMT
+            s"($opSMT $exp1SMT $exp2SMT)"
+        }
       }
+    } else { // at least one set comprehension or set range expression
+      var typeMapQuantified: Map[String, Type] = Map()
+      var exp1SMT: String = null
+      var exp2SMT: String = null
+      if (!UtilSMT.isComplexSetCompr(exp1) && !UtilSMT.isComplexSetCompr(exp2)) {
+        op match {
+          case EQ | NEQ | SUBSET | PSUBSET =>
+            val qvar = UtilSMT.newVariable()
+            val identExp = IdentExp(qvar)
+            val ty = UtilSMT.getSetMemberTypeOf(exp2)
+            typeMapQuantified = Map(qvar -> ty)
+            UtilSMT.createLocals(Set(qvar))
+            exp1SMT = exp1.toSMTSetContains(className, subTyping)(identExp)
+            exp2SMT = exp2.toSMTSetContains(className, subTyping)(identExp)
+            UtilSMT.removeCreatedLocals(Set(qvar))
+          case _ =>
+        }
+      } else { // at least one complex set comprehension
+        val swapExpressions: Boolean = !UtilSMT.isComplexSetCompr(exp2)
+        val (lessComplex, moreComplex) = if (swapExpressions) (exp2, exp1) else (exp1, exp2)
+        op match {
+          case EQ | NEQ | SUBSET | PSUBSET =>
+            val CollectionComprExp(kind, headExp, bindings, bodyExp) = exp2
+            val freeVarsExp1 = headExp.freeVariables
+            val typeMap: Map[String, Type] = bindings.flatMap(_.getTypeMap.toSet).toMap
+            var substitution: Map[String, Exp] = Map()
+            var locals: Set[String] = Set()
+            for (ident <- typeMap.keySet if freeVarsExp1.contains(ident)) {
+              val newIdent = UtilSMT.newVariable()
+              typeMapQuantified += (newIdent -> typeMap(ident))
+              substitution += (ident -> IdentExp(newIdent))
+              locals += newIdent
+            }
+            UtilSMT.createLocals(locals)
+            val exp2Head = exp2.asInstanceOf[CollectionComprExp].exp1
+            val exp2HeadRenamed = exp2Head.substitute(substitution)
+            val lessComplexSMT = lessComplex.toSMTSetContains(className, subTyping)(exp2HeadRenamed)
+            val moreComplexSMT = moreComplex.asInstanceOf[CollectionComprExp].toSMTSetContainsIgnoreHead(className, subTyping)(substitution)
+            UtilSMT.removeCreatedLocals(locals)
+            if (swapExpressions) {
+              exp1SMT = moreComplexSMT
+              exp2SMT = lessComplexSMT
+            } else {
+              exp1SMT = lessComplexSMT
+              exp2SMT = moreComplexSMT
+            }
+          case _ =>
+        }
+      }
+      op match {
+        case EQ =>
+          assertQuantification("forall", typeMapQuantified, "=", exp1SMT, exp2SMT)
+        case NEQ =>
+          val allEqual = assertQuantification("forall", typeMapQuantified, "=", exp1SMT, exp2SMT)
+          s"(not $allEqual)"
+        case SUBSET =>
+          assertQuantification("forall", typeMapQuantified, "=>", exp1SMT, exp2SMT)
+        case PSUBSET =>
+          val isSubset = assertQuantification("forall", typeMapQuantified, "=>", exp1SMT, exp2SMT)
+          val notEqual = assertQuantification("exists", typeMapQuantified, "and", s"(not $exp1SMT)", exp2SMT)
+          s"(and $isSubset $notEqual)"
+        case ISIN =>
+          exp2.toSMTSetContains(className, subTyping)(exp1)
+        case NOTISIN =>
+          val setContainsElement = exp2.toSMTSetContains(className, subTyping)(exp1)
+          s"(not $setContainsElement)"
+      }
+    }
+  }
+
+  override def toSMTSetContains(className: String, subTyping: Boolean)(element: Exp): String = {
+    val exp1SMT = exp1.toSMTSetContains(className, subTyping)(element)
+    val exp2SMT = exp2.toSMTSetContains(className, subTyping)(element)
+    op match {
+      case SETINTER => s"(and $exp1SMT $exp2SMT)"
+      case SETUNION => s"(or $exp1SMT $exp2SMT)"
+      case _        => UtilSMT.error(this.toString)
     }
   }
 
@@ -1775,6 +2077,14 @@ case class BinExp(exp1: Exp, op: BinaryOp, exp2: Exp) extends Exp {
 }
 
 case class UnaryExp(op: UnaryOp, exp: Exp) extends Exp {
+  override def freeVariables: Set[String] =
+    exp.freeVariables
+
+  override def substitute(substitution: Map[String, Exp]): Exp = {
+    val expRenamed = exp.substitute(substitution)
+    UnaryExp(op, expRenamed) copyType this
+  }
+
   override def toSMT(className: String, subTyping: Boolean): String = {
     val opSMT = op.toSMT
     val expSMT = exp.toSMT(className, subTyping)
@@ -1820,6 +2130,17 @@ case class QuantifiedExp(quant: Quantifier,
                          bindings: List[RngBinding],
                          exp: Exp) extends Exp {
 
+  override def freeVariables: Set[String] = {
+    val boundNames = bindings.flatMap(_.boundNames)
+    exp.freeVariables -- boundNames
+  }
+
+  override def substitute(substitution: Map[String, Exp]): Exp = {
+    val boundNames = bindings.flatMap(_.boundNames)
+    val expRenamed = exp.substitute(substitution -- boundNames)
+    QuantifiedExp(quant, bindings, expRenamed) copyType this
+  }
+
   override def toSMT(className: String, subTyping: Boolean): String = {
     val quantSMT = quant.toSMT
     val bindingsSMT = bindings.map(_.toSMT).mkString
@@ -1862,6 +2183,14 @@ case class QuantifiedExp(quant: Quantifier,
 }
 
 case class TupleExp(exps: List[Exp]) extends Exp {
+  override def freeVariables: Set[String] =
+    exps.flatMap(_.freeVariables).toSet
+
+  override def substitute(substitution: Map[String, Exp]): Exp = {
+    val expsRenamed = exps.map(_.substitute(substitution))
+    TupleExp(expsRenamed) copyType this
+  }
+
   override def toSMT(className: String, subTyping: Boolean): String = {
     val constrSMT = s"mk-Tuple${exps.length}"
     val expsSMT = exps.map(_.toSMT(className, subTyping)).mkString(" ")
@@ -1908,6 +2237,36 @@ case object BagKind extends CollectionKind {
 }
 
 case class CollectionEnumExp(kind: CollectionKind, exps: List[Exp]) extends Exp {
+  override def freeVariables: Set[String] =
+    exps.flatMap(_.freeVariables).toSet
+
+  override def substitute(substitution: Map[String, Exp]): Exp = {
+    val expsRenamed = exps.map(_.substitute(substitution))
+    CollectionEnumExp(kind, expsRenamed) copyType this
+  }
+
+  override def toSMT(className: String, subTyping: Boolean): String = {
+    kind match {
+      case SetKind =>
+        val ty = exp2Type.get(this) // not used, see below.
+        val tySMT = "Int" // TODO: use ty instead
+        val emptySMT = s"((as const (Set $tySMT)) false)"
+        var result = emptySMT
+        for (exp <- exps) {
+          val expSMT = exp.toSMT(className, subTyping)
+          result = s"(store $result $expSMT true)"
+        }
+        result
+      case _ => UtilSMT.error(this.toString)
+    }
+  }
+
+  override def toSMTSetContains(className: String, subTyping: Boolean)(element: Exp): String = {
+    val expSMT = toSMT(className, subTyping)
+    val elementSMT = element.toSMT(className, subTyping)
+    s"(select $expSMT $elementSMT)"
+  }
+
   override def toString = kind + "{" + exps.mkString(",") + "}"
 
   override def toJson1 = {
@@ -1931,6 +2290,43 @@ case class CollectionEnumExp(kind: CollectionKind, exps: List[Exp]) extends Exp 
 }
 
 case class CollectionRangeExp(kind: CollectionKind, exp1: Exp, exp2: Exp) extends Exp {
+  override def freeVariables: Set[String] =
+    exp1.freeVariables union exp2.freeVariables
+
+  override def substitute(substitution: Map[String, Exp]): Exp = {
+    val exp1Renamed = exp1.substitute(substitution)
+    val exp2Renamed = exp2.substitute(substitution)
+    CollectionRangeExp(kind, exp1Renamed, exp2Renamed) copyType this
+  }
+
+  override def containsSetComprhension: Boolean =
+    !exp1.isInstanceOf[IntegerLiteral] || !exp2.isInstanceOf[IntegerLiteral]
+
+  override def toSMT(className: String, subTyping: Boolean): String = {
+    kind match {
+      case SetKind =>
+        (exp1, exp2) match {
+          case (IntegerLiteral(low), IntegerLiteral(high)) =>
+            val emptySMT = s"((as const (Set Int)) false)"
+            var result = emptySMT
+            for (i <- low to high) {
+              result = s"(store $result $i true)"
+            }
+            result
+          case _ =>
+            UtilSMT.error(this.toString)
+        }
+      case _ => UtilSMT.error(this.toString)
+    }
+  }
+
+  override def toSMTSetContains(className: String, subTyping: Boolean)(element: Exp): String = {
+    val exp1SMT = exp1.toSMT(className, subTyping)
+    val exp2SMT = exp2.toSMT(className, subTyping)
+    val elementSMT = element.toSMT(className, subTyping)
+    s"(and (<= $exp1SMT $elementSMT) (<= $elementSMT $exp2SMT))"
+  }
+
   override def toString = s"$kind{$exp1 .. $exp2}"
 
   override def toJson1 = {
@@ -1957,6 +2353,53 @@ case class CollectionComprExp(kind: CollectionKind,
                               exp1: Exp,
                               bindings: List[RngBinding],
                               exp2: Exp) extends Exp {
+
+  override def freeVariables: Set[String] = {
+    val boundNames = bindings.flatMap(_.boundNames).toSet
+    val exp1FreeVariables = exp1.freeVariables -- boundNames
+    val exp2FreeVariables = exp2.freeVariables -- boundNames
+    exp1FreeVariables union exp2FreeVariables
+  }
+
+  override def containsSetComprhension: Boolean = true
+
+  override def toSMTSetContains(className: String, subTyping: Boolean)(element: Exp): String = {
+    val simpleCase: Boolean = exp1 match {
+      case IdentExp(id) => bindings.flatMap(_.boundNames).toSet.contains(id)
+      case _            => false
+    }
+    if (simpleCase) {
+      val ident = exp1.asInstanceOf[IdentExp].ident
+      val exp2Renamed = exp2.substitute(Map(ident -> element))
+      val exp2RenamedSMT = exp2Renamed.toSMT(className, subTyping)
+      val headVariables = exp1.freeVariables
+      val remainingBindings = UtilSMT.removeRngBindingsFor(headVariables, bindings)
+      if (remainingBindings.isEmpty)
+        exp2RenamedSMT
+      else {
+        val remainingBindingsSMT = remainingBindings.map(_.toSMT).mkString
+        s"(exists ($remainingBindingsSMT) $exp2RenamedSMT)"
+      }
+    } else {
+      val bindingsSMT = bindings.flatMap(_.toSMT).mkString
+      val elementSMT = element.toSMT(className, subTyping)
+      val exp1SMT = exp1.toSMT(className, subTyping)
+      val exp2SMT = exp2.toSMT(className, subTyping)
+      val predicateSMT = s"(and (= $elementSMT $exp1SMT) $exp2SMT)"
+      s"(exists ($bindingsSMT) $predicateSMT)"
+    }
+  }
+
+  def toSMTSetContainsIgnoreHead(className: String, subTyping: Boolean)(substitution: Map[String, Exp]): String = {
+    val exp2RenamedSMT = exp2.substitute(substitution).toSMT(className, subTyping)
+    val remainingBindings = UtilSMT.removeRngBindingsFor(substitution.keySet, bindings)
+    if (remainingBindings.isEmpty)
+      exp2RenamedSMT
+    else {
+      val bindingsSMT = remainingBindings.map(_.toSMT).mkString
+      s"(exists ($bindingsSMT) $exp2RenamedSMT)"
+    }
+  }
 
   override def toString = s"$kind{$exp1 | ${bindings.mkString(",")} . $exp2}"
 
@@ -1985,6 +2428,9 @@ case class CollectionComprExp(kind: CollectionKind,
 }
 
 case class LambdaExp(pat: Pattern, exp: Exp) extends Exp {
+  override def freeVariables: Set[String] =
+    exp.freeVariables -- pat.boundNames
+
   override def toString = {
     s"$pat -> $exp"
   }
@@ -2009,6 +2455,9 @@ case class LambdaExp(pat: Pattern, exp: Exp) extends Exp {
 }
 
 case class AssertExp(exp: Exp) extends Exp {
+  override def freeVariables: Set[String] =
+    exp.freeVariables
+
   override def toString = s"assert($exp)"
 
   override def toJson1 = {
@@ -2028,6 +2477,14 @@ case class AssertExp(exp: Exp) extends Exp {
 }
 
 case class TypeCastCheckExp(cast: Boolean, exp: Exp, ty: Type) extends Exp {
+  override def freeVariables: Set[String] =
+    exp.freeVariables // TODO type expressions can also contain expressions
+
+  override def substitute(substitution: Map[String, Exp]): Exp = {
+    val expRenamed = exp.substitute(substitution)
+    TypeCastCheckExp(cast, expRenamed, ty) copyType this
+  }
+
   override def toSMT(className: String, subTyping: Boolean): String = {
     if (cast)
       UtilSMT.error(s"type cast $this")
@@ -2068,6 +2525,9 @@ case class TypeCastCheckExp(cast: Boolean, exp: Exp, ty: Type) extends Exp {
 }
 
 case class ReturnExp(exp: Exp) extends Exp {
+  override def freeVariables: Set[String] =
+    exp.freeVariables
+
   override def toSMT(className: String, subTyping: Boolean): String =
     exp.toSMT(className, subTyping)
 
@@ -2172,6 +2632,12 @@ case object StarExp extends Exp {
 trait Argument extends Exp
 
 case class PositionalArgument(exp: Exp) extends Argument {
+  override def freeVariables: Set[String] =
+    exp.freeVariables
+
+  override def substitute(substitution: Map[String, Exp]): Exp =
+    PositionalArgument(exp.substitute(substitution)) copyType this
+
   override def toSMT(className: String, subTyping: Boolean): String =
     exp.toSMT(className, subTyping)
 
@@ -2195,6 +2661,12 @@ case class PositionalArgument(exp: Exp) extends Argument {
 }
 
 case class NamedArgument(ident: String, exp: Exp) extends Argument {
+  override def freeVariables: Set[String] =
+    exp.freeVariables
+
+  override def substitute(substitution: Map[String, Exp]): Exp =
+    NamedArgument(ident, exp.substitute(substitution)) copyType this
+
   override def toString = s"$ident :: $exp"
 
   override def toJson1 = {
@@ -2217,7 +2689,7 @@ case class NamedArgument(ident: String, exp: Exp) extends Argument {
 }
 
 trait BinaryOp {
-  def toSMT: String = ???
+  def toSMT: String = UtilSMT.error(this.toString)
   def toScala: String = ???
   def toJsonName: String
 }
@@ -2438,7 +2910,7 @@ case object ASSIGN extends BinaryOp {
 }
 
 trait UnaryOp {
-  def toSMT: String = ???(s"'$this' is not translated to Z3")
+  def toSMT: String = UtilSMT.error(this.toString)
 
   def toScala: String = ???(s"'$this' is not translated to Scala")
 
@@ -2470,7 +2942,10 @@ case object PREV extends UnaryOp {
   override def toJsonName = "Prev"
 }
 
-trait Literal extends Exp
+trait Literal extends Exp {
+  override def substitute(substitution: Map[String, Exp]): Exp =
+    this
+}
 
 case class IntegerLiteral(i: Int) extends Literal {
   override def toSMT(className: String, subTyping: Boolean): String = {
@@ -2672,7 +3147,7 @@ case object Exists extends Quantifier {
 }
 
 trait Type {
-  def toSMT: String = ???
+  def toSMT: String = UtilSMT.error(this.toString)
   def toScala: String = ???
   def toJson: JSONObject = {
     if (ASTOptions.useJson1 == true) toJson1
@@ -2700,7 +3175,7 @@ case object AnyType extends Type {
 
 case class ClassType(ident: QualifiedName) extends Type {
   override def toString = s"ClassOf($ident)"
-  override def toSMT: String = ???
+  override def toSMT: String = UtilSMT.error(this.toString)
 
   override def toJson1 = {
     val identType = new JSONObject()
@@ -2973,7 +3448,7 @@ case object UnitType extends PrimitiveType {
 
 trait Pattern {
   def boundNames: Set[String] = Set()
-  def toSMT: String = ???
+  def toSMT: String = UtilSMT.error(this.toString)
   def toJson: JSONObject = {
     if (ASTOptions.useJson1) toJson1
     else toJson2
@@ -3095,6 +3570,23 @@ case class RngBinding(patterns: List[Pattern], collection: Collection) {
     patterns.map(_.boundNames).toSet.flatten
   }
 
+  def getTypeMap: Map[String, Type] = {
+    var result: Map[String, Type] = Map()
+    val ty: Type = collection match {
+      case TypeCollection(ty) => ty
+      case _                  => UtilSMT.error(s"collection $collection")
+    }
+    for (pattern <- patterns) {
+      pattern match {
+        case IdentPattern(ident) =>
+          result += (ident -> ty)
+        case _ =>
+          UtilSMT.error(s"pattern $pattern")
+      }
+    }
+    result
+  }
+
   override def toString = patterns.mkString(",") + " : " + collection
 
   def toJson: JSONObject = {
@@ -3123,7 +3615,7 @@ case class RngBinding(patterns: List[Pattern], collection: Collection) {
 }
 
 trait Collection {
-  def toSMT: String = ???
+  def toSMT: String = UtilSMT.error(this.toString)
 
   def toJson: JSONObject = {
     if (ASTOptions.useJson1) toJson1
@@ -3135,6 +3627,15 @@ trait Collection {
 }
 
 case class ExpCollection(exp: Exp) extends Collection {
+  override def toSMT: String = {
+    exp match {
+      case IdentExp(id) if getEntityDecl(id) != null => // user-defined class
+        "Ref"
+      case _ => // TODO
+        UtilSMT.error(this.toString())
+    }
+  }
+
   override def toString = exp.toString()
 
   override def toJson1 = {

@@ -1,4 +1,4 @@
-\section{Related Work}
+\section{RELATED WORK}
 \label{sec:related-work}
 
 \Klang{} is a wide spectrum textual language containing concepts such
@@ -26,14 +26,18 @@ specification languages. More recently, \asml{} presented
 in~\cite{asml05} presents a language where all operations operate on
 algebras. \alloy{}~\cite{jackson-alloy-12} is a language intended for
 describing structure and exploring the design of the structure through
-the specification of constraints. \alloy{} also provides seemless
-integration with a SAT solver.
+the specification of constraints. \alloy{} also provides seem less
+integration with a SAT solver. FORMULA~\cite{jackson2009specifying}
+also presents a language for logic programming where the model is then
+analyzed by SMT solvers. FORMULA focuses on non-functional
+requirements for incremental refinement purposes and design
+exploration. 
 
 In contrast to specification languages, high level programming
 languages have also been developed over time. \sml{} (Standard ML)
 \cite{standard-ml-97}, \ocaml{} \cite{ocaml}, and \haskell{}
-\cite{haskell} belong to the same family of functional programming
-languages with some support for classes and object
+\cite{jones2003haskell} belong to the same family of functional
+programming languages with some support for classes and object
 orientation. \python{} \cite{python} also provides a unique
 perspective on combining object oriented and functional
 programming. In our view, \scala{} \cite{scala} does so to the fullest
@@ -44,12 +48,12 @@ maps, very much resembling the notation in \vdm{}.
 
 Yet another class of recent languages has investigated introducing
 specification constructs in programming languages in the form of
-design-by-contract (pre/postconditions and class
-invariants). Examples of such languages include \eiffel{}
-\cite{eiffel} and \specsharp{} \cite{specsharp}. \scala{} also
-attempts at providing such constructs, but through the use of library
-functions on functional programs \cite{odersky-rv10}. Finally, The
-\jml{} language \cite{jml} allows to write design-by-contract
+design-by-contract (pre/postconditions and class invariants). Examples
+of such languages include \eiffel{} \cite{meyer1988eiffel} and
+\specsharp{} \cite{barnett2011specification}.  \scala{} also attempts
+at providing such constructs, but through the use of library functions
+on functional programs \cite{odersky-rv10}. Finally, The \jml{}
+language \cite{leavens1998jml} allows to write design-by-contract
 specifications for \java{} as comments. These specifications and
 constructs are ignored by the standard \java{} compiler. Rather, they
 are processed with special tools; thus, making them less valuable or
@@ -62,21 +66,23 @@ built with verification as a primary goal. \dafny{}
 the program that can be used to specify functional correctness
 constraints for programs. These constraints and specifications are
 verified using the \boogie{}~\cite{barnett2006boogie} verifier that
-uses \zthree{} as the underlying SMT solver. Similarly, \specsharp{}
-also provides support for verifying the user provided
-specifications. \whythree{} \cite{filliatre-why3-2011} provides a rich
-language for specification and programming, called
-\whyml{}. \whythree{} relies on external theorem provers (automatic
-and interactive) to then verify the specification. Additionally, using
-\whyml{}, one can also generate \ocaml{} programs using a correct by
-construction automatic extraction procedure. In contrast to using
-automated provers, interactive theorem provers such as \pvs{}
-\cite{cade92-pvs,pvs-website}, \coq{} \cite{coq-website}, and
-\isabelle{} \cite{isabelle-website}, also provide languages to create
-specifications and provide constraints, which can then be discharged
-via a user guided process. Such tools allow for proving much more
-complex properties, but tend to be laborious and difficult to use in
-practice.
+uses \zthree{} as the underlying SMT solver. \dafny{} is an excellent
+language for performing verification, but lacks support for
+inheritance and class invariants, which are a necessity for the kind
+of models we deal with. Similarly, \specsharp{} also provides support
+for verifying the user provided specifications. \whythree{}
+\cite{filliatre-why3-2011} provides a rich language for specification
+and programming, called \whyml{}. \whythree{} relies on external
+theorem provers (automatic and interactive) to then verify the
+specification. Additionally, using \whyml{}, one can also generate
+\ocaml{} programs using a correct by construction automatic extraction
+procedure. In contrast to using automated provers, interactive theorem
+provers such as \pvs{} \cite{cade92-pvs,pvs-website}, \coq{}
+\cite{barras1997coq}, and \isabelle{} \cite{nipkow2002isabelle}, also
+provide languages to create specifications and provide constraints,
+which can then be discharged via a user guided process. Such tools
+allow for proving much more complex properties, but tend to be
+laborious and difficult to use in practice.
 
 Past research in formal modeling has also resulted in various attempts
 at combining formal and semi-formal languages. Work
@@ -91,7 +97,7 @@ SMT solver, and have been primarily focused on UML (not \sysml).
 aforementioned languages, but differs in many respects as well. For
 example, due to the application environment of \Klang{} being targeted
 to \sysml{} models, proving class satisfiability and model finding are
-of prime importance, something \Klang{} is optimized for. \Klang{}
+of prime importance, something for which \Klang{} is optimized. \Klang{}
 also provides support for specifying and proving specifications with
 multiple inheritance, something \sysml{} models depend on
 greatly. Integration with SMT solvers has proven to be useful not only

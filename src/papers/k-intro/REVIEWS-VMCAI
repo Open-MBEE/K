@@ -1,0 +1,213 @@
+Dear Klaus Havelund,
+
+On behalf of the VMCAI 2016 PC, we regret to inform you that paper 88 entitled
+
+  K: A Wide Spectrum Language for Modeling, Programming, and Analysis
+
+has not been accepted for publication.
+
+The reviews for your paper are attached. We hope you will find them useful.
+
+We have put together a strong program this year, including three invited speakers.  We really hope that you will be able to attend the conference.
+
+Thank you for submitting to VMCAI 2016.
+
+Best regards,
+  Barbara and Rustan
+
+
+----------------------- REVIEW 1 ---------------------
+PAPER: 88
+TITLE: K: A Wide Spectrum Language for Modeling, Programming, and Analysis
+AUTHORS: Klaus Havelund, Rahul Kumar, Bradley Clement and Chris Delp
+
+OVERALL EVALUATION: 1 (weak accept)
+REVIEWER'S CONFIDENCE: 4 (high)
+
+----------- REVIEW -----------
+This paper describes K, a textual modeling language that formalizes SysML, a graphical modeling language used popularly in the model-based design community. K also supports object-oriented programming constructs such as classes and multiple inheritance, and allow specifications (such as function preconditions and postconditions) written in predicate logic and set theory. The paper also describes the translation of a subset of K to the SMT-Lib format. This is used to apply Z3 for checking the logical consistency of classes specified in K models.
+
+Strengths:
+
++ Formalizing SysML in a textual modeling language and translation (of a subset) to the SMT-lib is a useful effort, enabling applications of other tools in model-based development.
+
++ Supporting the design of NASA's missions is especially nice!
+
+Weaknesses:
+
+- The formalization of the classes in K and translation to SMT-lib are relatively straight-forward.
+
+- Some other interesting parts could be elaborated, e.g., the paper briefly mentions the "Event" class and the function "after" in Allen logic, but it is not clear how these are handled. Even if the authors cannot share details of the scheduling problems discovered specifically in the Europa project, it would be useful to describe how such problems are formulated and solved in the K language.
+
+- A broader discussion on properties of interest in SysML and/or K models would be useful.
+
+Typo:
+
+- Fig 1: The caption seems to be incorrect (unless this filesystem is part of the spacecraft model).
+
+
+----------------------- REVIEW 2 ---------------------
+PAPER: 88
+TITLE: K: A Wide Spectrum Language for Modeling, Programming, and Analysis
+AUTHORS: Klaus Havelund, Rahul Kumar, Bradley Clement and Chris Delp
+
+OVERALL EVALUATION: 0 (borderline paper)
+REVIEWER'S CONFIDENCE: 3 (medium)
+
+----------- REVIEW -----------
+The paper describes the modelling language K which is inspired by the modelling
+  languages such as UML and SysML, but also by various formally founded specification
+  languages. The result is a textual language with support for system modelling,
+  programming and analysis (with the help of SMT solvers). The language borrows
+  concepts from many different languages, such as classes and inheritance,
+  multiplicities, collections, standard data types, specification of pre
+  and post conditions, annotation constructs, etc. The main contribution of the paper
+  is the method to translate the specification requirements in K language into a satisfiability
+  query in SMT-lib format, which allows use of SMT solvers to check the consistency
+  of the specification.
+
+  The biggest challenge in translation from K language specification to SMT-lib are
+  multiple inheritance and recursive references. Some aspects are straight forward,
+  e.g, objects are represented using class constructors with corresponding arguments,
+  and class members are accessed using getter functions. However, in order to handle
+  recursive data type references are needed. This is achieved using a heap which maps
+  references to objects. Inheritance is then modeled by explicit property inclusion.
+  Functions are translated to SMT functions, and assertions and invariants become
+  functions asserting the properties in question. In the end the well-formedness of
+  the model can be checked by asserting that an object of that type exists in the heap
+  and that each object in the heap of that type satisfies the invariants associated with
+  its class. The query can be given to an SMT solver which will either provide a model
+  or report that it's unsatisfiable.
+
+  The paper presents a few ways K is being used in practice and provides an extensive
+  overview of related work.
+
+  The paper is well written and easy to read, however it might be a bit too example
+  driven. I found the ideas behind this work to be interesting, since it may result in
+  a single language being used from specification to implementation. The way formal
+  analysis is being implemented is interesting, however I would have preferred a somewhat
+  more systematic description. It is a bit difficult to tell where the boundaries are of
+  problems that are solved and challenges to the method that persist (if any). Perhaps a more detailed
+  report of particular differences with other languages mentioned in the related work
+  should be included. It would be interesting to see the amount of time it takes to show
+  model consistency, for models of varying sizes and complexity. How big models were
+  successfully analyzed using the K tool chain?
+
+  Overall, I like the ideas and work that is presented, but I would prefer if the
+  presentation was clearer about some aspects (e.g., what exactly can be handled, persisting
+  challenges, having some performance results).
+
+
+----------------------- REVIEW 3 ---------------------
+PAPER: 88
+TITLE: K: A Wide Spectrum Language for Modeling, Programming, and Analysis
+AUTHORS: Klaus Havelund, Rahul Kumar, Bradley Clement and Chris Delp
+
+OVERALL EVALUATION: -2 (reject)
+REVIEWER'S CONFIDENCE: 5 (expert)
+
+----------- REVIEW -----------
+The paper proposes a language K (for kernel) as a candidate formal foundation for SysML.  K is intended to support classes, multiple inheritance, logic and set theory.  A subset of K can be translated into the SMT-LIB language, thus facilitating machine-assisted analysis using the Z3 solver.
+
+The semantics of the language is provided by translation into the SMT-LIB input language.   No reference semantics, in the form of operational, denotational or axiomatic semantics, is provided against which one may gauge the correctness of the translation.  Indeed, the translation schema are presented only by small examples.   The translation is standard, with no surprises.  It is presented in detail, but without conveying any great insight.  I did not see any attempt to validate the translation (e.g., any theorems about the translation, even with respect to the examples).
+
+I struggle to find anything novel in the work: In 2015 to have yet another executable specification language, with no new abstractions proposed, no new structured programming constructs beyond the tired old ones.
+
+I must note I am partial towards the goals of having formal foundations, and being able to translate specifications into executable/verifiable models. The one positive I found in the work was the possibility of model exploration.   However, I did not find any insights into what restrictions (or what subset translates into SMT-LIB) that makes this feasible/tractable.
+
+The paper starts with a weak motivation. While the problems of learning the large 2-D graphical syntax is a valid concern, the authors’ thesis that these can be mitigated by having a textual syntax is not a wholly convincing motivation for the work.
+
+The motivation is not helped with the introduction containing
+baroque sentences such as: “Development of a textual language technology like K in a context asking for it makes it a different experience than seen in most earlier such efforts, whether or not the results will overlap.”
+
+The examples are not particularly enlightening, either, and are rather trivial. The user experience report was not very convincing. Unsatisfiability of a proposed scheduling in the Europa project would have been interesting.  Therefore the cop-out line that information classification requirements prevent a more extensive description is a let-down.
+
+I am not sure how the work presented makes a major contribution in verification, model-checking or program analysis, other than what may be paraphrased as: ``We’ve done this, this and this, and they seem to be useful to us in some of our projects.’’
+
+In summary, the paper
+fails as a language design paper — since no new abstractions, no new insights form logic/mathematics into model exploration by restricting the expressiveness of the language.
+fails as a user experience paper — since the examples and case study are trivial.  And where it may be interesting, details are not presented.
+fails as a formal methods paper since there are no reference semantics, and no results about the translation.
+
+Detailed Comments for the authors.
+
+Language design issues.
+
+The scoping rules of the language are not specified.  The reader is left to guess that these will be similar to OO languages such as Java or C++.
+
+I prefer that what are called functions are indeed mathematical functions.  What you call functions are methods (in object-oriented programming).
+
+One would expect that other than pre- and post-conditions specifying the input/output behaviour of “functions”, there would also be constraints such as invariant properties about (global) objects which they may manipulate.
+
+Section 4, while acting as a plug for the use of K and its programming environment, shows little continuity with the rest of the text and contributes little in a conference such as VMCAI.
+
+The Related Work discussion  is unedifying.  It looks like a ;aundry list of various approaches, without any insights into what works well in this context, what features are worthwhile incorporating into K and why, and (perhaps more importantly) what features are unnecessary/undesirable and why.
+
+More Quibbles:
+
+Figure 1 is not a model of a spacecraft.  Unless spacecrafts look like file systems.
+Figure 6 is almost unreadable, except under magnification.
+The values presented for the spacecraft weight (18g) and the weight of instruments (966g) seem quite strange in the model that is presented.
+Writing style/notation
+
+Avoid puzzling sentences such as:  “Classes, similar to other languages provide a means for abstracting and collecting properties (member instance variables)."
+it’s -> its (for the possessive)
+Use of ! for negation is non-logical, and especially avoidable since many notations use $\exists !$ to mean a unique existential witness.
+The distinction between multiplicities and collections is not well explained.  In the example, why must a person have at least one portfolio? [Also, would it be possible to consider the children first as an unordered collection, but on refinement, an ordered collection?]
+Use gerundal forms rather than infinitives:
+ “anticipate to target” -> “anticipate targetting”
+Rephrase sentences such as "Instruments, and its radio sub-classes, as well as the the spacecraft itself, are things, inheriting from this class”
+“it refers to” -> “to which it refers”.
+"something K is optimized for” -> “something for which K is optimized”
+“Reversely” is not a word.
+Missing subject in "For this purpose must define the type of references, which are just integers”.
+“who’s” -> “whose”
+generates *an* is-C function
+
+
+----------------------- REVIEW 4 ---------------------
+PAPER: 88
+TITLE: K: A Wide Spectrum Language for Modeling, Programming, and Analysis
+AUTHORS: Klaus Havelund, Rahul Kumar, Bradley Clement and Chris Delp
+
+OVERALL EVALUATION: 1 (weak accept)
+REVIEWER'S CONFIDENCE: 5 (expert)
+
+----------- REVIEW -----------
+This paper describes a new modeling language, K, and its use and translation to SMT-LIB.  This is a very nice effort and I'm excited about it.  The textual notation looks clean and the paper reports that it is being used in a some projects.  Having analysis of K models be analyzed by an SMT solver is also a good idea.
+
+The paper leaves a bit to be desired, however. Foremost, I don't understand if the language really has objects with references or if they are actually immutable datatypes (with subtyping).  In any case, there seem to be no assignment statements in the language to change the state, which is appropriate for a modeling language and makes the encoding simpler. The paper shows an example of mutually recursive types, A and B, and says this occurs in programs.  But I don't see how such classes can be created in K.
+
+Other questions I have include:  How are recursive functions encoded?  How are high-order constructions modeled?  (In fact, how are such even written in the language? The paper says that K can be used to model higher-order logics.)
+
+The paper mentions a lot of related work, but does not say anything about FORMULA, which I think may be the closest related work there is.
+
+Details:
+
+The language name K is unfortunate, because there is a language and system called K (Grigore Rosu et al.) that has roots in the rewriting system Maude.  It occurs to me that you could rename the language to Ke and still decide pronounce it the same way as before.
+
+K provides tuples.  Isn’t Unit a special case of a tuple (a 0-tuple)?
+
+sum() is provided for all collections.  What if the collection does not contain numeric elements?
+
+it’s specification language -> its specification language
+
+under specified -> underspecified
+
+what is line 21 of Fig. 1?  Is it like an object invariant?
+
+Similarly, what kind of thing is line 8 of the right-hand column of Fig. 2?
+
+I’m a bit confused in section 3.2.  Before this, it had seemed to me that classes were really just datatypes.  In other words, it had seemed like fields were always immutable and could only be set during construction.  But in section 3.2, with the mutually recursive types A and B, it suggests that there is a way in the language to initialize such A and B objects.  How is that done?
+
+Functions are translated directly to SMT-LIB functions.  What is done with recursive functions?
+
+The translation of K into SMT-LIB could benefit from similar translations that have well developed support for functions, recursion, etc.  For example, why not translate K to Dafny?
+
+Section 5 says that K can be used to express higher-order logics.  How are these translated to SMT-LIB?
+
+[34] Spec# is better cited as the 2011 CACM article.
+
+A highly related piece of work is the tool FORMULA (Ethan Jackson et al.)
+
+Multiplicity and other inter-object constraints have also been explored in the work of Stephanie Baltzer.
