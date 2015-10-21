@@ -9,7 +9,7 @@ systems (for example in competitions).  In addition, it allows systems
 generating SMT-LIB formulas to target any SMT solver processing this
 standard. In our case we use the Z3 SMT solver \cite{de2008z3} to
 process the generated formulas, but anticipate targeting other solvers
-as well in near term work.
+in the near term.
 
 \subsection{The Source K Model}
 
@@ -31,7 +31,7 @@ language, corresponding to the model of a spacecraft shown in Figure
 %
 The translated subset includes classes, multiple inheritance,
 properties of primitive types (\code{Bool}, \code{Int}, and
-\code{Real}), user-defined class types, and tuple types (cartesian
+\code{Real}), user-defined class types, tuple types (cartesian
 product), functions, pre/post conditions, and constraints.  Functions,
 pre/post conditions, and constraints can be specified in a rich
 expression language supporting conditionals, class constructors, dot
@@ -41,24 +41,24 @@ covered here. Currently not translated constructs include type
 parameterized classes, statements with side-effects (assignment) and
 their corresponding looping constructs, functions as first class
 citizens, type abbreviations and predicate subtypes, as well as
-multiplicities, which will be treated as collection types.
-Recursive functions can currently not be defined using function definitions, but
-can be specified by providing function signatures plus separate constraints.
+multiplicities, which will be treated as collection types.  Recursive
+functions can currently not be defined using function definitions, but
+can be specified by providing function signatures plus separate
+constraints.
 
-The example illustrates the features of K
-that have been used by engineers at JPL until the time of writing. The
-emphasis of these models is on {\em structure} of artifacts and {\em
-  scheduling} of events. The class \code{Thing} is meant to represent
-entities that have weight. Instruments, its radio sub-classes, and 
-the spacecraft class itself, inherit from 
-class \code{Thing}. The class \code{Instr} defines a \code{power}
-level. Requirements in the form of Boolean constraints are imposed on
-\code{power} and \code{weight}. The \code{SpaceCraft} class makes
-instances of instruments, defines a combined sum
-\code{instrWeight} and a constraint on it with additional
-requirements. The elements of the model discussed above are so-called
-{\em structural} elements, what one would normally see in a SysML
-class diagram.
+The example illustrates the features of \Klang{} that have been used
+by engineers at JPL until the time of writing. The emphasis of these
+models is on {\em structure} of artifacts and {\em scheduling} of
+events. The class \code{Thing} is meant to represent entities that
+have weight. Instruments, its radio sub-classes, and the
+\code{SpaceCraft} class itself, inherit from class \code{Thing}. Class
+\code{Instr} defines a \code{power} level. Requirements in the form of
+Boolean constraints are imposed on \code{power} and \code{weight}. The
+\code{SpaceCraft} class makes instances of instruments, defines a
+combined sum \code{instrWeight}, and a constraint on it with
+additional requirements. Such elements of a model are so-called {\em
+  structural} elements, what one would normally see in a SysML class
+diagram.
 
 The spacecraft in addition contains a system manager, representing the
 software on board. For the purpose of illustration, the system manager
@@ -95,17 +95,17 @@ the system manager.
 
 \subsection{The Translation to SMT-LIB}
 
-The SMT-LIB input language (from here on referred to as SMT-LIB) is a
-textual language for typed first order predicate logic plus various
-theories, including for example arithmetic, uninterpreted functions,
-and arrays. The syntax is LISP-like, meaning for example that function
+The SMT-LIB language (from here on referred to as SMT-LIB) is a textual
+language for typed first order predicate logic plus various theories,
+including for example arithmetic, uninterpreted functions, and
+arrays. The syntax is LISP-like, meaning for example that function
 calls such as $f(42,false)$ have the form $(f\ 42\ false)$. For the 44
-line K model in Figure \ref{fig:spacecraftSmt}, the translator
+line \Klang{} model in Figure \ref{fig:spacecraftSmt}, the translator
 generates 333 lines of uncommented SMT-LIB code (additional comments
 are generated to make the output easier for humans to read). We shall
 below highlight subsets from each class of formulas generated, while
-covering each of the categories of formulas generated. Our main challenge
-in translating K to SMT-LIB is how to translate classes 
+covering each of the categories of formulas generated. Our main
+challenge in translating K to SMT-LIB is how to translate classes
 supporting (multiple) {\em inheritance} and {\em recursive} references
 between classes. This will be illustrated in the following.
 
@@ -157,9 +157,10 @@ class A {   class B {
 \end{tabular}
 \end{center}
 
-\noindent The following translation of this model to the SMT-LIB datatypes
-\code{A} and \code{B} is {\bf not} well-founded since it contains
-recursion between \code{A} and \code{B} (it is illegal SMT-LIB).
+\noindent The following translation of this model to the SMT-LIB
+datatypes \code{A} and \code{B} is {\bf not} well-founded since it
+contains recursion between \code{A} and \code{B} (it is illegal
+SMT-LIB).
 
 \lstset{language=SMT,numbers=none}
 
@@ -470,18 +471,6 @@ class.
 \end{tabular}
 \end{center}
 
-\begin{figure*}[!t]
-\centering
-  \lstset{language=SMT,numbers=none}
-  \small
-  \begin{tabular}{c}
-    \lstinputlisting{examples/spacecraftOutput.k}% 
-    %\VerbatimInput{examples/spacecraftOutput.k}
-  \end{tabular}
-  \caption{Output of the K tool chain for the spacecraft example.}
-  \label{fig:shapes}
-\end{figure*}
-
 \textbf{Solving the model} Given the generated SMT-LIB model outlined
 above, an SMT solver following the SMT-LIB standard can determine
 whether the model is satisfiable. Our currently used SMT solver is
@@ -490,6 +479,19 @@ Z3. If the model is {\bf not} satisfiable, the solver will just return
 eliminating assertions to discover which assertions caused the model
 to become unsatisfiable, in the best case the minimal set of such
 assertions. We are working on such a violation explanation capability.
+
+
+\begin{figure*}
+\centering
+  \lstset{language=SMT,numbers=none}
+  \small
+  \begin{tabular}{c}
+    \scalebox{0.9}{\lstinputlisting{examples/spacecraftOutput.k}}
+  \end{tabular}
+  \caption{Output of the K tool chain for the spacecraft example.}
+  \label{fig:shapes}
+\end{figure*}
+
 
 If the model on the other hand is satisfiable, an assignment to
 variables in the model will be returned by the solver. In our case the

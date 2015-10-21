@@ -5,13 +5,6 @@ Currently, \Klang{} is used to analyze models created for the NASA
 Europa Clipper Mission Concept. Figure~\ref{fig:k} gives an overview
 of the usage scenarios for the \Klang{} language and tool chain.
 
-\begin{figure*}[!t]
-\centering
-\includegraphics[scale=0.49]{K.png}
-\caption{\Klang{} in practice.}
-\label{fig:k}
-\end{figure*}
-
 The typical scenario involves modelers (of the Europa Clipper mission
 concept) creating SysML diagrams in a tool such as MagicDraw and
 saving them to a central model repository. This database of models is
@@ -35,6 +28,15 @@ translation and analysis. In the future, we plan on automating this
 effort and have it be executed on a regular cadence with results made
 available through the model database to a web application.
 
+\begin{figure*}
+  \centering
+  \includegraphics[scale=0.49]{K.png}
+  \caption{\Klang{} in practice.}
+  \label{fig:k}
+\end{figure*}
+
+
+
 \begin{comment}
 \begin{figure*}
 \centering
@@ -49,22 +51,21 @@ browser~\cite{kwebsite}. We have created a simple HTML based \Klang{}
 code editor along with the functionality to invoke the \Klang{}
 tool chain from the web browser. This page is used for purposes of
 teaching, learning, exploring, and prototyping with \Klang{}. The web
-page also provides a tutorial, documentation, and \Klang{} examples as
-a guide.
+page also provides a tutorial, documentation, and examples.
 
 Finally, the \Klang{} tool chain is also available as a binary
-download for all major operating systems. Users may download the tool
-chain and invoke the \Klang{} parser, type checker, and SMT analyzer
-from the command line. We expect that certain models of Europa Clipper
-mission concept are created and analyzed directly as \Klang{}
-models. Currently, there are two such salient examples where \Klang{}
-was used to create and analyze requirements. The first model is a
-series of scheduling constraints, which after modeling in \Klang{},
-were successfully analyzed in less than 20 seconds. The results of the
-analysis also discovered a scheduling problem, that was later
-successfully confirmed by a significantly more cumbersome manual
-analysis. The second model contains a series of high level constraints
-that are analyzed using \Klang{} for satisfiability. This model solves
-in around 30 seconds. Due to JPL's information release restrictions,
-such details cannot be shared at this time.
+download for all major operating systems. Users may download the
+binaries and invoke the tool chain from the command line. We expect
+that certain models of Europa Clipper mission concept are created and
+analyzed directly as \Klang{} models. Currently, there are two such
+salient examples where \Klang{} was used to create and analyze
+requirements. The first model is a series of scheduling constraints,
+which after modeling in \Klang{}, were successfully analyzed in less
+than 20 seconds. The results of the analysis also discovered a
+scheduling problem, that was later successfully confirmed by a
+significantly more cumbersome manual analysis. The second model
+contains a series of high level constraints that are analyzed using
+\Klang{} for satisfiability. This model solves in around 30
+seconds. Due to JPL's information release restrictions, such details
+cannot be shared at this time.
 
