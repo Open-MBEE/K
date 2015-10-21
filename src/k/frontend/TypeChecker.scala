@@ -291,7 +291,7 @@ object ClassHierarchy {
 
   def buildHierarchy(d: EntityDecl, types: Map[Type, TopDecl], visited: Set[EntityDecl]): Set[Type] = {
     d.extending.foldLeft(Set[Type]()) { (res, e) =>
-      if(!types.contains(e)){
+      if (!types.contains(e)) {
         error(s"Could not find ${e.toString}")
       }
       assert(types(e).isInstanceOf[EntityDecl])
@@ -355,7 +355,17 @@ class TypeChecker(model: Model) {
         else pd.assignment.get
       case _ => false
     }
+  }
 
+  private def incompleteIfExp(e: Exp): Boolean = {
+    e match {
+      case IfExp(e, t, f) =>
+        f match {
+          case None => true
+          case _    => false
+        }
+      case _ => false
+    }
   }
 
   private def functionContainsReq(d: FunDecl): Boolean = {
@@ -381,6 +391,12 @@ class TypeChecker(model: Model) {
             case ExpressionDecl(e) => !isConstructorCall(exp2TypeEnv.get(e), e).isEmpty
             case _                 => false
           }
+        val incompleteIf =
+          if (fd.body.length == 0) false
+          else fd.body.last match {
+            case ExpressionDecl(e) => incompleteIfExp(e)
+            case _                 => false
+          }
 
         if (!isPrimitiveType(d.asInstanceOf[FunDecl].ty.getOrElse(UnitType)) && lastMemberIsConstructorCall) {
           error(s"Function $d does not return a primitive type. SMT mode disallows this.")
@@ -388,6 +404,10 @@ class TypeChecker(model: Model) {
         if (functionContainsReq(d.asInstanceOf[FunDecl])) {
           error(s"Function $d contains a constraint. SMT mode disallows this.")
         }
+        if (incompleteIf) {
+          error(s"Function $d contains an incomplete If statement with no else clause.")
+        }
+
       }
 
       if (d.isInstanceOf[EntityDecl]) {
@@ -398,11 +418,21 @@ class TypeChecker(model: Model) {
               case ExpressionDecl(e) => !isConstructorCall(exp2TypeEnv.get(e), e).isEmpty
               case _                 => false
             }
+          val incompleteIf =
+          if (fd.body.length == 0) false
+          else fd.body.last match {
+            case ExpressionDecl(e) => incompleteIfExp(e)
+            case _                 => false
+          }
+
           if (!isPrimitiveType(fd.ty.getOrElse(UnitType)) && lastMemberIsConstructorCall) {
             error(s"Function $fd does not return a primitive type. SMT mode disallows this.")
           }
           if (functionContainsReq(fd)) {
             error(s"Function $fd contains a constraint. SMT mode disallows this.")
+          }
+          if (incompleteIf) {
+            error(s"Function $d contains an incomplete If statement with no else clause.")
           }
         }
       }
@@ -548,7 +578,7 @@ class TypeChecker(model: Model) {
                   false
               }).get
 
-              /*
+        /*
           decl2TypeEnvi += (cte0._1 -> (cte0._2.union((m2.name) -> PropertyTypeInfo(m2, false, true, ed))))
           origTypeEnvironments += (cte0._1 -> (cte0._2.union((m2.name) -> PropertyTypeInfo(m2, false, true, ed))))
           decl2TypeEnvi += (cte1._1 -> (cte1._2.union((m1.name) -> PropertyTypeInfo(m1, false, true, ed))))
