@@ -33,9 +33,9 @@ The translated subset includes classes, multiple inheritance,
 properties of primitive types (\code{Bool}, \code{Int}, and
 \code{Real}), user-defined class types, and tuple types (cartesian
 product), functions, pre/post conditions, and constraints.  Functions,
-pre/post conditions, and constrainsts can be specified in a rich
+pre/post conditions, and constraints can be specified in a rich
 expression language supporting conditionals, class constructors, dot
-notation for accesing properties in objects, and universal and
+notation for accessing properties in objects, and universal and
 existential quantification.  Sets are under development but not
 covered here. Currently not translated constructs include type
 parameterized classes, statements with side-effects (assignment) and
@@ -55,7 +55,7 @@ class \code{Thing}. The class \code{Instr} defines a \code{power}
 level. Requirements in the form of Boolean constraints are imposed on
 \code{power} and \code{weight}. The \code{SpaceCraft} class makes
 instances of instruments, defines a combined sum
-\code{instrumentsWeight} and a constraint on it with additional
+\code{instrWeight} and a constraint on it with additional
 requirements. The elements of the model discussed above are so-called
 {\em structural} elements, what one would normally see in a SysML
 class diagram.
@@ -200,7 +200,7 @@ This is illustrated by the following definition of the \code{SpaceCraft} datatyp
 (declare-datatypes () ((SpaceCraft 
   (mk-SpaceCraft 
       (weight Int)
-      (instrumentsWeight Real)
+      (instrWeight Real)
       (radio Ref) (camera Ref)
       (software Ref)))))
 \end{lstlisting}
@@ -338,7 +338,7 @@ when checking the satisfiability of, for example, the
 \code{Instr}, as for example \code{radio : Instr}, we have
 to assume that \code{radio} in addition potentially can refer to any
 object of a class that sub-classes \code{Instr}, which in this
-case is either \code{SmplRadio} or \code{SmartRadio}. This is
+case is either \code{SmplRadio} or \code{SmrtRadio}. This is
 achieved with the following alternative getter function, named
 \code{Instr.weight}, for the \code{weight} property of the class
 \code{Instr}.
