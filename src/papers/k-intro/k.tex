@@ -181,11 +181,15 @@ have a multiplicity of 1 or more. This translates to \code{prtflios}
 being a \code{Bag} of \code{Set[Stock]} with at least 1 entry and no
 upper limit.
 
-\sysml{} models also carry a lot of meta data information in them. To
-accommodate for this, \Klang{} also provides the {\em annotation}
-construct. New annotations can be created and applied to classes,
-expressions, functions etc. Currently, each annotation has a name and
-a type.
+\sysml{} models can also carry meta data information in them
+(sometimes introduced by tools). To accommodate for this, \Klang{}
+also provides the {\em annotation} construct. New annotations can be
+created and applied to classes, expressions, functions etc. Currently,
+each annotation has a name and a type.
+
+\Klang{} also provides single line comments using `-{}-' at the
+beginning of the line, and block comments using `===(=*)' as the token for
+the beginning and the end of the comment.
 
 \subsection{K Type Checking}
 
