@@ -13,4 +13,3 @@ class Sets {
   req 11 isin Set{x + 1 | x : Int :- 10 <= x && x <= 15}
 }
 
-

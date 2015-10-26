@@ -1,8 +1,12 @@
 
+annotation instances : Int
+
+@instances(3)
 class A {
   x : Int
 }
 
+@instances(1)
 class B {
   s1 : Set[A]
   a1 : A
@@ -19,4 +23,6 @@ class B {
   
   req s2 = Set{a | a : A :- a.x = 10 && (a = a1 || a = a2)}
 }
+
+b : B
 
