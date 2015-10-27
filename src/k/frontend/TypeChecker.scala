@@ -892,10 +892,13 @@ class TypeChecker(model: Model) {
               else {
                 // get class type environment
                 val classTypeEnv = decl2TypeEnvi(classes(it.ident.toString))
+                logDebug(s"classTypeEnv is $classTypeEnv")
                 classTypeEnv(i) match {
                   case pti @ PropertyTypeInfo(decl, _, _, _) => getPropertyDeclType(decl)
                   case pti @ ParamTypeInfo(p)                => p.ty
                   case pti @ FunctionTypeInfo(decl, _)       => decl.ty.get
+                  case _ => error(s"Given expression does not type check: $exp.")
+                  
                 }
               }
             }
@@ -910,7 +913,7 @@ class TypeChecker(model: Model) {
       case BinExp(exp1, op, exp2) =>
         val ty1 = getExpType(te, exp1, owner)
         val ty2 = getExpType(te, exp2, owner)
-        logDebug(s"Types are $exp1:$ty1 and $exp2:$ty2")
+        logDebug(s"Types are $exp1:$ty1 and $exp2:$ty2") 
         op match {
           case LT | LTE | GT | GTE | AND | IMPL | OR | IFF | NEQ | EQ =>
             if (!areTypesEqual(ty1, ty2, true)) error(s"$exp does not type check. $ty1 and $ty2 are not equivalent.")
@@ -1124,7 +1127,7 @@ class TypeChecker(model: Model) {
     exp2Type.put(exp, result)
     exp2TypeEnv.put(exp, te)
 
-    logDebug(s"getExpType: $exp $result")
+    logDebug(s"getExpType (end): $exp $result")
 
     return result
   }
