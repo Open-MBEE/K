@@ -173,15 +173,7 @@ object K2Z3 {
 
       var rows: List[List[String]] = List(List("Variable", "Value"))
       var extraRows: List[List[String]] = List(List("Variable", "Value"))
-
-      var heapDecl = z3Model.getFuncDecls.find {
-        x =>
-          val isHeap = !z3Model.getFuncInterp(x).getEntries.
-            find { e => e.getValue.toString.contains("lift-TopLevelDeclarations") }.isEmpty ||
-            z3Model.getFuncInterp(x).getElse.toString.contains("lift-TopLevelDeclarations")
-          logDebug(s"$x $isHeap")
-          isHeap
-      }
+      var heapDecl = z3Model.getDecls.find { _.getName.toString.equals("heap") }
 
       if (heapDecl.isEmpty) {
         error(s"FATAL INTERNAL ERROR! Could not find a heap declaration for printing the model.")
