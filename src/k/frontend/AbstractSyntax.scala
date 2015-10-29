@@ -51,7 +51,7 @@ object UtilSMT {
   }
 
   def saveConstraintMapping(cPrint: String) {
-    UtilSMT.constraintMessageMap = UtilSMT.constraintMessageMap + (s"x${UtilSMT.constraintCounter}" -> cPrint)
+    UtilSMT.constraintMessageMap = UtilSMT.constraintMessageMap + (s"_xkassert${UtilSMT.constraintCounter}" -> cPrint)
     UtilSMT.constraintCounter += 1
   }
 

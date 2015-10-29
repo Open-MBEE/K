@@ -47,7 +47,7 @@ object Frontend {
         timeoutValue = value.toInt
         parseArgs(map, tail)
       case "-classpath" :: value :: tail =>
-        classpath = value.split(":").toSet
+        classpath = value.replace("\"", "").split(File.pathSeparator).toSet
         parseArgs(map, tail)
       case "-tests" :: tail    => parseArgs(map ++ Map('tests -> true), tail)
       case "-baseline" :: tail => parseArgs(map ++ Map('baseline -> true), tail)
@@ -126,7 +126,10 @@ object Frontend {
         model = getModelFromFile(f)
         filename = Paths.get(f).getFileName.toString
         fullFileName = f
-        modelFileDirectory = Paths.get(f).getParent.toString
+        if (Paths.get(f).getParent == null)
+          modelFileDirectory = new java.io.File(".").getCanonicalPath
+        else
+          modelFileDirectory = Paths.get(f).getParent.toString
         classpath = classpath + modelFileDirectory
 
         // massage classpath
@@ -134,7 +137,9 @@ object Frontend {
           if (!Paths.get(x).isAbsolute()) Paths.get(modelFileDirectory, x).toString
           else x
         }
-        println(classpath.toString)
+        classpath = classpath.map {_.trim}
+        
+        println("CLASSPATH set to: " + classpath)
 
       case _ => ()
     }
