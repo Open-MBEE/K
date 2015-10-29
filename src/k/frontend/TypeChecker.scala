@@ -891,11 +891,11 @@ class TypeChecker(model: Model) {
           case ASSIGN =>
             if (!areTypesEqual(ty1, ty2, false)) error(s"$exp does not type check. $ty1 and $ty2 are not equivalent.")
             UnitType
-          case ISIN | NOTISIN =>
+          case ISIN | NOTISIN | SUBSET | PSUBSET =>
             val (typesCompat, cType) = Misc.typeTypeCollection(ty1, ty2)
             if (!typesCompat) error(s"$exp does not type check. $ty1 and $ty2 are not compatible.")
-            ty1
-          case SETUNION =>
+            BoolType
+          case SETUNION | SETDIFF | SETINTER =>
             val (typesCompat, cType) = Misc.typeTypeCollection(ty1, ty2)
             if (!typesCompat) error(s"$exp does not type check. $ty1 and $ty2 are not compatible.")
             cType
@@ -1020,7 +1020,9 @@ class TypeChecker(model: Model) {
         if (getExpType(newTe, exp, owner) != BoolType)
           error(s"$exp is not of type Bool")
         getExpType(newTe, body, owner)
-      case TypeCastCheckExp(cast, e, ty) => if (cast) ty else BoolType
+      case TypeCastCheckExp(cast, e, ty) =>
+        val eType = getExpType(te, e, owner)
+        if (cast) ty else BoolType
       case QuantifiedExp(q, b, e) =>
 
         // process bindings
@@ -1076,7 +1078,7 @@ class TypeChecker(model: Model) {
         }
         val e1Type = getExpType(newTe, e1, owner)
         val e2Type = getExpType(newTe, e2, owner)
-        if (e1Type != e2Type) {
+        if (e2Type != BoolType) {
           error(s"CollectionComprExp: $exp does not type check.")
         }
         IdentType(QualifiedName(List(kind.toString)), List(e1Type))
