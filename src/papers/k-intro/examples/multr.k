@@ -5,4 +5,4 @@ Person
 Set[Person]
 Set[Car]
 Bag[Set[Stock]] 
-  req prtflios.size() >= 0
+  req prtflios.size() >= 1

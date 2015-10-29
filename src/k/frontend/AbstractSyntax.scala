@@ -4,6 +4,7 @@ import org.json.JSONObject
 import java.text._
 import org.json.JSONArray
 import scala.collection.mutable.Stack
+import java.io.File
 
 // NOTE: toJson is the correct way of doing JSON
 // toJson2 is the MMS way of doing JSON, which in a lot of cases
@@ -14,9 +15,8 @@ object ASTOptions {
   var debug: Boolean = false
   var silent: Boolean = false
   var useJson1: Boolean = true
-  var numberOfInstances: Int = 1
+  var numberOfInstances: Int = 3
   var checkPostNoBody: Boolean = false
-  var heapInitializedToNull: Boolean = true
 }
 
 object UtilAST {
@@ -39,14 +39,10 @@ import TypeChecker._
 object K2SMTException extends Exception
 
 object UtilSMT {
-
   var constraintCounter = 0
   var constraintMessageMap: Map[String, String] = Map()
-
   var objectGraph: ObjectGraph = null
-
   var variableCounter: Int = 0
-
   var heapInitializerConstants: List[(Int, String, String)] = Nil // index into heap, class name, constant
 
   def newVariable(): String = {
@@ -55,7 +51,7 @@ object UtilSMT {
   }
 
   def saveConstraintMapping(cPrint: String) {
-    UtilSMT.constraintMessageMap = UtilSMT.constraintMessageMap + (s"x${UtilSMT.constraintCounter}" -> cPrint)
+    UtilSMT.constraintMessageMap = UtilSMT.constraintMessageMap + (s"_xkassert${UtilSMT.constraintCounter}" -> cPrint)
     UtilSMT.constraintCounter += 1
   }
 
@@ -350,8 +346,9 @@ object UtilSMT {
   }
 }
 
-class ObjectGraph {
+class ObjectGraph(model: Model) {
   private var counter: Int = 1
+  private var numberOfInstances: Map[String, Int] = Map()
 
   def getCounter: Int = counter
 
@@ -368,7 +365,15 @@ class ObjectGraph {
   }
 
   private def getNrOfInstances(className: String): Int =
-    ASTOptions.numberOfInstances
+    numberOfInstances.getOrElse(className, ASTOptions.numberOfInstances)
+
+  // Initialize numberOfInstances from @instances annotations:  
+
+  for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
+    for (Annotation("instances", IntegerLiteral(size)) <- ed.annotations) {
+      numberOfInstances += (ed.ident -> size)
+    }
+  }
 }
 
 object K2ScalaException extends Exception
@@ -408,10 +413,9 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
                  annotations: List[AnnotationDecl],
                  decls: List[TopDecl]) {
 
-  UtilSMT.objectGraph = new ObjectGraph
-
   def toSMT: String = {
     val model: Model = UtilSMT.transformModel(this)
+    UtilSMT.objectGraph = new ObjectGraph(model)
     val entityDecls = model.decls.asInstanceOf[List[EntityDecl]].filterNot {
       case ed => ed.annotations exists {
         case Annotation(name, _) => name.equals("ignore")
@@ -509,23 +513,21 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
     }
     result2 += "\n"
 
-    if (ASTOptions.heapInitializedToNull) {
-      // Generate heap:
+    // Generate heap:
 
-      result2 += UtilSMT.headline1("Generate heap")
-      result2 += s"(assert\n"
-      result2 += s"  (=\n"
-      result2 += s"    heap\n"
-      val storeOperations = "(store" * UtilSMT.heapInitializerConstants.size
-      result2 += s"    $storeOperations\n"
-      result2 += s"      ((as const (Array Ref Any)) null)\n"
-      for ((index, className, constName) <- UtilSMT.heapInitializerConstants.reverse) {
-        result2 += s"        $index (lift-$className $constName))\n"
-      }
-      result2 += s"  )\n"
-      result2 += s")\n"
-      result2 += "\n"
+    result2 += UtilSMT.headline1("Generate heap")
+    result2 += s"(assert\n"
+    result2 += s"  (=\n"
+    result2 += s"    heap\n"
+    val storeOperations = "(store" * UtilSMT.heapInitializerConstants.size
+    result2 += s"    $storeOperations\n"
+    result2 += s"      ((as const (Array Ref Any)) null)\n"
+    for ((index, className, constName) <- UtilSMT.heapInitializerConstants.reverse) {
+      result2 += s"        $index (lift-$className $constName))\n"
     }
+    result2 += s"  )\n"
+    result2 += s")\n"
+    result2 += "\n"
 
     // -----------------------------------
     // --- Back to the middle section. ---
@@ -669,6 +671,8 @@ case class QualifiedName(names: List[String]) {
 
   override def toString = names.mkString(".")
 
+  def toPath = names.mkString(File.separator)
+
   def toJson: JSONObject = {
     val qualifiedName = new JSONObject()
     val theNames = new JSONArray()
@@ -703,13 +707,13 @@ trait TopDecl {
 }
 
 case class EntityDecl(
-    var annotations: List[Annotation],
-    entityToken: EntityToken,
-    keyword: Option[String],
-    ident: String,
-    typeParams: List[TypeParam],
-    extending: List[Type],
-    members: List[MemberDecl]) extends TopDecl {
+  var annotations: List[Annotation],
+  entityToken: EntityToken,
+  keyword: Option[String],
+  ident: String,
+  typeParams: List[TypeParam],
+  extending: List[Type],
+  members: List[MemberDecl]) extends TopDecl {
 
   def toSMTDatatype: String = {
     val propertyDecls = getAllPropertyDecls
@@ -815,7 +819,7 @@ case class EntityDecl(
       result += s")\n"
       result += "\n"
       for (index <- heapEntries) {
-        val assertName = s"x${UtilSMT.constraintCounter}"
+        val assertName = s"_xkassert${UtilSMT.constraintCounter}"
         result += s"(assert (! ($functionName $index) :named $assertName))\n"
         UtilSMT.saveConstraintMapping((s"$outputString"))
       }
@@ -825,19 +829,21 @@ case class EntityDecl(
 
     // generate instances:
 
-    if (ASTOptions.heapInitializedToNull) {
-      for (index <- heapEntries) {
-        val const = s"const-$index-$ident"
-        result += s"(declare-const $const $ident)\n"
-        UtilSMT.heapInitializerConstants ::= (index, ident, const)
-      }
-      result += "\n"
-    } else {
-      for (index <- heapEntries) {
-        result += s"(assert (deref-is-$ident $index))\n"
-      }
-      result += "\n"
+    for (index <- heapEntries) {
+      val const = s"const-$index-$ident"
+      result += s"(declare-const $const $ident)\n"
+      UtilSMT.heapInitializerConstants ::= (index, ident, const)
     }
+    result += "\n"
+
+    // ------------------------------
+    // Open heap (this did not work):
+    // ------------------------------
+    // for (index <- heapEntries) {
+    //   result += s"(assert (deref-is-$ident $index))\n"
+    // }
+    // result += "\n"
+    // ------------------------------
 
     // constraints for property definitions of the form: x : T = e
     for (PropertyDecl(_, propertyName, ty, _, _, Some(exp)) <- propertyDecls) {
@@ -1257,7 +1263,7 @@ case class FunDecl(ident: String,
         result += s"      )\n"
         result += s"    )\n"
         result += s"  )\n"
-        result += s") :named x${UtilSMT.constraintCounter}))"
+        result += s") :named _xkassert${UtilSMT.constraintCounter}))"
         UtilSMT.saveConstraintMapping(s"Function $ident does not satisfy its specification.")
       } else if (ASTOptions.checkPostNoBody) {
         if (!params.isEmpty) {
@@ -1280,7 +1286,7 @@ case class FunDecl(ident: String,
         result += s"    )\n"
         result += s"  )\n"
         if (!params.isEmpty) result += ")"
-        result += s") :named x${UtilSMT.constraintCounter}))"
+        result += s") :named _xkassert${UtilSMT.constraintCounter}))"
         UtilSMT.saveConstraintMapping(s"Function $ident's specification is not satisfiable.")
       }
       UtilSMT.clearCreatedLocals()

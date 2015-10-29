@@ -22,9 +22,14 @@ import k.frontend.ModelParser.ModelContext
 import org.json.JSONTokener
 import scala.collection.mutable.{ ListBuffer => MList }
 import scala.actors.Futures._
+import java.nio.file._
 
 object Frontend {
+
+  var modelFileDirectory: String = null
+  var classpath: Set[String] = Set()
   var timeoutValue = 30000
+
   type OptionMap = Map[Symbol, Any]
 
   def log(msg: String = "") = Misc.log("main", msg)
@@ -40,6 +45,9 @@ object Frontend {
         parseArgs(map ++ Map('rawSMTFile -> value), tail)
       case "-timeout" :: value :: tail =>
         timeoutValue = value.toInt
+        parseArgs(map, tail)
+      case "-classpath" :: value :: tail =>
+        classpath = value.replace("\"", "").split(File.pathSeparator).toSet
         parseArgs(map, tail)
       case "-tests" :: tail    => parseArgs(map ++ Map('tests -> true), tail)
       case "-baseline" :: tail => parseArgs(map ++ Map('baseline -> true), tail)
@@ -70,12 +78,13 @@ object Frontend {
     var filename: String = null
     var fullFileName: String = null
     var rawSMT: String = null
+    var smtModel: String = ""
 
     options.get('postnobody) match {
       case Some(true) => ASTOptions.checkPostNoBody = true
-      case _ =>
+      case _          =>
     }
-    
+
     options.get('tests) match {
       case Some(true) => doTests(options.getOrElse('baseline, false).asInstanceOf[Boolean])
       case _          => ()
@@ -113,9 +122,25 @@ object Frontend {
 
     options.get('modelFile) match {
       case Some(f: String) =>
+        log(s"Processing $f")
         model = getModelFromFile(f)
         filename = Paths.get(f).getFileName.toString
         fullFileName = f
+        if (Paths.get(f).getParent == null)
+          modelFileDirectory = new java.io.File(".").getCanonicalPath
+        else
+          modelFileDirectory = Paths.get(f).getParent.toString
+        classpath = classpath + modelFileDirectory
+
+        // massage classpath
+        classpath = classpath.map { x =>
+          if (!Paths.get(x).isAbsolute()) Paths.get(modelFileDirectory, x).toString
+          else x
+        }
+        classpath = classpath.map {_.trim}
+        
+        println("CLASSPATH set to: " + classpath)
+
       case _ => ()
     }
 
@@ -124,8 +149,8 @@ object Frontend {
         rawSMT = getRawSMTFromFile(f)
         K2Z3.debugRawModel = true
       case _ => ()
-    }    
-    
+    }
+
     options.get('mmsJson) match {
       case Some(file: String) => {
         model = parseMMSJson(file)
@@ -133,8 +158,11 @@ object Frontend {
       case _ => ()
     }
 
+    var importModels = List[Model]()
+
     if (model != null) {
       try {
+        importModels = processImports(model, Set(fullFileName))._1
         val tc: TypeChecker = new TypeChecker(model)
         tc.smtCheck
         log("Type checking completed. No errors found.")
@@ -168,7 +196,14 @@ object Frontend {
     }
 
     if (model != null) {
-      val smtModel = model.toSMT
+
+      //case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
+      //annotations: List[AnnotationDecl],
+      //decls: List[TopDecl]) {
+      val allDecls = importModels.flatMap { x => x.decls }
+      val combinedModel = Model(model.packageName, model.imports,
+        model.annotations, model.decls ++ allDecls)
+      smtModel += combinedModel.toSMT
       if (K2Z3.debug) {
         println()
         println("--- SMT Model ---")
@@ -181,7 +216,6 @@ object Frontend {
       try {
         val res = runWithTimeout(timeoutValue) { K2Z3.solveSMT(model, smtModel, true) }
         if (res.isEmpty) log("Timeout")
-
       } catch {
         case TypeCheckException => errorExit("Type Checking exception.")
         case K2SMTException     => errorExit("K2SMT Exception during SMT solving.")
@@ -214,8 +248,8 @@ object Frontend {
           e.printStackTrace()
           errorExit("Unknown Exception during SMT solving.")
       }
-    }    
-    
+    }
+
     options.get('latex) match {
       case Some(_) => if (model != null) K2Latex.convert(filename, model)
       case _       => ()
@@ -263,6 +297,37 @@ object Frontend {
       case _       => ()
     }
 
+  }
+
+  def getImportFileLocationFromClassPath(fileName: String): String = {
+    for (d <- classpath) {
+      val path = Paths.get(d, fileName)
+      if (Files.exists(path)) return path.toString
+    }
+    return null
+  }
+
+  def processImports(model: Model, processed: Set[String]): (List[Model], Set[String]) = {
+    var models = List[Model]()
+    var newProcessed = processed
+    for (i <- model.imports) {
+      val iFile = getImportFileLocationFromClassPath((i.name.toPath + ".k").toString)
+      if (iFile == null) {
+        errorExit(s"Import ${i.name} could not be found!")
+      }
+      if (!newProcessed.contains(iFile)) {
+        log(s"Processing import $iFile")
+        val iModel = getModelFromFile(iFile)
+        newProcessed += iFile
+        val (importImports, iProcessed) = processImports(iModel, newProcessed)
+        newProcessed = newProcessed ++ iProcessed
+        new TypeChecker(iModel).smtCheck
+        models = iModel :: (models ++ importImports)
+      } else {
+        log(s"Skipping $iFile (already processed).")
+      }
+    }
+    return (models, newProcessed)
   }
 
   def doElastic(model: Model) {
@@ -1306,14 +1371,17 @@ object Frontend {
   }
 
   def getModelFromFile(f: String): Model = {
-    var path: Path = Paths.get(f)
+    val path: Path = Paths.get(f)
+    if (!Files.exists(path)) {
+      errorExit(s"Given path does not exist: $f")
+    }
     var bytes: Array[Byte] = Files.readAllBytes(path)
     var fileContents: String = new String(bytes, "UTF-8")
     val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(fileContents)
     var m: Model = ksv.visit(tree).asInstanceOf[Model]
     m
   }
-  
+
   /**
    * Read an SMT formula directly from a file.
    * Useful for making SMT experiments without rise4fun.com
@@ -1324,7 +1392,7 @@ object Frontend {
     var fileContents: String = new String(bytes, "UTF-8")
     fileContents
   }
-  
+
   def getModelFromString(f: String): Model = {
     val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(f)
     var m: Model = ksv.visit(tree).asInstanceOf[Model]

@@ -1,19 +1,12 @@
+package main
 
-class MathUtil {
+import a
+import b
 
-  fun min(x:Int,y:Int): Int 
-    post ($result  = x || $result  = y) 
-      && ($result <= x && $result <= y)
-  {
-    if x <= y then x else y
-  }
+-- all classes are defined in [a-f].k files
+-- which are then imported using import 
+-- declarations (recursive)
 
-
-  fun abs(x:Int):Int 
-    post $result >= 0 && ($result = x || $result = -x)
-  {
-    if x < 0 then -x else x
-  }
-
-}
+aobj : A
+bobj : B
 
