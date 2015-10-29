@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if [ -z "$1" ]
+  then 
+    echo "Please provide a file."
+    exit -1
+fi
+
+DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+export PATH=./lib:$PATH
+export DYLD_LIBRARY_PATH=$DIR/lib
+
+chmod +x lib/z3
+
+java -classpath "$DIR/lib/*:$DIR/lib/scalalib/*:$DIR/lib/elasticsearch-1.5.0/*" k.frontend.Main -f "$1" $2 $3 $4 $5
