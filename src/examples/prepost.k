@@ -1,3 +1,11 @@
+==============================================
+This example shows how one can specify function
+specifications (pre and post conditions). These
+are checked automatically by K. The example
+shows that the specification is inherited by 
+the MathUtil class when it extends the 
+MathUtil_Spec class. 
+==============================================
 
 class MathUtil_Spec {
   fun min(x:Int,y:Int): Int

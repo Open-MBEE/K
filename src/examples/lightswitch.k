@@ -1,3 +1,12 @@
+==============================================
+This example highlights how we can perform 
+refinement using inheritance and have K check
+the specification using function specifications
+(pre and post conditions) as wel as requirements
+inherited from parent classes. We also use a 
+quantifier to show that the specification is 
+equivalent to the implementation.
+==============================================
 
 class State
 
@@ -41,7 +50,7 @@ class Main {
     else abstract.off
   }
 
-req forall concreteState: Int :-
+  req forall concreteState: Int :-
     abstract.toggle(abs(concreteState)) = abs(concrete.toggle(concreteState))
 }
 

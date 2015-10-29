@@ -1,3 +1,10 @@
+==============================================
+This example shows how a simple state machine
+can be encoded using K and then checked for
+any non-deterministic transitions (which are 
+considered erroneous). 
+==============================================
+
 package examples.sm
 
 class Event
@@ -20,9 +27,9 @@ class RocketMachine {
   req move(ready, fire) = firing
   req move(firing, turn_off) = ready  
 
-  ====================================================
-  The following makes the state machine unsat because 
-  it introduces non-determinism.
-  ====================================================
+  ==============================================
+  The following makes the state machine unsat 
+  because it introduces non-determinism.
+  ==============================================
   -- req move(ready, fire) = off    
 }
