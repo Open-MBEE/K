@@ -4,6 +4,7 @@ import org.json.JSONObject
 import java.text._
 import org.json.JSONArray
 import scala.collection.mutable.Stack
+import java.io.File
 
 // NOTE: toJson is the correct way of doing JSON
 // toJson2 is the MMS way of doing JSON, which in a lot of cases
@@ -14,7 +15,7 @@ object ASTOptions {
   var debug: Boolean = false
   var silent: Boolean = false
   var useJson1: Boolean = true
-  var numberOfInstances: Int = 3
+  var numberOfInstances: Int = 5
   var checkPostNoBody: Boolean = false
 }
 
@@ -50,7 +51,7 @@ object UtilSMT {
   }
 
   def saveConstraintMapping(cPrint: String) {
-    UtilSMT.constraintMessageMap = UtilSMT.constraintMessageMap + (s"x${UtilSMT.constraintCounter}" -> cPrint)
+    UtilSMT.constraintMessageMap = UtilSMT.constraintMessageMap + (s"_xkassert${UtilSMT.constraintCounter}" -> cPrint)
     UtilSMT.constraintCounter += 1
   }
 
@@ -670,6 +671,8 @@ case class QualifiedName(names: List[String]) {
 
   override def toString = names.mkString(".")
 
+  def toPath = names.mkString(File.separator)
+
   def toJson: JSONObject = {
     val qualifiedName = new JSONObject()
     val theNames = new JSONArray()
@@ -704,13 +707,13 @@ trait TopDecl {
 }
 
 case class EntityDecl(
-    var annotations: List[Annotation],
-    entityToken: EntityToken,
-    keyword: Option[String],
-    ident: String,
-    typeParams: List[TypeParam],
-    extending: List[Type],
-    members: List[MemberDecl]) extends TopDecl {
+  var annotations: List[Annotation],
+  entityToken: EntityToken,
+  keyword: Option[String],
+  ident: String,
+  typeParams: List[TypeParam],
+  extending: List[Type],
+  members: List[MemberDecl]) extends TopDecl {
 
   def toSMTDatatype: String = {
     val propertyDecls = getAllPropertyDecls
@@ -816,7 +819,7 @@ case class EntityDecl(
       result += s")\n"
       result += "\n"
       for (index <- heapEntries) {
-        val assertName = s"x${UtilSMT.constraintCounter}"
+        val assertName = s"_xkassert${UtilSMT.constraintCounter}"
         result += s"(assert (! ($functionName $index) :named $assertName))\n"
         UtilSMT.saveConstraintMapping((s"$outputString"))
       }
@@ -1260,7 +1263,7 @@ case class FunDecl(ident: String,
         result += s"      )\n"
         result += s"    )\n"
         result += s"  )\n"
-        result += s") :named x${UtilSMT.constraintCounter}))"
+        result += s") :named _xkassert${UtilSMT.constraintCounter}))"
         UtilSMT.saveConstraintMapping(s"Function $ident does not satisfy its specification.")
       } else if (ASTOptions.checkPostNoBody) {
         if (!params.isEmpty) {
@@ -1283,7 +1286,7 @@ case class FunDecl(ident: String,
         result += s"    )\n"
         result += s"  )\n"
         if (!params.isEmpty) result += ")"
-        result += s") :named x${UtilSMT.constraintCounter}))"
+        result += s") :named _xkassert${UtilSMT.constraintCounter}))"
         UtilSMT.saveConstraintMapping(s"Function $ident's specification is not satisfiable.")
       }
       UtilSMT.clearCreatedLocals()

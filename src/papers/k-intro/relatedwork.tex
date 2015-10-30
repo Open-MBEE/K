@@ -2,15 +2,15 @@
 \label{sec:related-work}
 
 \Klang{} is a wide spectrum textual language containing concepts such
-as classes, inheritance, functions, and expressions. Expressions in
-\Klang{} are very rich and provide a basis for expressing any higher
-order logic formula succinctly. The language also contains constructs
-such as lists, sets, loops etc. for performing general sequential
-programming, functional programming, and object oriented
-programming. The main goal is to automatically translate \sysml{}
-diagrams and models to \Klang{} and perform various types of analysis
-such as type checking, satisfiability checking, and potentially
-execution.
+as classes, inheritance, properties, functions, and
+expressions. Expressions in \Klang{} are very rich and provide a basis
+for expressing any higher order logic formula succinctly. The language
+also contains constructs such as lists, sets, loops etc. for
+performing general sequential programming, functional programming, and
+object oriented programming. The main goal is to automatically
+translate \sysml{} diagrams and models to \Klang{} and perform various
+types of analysis such as type checking, satisfiability checking, and
+potentially execution.
 
 The formal methods community has studied and investigated wide
 spectrum specification languages in
@@ -26,12 +26,11 @@ specification languages. More recently, \asml{} presented
 in~\cite{asml05} presents a language where all operations operate on
 algebras. \alloy{}~\cite{jackson-alloy-12} is a language intended for
 describing structure and exploring the design of the structure through
-the specification of constraints. \alloy{} also provides seem less
+the specification of constraints. \alloy{} also provides seamless
 integration with a SAT solver. FORMULA~\cite{jackson2009specifying}
 also presents a language for logic programming where the model is then
-analyzed by SMT solvers. FORMULA focuses on non-functional
-requirements for incremental refinement purposes and design
-exploration. 
+analyzed by SMT solvers. FORMULA focuses on requirements for
+incremental refinement purposes and design exploration.
 
 In contrast to specification languages, high level programming
 languages have also been developed over time. \sml{} (Standard ML)
@@ -56,8 +55,8 @@ on functional programs \cite{odersky-rv10}. Finally, The \jml{}
 language \cite{leavens1998jml} allows to write design-by-contract
 specifications for \java{} as comments. These specifications and
 constructs are ignored by the standard \java{} compiler. Rather, they
-are processed with special tools; thus, making them less valuable or
-{\em alien} to the language.
+are processed with special tools; thus, in some cases making them less
+valuable to the language.
 
 With the great improvements being made to SAT and SMT
 solvers~\cite{smt-lib,de2008z3}, programming languages now are also
@@ -82,7 +81,7 @@ provers such as \pvs{} \cite{cade92-pvs,pvs-website}, \coq{}
 provide languages to create specifications and provide constraints,
 which can then be discharged via a user guided process. Such tools
 allow for proving much more complex properties, but tend to be
-laborious and difficult to use in practice.
+laborious and non-trivial to use.
 
 Past research in formal modeling has also resulted in various attempts
 at combining formal and semi-formal languages. Work

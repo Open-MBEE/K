@@ -104,7 +104,7 @@ object K2Z3 {
   }
 
   def printObjectValue(name: String, heap: Map[String, String],
-                       v: String, visited: Set[String]): (Set[String], List[List[String]]) = {
+                       v: String, visited: Set[String], refNum: String): (Set[String], List[List[String]]) = {
 
     if (visited.contains(name)) return (visited, Nil)
 
@@ -113,7 +113,7 @@ object K2Z3 {
     val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
     val objectValuesString = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
     val objectValuesOrig = objectValuesString.split(' ').map(_.trim).filterNot { _.isEmpty }.drop(1)
-
+    
     var objectValues = List[String]()
     var i = 0
     while (i < objectValuesOrig.length) {
@@ -150,13 +150,17 @@ object K2Z3 {
             (x._1.name + "::" + x._2)
           }
       }.toList
-    var all = List(name, s"$className(" + printList.mkString(", ") + ")")
+    var all =
+      if (name.startsWith("Ref"))
+        List("", name, s"$className(" + printList.mkString(", ") + ")")
+      else
+        List(name, s"Ref $refNum", s"$className(" + printList.mkString(", ") + ")")
     var result = toPrint.foldLeft((visited, List(all))) { (res, x) =>
       if (heap.contains(x)) {
-        val downRes = printObjectValue("Ref " + x, heap, heap(x), res._1 + name)
+        val downRes = printObjectValue("Ref " + x, heap, heap(x), res._1 + name, x)
         ((downRes._1 + name) ++ res._1, downRes._2 ++ res._2)
       } else {
-        val downRes = printObjectValue("else " + x, heap, heap("else"), res._1 + name)
+        val downRes = printObjectValue("else " + x, heap, heap("else"), res._1 + name, x)
         ((downRes._1 + name) ++ res._1, downRes._2 ++ res._2)
       }
     }
@@ -171,17 +175,9 @@ object K2Z3 {
 
       log("<<++")
 
-      var rows: List[List[String]] = List(List("Variable", "Value"))
-      var extraRows: List[List[String]] = List(List("Variable", "Value"))
-
-      var heapDecl = z3Model.getFuncDecls.find {
-        x =>
-          val isHeap = !z3Model.getFuncInterp(x).getEntries.
-            find { e => e.getValue.toString.contains("lift-TopLevelDeclarations") }.isEmpty ||
-            z3Model.getFuncInterp(x).getElse.toString.contains("lift-TopLevelDeclarations")
-          logDebug(s"$x $isHeap")
-          isHeap
-      }
+      var rows: List[List[String]] = List(List("Variable", "Ref", "Value"))
+      var extraRows: List[List[String]] = List(List("Variable", "Ref", "Value"))
+      var heapDecl = z3Model.getDecls.find { _.getName.toString.equals("heap") }
 
       if (heapDecl.isEmpty) {
         error(s"FATAL INTERNAL ERROR! Could not find a heap declaration for printing the model.")
@@ -200,7 +196,9 @@ object K2Z3 {
 
       // walk through heap and  print entries
       heapMap.foreach { kv =>
+
         val key = kv._1
+
         val value = kv._2.replace("- ", "-")
         if (value != "null") {
           val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
@@ -219,18 +217,38 @@ object K2Z3 {
                   }
                 var i = 1
                 topLevelVariables.reverse.foreach { k =>
-                  if (k._2) rows = (List(k._1, objectValues(i))) :: rows
-                  else {
-                    val res = printObjectValue(k._1, heapMap, heapMap.getOrElse(objectValues(i), heapMap("else")), visited)
+                  if (k._2) {
+                    rows = (List(k._1, "-", objectValues(i))) :: rows
+                  } else {
+                    val res = printObjectValue(k._1, heapMap, heapMap.getOrElse(objectValues(i), heapMap("else")), visited, objectValues(i))
                     rows = res._2 ++ rows
-                    visited = res._1 + ("Ref " + key)
+                    visited = res._1 + ("Ref " + objectValues(i))
                   }
                   i = i + 1
                 }
+              case _ => ()
+            }
+          }
+        }
+      }
+
+      // walk through heap and  print EXTRA entries
+      heapMap.foreach { kv =>
+
+        val key = kv._1
+
+        val value = kv._2.replace("- ", "-")
+        if (value != "null") {
+          val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
+          if (value.contains("mk-")) {
+            val objectValues = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
+              .split(' ').map(_.trim).filterNot { _.isEmpty }
+            className == "TopLevelDeclarations" match {
+              case true => ()
               case _ => {
-                val res = printObjectValue("Ref " + key, heapMap, value, visited)
+                val res = printObjectValue("Ref " + key, heapMap, value, visited, key)
                 extraRows = res._2 ++ extraRows
-                visited = res._1
+                visited = res._1 + ("Ref " + key)
               }
             }
           }

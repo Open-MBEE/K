@@ -99,7 +99,7 @@ The SMT-LIB language (from here on referred to as SMT-LIB) is a textual
 language for typed first order predicate logic plus various theories,
 including for example arithmetic, uninterpreted functions, and
 arrays. The syntax is LISP-like, meaning for example that function
-calls such as $f(42,false)$ have the form $(f\ 42\ false)$. For the 44
+calls such as $f(42,false)$ have the form $(f\ 42\ false)$. For the 51
 line \Klang{} model in Figure \ref{fig:spacecraftSmt}, the translator
 generates 333 lines of uncommented SMT-LIB code (additional comments
 are generated to make the output easier for humans to read). We shall
@@ -150,9 +150,9 @@ If no constructors are applied, the solver will assign objects.
 \begin{tabular}{c}
 \small
 \begin{lstlisting}
-class A {   class B {
-  b : B          a : A
-}           }
+class A {     class B {
+  b : B            a : A
+}             }
 \end{lstlisting}
 \end{tabular}
 \end{center}
@@ -390,7 +390,8 @@ the two versions, which are the same in this case.
 \begin{lstlisting}
 (define-fun Event.after 
   ((this Ref)(e Ref)) Bool
-  (>= (Event.start this)  (Event.end e)))
+  (>= (Event.start this)  
+  (Event.end e)))
 \end{lstlisting}
 \end{tabular}
 \end{center}
@@ -446,7 +447,7 @@ these three cases: that each of the properties \code{bootUp},
 \code{initMem}, and \code{tkPic}, are objects of any sub-class of
 class \code{Event} (the use of `\code{isa}'), although in this case
 there are no sub-classes of \code{Event}. The last condition,
-corresponding to the requirement, illustrate how functions are called,
+corresponding to the requirement, illustrates how functions are called,
 in the case the function \code{after}.
 
 We are now finally ready to assert the well-formedness of the
