@@ -15,7 +15,7 @@ object ASTOptions {
   var debug: Boolean = false
   var silent: Boolean = false
   var useJson1: Boolean = true
-  var numberOfInstances: Int = 3
+  var numberOfInstances: Int = 5
   var checkPostNoBody: Boolean = false
 }
 

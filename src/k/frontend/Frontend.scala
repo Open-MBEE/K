@@ -43,6 +43,8 @@ object Frontend {
         parseArgs(map ++ Map('modelFile -> value), tail)
       case "-fraw" :: value :: tail =>
         parseArgs(map ++ Map('rawSMTFile -> value), tail)
+      case "-instances" :: value :: tail =>
+        parseArgs(map ++ Map('instances -> value.toInt), tail)
       case "-timeout" :: value :: tail =>
         timeoutValue = value.toInt
         parseArgs(map, tail)
@@ -150,7 +152,13 @@ object Frontend {
         K2Z3.debugRawModel = true
       case _ => ()
     }
-
+    
+    options.get('instances) match {
+      case Some(i: Int) =>
+        ASTOptions.numberOfInstances = i
+      case _ => ()
+    }    
+    
     options.get('mmsJson) match {
       case Some(file: String) => {
         model = parseMMSJson(file)
