@@ -103,6 +103,23 @@ object K2Z3 {
     solver.setParameters(params)
   }
 
+  def getStringForSets(setValue: FuncDecl): String = {
+    "Set(" +
+      z3Model.getFuncInterp(setValue).getEntries.foldLeft(List[String]()) {
+        (res, x) =>
+          if (x.getValue.getBoolValue.toInt > 0) {
+            val arg = x.getArgs.mkString.toString
+            if (arg.contains("array")) {
+              val setName = arg.split(" ").last.split("!").last.replace(")", "")
+              val decl = z3Model.getFuncDecls.find { x => x.getName.toString == setName }
+              val result = getStringForSets(decl.get)
+              result :: res
+            } else x.getArgs.mkString.toString :: res
+          } else res
+      }.mkString(",") +
+      ")"
+  }
+
   def printObjectValue(name: String, heap: Map[String, String],
                        v: String, visited: Set[String], refNum: String): (Set[String], List[List[String]]) = {
 
@@ -113,8 +130,10 @@ object K2Z3 {
     val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
     val objectValuesString = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
     val objectValuesOrig = objectValuesString.split(' ').map(_.trim).filterNot { _.isEmpty }.drop(1)
-    
     var objectValues = List[String]()
+    var printList = List[String]()
+    var toPrint = List[String]()
+
     var i = 0
     while (i < objectValuesOrig.length) {
       var value = objectValuesOrig(i)
@@ -130,6 +149,11 @@ object K2Z3 {
         value += " " + objectValuesOrig(i)
         i = i + 1
         value += " " + objectValuesOrig(i)
+      } else if (objectValuesOrig(i).contains("(_")) {
+        i = i + 1
+        value += " " + objectValuesOrig(i)
+        i = i + 1
+        value += " " + objectValuesOrig(i)
       }
       objectValues = value :: objectValues
       i = i + 1
@@ -137,24 +161,28 @@ object K2Z3 {
     objectValues = objectValues.reverse
 
     if (className == "TopLevelDeclarations") return (visited, List(List(name, " - top level -")))
-    val entityDecl = TypeChecker.classes(className)
-    val properties = entityDecl.getAllPropertyDecls
-    var toPrint = List[String]()
-    val printList =
+
+    val properties = TypeChecker.classes(className).getAllPropertyDecls
+    printList =
       (properties zip objectValues).map {
         x =>
-          if (!TypeChecker.isPrimitiveType(x._1.ty)) {
+          if (Misc.isCollection(x._1.ty)) {
+            val setName = x._2.split("!").last.replace(")", "")
+            val setValue = z3Model.getFuncDecls.find { x => x.getName.toString == setName }
+            //if (z3Model.getFuncInterp(setValue.get))
+            x._1.name + ":: " + getStringForSets(setValue.get)
+          } else if (!TypeChecker.isPrimitiveType(x._1.ty)) {
             toPrint = x._2 :: toPrint
             (x._1.name + ":: Ref " + x._2)
           } else {
             (x._1.name + "::" + x._2)
           }
       }.toList
+
     var all =
-      if (name.startsWith("Ref"))
-        List("", name, s"$className(" + printList.mkString(", ") + ")")
-      else
-        List(name, s"Ref $refNum", s"$className(" + printList.mkString(", ") + ")")
+      if (name.startsWith("Ref")) List("", name, s"$className(" + printList.mkString(", ") + ")")
+      else List(name, s"Ref $refNum", s"$className(" + printList.mkString(", ") + ")")
+
     var result = toPrint.foldLeft((visited, List(all))) { (res, x) =>
       if (heap.contains(x)) {
         val downRes = printObjectValue("Ref " + x, heap, heap(x), res._1 + name, x)
@@ -186,6 +214,8 @@ object K2Z3 {
       var heapMap =
         z3Model.getFuncInterp(heapDecl.get).getEntries.
           foldLeft(Map[String, String]()) { (res, x) =>
+            x.getValue.getArgs.foreach { x =>
+            }
             res + (x.getArgs.last.toString -> x.getValue.toString)
           }
 

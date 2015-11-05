@@ -419,11 +419,11 @@ class TypeChecker(model: Model) {
               case _                 => false
             }
           val incompleteIf =
-          if (fd.body.length == 0) false
-          else fd.body.last match {
-            case ExpressionDecl(e) => incompleteIfExp(e)
-            case _                 => false
-          }
+            if (fd.body.length == 0) false
+            else fd.body.last match {
+              case ExpressionDecl(e) => incompleteIfExp(e)
+              case _                 => false
+            }
 
           if (!isPrimitiveType(fd.ty.getOrElse(UnitType)) && lastMemberIsConstructorCall) {
             error(s"Function $fd does not return a primitive type. SMT mode disallows this.")
@@ -897,8 +897,8 @@ class TypeChecker(model: Model) {
                   case pti @ PropertyTypeInfo(decl, _, _, _) => getPropertyDeclType(decl)
                   case pti @ ParamTypeInfo(p)                => p.ty
                   case pti @ FunctionTypeInfo(decl, _)       => decl.ty.get
-                  case _ => error(s"Given expression does not type check: $exp.")
-                  
+                  case _                                     => error(s"Given expression does not type check: $exp.")
+
                 }
               }
             }
@@ -913,7 +913,7 @@ class TypeChecker(model: Model) {
       case BinExp(exp1, op, exp2) =>
         val ty1 = getExpType(te, exp1, owner)
         val ty2 = getExpType(te, exp2, owner)
-        logDebug(s"Types are $exp1:$ty1 and $exp2:$ty2") 
+        logDebug(s"Types are $exp1:$ty1 and $exp2:$ty2")
         op match {
           case LT | LTE | GT | GTE | AND | IMPL | OR | IFF | NEQ | EQ =>
             if (!areTypesEqual(ty1, ty2, true)) error(s"$exp does not type check. $ty1 and $ty2 are not equivalent.")
@@ -992,24 +992,27 @@ class TypeChecker(model: Model) {
               areTypesEqual(pa._1.ty, p2Type, false)
             }))
             error(s"Arguments to function seem incorrect: $exp")
-
-          functionReturnType match {
-            case CollectType(t) =>
-              if (args.length > 1)
-                IdentType(QualifiedName(List("Seq")), t)
-              else {
-                assert(args.length <= 1)
-                // TODO
-                // assuming lambda expression as only argument
-                // assuming ident pattern in lambda expression
-                val lambdaExp = args.last.asInstanceOf[PositionalArgument].exp.asInstanceOf[LambdaExp]
-                val lambdaTe = te.overwrite(lambdaExp.pat.asInstanceOf[IdentPattern].ident -> te(t.last.toString))
-                // CollectType(List(getExpType(lambdaTe, lambdaExp)))
-                IdentType(QualifiedName(List("Seq")), List(getExpType(lambdaTe, lambdaExp, owner)))
-              }
-            case SumType(t) => IntType
-            case _          => functionReturnType
+          else if(collectionFunction){
+            args.foreach { x => getExpType(te, x.asInstanceOf[PositionalArgument].exp, owner) }
           }
+
+            functionReturnType match {
+              case CollectType(t) =>
+                if (args.length > 1)
+                  IdentType(QualifiedName(List("Seq")), t)
+                else {
+                  assert(args.length <= 1)
+                  // TODO
+                  // assuming lambda expression as only argument
+                  // assuming ident pattern in lambda expression
+                  val lambdaExp = args.last.asInstanceOf[PositionalArgument].exp.asInstanceOf[LambdaExp]
+                  val lambdaTe = te.overwrite(lambdaExp.pat.asInstanceOf[IdentPattern].ident -> te(t.last.toString))
+                  // CollectType(List(getExpType(lambdaTe, lambdaExp)))
+                  IdentType(QualifiedName(List("Seq")), List(getExpType(lambdaTe, lambdaExp, owner)))
+                }
+              case SumType(t) => IntType
+              case _          => functionReturnType
+            }
         }
       case WhileExp(cond, body) =>
         if (getExpType(te, cond, owner) != BoolType) {
