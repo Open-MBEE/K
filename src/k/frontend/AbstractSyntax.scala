@@ -428,6 +428,8 @@ class HeapLayout(model: Model) {
       if (stack.contains(child)) {
         // TODO: choose strategy
         if (K2Z3.debug) println(s"cycle $child in $stack")
+        val countChild = instancesByComputation(child)
+        instancesByComputation += (child -> (countChild + 1))
       } else {
         dfs(child :: stack)
       }
