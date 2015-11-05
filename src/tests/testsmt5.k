@@ -43,3 +43,4 @@ class Schedule {
     )
 }
 
+schedule : Schedule

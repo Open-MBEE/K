@@ -37,3 +37,4 @@ class Schedule {
   RESULT : Int = CHECK(a.t2 = b.t1 && b.t2 < c.t1 && c.t1 <= d.t1 && d.t2 <= c.t2)
 }
 
+schedule : Schedule

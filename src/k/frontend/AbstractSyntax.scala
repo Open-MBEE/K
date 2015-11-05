@@ -41,7 +41,7 @@ object K2SMTException extends Exception
 object UtilSMT {
   var constraintCounter = 0
   var constraintMessageMap: Map[String, String] = Map()
-  var objectGraph: ObjectGraph = null
+  var objectGraph: HeapLayout = null
   var variableCounter: Int = 0
   var heapInitializerConstants: List[(Int, String, String)] = Nil // index into heap, class name, constant
 
@@ -346,34 +346,125 @@ object UtilSMT {
   }
 }
 
-class ObjectGraph(model: Model) {
-  private var counter: Int = 1
-  private var numberOfInstances: Map[String, Int] = Map()
+class InstantiationGraph(model: Model) {
+  type ClassName = String
 
-  def getCounter: Int = counter
+  private var graph: Map[ClassName, List[ClassName]] = Map()
 
-  def getHeapEntries(className: String): List[Int] = {
-    if (className.equals("TopLevelDeclarations"))
-      List(0)
-    else {
-      val nrOfInstances = getNrOfInstances(className)
-      val newCounter = (counter + nrOfInstances)
-      val range = counter until newCounter // does not include newCounter
-      counter = newCounter
-      range.toList
+  override def toString: String =
+    s"instantiation graph:\n  ${graph.mkString("\n  ")}"
+
+  def getInstances(creator: ClassName): List[ClassName] =
+    graph.getOrElse(creator, Nil)
+
+  private def addInstances(creator: ClassName, created: List[ClassName]) {
+    val instances = created ++ getInstances(creator)
+    graph += (creator -> instances)
+  }
+
+  def getAllClasses = graph.keySet
+
+  // TODO: think of other strategies
+  def getClassesToChase(strategy: Int): Set[ClassName] = {
+    require(strategy == 1 || strategy == 2)
+    strategy match {
+      case 1 =>
+        // classes not instantiated by other classes (the top level)
+        // problem: misses recursive classes
+        val allClasses = graph.keySet
+        val classesInstantiated = graph.values.flatMap(_.toSet)
+        allClasses -- classesInstantiated
+      case 2 =>
+        // all classes
+        // problem: creates perhaps too many instances
+        getAllClasses
     }
   }
 
-  private def getNrOfInstances(className: String): Int =
-    numberOfInstances.getOrElse(className, ASTOptions.numberOfInstances)
-
-  // Initialize numberOfInstances from @instances annotations:  
+  // --- Populate state: ---
 
   for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
-    for (Annotation("instances", IntegerLiteral(size)) <- ed.annotations) {
-      numberOfInstances += (ed.ident -> size)
+    val created = ed.getCreatedObjects
+    addInstances(ed.ident, created)
+  }
+}
+
+class HeapLayout(model: Model) {
+  private val graph = new InstantiationGraph(model)
+
+  private var instancesByAnnotation: Map[graph.ClassName, Int] = Map()
+  private var instancesByComputation: Map[graph.ClassName, Int] = Map()
+  private var heapEntries: Map[graph.ClassName, (Int, Int)] = Map()
+
+  override def toString: String = {
+    var result: String = ""
+    result += "\n"
+    result += "------ heap layout: ------\n"
+    result += graph.toString + "\n"
+    result += s"\ninstancesByAnnotation:\n  ${instancesByAnnotation.mkString("\n  ")}\n"
+    result += s"\ninstancesByComputation:\n  ${instancesByComputation.mkString("\n  ")}\n"
+    result += s"\nheapEntries:\n  ${heapEntries.mkString("\n  ")}\n"
+    result += "---------------------------\n"
+    result += "\n"
+    result
+  }
+
+  private def getNrOfInstances(className: graph.ClassName): Int =
+    instancesByAnnotation.getOrElse(className,
+      instancesByComputation.getOrElse(className,
+        ASTOptions.numberOfInstances))
+
+  private def dfs(node: graph.ClassName) {
+    dfs(List(node))
+  }
+
+  private def dfs(stack: List[graph.ClassName]) {
+    if (K2Z3.debug) println(stack.reverse)
+    val top = stack.head
+    val count = instancesByComputation.getOrElse(top, 0)
+    instancesByComputation += (top -> (count + 1))
+    val children = graph.getInstances(top)
+    for (child <- children) {
+      if (stack.contains(child)) {
+        // TODO: choose strategy
+        if (K2Z3.debug) println(s"cycle $child in $stack")
+      } else {
+        dfs(child :: stack)
+      }
     }
   }
+
+  def getHeapEntries(className: graph.ClassName): List[Int] = {
+    val (low, high) = heapEntries(className)
+    (low to high).toList
+  }
+
+  // --- Populate state: ---
+
+  // update instancesByAnnotation:
+  for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
+    for (Annotation("instances", IntegerLiteral(size)) <- ed.annotations) {
+      instancesByAnnotation += (ed.ident -> size)
+    }
+  }
+
+  // update instancesByComputation:
+  if (K2Z3.debug) println("\n--- dfs instance search:\n")
+  for (className <- graph.getClassesToChase(2))
+    dfs(className)
+
+  // update heapEntries:
+  heapEntries += ("TopLevelDeclarations" -> (0, 0))
+  var nextFreeHeapCell: Int = 1
+  for (className <- graph.getAllClasses if !className.equals("TopLevelDeclarations")) {
+    val nrOfInstances = getNrOfInstances(className)
+    val newNextFreeHeapCell = nextFreeHeapCell + nrOfInstances
+    val range = (nextFreeHeapCell, newNextFreeHeapCell - 1)
+    nextFreeHeapCell = newNextFreeHeapCell
+    heapEntries += (className -> range)
+  }
+
+  if (K2Z3.debug) println(this)
 }
 
 object K2ScalaException extends Exception
@@ -415,7 +506,7 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
 
   def toSMT: String = {
     val model: Model = UtilSMT.transformModel(this)
-    UtilSMT.objectGraph = new ObjectGraph(model)
+    UtilSMT.objectGraph = new HeapLayout(model)
     val entityDecls = model.decls.asInstanceOf[List[EntityDecl]].filterNot {
       case ed => ed.annotations exists {
         case Annotation(name, _) => name.equals("ignore")
@@ -707,13 +798,13 @@ trait TopDecl {
 }
 
 case class EntityDecl(
-  var annotations: List[Annotation],
-  entityToken: EntityToken,
-  keyword: Option[String],
-  ident: String,
-  typeParams: List[TypeParam],
-  extending: List[Type],
-  members: List[MemberDecl]) extends TopDecl {
+    var annotations: List[Annotation],
+    entityToken: EntityToken,
+    keyword: Option[String],
+    ident: String,
+    typeParams: List[TypeParam],
+    extending: List[Type],
+    members: List[MemberDecl]) extends TopDecl {
 
   def toSMTDatatype: String = {
     val propertyDecls = getAllPropertyDecls
@@ -814,6 +905,7 @@ case class EntityDecl(
       invFunctionCount += 1
       val functionName = s"$ident.inv$invFunctionCount"
       var result = ""
+      result += UtilSMT.headline3(s"Invariant $invFunctionCount")
       result += s"(define-fun $functionName ((this Ref)) Bool\n"
       result += s"  $constraintSMT\n"
       result += s")\n"
@@ -829,6 +921,7 @@ case class EntityDecl(
 
     // generate instances:
 
+    result += UtilSMT.headline3("Constants")
     for (index <- heapEntries) {
       val const = s"const-$index-$ident"
       result += s"(declare-const $const $ident)\n"
@@ -873,6 +966,19 @@ case class EntityDecl(
         case Some(str) => s" [$str]"
       }
       result += mkInvFunAndAssert(ident, exp.toSMT(ident, false), exp.toString + name)
+    }
+    result
+  }
+
+  def getCreatedObjects: List[String] = {
+    // TODO: sets and multiplicities, expressions
+    var result: List[String] = Nil
+    for (PropertyDecl(_, _, ty, multiplicity, _, _) <- members) {
+      ty match {
+        case IdentType(QualifiedName(name :: Nil), _) if !UtilSMT.isCollection(name) =>
+          result ::= name
+        case _ =>
+      }
     }
     result
   }
