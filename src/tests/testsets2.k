@@ -6,10 +6,12 @@ class Sets {
 
   req 
     Set{x | x : Int :- 11 <= x && x <= 14} 
-      subset 
+    subset 
     Set{x + 1 | x : Int :- 10 <= x && x <= 15}
 
 
   req 11 isin Set{x + 1 | x : Int :- 10 <= x && x <= 15}
+  
+  req 11 isin s1
 }
 

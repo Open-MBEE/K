@@ -201,7 +201,14 @@ object Misc {
 
   private val collectionNames = Set("Set", "Bag", "Seq")
   def isCollection(it: IdentType): Boolean = collectionNames(it.ident.toString)
-
+  
+  def isCollection(ty : Type) : Boolean = {
+    ty match {
+      case IdentType(id, ct) => isCollection(ty.asInstanceOf[IdentType])
+      case _ => false
+    }
+  }
+  
   def typeTypeCollection(t1: Type, t2: Type): (Boolean, Type) = {
     (t1, t2) match {
       case (IdentType(id, ct1), IdentType(id2, ct2)) if isCollection(t1.asInstanceOf[IdentType]) && isCollection(t2.asInstanceOf[IdentType]) =>

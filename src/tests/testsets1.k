@@ -52,3 +52,5 @@ class Sets {
 
   req r29: Set{1,2,3} isin s8
 }
+
+main : Sets 
