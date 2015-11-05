@@ -7,6 +7,8 @@ class Event {
 class Events {
   s : Set[Event]
 
+  req s != Set{}
+
   req forall e : Event :-
     e isin s =>	 e.time >= 0
 }

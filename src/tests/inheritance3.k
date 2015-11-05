@@ -1,4 +1,6 @@
 
+-- This one fails due to type checker issue: inner bobj.get(). Reported as bug.
+
 class A {
   x : Int = 2
 

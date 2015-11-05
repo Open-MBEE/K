@@ -8,15 +8,15 @@ fun double(x:Int):Int {
 }
 
 class A {
-  a : Int
+  a_500 : Int
 
-  req double(a) = max
+  req double(a_500) = max
 }
 
 instA : A
 
 class B {
-  b : Int = double(instA.a)
+  b_1000 : Int = double(instA.a_500)
 }
 
 X : Int

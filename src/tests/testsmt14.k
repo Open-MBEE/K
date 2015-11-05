@@ -1,6 +1,6 @@
 
 class A {
-  a : Int
+  RESULT_10 : Int
 
   b : Int
 
@@ -14,10 +14,6 @@ class A {
     }
   }
 
-  req a = id(10)
-
-  -- verifying result:
-
-  req a = 10
+  req RESULT_10 = id(10)
 }
 

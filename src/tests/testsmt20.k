@@ -17,7 +17,9 @@ class RocketMachine {
     if s = e then 50*s.duration.value else 0
   }
 
-  req imp(e) > 1500
+  impe : Int = imp(e)
+
+  req impe > 1500
 
 }
 

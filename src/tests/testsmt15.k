@@ -1,8 +1,8 @@
 
 class A {
-  a : Int
+  RESULT_6 : Int
 
-  req a = 
+  req RESULT_6 = 
     { k1 : Int = 1
       k1
     } 

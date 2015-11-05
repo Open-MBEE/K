@@ -1,6 +1,4 @@
 
--- This example does not solve. Not sure if it did in the past. I think so (KH).
-
 class Person {
   age : Int
 

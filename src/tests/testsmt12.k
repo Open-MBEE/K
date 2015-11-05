@@ -10,10 +10,7 @@ class A {
     }
   }
 
-  result1 : Int = id(7)
-  result2 : Int = id(-3)
-  result  : Int = result1 + result2
-  req result1 = 7
-  req result2 = -3
-  req result = 4
+  RESULT_7 : Int = id(7)
+  RESULT_m3 : Int = id(-3)
+  RESULT_4  : Int = RESULT_7 + RESULT_m3
 }

@@ -41,3 +41,4 @@ class RocketMachine {
   )
 }
 
+machine : RocketMachine

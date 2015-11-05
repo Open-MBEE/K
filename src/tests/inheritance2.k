@@ -26,6 +26,4 @@ class C extends A {
 
 dobj : D
 
-sum : Int = dobj.a + dobj.c + dobj.d
-
--- sum = 8
+RESULT_8 : Int = dobj.a + dobj.c + dobj.d
