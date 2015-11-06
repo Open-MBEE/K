@@ -222,7 +222,7 @@ object Frontend {
         println()
       }
       try {
-        val res = runWithTimeout(timeoutValue) { K2Z3.solveSMT(model, smtModel, true) }
+        val res = runWithTimeout(timeoutValue) { K2Z3.solveSMT(combinedModel, smtModel, true) }
         if (res.isEmpty) log("Timeout")
       } catch {
         case TypeCheckException => errorExit("Type Checking exception.")
@@ -424,6 +424,7 @@ object Frontend {
     ASTOptions.silent = !debug
     TypeChecker.silent = !debug
     TypeChecker.debug = debug
+    
     val currentTestJsonObject = new JSONObject()
 
     try {

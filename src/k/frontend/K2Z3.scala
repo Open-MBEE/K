@@ -103,7 +103,7 @@ object K2Z3 {
     solver.setParameters(params)
   }
 
-  def getStringForSets(setValue: FuncDecl): String = {
+  def getStringForSets(setValue: FuncDecl, ty: Type): String = {
     "Set(" +
       z3Model.getFuncInterp(setValue).getEntries.foldLeft(List[String]()) {
         (res, x) =>
@@ -112,9 +112,14 @@ object K2Z3 {
             if (arg.contains("array")) {
               val setName = arg.split(" ").last.split("!").last.replace(")", "")
               val decl = z3Model.getFuncDecls.find { x => x.getName.toString == setName }
-              val result = getStringForSets(decl.get)
+              val result = getStringForSets(decl.get, Misc.getInnerTypeFromCollectionType(ty))
               result :: res
-            } else x.getArgs.mkString.toString :: res
+            } else {
+              if (TypeChecker.isPrimitiveType(Misc.getInnerTypeFromCollectionType(ty)))
+                x.getArgs.mkString :: res
+              else
+                x.getArgs.map { x => s"Ref $x" }.mkString :: res
+            }
           } else res
       }.mkString(",") +
       ")"
@@ -170,7 +175,7 @@ object K2Z3 {
             val setName = x._2.split("!").last.replace(")", "")
             val setValue = z3Model.getFuncDecls.find { x => x.getName.toString == setName }
             //if (z3Model.getFuncInterp(setValue.get))
-            x._1.name + ":: " + getStringForSets(setValue.get)
+            x._1.name + ":: " + getStringForSets(setValue.get, x._1.ty)
           } else if (!TypeChecker.isPrimitiveType(x._1.ty)) {
             toPrint = x._2 :: toPrint
             (x._1.name + ":: Ref " + x._2)
@@ -305,7 +310,6 @@ object K2Z3 {
       reset()
 
       val boolExp = ctx.parseSMTLIB2String(smtModel, null, null, null, null)
-
       z3Model = SolveExp(boolExp, smtModel)
 
       if (debugRawModel) {

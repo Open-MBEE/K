@@ -180,6 +180,15 @@ object Misc {
 
   def log(prefix: String, msg: String) = println(s"[$prefix] $msg")
 
+  def getInnerTypeFromCollectionType(ty : Type): Type = {
+    ty match {
+      case IdentType(id, t) if isCollection(ty) => 
+        require(t.length == 1)
+        t.last
+      case _ => errorExit("Util", "Cannot get inner type from non collection: " + ty)
+    }
+  }
+  
   def areTypesEqual(t1: Type, t2: Type, compatibility: Boolean): Boolean = {
     (t1, t2) match {
       case (ParenType(pt1), ParenType(pt2))         => return areTypesEqual(pt1, pt2, compatibility)

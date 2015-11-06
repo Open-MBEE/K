@@ -93,6 +93,7 @@ object UtilSMT {
     subClassMap = Map()
     constantsToDeclare = Nil
     constantCounter = 0
+    heapInitializerConstants = Nil
   }
 
   def error(msg: String) = {
