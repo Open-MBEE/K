@@ -18,4 +18,4 @@ class C extends B {
 
 dobj : D
 
-sum : Int = dobj.x + dobj.y + dobj.z + dobj.i
+RESULT_10 : Int = dobj.x + dobj.y + dobj.z + dobj.i

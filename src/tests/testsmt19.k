@@ -9,6 +9,4 @@ class X {
 
 x : X
 
-theOne: Int = x.f()
-
-req theOne = 1
+r_1 : Int = x.f()
