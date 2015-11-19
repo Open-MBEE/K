@@ -645,7 +645,10 @@ class TypeChecker(model: Model) {
           val entityTypeEnv = decl2TypeEnvi(ed)
 
           ed.annotations.foreach { a =>
-            val annotationExpType = getExpType(entityTypeEnv, a.exp, ed)
+            
+            val annotationExpType = 
+              if(a.exp != null) getExpType(entityTypeEnv, a.exp, ed)
+              else UnitType
             val annotationType = annotations(a.name).ty
             if (!areTypesEqual(annotationExpType, annotationType, false))
               error(s"Annotation $a does not type check.")

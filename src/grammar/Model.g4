@@ -21,7 +21,7 @@ annotationDeclaration:
 ;
 
 annotation:
-  '@' Identifier '(' expression ')'
+  '@' Identifier ('(' expression ')')?
 ;
 
 topDeclaration:

@@ -71,6 +71,7 @@ object K2Z3 {
 
   var debug: Boolean = false
   var debugRawModel: Boolean = false
+  val printExtraEntries: Boolean = true
   var silent: Boolean = true
   var cfg: Map[String, String] = Map(
     "model" -> "true",
@@ -126,13 +127,20 @@ object K2Z3 {
   }
 
   def printObjectValue(name: String, heap: Map[String, String],
-                       v: String, visited: Set[String], refNum: String): (Set[String], List[List[String]]) = {
+                       v: String, visited: Set[String],
+                       refNum: String, force: Boolean): (Set[String], List[List[String]]) = {
 
     if (visited.contains(name)) return (visited, Nil)
 
     val value = v.trim.replace("- ", "-")
     if (value.indexOf("mk-") < 0) return (visited + name, Nil)
     val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
+
+    val classDecl = TypeChecker.classes(className)
+    val noInstancesForClass =
+      classDecl.annotations.foldLeft(false)((res, a) => if (a.name.equals("noInstances")) true else res)
+    if (noInstancesForClass && !force) return (visited, Nil)
+
     val objectValuesString = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
     val objectValuesOrig = objectValuesString.split(' ').map(_.trim).filterNot { _.isEmpty }.drop(1)
     var objectValues = List[String]()
@@ -167,7 +175,7 @@ object K2Z3 {
 
     if (className == "TopLevelDeclarations") return (visited, List(List(name, " - top level -")))
 
-    val properties = TypeChecker.classes(className).getAllPropertyDecls
+    val properties = classDecl.getAllPropertyDecls
     printList =
       (properties zip objectValues).map {
         x =>
@@ -190,10 +198,10 @@ object K2Z3 {
 
     var result = toPrint.foldLeft((visited, List(all))) { (res, x) =>
       if (heap.contains(x)) {
-        val downRes = printObjectValue("Ref " + x, heap, heap(x), res._1 + name, x)
+        val downRes = printObjectValue("Ref " + x, heap, heap(x), res._1 + name, x, true)
         ((downRes._1 + name) ++ res._1, downRes._2 ++ res._2)
       } else {
-        val downRes = printObjectValue("else " + x, heap, heap("else"), res._1 + name, x)
+        val downRes = printObjectValue("else " + x, heap, heap("else"), res._1 + name, x, true)
         ((downRes._1 + name) ++ res._1, downRes._2 ++ res._2)
       }
     }
@@ -255,7 +263,7 @@ object K2Z3 {
                   if (k._2) {
                     rows = (List(k._1, "-", objectValues(i))) :: rows
                   } else {
-                    val res = printObjectValue(k._1, heapMap, heapMap.getOrElse(objectValues(i), heapMap("else")), visited, objectValues(i))
+                    val res = printObjectValue(k._1, heapMap, heapMap.getOrElse(objectValues(i), heapMap("else")), visited, objectValues(i), false)
                     rows = res._2 ++ rows
                     visited = res._1 + ("Ref " + objectValues(i))
                   }
@@ -268,22 +276,24 @@ object K2Z3 {
       }
 
       // walk through heap and  print EXTRA entries
-      heapMap.foreach { kv =>
+      if (printExtraEntries) {
+        heapMap.foreach { kv =>
 
-        val key = kv._1
+          val key = kv._1
 
-        val value = kv._2.replace("- ", "-")
-        if (value != "null") {
-          val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
-          if (value.contains("mk-")) {
-            val objectValues = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
-              .split(' ').map(_.trim).filterNot { _.isEmpty }
-            className == "TopLevelDeclarations" match {
-              case true => ()
-              case _ => {
-                val res = printObjectValue("Ref " + key, heapMap, value, visited, key)
-                extraRows = res._2 ++ extraRows
-                visited = res._1 + ("Ref " + key)
+          val value = kv._2.replace("- ", "-")
+          if (value != "null") {
+            val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
+            if (value.contains("mk-")) {
+              val objectValues = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
+                .split(' ').map(_.trim).filterNot { _.isEmpty }
+              className == "TopLevelDeclarations" match {
+                case true => ()
+                case _ => {
+                  val res = printObjectValue("Ref " + key, heapMap, value, visited, key, false)
+                  extraRows = res._2 ++ extraRows
+                  visited = res._1 + ("Ref " + key)
+                }
               }
             }
           }

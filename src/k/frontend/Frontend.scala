@@ -139,8 +139,8 @@ object Frontend {
           if (!Paths.get(x).isAbsolute()) Paths.get(modelFileDirectory, x).toString
           else x
         }
-        classpath = classpath.map {_.trim}
-        
+        classpath = classpath.map { _.trim }
+
         println("CLASSPATH set to: " + classpath)
 
       case _ => ()
@@ -152,13 +152,13 @@ object Frontend {
         K2Z3.debugRawModel = true
       case _ => ()
     }
-    
+
     options.get('instances) match {
       case Some(i: Int) =>
         ASTOptions.numberOfInstances = i
       case _ => ()
-    }    
-    
+    }
+
     options.get('mmsJson) match {
       case Some(file: String) => {
         model = parseMMSJson(file)
@@ -210,7 +210,9 @@ object Frontend {
       //decls: List[TopDecl]) {
       val allDecls = importModels.flatMap { x => x.decls }
       val combinedModel = Model(model.packageName, model.imports,
-        model.annotations, model.decls ++ allDecls)
+          model.annotations ++
+          importModels.flatMap { x => x.annotations },
+        model.decls ++ allDecls)
       smtModel += combinedModel.toSMT
       if (K2Z3.debug) {
         println()
@@ -424,7 +426,7 @@ object Frontend {
     ASTOptions.silent = !debug
     TypeChecker.silent = !debug
     TypeChecker.debug = debug
-    
+
     val currentTestJsonObject = new JSONObject()
 
     try {
@@ -593,7 +595,7 @@ object Frontend {
     val elementsArray = jsonObject.get("elements").asInstanceOf[JSONArray]
     var packageName: Option[PackageDecl] = None
     var imports: List[ImportDecl] = List()
-    var annotations: List[AnnotationDecl] = List()
+    var annotations: Set[AnnotationDecl] = Set()
     var mdecls: List[TopDecl] = List[TopDecl]()
     var id2Decl: Map[String, TopDecl] = Map()
 
@@ -875,7 +877,7 @@ object Frontend {
         var packageName: Option[PackageDecl] =
           if (obj.keySet().contains("packageName")) Some(visitJsonObject(obj.get("packageName"))).asInstanceOf[Option[PackageDecl]]
           else None
-        var annotations = visitJsonArray(obj.get("annotations"), visitJsonObject).asInstanceOf[List[AnnotationDecl]]
+        var annotations = visitJsonArray(obj.get("annotations"), visitJsonObject).asInstanceOf[Set[AnnotationDecl]]
         var imports = visitJsonArray(obj.get("imports"), visitJsonObject).asInstanceOf[List[ImportDecl]]
         var decls = visitJsonArray(obj.get("decls"), visitJsonObject).asInstanceOf[List[TopDecl]]
         Model(packageName, imports, annotations, decls)
@@ -1248,7 +1250,7 @@ object Frontend {
         var packageName: Option[PackageDecl] =
           if (obj.keySet().contains("packageName")) Some(visitJsonObject2(obj.getJSONObject("packageName"))).asInstanceOf[Option[PackageDecl]]
           else None
-        var annotations = visitJsonArray(obj.get("annotations"), visitJsonObject2).asInstanceOf[List[AnnotationDecl]]
+        var annotations = visitJsonArray(obj.get("annotations"), visitJsonObject2).asInstanceOf[Set[AnnotationDecl]]
         var imports = visitJsonArray(obj.get("imports"), visitJsonObject2).asInstanceOf[List[ImportDecl]]
         var decls = visitJsonArray(obj.get("decls"), visitJsonObject2).asInstanceOf[List[TopDecl]]
         Model(packageName, imports, annotations, decls)
@@ -1388,7 +1390,9 @@ object Frontend {
     var fileContents: String = new String(bytes, "UTF-8")
     val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(fileContents)
     var m: Model = ksv.visit(tree).asInstanceOf[Model]
-    m
+    Model(m.packageName, m.imports,
+      ReservedAnnotations.annotations ++ m.annotations,
+      m.decls)
   }
 
   /**
