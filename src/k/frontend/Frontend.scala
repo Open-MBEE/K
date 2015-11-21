@@ -210,8 +210,7 @@ object Frontend {
       //decls: List[TopDecl]) {
       val allDecls = importModels.flatMap { x => x.decls }
       val combinedModel = Model(model.packageName, model.imports,
-          model.annotations ++
-          importModels.flatMap { x => x.annotations },
+        model.annotations ++ importModels.flatMap { x => x.annotations },
         model.decls ++ allDecls)
       smtModel += combinedModel.toSMT
       if (K2Z3.debug) {
@@ -1389,10 +1388,7 @@ object Frontend {
     var bytes: Array[Byte] = Files.readAllBytes(path)
     var fileContents: String = new String(bytes, "UTF-8")
     val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(fileContents)
-    var m: Model = ksv.visit(tree).asInstanceOf[Model]
-    Model(m.packageName, m.imports,
-      ReservedAnnotations.annotations ++ m.annotations,
-      m.decls)
+    ksv.visit(tree).asInstanceOf[Model]
   }
 
   /**

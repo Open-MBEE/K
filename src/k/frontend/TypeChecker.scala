@@ -2,7 +2,6 @@ package k.frontend
 
 import k.frontend._
 import java.util.{ IdentityHashMap => IMap }
-import javax.xml.bind.annotation.XmlElementDecl.GLOBAL
 
 object TypeCheckException extends Exception
 
@@ -443,6 +442,9 @@ class TypeChecker(model: Model) {
 
     if (model == null) return true
 
+    // add the reserved annotations to our available annotations
+    ReservedAnnotations.annotations.foreach { a => annotations += (a.name -> a) }
+
     // get declared annotations and corresponding types
     model.annotations.foreach { d =>
       val ad = d.asInstanceOf[AnnotationDecl]
@@ -645,9 +647,8 @@ class TypeChecker(model: Model) {
           val entityTypeEnv = decl2TypeEnvi(ed)
 
           ed.annotations.foreach { a =>
-            
-            val annotationExpType = 
-              if(a.exp != null) getExpType(entityTypeEnv, a.exp, ed)
+            val annotationExpType =
+              if (a.exp != null) getExpType(entityTypeEnv, a.exp, ed)
               else UnitType
             val annotationType = annotations(a.name).ty
             if (!areTypesEqual(annotationExpType, annotationType, false))
@@ -995,27 +996,27 @@ class TypeChecker(model: Model) {
               areTypesEqual(pa._1.ty, p2Type, false)
             }))
             error(s"Arguments to function seem incorrect: $exp")
-          else if(collectionFunction){
+          else if (collectionFunction) {
             args.foreach { x => getExpType(te, x.asInstanceOf[PositionalArgument].exp, owner) }
           }
 
-            functionReturnType match {
-              case CollectType(t) =>
-                if (args.length > 1)
-                  IdentType(QualifiedName(List("Seq")), t)
-                else {
-                  assert(args.length <= 1)
-                  // TODO
-                  // assuming lambda expression as only argument
-                  // assuming ident pattern in lambda expression
-                  val lambdaExp = args.last.asInstanceOf[PositionalArgument].exp.asInstanceOf[LambdaExp]
-                  val lambdaTe = te.overwrite(lambdaExp.pat.asInstanceOf[IdentPattern].ident -> te(t.last.toString))
-                  // CollectType(List(getExpType(lambdaTe, lambdaExp)))
-                  IdentType(QualifiedName(List("Seq")), List(getExpType(lambdaTe, lambdaExp, owner)))
-                }
-              case SumType(t) => IntType
-              case _          => functionReturnType
-            }
+          functionReturnType match {
+            case CollectType(t) =>
+              if (args.length > 1)
+                IdentType(QualifiedName(List("Seq")), t)
+              else {
+                assert(args.length <= 1)
+                // TODO
+                // assuming lambda expression as only argument
+                // assuming ident pattern in lambda expression
+                val lambdaExp = args.last.asInstanceOf[PositionalArgument].exp.asInstanceOf[LambdaExp]
+                val lambdaTe = te.overwrite(lambdaExp.pat.asInstanceOf[IdentPattern].ident -> te(t.last.toString))
+                // CollectType(List(getExpType(lambdaTe, lambdaExp)))
+                IdentType(QualifiedName(List("Seq")), List(getExpType(lambdaTe, lambdaExp, owner)))
+              }
+            case SumType(t) => IntType
+            case _          => functionReturnType
+          }
         }
       case WhileExp(cond, body) =>
         if (getExpType(te, cond, owner) != BoolType) {
