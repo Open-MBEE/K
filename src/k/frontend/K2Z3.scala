@@ -72,7 +72,7 @@ object K2Z3 {
   var debug: Boolean = false
   var debugRawModel: Boolean = false
   val printExtraEntries: Boolean = true
-  var silent: Boolean = true
+  var silent: Boolean = false
   var cfg: Map[String, String] = Map(
     "model" -> "true",
     "auto-config" -> "true",
