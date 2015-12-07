@@ -61,6 +61,7 @@ object Frontend {
       case "-latex" :: tail    => parseArgs(map ++ Map('latex -> true), tail)
       case "-scala" :: tail    => parseArgs(map ++ Map('scala -> true), tail)
       case "-json" :: tail     => parseArgs(map ++ Map('printJson -> true), tail)
+      case "-tc" :: tail     => parseArgs(map ++ Map('tc -> true), tail)
       case "-mmsJson" :: value :: tail =>
         parseArgs(map ++ Map('mmsJson -> value), tail)
       case "-expressionToJson" :: value :: tail =>
@@ -203,7 +204,7 @@ object Frontend {
       case _ => ()
     }
 
-    if (model != null) {
+    if (model != null && !options.contains('tc)) {
 
       //case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
       //annotations: List[AnnotationDecl],
