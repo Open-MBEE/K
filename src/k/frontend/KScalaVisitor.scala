@@ -14,7 +14,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
       if (ctx.packageDeclaration() != null) Some(visit(ctx.packageDeclaration()).asInstanceOf[PackageDecl])
       else None
     var importDecls: List[ImportDecl] = ctx.importDeclaration().asScala.toList.map(visit(_).asInstanceOf[ImportDecl])
-    var annotationDecls: List[AnnotationDecl] = ctx.annotationDeclaration().asScala.toList.map(visit(_).asInstanceOf[AnnotationDecl])
+    var annotationDecls: Set[AnnotationDecl] = ctx.annotationDeclaration().asScala.toList.map(visit(_).asInstanceOf[AnnotationDecl]).toSet
     var topDecls: List[TopDecl] = ctx.topDeclaration().asScala.toList.map(visit(_).asInstanceOf[TopDecl])
     Model(packageDecl, importDecls, annotationDecls, topDecls)
   }
@@ -240,16 +240,16 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
     var e1: Exp = visit(ctx.expression(1)).asInstanceOf[Exp]
     var op: BinaryOp =
       ctx.getChild(1).getText() match {
-        case "*"     => MUL
-        case "/"     => DIV
-        case "%"     => REM
-        case "inter" => SETINTER
-        case "\\"    => SETDIFF
-        case "subset" => SUBSET
+        case "*"       => MUL
+        case "/"       => DIV
+        case "%"       => REM
+        case "inter"   => SETINTER
+        case "\\"      => SETDIFF
+        case "subset"  => SUBSET
         case "psubset" => PSUBSET
-        case "++"    => ADD
-        case "#"     => TUPLEINDEX
-        case "^"     => LISTCONCAT
+        case "++"      => ADD
+        case "#"       => TUPLEINDEX
+        case "^"       => LISTCONCAT
       }
     BinExp(e0, op, e1)
   }
@@ -271,15 +271,15 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
     var e1: Exp = visit(ctx.expression(1)).asInstanceOf[Exp]
     var op: BinaryOp =
       ctx.getChild(1).getText() match {
-        case "<="     => LTE
-        case ">="     => GTE
-        case "<"      => LT
-        case ">"      => GT
-        case "="      => EQ
-        case "!="     => NEQ
-        case "isin"   => ISIN
-        case "!isin"  => NOTISIN
-        case "subset" => SUBSET
+        case "<="      => LTE
+        case ">="      => GTE
+        case "<"       => LT
+        case ">"       => GT
+        case "="       => EQ
+        case "!="      => NEQ
+        case "isin"    => ISIN
+        case "!isin"   => NOTISIN
+        case "subset"  => SUBSET
         case "psubset" => PSUBSET
       }
     BinExp(e0, op, e1)
@@ -622,7 +622,10 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
 
   override def visitAnnotation(ctx: ModelParser.AnnotationContext): AnyRef = {
     val name: String = ctx.Identifier().getText()
-    val exp: Exp = visit(ctx.expression()).asInstanceOf[Exp]
+
+    val exp: Exp =
+      if (ctx.expression != null) visit(ctx.expression()).asInstanceOf[Exp]
+      else null
     Annotation(name, exp)
 
   }

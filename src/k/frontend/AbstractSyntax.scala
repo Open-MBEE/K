@@ -504,7 +504,7 @@ private[frontend] object ToStringSupport {
 import ToStringSupport._
 
 case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
-                 annotations: List[AnnotationDecl],
+                 annotations: Set[AnnotationDecl],
                  decls: List[TopDecl]) {
 
   def toSMT: String = {
@@ -750,7 +750,7 @@ case class Annotation(name: String, exp: Exp) {
     val annotation = new JSONObject()
     annotation.put("type", "Annotation")
     annotation.put("name", name)
-    annotation.put("exp", exp.toJson)
+    if (exp != null) annotation.put("exp", exp.toJson)
   }
 }
 
@@ -801,13 +801,13 @@ trait TopDecl {
 }
 
 case class EntityDecl(
-    var annotations: List[Annotation],
-    entityToken: EntityToken,
-    keyword: Option[String],
-    ident: String,
-    typeParams: List[TypeParam],
-    extending: List[Type],
-    members: List[MemberDecl]) extends TopDecl {
+  var annotations: List[Annotation],
+  entityToken: EntityToken,
+  keyword: Option[String],
+  ident: String,
+  typeParams: List[TypeParam],
+  extending: List[Type],
+  members: List[MemberDecl]) extends TopDecl {
 
   def toSMTDatatype: String = {
     val propertyDecls = getAllPropertyDecls
