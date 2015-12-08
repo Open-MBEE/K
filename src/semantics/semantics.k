@@ -39,9 +39,7 @@ SEMANTIC FUNCTIONS:
 -- Auxilliary functions: --
 ---------------------------
 
-fun TODO(s:String) : Bool
 fun WAIT(s:String) : Bool
-fun KERROR(s:String) : Bool
 
 -- sets used for modeling Option, not perfect:
 
@@ -94,9 +92,7 @@ satDecl(ed,M) =
     ed.ident isin M.env.dom() &&
     M.env.get(ed.ident) is CLASS_VALUE &&
     {classValue : CLASS_VALUE = M.env.get(ed.ident) as CLASS_VALUE
-      KERROR("
-        (classValue.objects = Set{obj | obj : OBJECT :- satEntityDecl(ed,M.plus(obj.env)) })
-      ")
+     classValue.objects = Set{obj | obj : OBJECT :- entityDeclSatObject(ed,M.plus(obj.env)) }
     }
   else
     WAIT("association")
@@ -104,24 +100,23 @@ satDecl(ed,M) =
 -------------------------------------------
 
 req forall td : TypeDecl :- forall M : MODEL :-
-satDecl(td,M) = (
+satDecl(td,M) = {
   td.ident isin M.env.dom() &&
   if (td.ty = Set{}) then
     M.env.get(td.ident) subset Set{v | v : VALUE :- true}
   else
     M.env.get(td.ident) = semType(chooseType(td.ty))
-)
+}
 
 -------------------------------------------
 
 req forall pd: PropertyDecl :- forall M : MODEL :-
-satDecl(pd, M) = (
+satDecl(pd, M) = {
   pd.name isin M.env.dom() &&
   M.env.get(pd.name) isin semType(pd.ty).values &&
   (pd.expr != Set{} => {
     exp : Exp = chooseExp(pd.expr)
-    value : VALUE = evalExp(exp,M)
-    KERROR("isTrue(value)")
+    evalBoolExp(exp,M)
   }) &&
   (
   forall o : OBJECT :-
@@ -135,19 +130,13 @@ satDecl(pd, M) = (
         )
     ) 
   )
-)
-
--------------------------------------------
-
-req forall fd : FunDecl :- forall M : MODEL :-
-satDecl(fd,M) = 
-  TODO("FunDecl")
+}
 
 -------------------------------------------
 
 req forall cd : ConstraintDecl :- forall M : MODEL :-
 satDecl(cd,M) = 
-  TODO("ConstraintDecl")
+  evalBoolExp(cd.exp,M)
 
 
 ------------------------------------
@@ -179,7 +168,7 @@ fun valueIsObject(v:VALUE,o:OBJECT): Bool
 {
  v is REF_VALUE && {
     refValue : REF_VALUE = v
-    KERROR("M.heap(refValue.ref) = o")  
+    M.heap(refValue.ref) = o  
  }
 }
 
@@ -190,8 +179,8 @@ fun valueContainsObject(v:VALUE,o:OBJECT): Bool
 {
   v is SET_VALUE && {
     setValue : SET_VALUE = v
-    -- KERROR set : Set[VALUE] = setValue.set
-    KERROR("exists v : VALUE :- v isin set && contains(v,o)")
+    set : Set[VALUE] = setValue.set
+    exists v : VALUE :- v isin set && contains(v,o)
   }
 }
 
@@ -201,28 +190,35 @@ fun hasPartProperty(className: STRING, field: STRING): Bool
 -----------------------------------------------------------
 {
   exists ed : EntityDecl :- 
-    KERROR("ed isin theModel.decls") &&
+    ed isin theModel.decls &&
     ed.ident = className &&
     exists pd : PropertyDecl :-
-      KERROR("pd isin ed.members") &&
+      pd isin ed.members &&
       pd.name = field &&
       Part isin pd.modifiers
 } 
 
-------------------------------
-fun semType(ty:Type):SET_VALUE
-------------------------------
+-------------------------------------------------------
+fun entityDeclSatObject(ed: EntityDecl, M: MODEL): Bool
+-------------------------------------------------------
 -- TODO
 
 --------------------------------------    
 fun evalExp(exp: Exp, M: MODEL): VALUE
 --------------------------------------
 -- TODO
-  
--------------------------------------------------
-fun satEntityDecl(ed: EntityDecl, M: MODEL): Bool
--------------------------------------------------
+
+------------------------------
+fun semType(ty:Type):SET_VALUE
+------------------------------
 -- TODO
+  
+-----------------------------------------
+fun evalBoolExp(exp: Exp, M: MODEL): Bool
+-----------------------------------------
+{
+  isTrue(evalExp(exp,M))
+}
 
 ------------------------
 fun isTrue(v:VALUE):Bool 
