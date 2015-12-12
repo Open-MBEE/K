@@ -1,9 +1,11 @@
 
 Review #: 1	
 
+@IGNORE:
 I miss details about limitations of the language. Is it covering all
 the constructs of the SysML language?
 
+@IGNORE:
 However, there is a practical use of the language which means that the
 utility is proven. It would be nice to have more information about the
 actual usage of the language and the perception of the users.
@@ -12,15 +14,20 @@ actual usage of the language and the perception of the users.
 
 Review #: 3	    
 
+@IGNORE:
 Paper formatting needs adjustment?       Yes - reviewer 3
-
-I still have a lot of questions related to K, but as the paper's goal
-was not to present K in details, they are of little relevance.
 
 For example: Why doesn't K support ordered unique collections (ordered
 sets), as it supports only three out of four possible combinations of
 uniqueness and ordering?
 
+    ordered unique
+      yes   yes : OSet (ordered set, we don't have it) 
+      yes   no  : Seq
+      no    yes : Set
+      no    no  : Bag
+
+@RAHUL: (by the way: is the use of var and 'not' correct in example?)
 What is the difference between properties declared with var (Figure 1,
 line 15) and those without?
 
