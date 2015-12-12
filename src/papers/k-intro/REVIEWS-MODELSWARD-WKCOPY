@@ -1,19 +1,5 @@
 
-Needs more experimental results?	 Yes - reviewer 1
-Abstract and Introduction are adequate?	 No  - reviewer 2
-Improve critical discussion ? validation Yes - reviewer 2
-Needs comparative evaluation?		 Yes - reviewer 2
-Paper formatting needs adjustment?       Yes - reviewer 3
-
-
-=========
-
-
 Review #: 1	
-
-Summary:
- - limitations of K
- - comments on use
 
 I miss details about limitations of the language. Is it covering all
 the constructs of the SysML language?
@@ -24,86 +10,9 @@ actual usage of the language and the perception of the users.
 
 ---------------------------------------------------------------------
 
-Review #: 2	   
-
-Summary:
- - language, notation, tools
- - school of thought: modeling as programming
-
-===
-
-In our discussion of SysML we shall distinguish beteen three
-representations of it: the language, the notations for it, and the
-tooling supporting it. By language we think of its abstract syntax:
-the concepts supported by the language, independent of their concrete
-syntax. A particilar model is represented as an object (abstract
-syntax tree, AST) in the abstract syntax. By notation we think of the
-concrete syntax used by a user to enter a model, which is then parsend
-and translated to an AST. A notation can be graphical (two or
-three-dimensional) or textual (one-dimensional). The concrete syntax
-for SysML applied by users and supported by tools is mostly
-graphical. Our hyothesis is that a textual concrete syntax would be
-beneficial, and more attractive in some cases.  As supporting evidence
-of this hypothesis one may notice that software developers largely
-program only using textual notations.  Likewise, system engineers
-familiar with programming might want to use a textual notation. SysML
-can be considered as consisting of class diagrams for describing
-structure, as well as diagrams for describing behavior. Class diagrams
-in addition can in some toolings be annotatated with OCL expressions
-in order to define constrains, although OCL is not formally part of
-SysML. The K language is meant as a textual language for class
-diagrams.  The plan is to map the rest of SysML into this textual
-language.
-
-===
-
-The Abstract fails to convince me that there is a problem to be
-solved; it explains what the authors did but does not provide a
-justification as to why this was necessary. The Introduction answers
-this, albeit not very convincingly: the authors systematically mix up
-the concepts of language and notation, and even that of modelling
-tools, by arguing that UML and SysML are not optimal because they are
-graphical. However, it is their notations what is graphical; the
-metamodels defining these languages ar epurely abstract constructs,
-and either UML or SysML models can be expressed using a textual
-notation, for example. Weaknesses such as "tedious GUI operations" or
-the need of "learning a large set of additional tools" to work with
-these languages are weakneses of specific tool implementation, not of
-the UML or SysML languages. The authors should recognise this and make
-a criticism of UML and SysML based on their intrinsic properties
-rather than on substandard tool implementations.
-
-In addition, the hypothesise that some of the drawbacks of UML and
-SysML are driven by the lack of a "simple textual language". I am not
-convinced. Again, language is not "textual" or "graphical"; the
-language (an abstract syntax) is an abstract entity, and only a
-notation (concrete syntax) can be textual or graphical. For example, I
-can easily devise a graphical notation for Z or VDM; or a textual
-notation for SysML or UML. Furthermore, ontology languages such as OWL
-are formally defined and based on description logic, and still drawing
-diagrams representig models expressed in them is as tedious and
-cumbersome as using UML.
-
-The authors also state that they adhere to the school of thought that
-"modeling can be seen as programming in a language where some parts of
-the model (program) at any point in time are executable, and some
-maybe are not (yet)". I have two objections to this. First of all, one
-does not simply "adhere to a school of thought" in science; you need
-to provide a reason why you do it, usually in the form of evidence or
-analytical reasoning. Secondly, the view of the authors is extremely
-limiting, and only works for modelling whose goal is to implement a
-software system. Conceptual modelling with goals such as exploration
-or communication of a complex reality are ruled out. I would suggest
-the authors that they consider the opposite "school of thought":
-programming is a kind of modelling geared towards a very specific
-purpose, namely instructig a computer to do something.
-
-In page 2, something is missing after "Europa Clipper
-Mission," in parenthesis.
-
----------------------------------------------------------------------
-
 Review #: 3	    
+
+Paper formatting needs adjustment?       Yes - reviewer 3
 
 I still have a lot of questions related to K, but as the paper's goal
 was not to present K in details, they are of little relevance.
@@ -120,7 +29,3 @@ constructed value), but it is not clear how?
 
 The syntax, wrt. the end of a statement is unclear – looks to be
 implicit (end of line)? Etc.
-
-Section 3.2, first para: “subsets of formulas generated from each class” instead of
-“subsets from each class formulas generated”
-

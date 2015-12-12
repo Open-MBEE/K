@@ -2,99 +2,96 @@
 \label{sec:introduction}
 
 Modeling is the activity of formulating an abstract description of a
-system to be implemented (or possibly already implemented). Modeling
-includes such activities as requirements capture in the initial phases
-and design of higher-level architectural decisions in later
-stages. Modeling has been studied by various communities, of which at
-least two can be identified: the model-based engineering community and
-the formal methods community. The {\em model-based engineering}
-community has suggested graphical modeling languages such as UML
-\cite{uml} and SysML \cite{sysml}, a variant of UML.  Both have been
-designed by the OMG (Object Management Group) technology standards
-consortium. SysML is meant for systems development more broadly
-considered, including physical systems as well as software systems, in
-contrast to UML, which is mainly meant for software development. These
-graphical formalisms have received a high degree of popularity in
-industry due to their two dimensional format, also sometimes referred
-to popularly as {\em boxology}: boxes and arrows. However, drawbacks
-of these formalisms include lack of precise semantics, lack of
-analysis capabilities, tedious GUI operations, requiring lots
-of visual real estate even for simple models, as well as large volumes
-of technologies. Learning UML and SysML is not just learning very
-large languages, it is also learning a large set of additional tools
-needed to work with models. We formulate the hypothesis that some of these
-drawbacks in part are due to the lack of a simple textual language, at
-a size comparable to a programming language, underlying the
-graphical notations.
+system, for example to understand the system before it is implemented.
+Modeling includes activities such as requirements capture in the
+initial phases and design of higher-level architectural decisions in
+later stages. Modeling has been studied by various communities, of
+which at least two can be identified: the model-based engineering
+community and the formal methods community. The {\em model-based
+  engineering} community has suggested modeling languages such as UML
+\cite{uml} and SysML \cite{sysml}, a variant of UML.  These languages
+typically come equipped with graphical notations (concrete syntax).
+Both UML and SysML have been designed by the OMG (Object Management
+Group) technology standards consortium. SysML is meant for systems
+development more broadly considered, including physical systems as
+well as software systems, in contrast to UML, which is mainly meant
+for software development. The graphical notations have received a high
+degree of popularity in industry due to their two dimensional format,
+also sometimes referred to popularly as {\em boxology}: boxes and
+arrows. However, drawbacks of these languages include lack of precise
+semantics, lack of analysis capabilities, tedious GUI operations in
+tools supporting the graphical notations, requiring lots of visual
+real estate even for simple models, as well as large volumes of
+technologies. Learning UML and SysML is not just learning very large
+languages, it is also learning a large set of additional tools needed
+to work with models. We formulate the hypothesis that some of these
+drawbacks in part are due to the lack of a simple textual notation, at
+a size comparable to a programming language notation. As evidence of
+this hyothesis, one may observe, that software developers mostly
+prefer to program in textual languages.
 
-From an even earlier point in time, since the 1960s, the {\em
-  formal methods} community, part of the computer science community,
-and closely connected to the programming language community, has
-proposed numerous formally founded specification languages. Several of
-these are based on predicate logic and set theory. These languages
-are, compared to UML and SysML, concise, small, well defined in the
-form of semantics, and in recent time well supported with analysis
-capabilities. The obvious observation is that it might be fruitful to
-study the interaction between the two classes of formalisms. Consider
-furthermore that programming languages are gaining in abstraction,
-such as for example combining object-oriented and functional
-programming. An example is Scala, which has many commonalities with very early formal
-specification languages, such as for example VDM \cite{vdm78}, and
-specifically its object-oriented variant VDM$^{++}$
-\cite{vdmplusplus05}.  The study should therefore include the
-interaction between the graphical formalisms, the formal methods
-modeling languages, and programming languages.
+From an even earlier point in time, since the 1960s, the {\em formal
+  methods} community, part of the computer science community, and
+closely connected to the programming language community, has proposed
+numerous formally founded specification languages with textual
+notations. Several of these are based on predicate logic and set
+theory. These languages are, compared to UML and SysML, concise,
+small, well defined in the form of semantics, and in recent time well
+supported with analysis capabilities. The obvious observation is that
+it might be fruitful to study the interaction between the two classes
+of languages. Consider furthermore that programming languages are
+gaining in abstraction, such as for example combining object-oriented
+and functional programming. An example is Scala, which has many
+commonalities with very early formal specification languages, such as
+for example VDM \cite{vdm78}, and specifically its object-oriented
+variant VDM$^{++}$ \cite{vdmplusplus05}.  The study should therefore
+include the interaction between languages with graphical notations,
+and languages with textual notations, such as formal methods modeling
+languages, and programming languages
 
-We report on an effort to formally ground SysML in a textual formal
-specification language, named K (Kernel language), designed
-specifically for this purpose.  Our initial focus is on specifying and
-analyzing class diagrams with constraints. K supports object-oriented
-concepts such as classes, multiple inheritance, and object
-instances. The contents of classes can be typed values, including
-functions, and constraints over these expressed in higher-order
-predicate logic.  K also contains programming constructs such as
-variables/properties, assignment statements, and looping constructs,
-and can as such be seen as a wide-spectrum modeling and programming
-language.  The K language can be seen as a vehicle for giving
-semantics to SysML, providing analysis capabilities, and even provide
-an alternative to modeling with the mouse: writing textual models in K
-directly, just like one normally writes programs.  We adhere to the
-school of thought that modeling can be seen as programming in a
-language where some parts of the model (program) at any point in time
-are executable, and some maybe are not (yet).
+We report on an effort to develop a textual notation for SysML. For
+this purpose we have developed a language named K (Kernel language)
+with a textual notation inspired by notations used in the formal
+methods community.  K corresponds to SysML’s class diagrams plus
+constraints. It is our plan to map other SysML language concepts into
+this kernel, rather than extending the K language to incorporate the
+rest of SysML. K supports object-oriented concepts such as classes,
+multiple inheritance, and object instances. The contents of classes
+can be typed values, including functions, and constraints over these
+expressed in higher-order predicate logic.  K also contains
+programming constructs such as variables/properties, assignment
+statements, and looping constructs, and can as such be seen as a
+wide-spectrum modeling and programming language.  The K language
+provides an alternative to modeling with the mouse in tools that
+typically support SysML: namely writing textual models in the K
+notation directly, just like one normally writes programs. K can
+furthermore be seen as a vehicle for giving semantics to SysML,
+providing analysis capabilities. It is our hypothesis, that modeling
+can be seen as programming in a language where some parts of the model
+(program) at any point in time are executable, and some maybe are not
+(yet). Supporting this hypothesis is the large number of language
+constructs shared by modeling and programming languages.
 
 The idea of merging modeling and programming in one language has been
 suggested before, as will be discussed in the related work section.
-Although K is not much different from previously suggested formalisms,  
-our contribution is the creation of \Klang{} specifically in support of a
-SysML model engineering tool set under development, to be used by
+Although K is not much different from previously suggested formalisms,
+our contribution is the creation of \Klang{} specifically in support
+of a SysML model engineering tool set under development, to be used by
 designers of the proposed 2022 mission to Jupiter's moon Europa, also
 referred to as the Europa Clipper mission concept
 \cite{europa-clipper}.  The resulting tool set will support graphical
 SysML modeling using MagicDraw \cite{magicdraw}, as well as
 browser-based model viewing and editing, including of textual K
-models. A first-order subset of K is furthermore translated to the input language of the
-SMT-LIB standard, and currently processed with the Z3 SMT solver for
-proving satisfiability of class definitions (are the constraints
-consistent?), and model finding (find variable assignments satisfying
-constraints, for example used in task scheduling).  The contribution here is
-the handling of (multiple) class inheritance, which is typically not supported
-by similar languages translated to SMT-LIB, as well as the allowance
-of recursive class definitions. Multiple inheritance is a crucial part
-of SysML, and therefore of K.
-
-%The idea of merging modeling and programming in one language has been
-%studied before, as will be discussed in the related work section. Our
-%contribution is the development of \Klang{}, along with the technology
-%to automatically translate it to SMT (for proving satisfiability) in
-%the presence of multiple inheritance and constraints. This technology
-%as part of a larger effort at NASA's Jet Propulsion Laboratory (JPL)
-%to develop a SysML model engineering tool set to be used by designers
-%of the proposed 2022 mission to Jupiter's Moon Europa, also referred to
-%as the Europa Clipper mission concept \cite{europa-clipper}. This tool set,
-%named EMS (Engineering Modeling System), supports graphical SysML
-%modeling using MagicDraw \cite{magicdraw} as well as textual K
-%modeling using any text editor of convenience. 
+models. A first-order subset of K is furthermore translated to the
+input language of the SMT-LIB standard, and currently processed with
+the Z3 SMT solver for proving satisfiability of class definitions (are
+the constraints consistent?), and model finding (find variable
+assignments satisfying constraints, for example used in task
+scheduling).  The contribution here is the handling of (multiple)
+class inheritance, which is typically not supported by similar
+languages translated to SMT-LIB, as well as the allowance of recursive
+class definitions. Multiple inheritance is a crucial part of SysML,
+and therefore of K.
 
 The paper is organized as follows. Section \ref{sec:k-syntax}
 introduces a subset of the K language through an example, which is
