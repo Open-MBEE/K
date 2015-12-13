@@ -1,4 +1,6 @@
 
+---------------------------------------------------------------------
+
 Review #: 1	
 
 @IGNORE:
@@ -17,22 +19,9 @@ Review #: 3
 @IGNORE:
 Paper formatting needs adjustment?       Yes - reviewer 3
 
+@LETS_ADD_OSET
 For example: Why doesn't K support ordered unique collections (ordered
 sets), as it supports only three out of four possible combinations of
 uniqueness and ordering?
 
-    ordered unique
-      yes   yes : OSet (ordered set, we don't have it, we could) 
-      yes   no  : Seq
-      no    yes : Set
-      no    no  : Bag
-
-@RAHUL: (by the way: is the use of var and 'not' correct in example?)
-What is the difference between properties declared with var (Figure 1,
-line 15) and those without?
-
-It seems that the value returned from functions is implicit (the last
-constructed value), but it is not clear how?
-
-The syntax, wrt. the end of a statement is unclear – looks to be
-implicit (end of line)? Etc.
+---------------------------------------------------------------------
