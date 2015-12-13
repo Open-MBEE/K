@@ -4,12 +4,12 @@
 We have presented an overview of the \Klang{} language in this
 paper. \Klang{} is intended to be used in a modeling environment for
 proving satisfiability of \sysml{} models and exploring solutions to
-various types of specifications, such as structure,
+various types of models, such as structure,
 planning/scheduling, etc. We have also presented in detail, our
 methodology for performing automatic translation of \Klang{}
-specifications to SMT-LIB, and using an SMT solver such as \zthree{}
-to perform model finding. Using manual methods of creating \Klang{}
-specifications from \sysml{} models and reference materials, we have
+models to SMT-LIB, and using an SMT solver such as \zthree{}
+to perform semantic model finding. Using manual methods of creating \Klang{}
+models from \sysml{} models and reference materials, we have
 already observed \Klang{} provide value in the modeling environment by
 discovering unsatisfiability of scheduling problems in the proposed
 Europa Clipper mission concept, which was confirmed by external manual
@@ -27,11 +27,11 @@ the use of Real numbers and arithmetic on them is also a known SMT
 challenge, especially in the context of arrays.
 %
 We are now in the process of creating tools to automatically translate
-\sysml{} models to \Klang{} specifications (and back) and perform analysis on
+\sysml{} models to \Klang{} models (and back) and perform analysis on
 them using the \Klang{} infrastructure. This will make it possible to view
 a model as graphics as well as in text. The translation of K needs to
 be extended to cover more constructs, including statements with
-side-effects. Other challenges is making K executable by translation
-to Scala, including executing OCL-like expressions,
-and providing support for reflection such that models can query themselves.
-
+side-effects. Other challenges include making K executable, for example by translation
+to Scala, including executing OCL-like expressions;
+providing support for reflection such that models can query themselves;
+and making the K language and textual notation user-extensible.
