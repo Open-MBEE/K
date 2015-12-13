@@ -22,7 +22,7 @@ sets), as it supports only three out of four possible combinations of
 uniqueness and ordering?
 
     ordered unique
-      yes   yes : OSet (ordered set, we don't have it) 
+      yes   yes : OSet (ordered set, we don't have it, we could) 
       yes   no  : Seq
       no    yes : Set
       no    no  : Bag
