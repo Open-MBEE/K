@@ -27,7 +27,7 @@ collections of \name{classes}. Packages can be \name{imported} by
 other \Klang{} files. Line 1 in Figure~\ref{fig:fs} shows an example
 of a package declaration. Classes, as in other object-oriented
 languages, provide a means for abstracting and grouping
-properties/variables. In \Klang{}, classes may contain properties,
+properties (variables). In \Klang{}, classes may contain properties,
 functions (there is no distinction between functions and methods), and
 constraints (requirements). Scoping rules in \Klang{} are similar to
 languages such as Java and C++. Lines 9 -- 12 in Figure~\ref{fig:fs}
@@ -97,13 +97,13 @@ return value of the function. It can only be used when specifying
 postconditions. The post condition for \code{mkDir} specifies that
 function \code{mkDir} returns a \code{FS} object that has the same
 size as the current \code{FS} object, which was used to create the new
-directory. Line 44, which is the body of function \code{mkDir} creates
+directory. Lines 44 -- 51, which form the body of function \code{mkDir}, create
 a new \code{FS} object by calling the constructor for class
 \code{FS}. The only argument provided to the constructor is a
 \code{Dir} object which contains one additional \code{Dir} entry whose
 name is \code{n}. \Klang{} provides constructors automatically for all
 classes where the arguments are {\em named arguments}. Each named
-argument is of the form \code{member :: value} where the `\code{::}'
+argument is of the form `\code{member :: value}' where the `\code{::}'
 notation is used as a form of assignment. Multiple named arguments can
 be provided as a comma delimited list. It is not necessary to specify
 a value for all members of a class. Any members that are specified in
@@ -121,19 +121,19 @@ current object.
 Expressions in \Klang{} are the core of the language. Expressions in
 \Klang{} allow one to write assignment statements (side-effects),
 binary expressions (such as and, or, implication, iff etc.), logical
-negation, arithmetic negation, quantification, \code{is} for checking
-type, and \code{as} for type casting. Any expression can make use of
+negation, arithmetic negation, quantification, {\bf is} for checking
+type, and {\bf as} for type casting. Any expression can make use of
 other defined constructs such as variables, function application,
 lambda functions, and dot expressions. \Klang{} also supports control
 expressions such as \code{if-then-else}, \code{while}, \code{match},
 \code{for}, \code{continue}, \code{break}, and \code{return}. These
-expressions are similar to control expressions provided in other
+expressions are similar to control expressions provided in programming
 languages such as Scala or Java. A detailed description of the
 expression language is beyond the scope of this paper.
 
 \Klang{} also provides {\em multiplicities} as part of the
-language. Multiplicities in \Klang{} are greatly influenced by similar
-concepts in graphical formalisms such as UML/SysML. In \Klang{},
+language. Multiplicities in \Klang{} are influenced by similar
+concepts in languages such as UML/SysML. In \Klang{},
 multiplicities can be used as a short hand for specifying collections
 and also restricting the size of collections. Figure~\ref{fig:mult}
 shows a \Klang{} model of a \code{Person} that has various member
@@ -175,7 +175,7 @@ collection. Line 6 specifies that a \code{Person} may have many
 \code{cars}. It is written using a modifier and a multiplicity, which
 semantically translates to a \code{Set} (\Klang{} default for a
 multiplicity is \code{Bag}) of \code{Car}. Finally, a person may own
-one or more \code{prtflios}, where each entry itself is a \code{Set}
+one or more portfolios (\code{prtflios}), where each entry itself is a \code{Set}
 of \code{Stock}, specified to have a multiplicity of 1 or more. This
 translates to \code{prtflios} being a \code{Bag} of \code{Set[Stock]}
 with at least 1 entry and no upper limit.
