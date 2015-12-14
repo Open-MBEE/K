@@ -63,9 +63,9 @@ requires that the property names be unique across all
 classes. Functions on the other hand may be overloaded by changing the
 function signature. Both class \code{File} and \code{Dir} inherit from
 class \code{Entry}. 
-Line 15 declares the variable \code{contents} using the keyword {\bf var},
+Line 15 declares the variable \code{contents} using the keyword \code{var},
 indicating that this variable is mutable (can change value). Variables introduced
-without this keyword (or with the keyword {\bf val}) are constants.
+without this keyword (or with the keyword \code{val}) are constants.
 Lines 16 -- 19 in Figure~\ref{fig:fs} show the
 implementation for the \code{size} function in the \code{Dir}
 class. It makes use of the \code{sum} function, that is provided by
@@ -135,8 +135,8 @@ current object.
 Expressions in \Klang{} are the core of the language. Expressions in
 \Klang{} allow one to write assignment statements (side-effects),
 binary expressions (such as and, or, implication, iff etc.), logical
-negation, arithmetic negation, quantification, {\bf is} for checking
-type, and {\bf as} for type casting. Any expression can make use of
+negation, arithmetic negation, quantification, `\code{is}' for checking
+type, and `\code{as}' for type casting. Any expression can make use of
 other defined constructs such as variables, function application,
 lambda functions, and dot expressions. \Klang{} also supports control
 expressions such as \code{if-then-else}, \code{while}, \code{match},
