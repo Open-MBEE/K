@@ -47,8 +47,12 @@ case object TypeChecker {
 
   def getPropertyDeclType(decl: PropertyDecl): Type = {
     if (!decl.multiplicity.isEmpty) {
-      if (decl.modifiers.contains(Unique)) IdentType(QualifiedName(List("Set")), List(decl.ty))
-      else if (decl.modifiers.contains(Ordered)) IdentType(QualifiedName(List("Seq")), List(decl.ty))
+      if (decl.modifiers.contains(Unique)) 
+        IdentType(QualifiedName(List("Set")), List(decl.ty))
+      else if (decl.modifiers.contains(Ordered)) 
+        IdentType(QualifiedName(List("Seq")), List(decl.ty))
+      else if (decl.modifiers.contains(Ordered) && decl.modifiers.contains(Unique))
+        IdentType(QualifiedName(List("OSet")), List(decl.ty))
       else IdentType(QualifiedName(List("Bag")), List(decl.ty))
     } else decl.ty
 
@@ -376,6 +380,21 @@ class TypeChecker(model: Model) {
      * For SMT we disallow statements with side effects and functions returning objects
      */
     model.decls.foreach { d =>
+      
+      // if property decl, make sure it is not an unsupported collection
+      d match {
+        case p @ PropertyDecl(_, name, ty, _, _, _) =>
+          if(Misc.isCollection(ty)){
+            val collectionKind = Misc.getCollectionKind(ty)
+            if(collectionKind == BagKind || 
+                collectionKind == SeqKind || 
+                collectionKind == OSetKind){
+              error(s"Unsupported collection kind for SMT processing. Currently only Set is supported.")
+            }
+          }
+        case _ => ()
+      }
+      
       if (d.isInstanceOf[MemberDecl]) {
         if (declContainsAssignment(d.asInstanceOf[MemberDecl])) {
           error(s"Found assignment in declaration $d. SMT mode disallows assignments.")

@@ -509,11 +509,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   }
 
   override def visitCollectionKind(ctx: ModelParser.CollectionKindContext): AnyRef = {
-    ctx.children.get(0).getText match {
-      case "Seq" => SeqKind
-      case "Set" => SetKind
-      case "Bag" => BagKind
-    }
+    Misc.getCollectionKind(ctx.children.get(0).getText)
   }
 
   override def visitCollectionOrType(ctx: ModelParser.CollectionOrTypeContext): AnyRef = {

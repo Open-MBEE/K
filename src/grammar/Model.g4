@@ -146,6 +146,7 @@ classIdentifier:
 
 collectionKind:
   'Set'
+| 'OSet'
 | 'Bag'
 | 'Seq' 
 ;

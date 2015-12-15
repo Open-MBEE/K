@@ -315,9 +315,6 @@ object UtilSMT {
     }
   }
 
-  def isCollection(typeName: String): Boolean =
-    Set("Set", "Bag", "Seq") contains typeName
-
   def removeRngBindingsFor(idents: Set[String], bindings: List[RngBinding]): List[RngBinding] = {
     var result: List[RngBinding] = Nil
     for (RngBinding(patterns, collection) <- bindings) {
@@ -955,7 +952,7 @@ case class EntityDecl(
     }
 
     // constraints for embedded references/parts:
-    for (PropertyDecl(_, propertyName, IdentType(QualifiedName(typeName :: Nil), _), _, _, _) <- propertyDecls if !UtilSMT.isCollection(typeName)) {
+    for (PropertyDecl(_, propertyName, IdentType(QualifiedName(typeName :: Nil), _), _, _, _) <- propertyDecls if !Misc.isCollection(typeName)) {
       val getter = s"$ident!$propertyName"
       UtilSMT.addGetter(getter)
       val constraintSMT = s"(deref-isa-$typeName ($getter this))"
@@ -978,7 +975,7 @@ case class EntityDecl(
     var result: List[String] = Nil
     for (PropertyDecl(_, _, ty, multiplicity, _, _) <- members) {
       ty match {
-        case IdentType(QualifiedName(name :: Nil), _) if !UtilSMT.isCollection(name) =>
+        case IdentType(QualifiedName(name :: Nil), _) if !Misc.isCollection(name) =>
           result ::= name
         case _ =>
       }
@@ -2341,6 +2338,11 @@ case object SetKind extends CollectionKind {
   override def toJson = toString
 }
 
+case object OSetKind extends CollectionKind {
+  override def toString = "OSet"
+  override def toJson = toString
+}
+
 case object SeqKind extends CollectionKind {
   override def toString = "Seq"
   override def toJson = toString
@@ -3312,12 +3314,13 @@ case class ClassType(ident: QualifiedName) extends Type {
 case class IdentType(ident: QualifiedName, args: List[Type]) extends Type {
   override def toSMT: String = {
     (ident.names, args) match {
-      case (name :: Nil, ty :: Nil) if Set("Set", "Bag", "Seq") contains name =>
+      case (name :: Nil, ty :: Nil) if Misc.isCollection(name) =>
         val tySMT = ty.toSMT
         val kindSMT = name match {
           case "Set" => "Set"
           case "Bag" => "Bag"
           case "Seq" => "List"
+          case "OSet" => "OSet"
         }
         s"($kindSMT $tySMT)"
       case _ =>

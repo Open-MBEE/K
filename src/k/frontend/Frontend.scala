@@ -142,7 +142,7 @@ object Frontend {
         }
         classpath = classpath.map { _.trim }
 
-        println("CLASSPATH set to: " + classpath)
+        println("CLASSPATH set to: " + classpath.mkString(","))
 
       case _ => ()
     }
@@ -810,14 +810,14 @@ object Frontend {
       case "TupleExp" =>
         TupleExp(visitJsonArray(obj.get("exps"), visitJsonObject).asInstanceOf[List[Exp]])
       case "CollectionEnumExp" =>
-        CollectionEnumExp(getCollectionKind(obj.getString("kind")),
+        CollectionEnumExp(Misc.getCollectionKind(obj.getString("kind")),
           visitJsonArray(obj.get("exps"), visitJsonObject).asInstanceOf[List[Exp]])
       case "CollectionRangeExp" =>
-        CollectionRangeExp(getCollectionKind(obj.getString("kind")),
+        CollectionRangeExp(Misc.getCollectionKind(obj.getString("kind")),
           visitJsonObject(obj.get("exp1")).asInstanceOf[Exp],
           visitJsonObject(obj.get("exp2")).asInstanceOf[Exp])
       case "CollectionComprExp" =>
-        var kind = getCollectionKind(obj.getString("kind"))
+        var kind = Misc.getCollectionKind(obj.getString("kind"))
         var exp1 = visitJsonObject(obj.get("exp1")).asInstanceOf[Exp]
         var bindings = visitJsonArray(obj.get("bindings"), visitJsonObject).asInstanceOf[List[RngBinding]]
         var exp2 = visitJsonObject(obj.get("exp2")).asInstanceOf[Exp]
@@ -1053,14 +1053,6 @@ object Frontend {
     }
   }
 
-  def getCollectionKind(o: String): CollectionKind = {
-    o match {
-      case "Set" => SetKind
-      case "Seq" => SeqKind
-      case "Bag" => BagKind
-    }
-  }
-
   def getRngBinding(o: Any): AnyRef = {
     val obj = o.asInstanceOf[JSONObject].getJSONArray("operand")
     val patternList: MList[Pattern] = MList()
@@ -1125,7 +1117,7 @@ object Frontend {
             val exp = visitJsonObject2(operand.getJSONObject(3)).asInstanceOf[Exp]
             QuantifiedExp(quantifier, bindings, exp)
           case "CollectionComprExp" =>
-            var kind = getCollectionKind(operand.getString(1))
+            var kind = Misc.getCollectionKind(operand.getString(1))
             var exp1 = visitJsonObject2(operand.get(2)).asInstanceOf[Exp]
             var exp2 = visitJsonObject2(operand.get(3)).asInstanceOf[Exp]
             val bindings: MList[RngBinding] = MList()
