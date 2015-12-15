@@ -95,8 +95,8 @@ the system manager.
 
 \subsection{The Translation to SMT-LIB}
 
-The SMT-LIB language (from here on referred to as SMT-LIB) is a textual
-language for typed first order predicate logic plus various theories,
+The SMT-LIB language (from here on referred to as SMT-LIB) is equipped with 
+a textual notation, and supports typed first order predicate logic plus various theories,
 including for example arithmetic, uninterpreted functions, and
 arrays. The syntax is LISP-like, meaning for example that function
 calls such as $f(42,false)$ have the form $(f\ 42\ false)$. For the 51
@@ -151,7 +151,7 @@ If no constructors are applied, the solver will assign objects.
 \small
 \begin{lstlisting}
 class A {     class B {
-  b : B            a : A
+  b : B         a : A
 }             }
 \end{lstlisting}
 \end{tabular}
