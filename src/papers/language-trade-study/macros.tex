@@ -19,8 +19,11 @@
 \usepackage{multirow}
 \usepackage{pslatex}
 
+\newcommand{\comment}[1]{}
 
 \definecolor{light-gray}{gray}{0.95}
+
+% --- K: ---
 
 \lstdefinelanguage{K}{
   morekeywords={package,import,class,unique,extends,with,match,new,if,then,else,while,for,yield,val,var,this,case,type,implicit,private,protected,abstract,final, req, Int, String, Bool, fun, pre, post},
@@ -43,13 +46,27 @@
   numberstyle=\footnotesize, 
 }
 
-\lstdefinelanguage{SMT}{
-  morekeywords={define,declare,sort,const,fun,datatypes,assert,forall,exists,and,or,ite,select,Int,Real,Bool,Array},
+% --- OCLInEcore: ---
+
+\lstdefinelanguage{oclinecore}{
+  morekeywords={package,import,class,unique,extends,with,match,new,if,then,else,while,for,yield,val,var,this,case,type,implicit,private,protected,abstract,final, req, Int, String, Bool, fun, pre, post},
+  otherkeywords={&,\{,\},_*},
+  literate=
+      {\#\#}{{$\oplus\;$}}2
+      {|->}{{$\longmapsto\;$}}2
+      {-->}{{$\Longrightarrow\;$}}2
+      {->}{{$\rightarrow\;$}}2
+      {~}{{$\sim\;$}}2
+      {>>}{{$\gg$}}2
+      {++}{{$++$}}2
+      {|==}{{$\models$}}2
+  ,
   sensitive=true, 
-  morecomment=[l]{;}, 
+  morecomment=[l]{//}, 
+  morecomment=[s]{/*}{*/},
   stringstyle=\ttfamily,
-%  numbers=none,   
-%  numberstyle=\footnotesize, 
+  numbers=left,   
+  numberstyle=\footnotesize, 
 }
 
  
