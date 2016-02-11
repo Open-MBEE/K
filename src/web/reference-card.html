@@ -1,0 +1,758 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>K Reference Card</title>
+
+<style>
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 10px;
+    text-align: left;    
+}
+</style>
+
+</head>
+<body>
+
+<center>
+<h1><font color=red>K</font> Reference Card</h1>
+</center>
+
+<!-------------------------------------------------->
+<table style="width:100%">
+<!-------------------------------------------------->
+
+<col width="40">
+
+
+
+<!-------------------------------------------------->
+<th colspan="2"><font color=red>Complete example</red></th>
+<!-------------------------------------------------->
+
+<tr>
+<td>
+<pre>
+<strong>package</strong> examples.example1
+
+<strong>annotation</strong> doc : String
+
+<strong>class Date</strong>
+
+<strong>class</strong> Person {
+  name : String
+  age  : Int
+  ssnr : Int   
+}
+
+@doc("Employee inherits from Person")
+<strong>class</strong> Employee <strong>extends</strong> Person {
+  hoursalary : Int 
+  @doc("Type Date is abstract")
+  hired : Date
+       
+  <strong>req</strong> hoursalary >= 15
+}
+
+<strong>class</strong> Company {
+  employees : Set[Employee]
+    
+  <strong>fun</strong> hasEmployer(e : Employee): Bool {
+    e <strong>isin</strong> employees    
+  }
+  
+  <strong>req</strong> <strong>forall</strong> e : Employee :-
+    e <strong>isin</strong> employees => e.age >= 18
+}
+</pre>
+</td>
+<td>
+Three classes are defined: Person, Employee, which extends Person, and Company.
+The example shows the two ways in which a class can be used to define another class:
+(1) class Employee extends class Person, inheriting from Person all the properties, functions and constraints
+defined in Person; and (2) class Company contains a property which is a set of Employees.
+</td>
+</tr>
+<!-------------------------------------------------->
+<th colspan="2"><font color=red>Packages</font></th>
+<!-------------------------------------------------->
+
+<tr>
+<td>
+<pre>
+<strong>package</strong> example 
+</pre>
+</td>
+<td>
+Package declarations should occur at the top.
+</td>
+</tr>
+<tr>
+<td>
+<pre>
+<strong>package</strong> examples.example1
+</pre>
+</td>
+<td>
+Package names can be composed corresponding to folder structure.
+</td>
+</tr>
+
+<!-------------------------------------------------->
+<th colspan="2"><font color=red>Imports</font></th>
+<!-------------------------------------------------->
+
+<tr>
+<td>
+<pre>
+<strong>import</strong> util.*
+</pre>
+</td>
+<td>
+Import declarations should occur right after the package declaration.
+One can import all contents from a different pakage using the 
+<code>.*</code> notation.
+</td>
+</tr>
+<tr>
+<td>
+<pre>
+<strong>import</strong> util.Date
+</pre>
+</td>
+<td>
+One can import a specific class from a diffrent package.
+</td>
+</tr>
+<tr><td>
+<pre>
+<strong>import</strong> examples.example1.*
+</pre>
+</td><td>
+Package names in import statements can be composed.
+</td></tr>
+
+<!-------------------------------------------------->
+<th colspan="2"><font color=red>Annotations</font></th>
+<!-------------------------------------------------->
+<tr><td>
+<pre>
+<strong>annotation</strong> doc : String
+<strong>annotation</strong> id  : Int
+</pre>
+</td><td>
+Annnotations occur right after import declarations and before any property, function,
+constraint or class declarations.
+Annotations must be declared before used. Here two annotations are declared,
+one with the name <code>doc</code> of type <code>String</code> and one with the name 
+<code>id</code> of type <code>Int</code> (integers).
+</td></tr>
+<tr><td>
+<pre>
+@doc("Employee inherits from Person")
+@id(42)
+<strong>class</strong> Employee <strong>extends</strong> Person { ...}
+</pre>
+</td><td>
+Annotations are applied using <code>@name(arguments)</code> notation before the
+declaration they annotate. In this example the class <code>Employee</code> is 
+annotated with two annotations, one documenting the class and one providing an
+id for the class. Annotations are not translated to SMT.
+</td></tr>
+<tr><td>
+<pre>
+@doc("Type Date is imported")
+hired : Date
+
+@doc("following minimum Wage ")       
+<strong>req</strong> hoursalary >= 10
+</pre>
+</td><td>
+Annotations can also be applied to properties, functions,
+and constraints.
+</td></tr>
+
+<!-------------------------------------------------->
+<th colspan="2"><font color=red>Class declarations</font></th>
+<!-------------------------------------------------->
+
+<tr><td>
+<pre>
+<strong>class</strong> Person
+</pre>
+</td><td>
+A class can defined without a body. This just introduces a type, the contents of
+which has not been decided upon yet.
+</td></tr>
+<tr><td>
+<pre>
+<strong>class</strong> Person {
+  name : String
+  ssnr : Int
+}
+</pre>
+</td><td>
+A class can contain declararations, such as properties, functions and constraints.
+In this example the class <code>Person</code> contains the property <code>name</code> 
+of type <code>String</code> and a social security number <code>ssnr</code> of type <code>Int</code>.
+</td></tr>
+<tr><td>
+<pre>
+<strong>class</strong> Employee <strong>extends</strong> Person { ... }
+</pre>
+</td><td>
+A class can extend another class, which means that the former class inherits all the
+properties, functions and constraints from the class it is extending. In this case
+an <code>Employee</code> inherits from <code>Person</code>, which for example means that
+an employee has a social security number <code>ssnr</code>.
+</td></tr>
+<tr><td>
+<pre>
+<strong>class</strong> SelfEmployed <strong>extends</strong> Employee, Employer { ... }
+</pre>
+</td><td>
+Multiple inheritance is allowed. Here class <code>SelfEmployed</code> extends <code>Employee</code>
+as well as <code>Employer</code>. If both class <code>Employee</code> and <code>Employer</code>
+extend class <code>Person</code>, class <code>Person</code>
+is inherited from twice. However, only one copy will be included.
+</td></tr>
+
+<!-------------------------------------------------->
+<th colspan="2"><font color=red>Keyword class declarations</font></th>
+<!-------------------------------------------------->
+
+<tr><td>
+<pre>
+<strong>class</strong> &lt;requirement&gt; Requirement { ... }
+
+requirement R1 { ... }
+requirement R2 { ... }
+</pre>
+
+</td><td>
+
+A class can be declared with a user-provided keyword in addition to the class name,
+using the <code>&lt;user-provided-keyword&gt;</code> notation in front of the class name. 
+This allows to write class declarations extending this class using this user-provided 
+keyword instead of using the K keywords <code><strong>class ... extends ...</strong></code>.
+
+The declarations to the left have the same semantics as the following:
+
+<pre>
+<strong>class</strong> Requirement { ... }
+
+<strong>class</strong> R1 <strong>extends</strong> Requirement { ... }
+<strong>class</strong> R2 <strong>extends</strong> Requirement { ... }
+</pre>
+
+</td></tr>
+
+<!-------------------------------------------------->
+<th colspan="2"><font color=red>Top level declarations</font></th>
+<!-------------------------------------------------->
+
+<tr><td>
+
+<pre>
+<strong>package</strong> tryouterdeclarations
+
+minwage : Int 
+
+<strong>req</strong> minwage >= 10
+
+<strong>fun</strong> ok(a: Int):Bool {
+  a >= minwage
+}
+
+<strong>class</strong> Employee <strong>extends</strong> Person {
+  hoursalary : Int
+  <strong>req</strong> ok(hoursalary)
+} 
+</pre>
+
+</td><td>
+
+Properties, functions, and constraints can be declared at the outermost
+level. Such declarations introduce global entities that can be referred to
+in for example classes. This example illustrates the declaration of
+the global property <code>minwage</code> and the global function
+<code>ok</code>, used in class <code>Employee</code>.
+
+</td></tr>
+
+<!-------------------------------------------------->
+<th colspan="2"><font color=red>Property declarations</font></th>
+<!-------------------------------------------------->
+
+<tr><td>
+
+<pre>
+name       : String
+hoursalary : Int
+taxable    : Bool
+</pre>
+
+</td><td>
+A basic property declaration introduces a name of the property and its type
+after the colon.
+</td></tr>
+
+<tr><td>
+
+<pre>
+taxable : Bool = true
+</pre>
+
+</td><td>
+
+A property can be given an exact value following the equals symbol (<code>=</code>).
+Such a property declaration has the exact same semantics as a basic property 
+declaration and a constraint:
+
+<pre>
+taxable : Bool
+
+<strong>req</strong>  taxable = true
+</pre>
+
+</td></tr>
+
+<tr><td>
+
+<pre>
+employees : Set[Employee]
+tasks     : Seq[Task]
+</pre>
+
+</td><td>
+
+Properties can have collection types, such as sets and sequences. The property
+<code>employees</code> is a set of <code>Employee</code>s for example.
+
+</td></tr>
+
+<tr><td>
+
+<pre>
+<strong>class</strong> Car {
+  <strong>part</strong> transmission : Transmission
+  ...
+}
+</pre>
+
+</td><td>
+Properties can be annotated with the <code>part</code> modifier. This corresponds
+to the black diamond (&#9830;) in SysML diagrams, reflecting in this case that
+a transmission can only be part of one car.
+</td></tr>
+
+<!-------------------------------------------------->
+<th colspan="2"><font color=red>Functions</font></th>
+<!-------------------------------------------------->
+
+<tr><td>
+
+<pre>
+<strong>fun</strong> min(x:Int,y:Int):Int {
+  <strong>if</strong> x < y <strong>then</strong> x <strong>else</strong> y
+}
+</pre>
+
+<pre>
+fun taxable(employees: Set[Employee]): Bool {
+  <strong>forall</strong> e : Employee :-
+    e <strong>isin</strong> employees => e.taxable
+}
+</pre>
+
+<pre>
+<strong>fun</strong> wellformed(x:Real):Bool
+</pre>
+
+</td><td>
+A function is declared by a name, a sequence of typed arguments,
+a result type and a body, which is an expression in between curly brackets.
+
+<br><br>
+
+The <code>min</code> function takes two integer arguments and returns the
+smallest value.
+
+<br><br>
+
+The <code>taxable</code> function takes a set of employees as argument,
+and returns true if they are all taxable.
+
+<br><br>
+
+The <code>wellformed</code> function is declared without a body
+provided, reflecting that we have not decided how to define it.
+
+</td></tr>
+
+<!-------------------------------------------------->
+<th colspan="2"><font color=red>Constraints</font></th>
+<!-------------------------------------------------->
+
+<tr><td>
+
+<pre>
+  <strong>req</strong> 
+    <strong>forall</strong> e : Employee :- 
+      e <strong>isin</strong> employees => 
+        e.hoursalary <= boss.hoursalary
+</pre>
+
+<pre>
+  <strong>req</strong> theBossRules :
+    <strong>forall</strong> e : Employee :- 
+      e <strong>isin</strong> employees => 
+        e.hoursalary <= boss.hoursalary
+</pre>
+
+</td><td>
+A constraint consists of an optional name (the second requirement is named
+<code>theBossRules</code>) and a Boolean value expression (of type <code>Bool</code>).
+</td></tr>
+
+<!-------------------------------------------------->
+<th colspan="2"><font color=red>Types</font></th>
+<!-------------------------------------------------->
+
+<tr><td>
+
+  <pre>Bool   : true, false</pre>
+  <pre>Int    : ..., -2, -1, 0, 1, 2, ...</pre>
+  <pre>Real   : ..., 0, 3, 0.1, 5., .5, 1.5E5, 1.5E-5, ...</pre>
+  <pre>String : N/A</pre>
+
+</td><td>
+There are four primitive types, Booleans, integers, reals and strings.
+For each type possible values are shown after the colon. Although strings can be declared
+in classes, string values are not currently supported.
+</td></tr>
+
+<tr><td>
+<pre>
+Employee
+
+Set[Employee]
+</pre>
+</td><td>
+A type can in addition be the name of a class (<code>Employee</code>), 
+or a type constructor (for example <code>Set</code>) applied to a type between
+square brackets, as in <code>Set[Employee]</code>, which denotes the type of
+all sets of employees.
+</td></tr>
+
+<!-------------------------------------------------->
+<th colspan="2"><font color=red>Expressions</font></th>
+<!-------------------------------------------------->
+
+<tr><td>
+  <pre>-1, 42</pre>
+</td><td>
+  Integer numbers of type <code>Int.</code>
+</td></tr>
+
+<tr><td>
+  <pre>3.4, 3.2E5</pre>
+</td><td>
+  Real numbers of type <code>Real.</code>
+</td></tr>
+
+<tr><td>
+  <pre>false, true</pre>
+</td><td>
+  Boolean values of type <code>Bool.</code>
+</td></tr>
+
+<tr><td>
+  <pre>1 + 2</pre>
+</td><td>
+  Binary expressions consisting of an infix-operator applied to two sub expressions (see operators below.).
+</td></tr>
+
+<tr><td>
+  <pre>(1 + 2) * 3</pre>
+</td><td>
+  Parentheses are used to mark to what sub-expressions an operator should be applied. Leaving out 
+  the parentheses in this case would cause the expression to evaluate as:
+  <code>1 + (2 * 3).</code>
+</td></tr>
+
+<tr><td>
+  <pre><strong>null</strong></pre>
+</td><td>
+  Any property the type of which is a class name may denote
+  <code><strong>null</strong></code>.
+</td></tr>
+
+<tr><td>
+  <pre><strong>this</strong></pre>
+</td><td>
+  This pre-defined name refers to the current object,
+  and can be referred to inside a class. It has the same sort of meaning as in Java.
+</td></tr>
+
+<tr><td>
+  <pre>hoursalary</pre>
+</td><td>
+  An identifier denoting a property declared in scope.
+</td></tr>
+
+<tr><td>
+  <pre>e.age</pre>
+</td><td>
+  Given an object (in this case <code>e</code>), a property 
+  (in this case <code>age</code>) of that object can be accessed using dot-notation, 
+  similar to Java.
+</td></tr>
+
+<tr><td>
+  <pre>ok(hoursalary)</pre>
+  <pre>min(x,y)</pre>
+</td><td>
+  Functions are applied with standard notation: function name followed by comma separated arguments
+  in between paretheses.
+</td></tr>
+
+<tr><td>
+  <pre>!ok</pre>
+</td><td>
+  Boolean negation (not <code>ok</code>).
+</td></tr>
+
+<tr><td>
+  <pre>if x < y then x else y</pre>
+</td><td>
+  Conditional expression returning 
+  <code>x</code> if <code>x < y</code> is true, and else returning <code>y</code>.
+</td></tr>
+
+<tr><td>
+  <pre>person is Employee</pre>
+</td><td>
+  Testing whether an object (in this case <code>person</code>) has a particular type (in this 
+  case <code>Employee</code>). An object <code>x</code> of type <code>S</code> is also of 
+  type <code>T</code> 
+  (<code>x is T</code>) if <code>S</code> is a subtype of (extends, either directly or indirectly)
+  the type <code>T</code>.
+</td></tr>
+
+<tr><td>
+  <pre>-x</pre>
+</td><td>
+  Negative <code>x</code>. Any integer or real valued expression can be negated.
+</td></tr>
+
+<tr><td>
+  <pre><strong>forall</strong> e : Employee :- e <strong>isin</strong> employees => e.age >= 18</pre>
+</td><td>
+  Universal quantification: for all values <code>e</code> in the type <code>Employee</code>, 
+  it holds that if <code>e</code> is a member of the set <code>employees</code>, it implies that 
+  the <code>age</code> of <code>e</code> is greather than or equal to 18.
+</td></tr>
+
+<tr><td>
+  <pre><strong>exists</strong> e : Employee :- e <strong>isin</strong> employees && e.age >= 18</pre>
+</td><td>
+  Existential quantification: there exists a value <code>e</code> in the type <code>Employee</code>, 
+  such that <code>e</code> is a member of the set <code>employees</code>, and 
+  the <code>age</code> of <code>e</code> is greather than or equal to 18.
+</td></tr>
+
+<tr><td>
+<pre>
+{x : Int = 2
+ y : Int = 3
+ x + y
+}
+</pre>
+</td><td>
+  Block expression: this form of expression allows to build up an expression in steps
+  by binding values to local names that are referred to later in the expression.
+  This particular expression should be read as follows: let <code>x</code> be equal to 2 
+  and let <code>y</code> be equal to 3, then return <code>x + y</code>. 
+  Hence the value of the expression is <code>x + y</code>.
+</td></tr>
+
+<tr><td>
+  <pre>Set{}</pre>
+</td><td>
+  The empty set.
+</td></tr>
+
+<tr><td>
+  <pre>Set{1,2,3,4,5}</pre>
+</td><td>
+  Set enumeration: the set containing the numbers 1 to 5, explicitly enumerated.
+</td></tr>
+
+<tr><td>
+  <pre>Set{1 .. 5}</pre>
+</td><td>
+  Set range: the set containing the numbers 1 to 5, given by the lower bound and the upper bound.
+  The resulting set is the same as the one above.
+</td></tr>
+
+<tr><td>
+  <pre>Set{ x + 1 | x : Int :- 0 <= x && x <= 4}</pre>
+</td><td>
+  Set comprehension: the set of numbers <code>x + 1</code>, where <code>x</code> is of type 
+  <code>Int</code>, and such that <code>x</code> is between 0 and 4.
+    The resulting set is the same as the two above.
+</td></tr> 
+
+<!-------------------------------------------------->
+<th colspan="2"><font color=red>Operators</font> (Operator precedences provided as numbers, lower number means higher precedence: binds tighter)</th>
+<!-------------------------------------------------->
+
+<tr><td>
+<pre>
+  =  (3) 
+  != (3)  
+</pre>
+</td><td>
+Equality:<br><br> 
+equal,<br> 
+not equal.
+</td></tr>
+
+<tr><td>
+
+<pre>
+  *       (1)  
+  +       (2)  
+  -       (2)  
+  /       (1)  
+  %       (1)  
+</pre>
+
+</td><td>
+
+Arithmetic operators:<br><br> 
+multiplication,<br> 
+addition,<br> 
+subtraction,<br>
+division,<br> 
+modulo (the remainder after division).
+
+</td></tr>
+
+<tr><td>
+
+<pre>
+  <=      (3) 
+  >=      (3) 
+  <       (3) 
+  >       (3) 
+</pre>
+
+</td><td>
+
+Arithmetic relational operators:<br><br>
+less than or equal,<br> 
+greater than or equal,<br>
+less than,<br>
+greater than.
+
+</td></tr>
+
+<tr><td>
+
+<pre>
+  inter   (1) 
+  union   (2) 
+</pre>
+
+</td><td>
+
+Set operators:<br><br>
+intersection,<br> 
+union.
+
+</td></tr>
+
+<tr><td>
+
+<pre>
+  isin    (3) 
+  !isin   (3) 
+  subset  (3) 
+  psubset (3) 
+</pre>
+
+</td><td>
+
+Set relational operators:<br><br>
+set membership,<br>
+negated set membership (not member of),<br>
+subset (is a subset of),<br>
+proper subset (<code>s1 proper s2 = s1 subset s2 && s1 != s2</code>).
+
+</td></tr>
+
+<tr><td>
+
+<pre>
+  &&      (4) 
+  ||      (5) 
+  =>      (6) 
+  <=>     (6) 
+</pre>
+
+</td><td>
+
+Logical operators:<br><br>
+and,<br>
+or,<br>
+implies,<br>
+bi-implication.
+
+</td></tr>
+
+<!-------------------------------------------------->
+<th colspan="2"><font color=red>Comments</font></th>
+<!-------------------------------------------------->
+
+<tr><td>
+<pre>
+===
+This is a comment occupying
+multiple lines. 
+===
+</pre>
+</td><td>
+  Multi line comments begin and end with <code>===</code>.
+</td></tr>
+
+<tr><td>
+<pre>
+===========================
+This is a comment occupying
+multiple lines.
+===========================
+</pre>
+</td><td>
+  The begin-comment and end-comment <code>===</code> symbols can be
+extended. They should just include at least three <code>=</code> symbols.
+</td></tr>
+
+<tr><td>
+<pre>
+-- This is a single line comment.
+</pre>
+</td><td>
+  Single line comments begin with <code>--</code>.
+</td></tr>
+
+<!-------------------------------------------------->
+</table>
+<!-------------------------------------------------->
+
+</html>
