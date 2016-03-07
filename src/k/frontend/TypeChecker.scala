@@ -2,7 +2,6 @@ package k.frontend
 
 import k.frontend._
 import java.util.{ IdentityHashMap => IMap }
-import javax.xml.bind.annotation.XmlElementDecl.GLOBAL
 
 object TypeCheckException extends Exception
 
@@ -48,8 +47,12 @@ case object TypeChecker {
 
   def getPropertyDeclType(decl: PropertyDecl): Type = {
     if (!decl.multiplicity.isEmpty) {
-      if (decl.modifiers.contains(Unique)) IdentType(QualifiedName(List("Set")), List(decl.ty))
-      else if (decl.modifiers.contains(Ordered)) IdentType(QualifiedName(List("Seq")), List(decl.ty))
+      if (decl.modifiers.contains(Unique)) 
+        IdentType(QualifiedName(List("Set")), List(decl.ty))
+      else if (decl.modifiers.contains(Ordered)) 
+        IdentType(QualifiedName(List("Seq")), List(decl.ty))
+      else if (decl.modifiers.contains(Ordered) && decl.modifiers.contains(Unique))
+        IdentType(QualifiedName(List("OSet")), List(decl.ty))
       else IdentType(QualifiedName(List("Bag")), List(decl.ty))
     } else decl.ty
 
@@ -377,6 +380,21 @@ class TypeChecker(model: Model) {
      * For SMT we disallow statements with side effects and functions returning objects
      */
     model.decls.foreach { d =>
+      
+      // if property decl, make sure it is not an unsupported collection
+      d match {
+        case p @ PropertyDecl(_, name, ty, _, _, _) =>
+          if(Misc.isCollection(ty)){
+            val collectionKind = Misc.getCollectionKind(ty)
+            if(collectionKind == BagKind || 
+                collectionKind == SeqKind || 
+                collectionKind == OSetKind){
+              error(s"Unsupported collection kind for SMT processing. Currently only Set is supported.")
+            }
+          }
+        case _ => ()
+      }
+      
       if (d.isInstanceOf[MemberDecl]) {
         if (declContainsAssignment(d.asInstanceOf[MemberDecl])) {
           error(s"Found assignment in declaration $d. SMT mode disallows assignments.")
@@ -442,6 +460,9 @@ class TypeChecker(model: Model) {
   private def typeCheck: Boolean = {
 
     if (model == null) return true
+
+    // add the reserved annotations to our available annotations
+    ReservedAnnotations.annotations.foreach { a => annotations += (a.name -> a) }
 
     // get declared annotations and corresponding types
     model.annotations.foreach { d =>
@@ -645,7 +666,9 @@ class TypeChecker(model: Model) {
           val entityTypeEnv = decl2TypeEnvi(ed)
 
           ed.annotations.foreach { a =>
-            val annotationExpType = getExpType(entityTypeEnv, a.exp, ed)
+            val annotationExpType =
+              if (a.exp != null) getExpType(entityTypeEnv, a.exp, ed)
+              else UnitType
             val annotationType = annotations(a.name).ty
             if (!areTypesEqual(annotationExpType, annotationType, false))
               error(s"Annotation $a does not type check.")
@@ -992,27 +1015,27 @@ class TypeChecker(model: Model) {
               areTypesEqual(pa._1.ty, p2Type, false)
             }))
             error(s"Arguments to function seem incorrect: $exp")
-          else if(collectionFunction){
+          else if (collectionFunction) {
             args.foreach { x => getExpType(te, x.asInstanceOf[PositionalArgument].exp, owner) }
           }
 
-            functionReturnType match {
-              case CollectType(t) =>
-                if (args.length > 1)
-                  IdentType(QualifiedName(List("Seq")), t)
-                else {
-                  assert(args.length <= 1)
-                  // TODO
-                  // assuming lambda expression as only argument
-                  // assuming ident pattern in lambda expression
-                  val lambdaExp = args.last.asInstanceOf[PositionalArgument].exp.asInstanceOf[LambdaExp]
-                  val lambdaTe = te.overwrite(lambdaExp.pat.asInstanceOf[IdentPattern].ident -> te(t.last.toString))
-                  // CollectType(List(getExpType(lambdaTe, lambdaExp)))
-                  IdentType(QualifiedName(List("Seq")), List(getExpType(lambdaTe, lambdaExp, owner)))
-                }
-              case SumType(t) => IntType
-              case _          => functionReturnType
-            }
+          functionReturnType match {
+            case CollectType(t) =>
+              if (args.length > 1)
+                IdentType(QualifiedName(List("Seq")), t)
+              else {
+                assert(args.length <= 1)
+                // TODO
+                // assuming lambda expression as only argument
+                // assuming ident pattern in lambda expression
+                val lambdaExp = args.last.asInstanceOf[PositionalArgument].exp.asInstanceOf[LambdaExp]
+                val lambdaTe = te.overwrite(lambdaExp.pat.asInstanceOf[IdentPattern].ident -> te(t.last.toString))
+                // CollectType(List(getExpType(lambdaTe, lambdaExp)))
+                IdentType(QualifiedName(List("Seq")), List(getExpType(lambdaTe, lambdaExp, owner)))
+              }
+            case SumType(t) => IntType
+            case _          => functionReturnType
+          }
         }
       case WhileExp(cond, body) =>
         if (getExpType(te, cond, owner) != BoolType) {

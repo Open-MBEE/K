@@ -315,9 +315,6 @@ object UtilSMT {
     }
   }
 
-  def isCollection(typeName: String): Boolean =
-    Set("Set", "Bag", "Seq") contains typeName
-
   def removeRngBindingsFor(idents: Set[String], bindings: List[RngBinding]): List[RngBinding] = {
     var result: List[RngBinding] = Nil
     for (RngBinding(patterns, collection) <- bindings) {
@@ -504,7 +501,7 @@ private[frontend] object ToStringSupport {
 import ToStringSupport._
 
 case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
-                 annotations: List[AnnotationDecl],
+                 annotations: Set[AnnotationDecl],
                  decls: List[TopDecl]) {
 
   def toSMT: String = {
@@ -750,7 +747,7 @@ case class Annotation(name: String, exp: Exp) {
     val annotation = new JSONObject()
     annotation.put("type", "Annotation")
     annotation.put("name", name)
-    annotation.put("exp", exp.toJson)
+    if (exp != null) annotation.put("exp", exp.toJson)
   }
 }
 
@@ -801,13 +798,13 @@ trait TopDecl {
 }
 
 case class EntityDecl(
-    var annotations: List[Annotation],
-    entityToken: EntityToken,
-    keyword: Option[String],
-    ident: String,
-    typeParams: List[TypeParam],
-    extending: List[Type],
-    members: List[MemberDecl]) extends TopDecl {
+  var annotations: List[Annotation],
+  entityToken: EntityToken,
+  keyword: Option[String],
+  ident: String,
+  typeParams: List[TypeParam],
+  extending: List[Type],
+  members: List[MemberDecl]) extends TopDecl {
 
   def toSMTDatatype: String = {
     val propertyDecls = getAllPropertyDecls
@@ -955,7 +952,7 @@ case class EntityDecl(
     }
 
     // constraints for embedded references/parts:
-    for (PropertyDecl(_, propertyName, IdentType(QualifiedName(typeName :: Nil), _), _, _, _) <- propertyDecls if !UtilSMT.isCollection(typeName)) {
+    for (PropertyDecl(_, propertyName, IdentType(QualifiedName(typeName :: Nil), _), _, _, _) <- propertyDecls if !Misc.isCollection(typeName)) {
       val getter = s"$ident!$propertyName"
       UtilSMT.addGetter(getter)
       val constraintSMT = s"(deref-isa-$typeName ($getter this))"
@@ -978,7 +975,7 @@ case class EntityDecl(
     var result: List[String] = Nil
     for (PropertyDecl(_, _, ty, multiplicity, _, _) <- members) {
       ty match {
-        case IdentType(QualifiedName(name :: Nil), _) if !UtilSMT.isCollection(name) =>
+        case IdentType(QualifiedName(name :: Nil), _) if !Misc.isCollection(name) =>
           result ::= name
         case _ =>
       }
@@ -2341,6 +2338,11 @@ case object SetKind extends CollectionKind {
   override def toJson = toString
 }
 
+case object OSetKind extends CollectionKind {
+  override def toString = "OSet"
+  override def toJson = toString
+}
+
 case object SeqKind extends CollectionKind {
   override def toString = "Seq"
   override def toJson = toString
@@ -3312,12 +3314,13 @@ case class ClassType(ident: QualifiedName) extends Type {
 case class IdentType(ident: QualifiedName, args: List[Type]) extends Type {
   override def toSMT: String = {
     (ident.names, args) match {
-      case (name :: Nil, ty :: Nil) if Set("Set", "Bag", "Seq") contains name =>
+      case (name :: Nil, ty :: Nil) if Misc.isCollection(name) =>
         val tySMT = ty.toSMT
         val kindSMT = name match {
           case "Set" => "Set"
           case "Bag" => "Bag"
           case "Seq" => "List"
+          case "OSet" => "OSet"
         }
         s"($kindSMT $tySMT)"
       case _ =>

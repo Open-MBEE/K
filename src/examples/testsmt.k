@@ -1,12 +1,22 @@
-package main
 
-import a
-import b
+class A {
+ x : Int 
 
--- all classes are defined in [a-f].k files
--- which are then imported using import 
--- declarations (recursive)
+ req 0 < x
+}
 
-aobj : A
-bobj : B
+class B extends A {
+  y : Int
 
+  req x < y
+}
+
+class C {
+  b1 : B
+  b2 : B
+
+  req b1 != b2
+  req b1.x < b2.x
+}
+
+c : C

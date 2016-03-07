@@ -61,6 +61,7 @@ object Frontend {
       case "-latex" :: tail    => parseArgs(map ++ Map('latex -> true), tail)
       case "-scala" :: tail    => parseArgs(map ++ Map('scala -> true), tail)
       case "-json" :: tail     => parseArgs(map ++ Map('printJson -> true), tail)
+      case "-tc" :: tail     => parseArgs(map ++ Map('tc -> true), tail)
       case "-mmsJson" :: value :: tail =>
         parseArgs(map ++ Map('mmsJson -> value), tail)
       case "-expressionToJson" :: value :: tail =>
@@ -139,9 +140,9 @@ object Frontend {
           if (!Paths.get(x).isAbsolute()) Paths.get(modelFileDirectory, x).toString
           else x
         }
-        classpath = classpath.map {_.trim}
-        
-        println("CLASSPATH set to: " + classpath)
+        classpath = classpath.map { _.trim }
+
+        println("CLASSPATH set to: " + classpath.mkString(","))
 
       case _ => ()
     }
@@ -152,13 +153,13 @@ object Frontend {
         K2Z3.debugRawModel = true
       case _ => ()
     }
-    
+
     options.get('instances) match {
       case Some(i: Int) =>
         ASTOptions.numberOfInstances = i
       case _ => ()
-    }    
-    
+    }
+
     options.get('mmsJson) match {
       case Some(file: String) => {
         model = parseMMSJson(file)
@@ -203,14 +204,15 @@ object Frontend {
       case _ => ()
     }
 
-    if (model != null) {
+    if (model != null && !options.contains('tc)) {
 
       //case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
       //annotations: List[AnnotationDecl],
       //decls: List[TopDecl]) {
       val allDecls = importModels.flatMap { x => x.decls }
       val combinedModel = Model(model.packageName, model.imports,
-        model.annotations, model.decls ++ allDecls)
+        model.annotations ++ importModels.flatMap { x => x.annotations },
+        model.decls ++ allDecls)
       smtModel += combinedModel.toSMT
       if (K2Z3.debug) {
         println()
@@ -424,7 +426,7 @@ object Frontend {
     ASTOptions.silent = !debug
     TypeChecker.silent = !debug
     TypeChecker.debug = debug
-    
+
     val currentTestJsonObject = new JSONObject()
 
     try {
@@ -593,7 +595,7 @@ object Frontend {
     val elementsArray = jsonObject.get("elements").asInstanceOf[JSONArray]
     var packageName: Option[PackageDecl] = None
     var imports: List[ImportDecl] = List()
-    var annotations: List[AnnotationDecl] = List()
+    var annotations: Set[AnnotationDecl] = Set()
     var mdecls: List[TopDecl] = List[TopDecl]()
     var id2Decl: Map[String, TopDecl] = Map()
 
@@ -808,14 +810,14 @@ object Frontend {
       case "TupleExp" =>
         TupleExp(visitJsonArray(obj.get("exps"), visitJsonObject).asInstanceOf[List[Exp]])
       case "CollectionEnumExp" =>
-        CollectionEnumExp(getCollectionKind(obj.getString("kind")),
+        CollectionEnumExp(Misc.getCollectionKind(obj.getString("kind")),
           visitJsonArray(obj.get("exps"), visitJsonObject).asInstanceOf[List[Exp]])
       case "CollectionRangeExp" =>
-        CollectionRangeExp(getCollectionKind(obj.getString("kind")),
+        CollectionRangeExp(Misc.getCollectionKind(obj.getString("kind")),
           visitJsonObject(obj.get("exp1")).asInstanceOf[Exp],
           visitJsonObject(obj.get("exp2")).asInstanceOf[Exp])
       case "CollectionComprExp" =>
-        var kind = getCollectionKind(obj.getString("kind"))
+        var kind = Misc.getCollectionKind(obj.getString("kind"))
         var exp1 = visitJsonObject(obj.get("exp1")).asInstanceOf[Exp]
         var bindings = visitJsonArray(obj.get("bindings"), visitJsonObject).asInstanceOf[List[RngBinding]]
         var exp2 = visitJsonObject(obj.get("exp2")).asInstanceOf[Exp]
@@ -875,7 +877,7 @@ object Frontend {
         var packageName: Option[PackageDecl] =
           if (obj.keySet().contains("packageName")) Some(visitJsonObject(obj.get("packageName"))).asInstanceOf[Option[PackageDecl]]
           else None
-        var annotations = visitJsonArray(obj.get("annotations"), visitJsonObject).asInstanceOf[List[AnnotationDecl]]
+        var annotations = visitJsonArray(obj.get("annotations"), visitJsonObject).asInstanceOf[Set[AnnotationDecl]]
         var imports = visitJsonArray(obj.get("imports"), visitJsonObject).asInstanceOf[List[ImportDecl]]
         var decls = visitJsonArray(obj.get("decls"), visitJsonObject).asInstanceOf[List[TopDecl]]
         Model(packageName, imports, annotations, decls)
@@ -1051,14 +1053,6 @@ object Frontend {
     }
   }
 
-  def getCollectionKind(o: String): CollectionKind = {
-    o match {
-      case "Set" => SetKind
-      case "Seq" => SeqKind
-      case "Bag" => BagKind
-    }
-  }
-
   def getRngBinding(o: Any): AnyRef = {
     val obj = o.asInstanceOf[JSONObject].getJSONArray("operand")
     val patternList: MList[Pattern] = MList()
@@ -1123,7 +1117,7 @@ object Frontend {
             val exp = visitJsonObject2(operand.getJSONObject(3)).asInstanceOf[Exp]
             QuantifiedExp(quantifier, bindings, exp)
           case "CollectionComprExp" =>
-            var kind = getCollectionKind(operand.getString(1))
+            var kind = Misc.getCollectionKind(operand.getString(1))
             var exp1 = visitJsonObject2(operand.get(2)).asInstanceOf[Exp]
             var exp2 = visitJsonObject2(operand.get(3)).asInstanceOf[Exp]
             val bindings: MList[RngBinding] = MList()
@@ -1248,7 +1242,7 @@ object Frontend {
         var packageName: Option[PackageDecl] =
           if (obj.keySet().contains("packageName")) Some(visitJsonObject2(obj.getJSONObject("packageName"))).asInstanceOf[Option[PackageDecl]]
           else None
-        var annotations = visitJsonArray(obj.get("annotations"), visitJsonObject2).asInstanceOf[List[AnnotationDecl]]
+        var annotations = visitJsonArray(obj.get("annotations"), visitJsonObject2).asInstanceOf[Set[AnnotationDecl]]
         var imports = visitJsonArray(obj.get("imports"), visitJsonObject2).asInstanceOf[List[ImportDecl]]
         var decls = visitJsonArray(obj.get("decls"), visitJsonObject2).asInstanceOf[List[TopDecl]]
         Model(packageName, imports, annotations, decls)
@@ -1387,8 +1381,7 @@ object Frontend {
     var bytes: Array[Byte] = Files.readAllBytes(path)
     var fileContents: String = new String(bytes, "UTF-8")
     val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(fileContents)
-    var m: Model = ksv.visit(tree).asInstanceOf[Model]
-    m
+    ksv.visit(tree).asInstanceOf[Model]
   }
 
   /**
