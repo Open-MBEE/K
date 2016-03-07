@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Example usage from JPL GITHUB KLANG folder:
+#   ./export/sync.sh /c/Users/rahulku/S/K/
+
 if [ -z "$1" ] 
 then 
     echo "Please provide the target OPEN SOURCE GITHUB directory."
