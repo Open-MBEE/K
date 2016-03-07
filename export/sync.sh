@@ -6,6 +6,7 @@ then
     exit -1
 fi
 
+echo "Syncing to $1..."
 
 # copy export folder
 cp -r ./export/* $1/export/
@@ -32,4 +33,20 @@ cp -r src/tests/* $1/src/tests/
 cp -r src/web/* $1/src/web/
 
 # copy other files in src/.
-cp src/* $1/src/
+cp README.md $1/README.md
+cp src/k.el $1/src/k.el
+cp build.xml $1/build.xml
+
+# remove unwanted files
+rm $1/src/examples/DSN_Pass.k
+rm $1/src/examples/GravityScience.k
+rm $1/src/examples/TrajectoryTimeline2.k
+rm $1/src/examples/WSTS.k
+
+echo ""
+echo "Please cd $1"
+echo "Please check the status of this (opensource) repository using 'git status'."
+echo "During review, please ensure you add/delete files as needed."
+echo "Once reviewed, you will need to commit and push."
+echo ""
+
