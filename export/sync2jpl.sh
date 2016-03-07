@@ -15,7 +15,7 @@ cp -r ./* $1/
 
 echo ""
 echo "Please cd $1"
-echo "Please check the status of this (opensource) repository using 'git status'."
+echo "Please check the status of the JPL repository using 'git status'."
 echo "During review, please ensure you add/delete files as needed."
 echo "Once reviewed, you will need to commit and push."
 echo ""
