@@ -6,35 +6,14 @@
 	<version>2.3.2-SNAPSHOT</version>
 	<name>klang</name>
 	<description>k library</description>
-	<distributionManagement>
-		<!-- use mvn -U deploy -DgeneratePom=true -Dpackaging=jar -->
-		<repository>
-			<id>artifactory</id>
-			<name>releases</name>
-			<url>http://europambee-build.jpl.nasa.gov:8082/artifactory/libs-release-local</url>
-		</repository>
-		<snapshotRepository>
-			<id>artifactory</id>
-			<name>snapshots</name>
-			<url>http://europambee-build.jpl.nasa.gov:8082/artifactory/libs-snapshot-local</url>
-		</snapshotRepository>
-	</distributionManagement>
-	<repositories>
-		<repository>
-			<id>artifactory-snapshot</id>
-			<name>snapshots</name>
-			<url>http://europambee-build.jpl.nasa.gov:8082/artifactory/libs-snapshot-local</url>
-			<snapshots>
-				<enabled>true</enabled>
-				<updatePolicy>interval:0</updatePolicy>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>artifactory</id>
-			<name>releases</name>
-			<url>http://europambee-build.jpl.nasa.gov:8082/artifactory/libs-release-local</url>
-		</repository>
-	</repositories>
+
+	<parent>
+		<groupId>gov.nasa.jpl</groupId>
+		<artifactId>mms-parent-pom</artifactId>
+		<version>1.0.0</version>
+		<relativePath>config/mvn/mms-parent-pom.xml</relativePath>
+	</parent>
+
 
 	<!-- Maven profiles allow you to support both Scala 2.10 and Scala 2.11 
 		with the right dependencies for modules specified for each version separately -->
