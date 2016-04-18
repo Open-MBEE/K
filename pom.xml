@@ -9,9 +9,9 @@
 
 	<parent>
 		<groupId>gov.nasa.jpl</groupId>
-		<artifactId>mms-parent-pom</artifactId>
+		<artifactId>repositories-parent-pom</artifactId>
 		<version>1.0.0-SNAPSHOT</version>
-		<relativePath>config/mvn/mms-parent-pom.xml</relativePath>
+		<relativePath>config/mvn/repositories-parent-pom.xml</relativePath>
 	</parent>
 
 
