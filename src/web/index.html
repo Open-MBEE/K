@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="The K Language portal.">
+    <meta name="author" content="">
+
+    <title>The K Language</title>
+    <style>
+      body { 
+      background: url(img/squared_metal.png) repeat 0 0;
+      } 
+    </style>
+  </head>
+  
+  <body>
+    <div class="container" style="padding-top:150px;width:80%;">
+      <div id="header"></div>
+      <div class="row">
+        <div class="col-md-6" style="border-right: 1px solid #ccc;">
+	  <div class="panel panel-info" style="width:100%;">
+	    <div class="panel-heading">
+	      <div class="row vertical-align">
+		<div class="col-lg-8">
+		  K Editor
+		</div>
+		<div class="col-lg-4">
+  		  <div class="pull-right">   <canvas width="25" height="25" id="myCanvas"></canvas> </div>
+		  <a class="btn-sm btn-warning pull-right" style="padding-top:-20px;" href="#" role="button" onclick="doWork()" >Analyze &rarr;</a>
+		</div>
+	      </div>
+	    </div>
+	    <div class="panel-body">
+	      <textarea id="code" name="code"></textarea>
+	    </div>
+	  </div>
+	  <hr>
+          <div class="row vertical-align">
+            <div class="col-lg-12">
+	      <h5>
+		<table class="table table-bordered">
+		  <tbody>
+		    <tr>
+                      <td colspan="2">Please ensure focus is on editor window.</td>
+		    </tr>
+		    <tr>
+                      <td>Ctrl+F</td>
+                      <td>Search</td>
+		    </tr>
+		    <tr>
+		      <td>Ctrl+Shift+F</td>
+                      <td>Search and Replace with Prompt</td>
+		    </tr>
+		    <tr>
+		      <td>Ctrl+Shift+R</td>
+                      <td>Search and Replace All</td>
+		    </tr>
+		  </tbody>
+		</table>
+	      </h5>
+	    </div>
+	  </div>
+        </div>
+        <div class="col-md-6">
+	  <div class="panel panel-success" style="width:100%;" id="resultsPanel">
+	    <div class="panel-heading">Results</div>
+	    <div class="panel-body" style="background: #e7e9db;">
+	      <textarea id="result" name="result"></textarea>
+	    </div>
+	  </div>
+	  <hr>
+       </div>
+      </div>
+
+    </div> <!-- /container -->
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+    <script>
+      $("#header").load("header.html"); 
+    </script>
+
+    <link rel="stylesheet" href="k.css">
+    
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.5/cerulean/bootstrap.min.css">
+    
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+    <link rel="stylesheet" href="CodeMirror-master/lib/codemirror.css">
+    <link rel="stylesheet" href="CodeMirror-master/theme/ttcn.css">
+    <link rel="stylesheet" href="CodeMirror-master/theme/paraiso-light.css">
+    <link rel="stylesheet" href="CodeMirror-master/theme/neat.css">
+    <script src="CodeMirror-master/lib/codemirror.js"></script>
+    <script src="CodeMirror-master/mode/shell/shell.js"></script>
+    <script src="CodeMirror-master/addon/edit/matchbrackets.js"></script>
+    <script src="CodeMirror-master/mode/k/clike.js"></script>
+    <script src="CodeMirror-master/addon/fold/foldcode.js"></script>
+    <script src="CodeMirror-master/addon/fold/foldgutter.js"></script>
+    <script src="CodeMirror-master/addon/fold/brace-fold.js"></script>
+    <script src="CodeMirror-master/addon/fold/xml-fold.js"></script>
+
+    <link rel="stylesheet" href="CodeMirror-master/addon/dialog/dialog.css">
+    <link rel="stylesheet" href="CodeMirror-master/addon/search/matchesonscrollbar.css">
+
+    <script src="CodeMirror-master/addon/dialog/dialog.js"></script>
+    <script src="CodeMirror-master/addon/search/searchcursor.js"></script>
+    <script src="CodeMirror-master/addon/search/search.js"></script>
+    <script src="CodeMirror-master/addon/scroll/annotatescrollbar.js"></script>
+    <script src="CodeMirror-master/addon/search/matchesonscrollbar.js"></script>
+
+    <script src="k.js"></script>
+
+    <script>
+      var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+      lineNumbers: true,
+      matchBrackets: true,
+      theme:"ttcn",
+      mode: "text/x-k",
+      foldGutter: {
+      rangeFinder: new CodeMirror.fold.combine(CodeMirror.fold.brace)
+      },
+      extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+      gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+      });
+
+      var results = CodeMirror.fromTextArea(document.getElementById("result"), {
+      lineNumbers: false,
+      theme: "paraiso-light",
+      mode: "shell",
+      readOnly: true
+      });
+
+      editor.setValue("");
+      editor.setSize(null,"650");
+
+      results.setSize("100%","650");
+      results.setValue("Results will be displayed here.");
+      results.readOnly = true;
+
+      $('canvas').hide();
+
+      loadExample(editor, "examples/sm.k");
+    </script>
+  </body>
+</html>

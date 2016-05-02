@@ -180,6 +180,15 @@ object Misc {
 
   def log(prefix: String, msg: String) = println(s"[$prefix] $msg")
 
+  def getInnerTypeFromCollectionType(ty: Type): Type = {
+    ty match {
+      case IdentType(id, t) if isCollection(ty) =>
+        require(t.length == 1)
+        t.last
+      case _ => errorExit("Util", "Cannot get inner type from non collection: " + ty)
+    }
+  }
+
   def areTypesEqual(t1: Type, t2: Type, compatibility: Boolean): Boolean = {
     (t1, t2) match {
       case (ParenType(pt1), ParenType(pt2))         => return areTypesEqual(pt1, pt2, compatibility)
@@ -194,14 +203,49 @@ object Misc {
       case (_, AnyType)                         => return true
       case (RealType, IntType) if compatibility => return true
       case (IntType, RealType) if compatibility => return true
-      case _ =>
-        return t1.equals(t2)
+      case _                                    => return t1.equals(t2)
     }
     return false
   }
 
-  private val collectionNames = Set("Set", "Bag", "Seq")
+  private val collectionNames = Set("Set", "Bag", "Seq", "OSet")
+
+  def isCollection(typeName: String): Boolean =
+    collectionNames contains typeName
+
   def isCollection(it: IdentType): Boolean = collectionNames(it.ident.toString)
+
+  def isCollection(ty: Type): Boolean = {
+    ty match {
+      case IdentType(id, ct) =>
+        isCollection(ty.asInstanceOf[IdentType])
+      case _ => false
+    }
+  }
+
+  def getCollectionKind(ty: Type): CollectionKind = {
+    ty match {
+      case IdentType(id, ct) =>
+        id.toString match {
+          case "Set"  => SetKind
+          case "Bag"  => BagKind
+          case "Seq"  => SeqKind
+          case "OSet" => OSetKind
+        }
+      case _ => errorExit("Util", "Non-collection type passed to getCollectionKind: " + ty)
+
+    }
+  }
+
+  def getCollectionKind(o: String): CollectionKind = {
+    o match {
+      case "Set"  => SetKind
+      case "Seq"  => SeqKind
+      case "Bag"  => BagKind
+      case "OSet" => OSetKind
+      case _ => errorExit("Util", "Non-collection type passed to getCollectionKind(2): " + o)
+    }
+  }
 
   def typeTypeCollection(t1: Type, t2: Type): (Boolean, Type) = {
     (t1, t2) match {

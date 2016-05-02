@@ -1,22 +1,21 @@
 class A {
-  x : Int
+  x : Int = 1
 }
 
 class B extends A {
-  y : Int
+  y : Int = 2
 }
 
 -- D comes before C just for testing the type checker
 class D extends C {
-  i : Int
+  i : Int = 3
 }
 
 class C extends B {
-  z : Int
+  z : Int = 4
 }
 
 
 dobj : D
 
-sum : Int = dobj.x + dobj.y + dobj.z + dobj.i
-
+RESULT_10 : Int = dobj.x + dobj.y + dobj.z + dobj.i

@@ -1,6 +1,4 @@
 
--- This test case does still not work since blocks are not supported.
-
 class A {
   fun id(x : Int) : Int {
     if x >= 0 then {
@@ -11,4 +9,8 @@ class A {
       k - 1
     }
   }
+
+  RESULT_7 : Int = id(7)
+  RESULT_m3 : Int = id(-3)
+  RESULT_4  : Int = RESULT_7 + RESULT_m3
 }

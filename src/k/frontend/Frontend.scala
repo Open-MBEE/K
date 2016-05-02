@@ -1,5 +1,12 @@
 package k.frontend
 
+import com.sksamuel.elastic4s.source._
+import org.elasticsearch.common.settings.ImmutableSettings
+import com.sksamuel.elastic4s._
+import com.sksamuel.elastic4s.ElasticClient
+import com.sksamuel.elastic4s.ElasticDsl._
+import org.apache.log4j.{ Level, Logger }
+import scala.util.control.Breaks._
 import org.antlr.runtime.tree.ParseTree
 import k.frontend
 import java.io._
@@ -14,11 +21,19 @@ import org.json.JSONObject
 import k.frontend.ModelParser.ModelContext
 import org.json.JSONTokener
 import scala.collection.mutable.{ ListBuffer => MList }
+import scala.actors.Futures._
+import java.nio.file._
 
 object Frontend {
+
+  var modelFileDirectory: String = null
+  var classpath: Set[String] = Set()
+  var timeoutValue = 30000
+
   type OptionMap = Map[Symbol, Any]
 
   def log(msg: String = "") = Misc.log("main", msg)
+  def errorExit(msg: String = "") = Misc.errorExit("main", msg)
 
   def parseArgs(map: OptionMap, list: List[String]): OptionMap = {
     def isSwitch(s: String) = (s(0) == '-')
@@ -26,19 +41,34 @@ object Frontend {
       case Nil => map
       case "-f" :: value :: tail =>
         parseArgs(map ++ Map('modelFile -> value), tail)
+      case "-fraw" :: value :: tail =>
+        parseArgs(map ++ Map('rawSMTFile -> value), tail)
+      case "-instances" :: value :: tail =>
+        parseArgs(map ++ Map('instances -> value.toInt), tail)
+      case "-timeout" :: value :: tail =>
+        timeoutValue = value.toInt
+        parseArgs(map, tail)
+      case "-classpath" :: value :: tail =>
+        classpath = value.replace("\"", "").split(File.pathSeparator).toSet
+        parseArgs(map, tail)
       case "-tests" :: tail    => parseArgs(map ++ Map('tests -> true), tail)
       case "-baseline" :: tail => parseArgs(map ++ Map('baseline -> true), tail)
       case "-test" :: tail     => parseArgs(map ++ Map('test -> true), tail)
       case "-v" :: tail        => parseArgs(map ++ Map('verbose -> true), tail)
+      case "-query" :: tail    => parseArgs(map ++ Map('query -> true), tail)
       case "-stats" :: tail    => parseArgs(map ++ Map('stats -> true), tail)
       case "-dot" :: tail      => parseArgs(map ++ Map('dot -> true), tail)
+      case "-latex" :: tail    => parseArgs(map ++ Map('latex -> true), tail)
+      case "-scala" :: tail    => parseArgs(map ++ Map('scala -> true), tail)
       case "-json" :: tail     => parseArgs(map ++ Map('printJson -> true), tail)
+      case "-tc" :: tail     => parseArgs(map ++ Map('tc -> true), tail)
       case "-mmsJson" :: value :: tail =>
         parseArgs(map ++ Map('mmsJson -> value), tail)
       case "-expressionToJson" :: value :: tail =>
         parseArgs(map ++ Map('expression -> value), tail)
       case "-jsonToExpression" :: value :: tail =>
         parseArgs(map ++ Map('json -> value), tail)
+      case "-postnobody" :: tail => parseArgs(map ++ Map('postnobody -> true), tail)
       case option :: tail =>
         println("Unknown option " + option)
         System.exit(1).asInstanceOf[Nothing]
@@ -49,6 +79,14 @@ object Frontend {
     val options = parseArgs(Map(), args.toList)
     var model: Model = null
     var filename: String = null
+    var fullFileName: String = null
+    var rawSMT: String = null
+    var smtModel: String = ""
+
+    options.get('postnobody) match {
+      case Some(true) => ASTOptions.checkPostNoBody = true
+      case _          =>
+    }
 
     options.get('tests) match {
       case Some(true) => doTests(options.getOrElse('baseline, false).asInstanceOf[Boolean])
@@ -57,32 +95,68 @@ object Frontend {
 
     options.get('test) match {
       case Some(_) =>
-        log("Please enter the test case to run:")
-        val testCase = readLine.trim
-        val fileName = testCase.asInstanceOf[String]
-        val testsDir = new File(new File(new File(".").getAbsolutePath, "src"), "tests")
-        val file = new File(testsDir, fileName)
-        val result = doTest(file)
-        val baselineFile = new File(testsDir, "baseline.json")
-        val baselineObject =
-          if (baselineFile.exists) {
-            val json = scala.io.Source.fromFile(baselineFile).mkString
-            var tokener: JSONTokener = new JSONTokener(json)
-            var jsonObject: JSONObject = new JSONObject(tokener)
-            jsonObject
-          } else {
-            new JSONObject()
-          }
-        if (baselineObject.has(fileName))
-          compareSingleResultDetail(baselineObject.getJSONObject(fileName), result, testsDir)
-        else log(s"Baseline does not contain $fileName. Cannot compare.")
+        try {
+          print("[main] Please enter the test case to run:")
+          val testCase = readLine.trim
+          val fileName = testCase.asInstanceOf[String]
+          val testsDir = new File(new File(new File(".").getAbsolutePath, "src"), "tests")
+          val file = new File(testsDir, fileName)
+          val result = doTest(file, true)
+          val baselineFile = new File(testsDir, "baseline.json")
+          val baselineObject =
+            if (baselineFile.exists) {
+              val json = scala.io.Source.fromFile(baselineFile).mkString
+              var tokener: JSONTokener = new JSONTokener(json)
+              var jsonObject: JSONObject = new JSONObject(tokener)
+              jsonObject
+            } else {
+              new JSONObject()
+            }
+          if (baselineObject.has(fileName))
+            compareSingleResultDetail(baselineObject.getJSONObject(fileName), result, testsDir)
+          else log(s"Baseline does not contain $fileName. Cannot compare.")
+        } catch {
+          case TypeCheckException => errorExit("Type Checking exception.")
+          case K2SMTException     => errorExit("K2SMT Exception during SMT solving.")
+          case K2Z3Exception      => errorExit("Z3 Exception during SMT solving.")
+        }
       case _ => ()
     }
 
     options.get('modelFile) match {
       case Some(f: String) =>
+        log(s"Processing $f")
         model = getModelFromFile(f)
         filename = Paths.get(f).getFileName.toString
+        fullFileName = f
+        if (Paths.get(f).getParent == null)
+          modelFileDirectory = new java.io.File(".").getCanonicalPath
+        else
+          modelFileDirectory = Paths.get(f).getParent.toString
+        classpath = classpath + modelFileDirectory
+
+        // massage classpath
+        classpath = classpath.map { x =>
+          if (!Paths.get(x).isAbsolute()) Paths.get(modelFileDirectory, x).toString
+          else x
+        }
+        classpath = classpath.map { _.trim }
+
+        println("CLASSPATH set to: " + classpath.mkString(","))
+
+      case _ => ()
+    }
+
+    options.get('rawSMTFile) match {
+      case Some(f: String) =>
+        rawSMT = getRawSMTFromFile(f)
+        K2Z3.debugRawModel = true
+      case _ => ()
+    }
+
+    options.get('instances) match {
+      case Some(i: Int) =>
+        ASTOptions.numberOfInstances = i
       case _ => ()
     }
 
@@ -93,8 +167,11 @@ object Frontend {
       case _ => ()
     }
 
+    var importModels = List[Model]()
+
     if (model != null) {
       try {
+        importModels = processImports(model, Set(fullFileName))._1
         val tc: TypeChecker = new TypeChecker(model)
         tc.smtCheck
         log("Type checking completed. No errors found.")
@@ -119,6 +196,7 @@ object Frontend {
           ASTOptions.useJson1 = false
           println("JSON2: " + model.toJson)
           val modelFromJson2 = visitJsonObject2(model.toJson).asInstanceOf[Model]
+
           // Reset old value of option
           ASTOptions.useJson1 = optionsUseJson1
         } else
@@ -126,17 +204,87 @@ object Frontend {
       case _ => ()
     }
 
-//    if (model != null) {
-//      val smtModel = model.toSMT
-//      if (K2Z3.debug) {
-//        println("--- SMT Model ---")
-//        println(smtModel)
-//        println("-----------------")
-//      }
-//      K2Z3.solveSMT(model, smtModel, true)
-//    }
+    if (model != null && !options.contains('tc)) {
 
-    // print DOT format class diagram
+      //case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
+      //annotations: List[AnnotationDecl],
+      //decls: List[TopDecl]) {
+      val allDecls = importModels.flatMap { x => x.decls }
+      val combinedModel = Model(model.packageName, model.imports,
+        model.annotations ++ importModels.flatMap { x => x.annotations },
+        model.decls ++ allDecls)
+      smtModel += combinedModel.toSMT
+      if (K2Z3.debug) {
+        println()
+        println("--- SMT Model ---")
+        println()
+        println(smtModel)
+        println()
+        println("-----------------")
+        println()
+      }
+      try {
+        val res = runWithTimeout(timeoutValue) { K2Z3.solveSMT(combinedModel, smtModel, true) }
+        if (res.isEmpty) log("Timeout")
+      } catch {
+        case TypeCheckException => errorExit("Type Checking exception.")
+        case K2SMTException     => errorExit("K2SMT Exception during SMT solving.")
+        case K2Z3Exception      => errorExit("Z3 Exception during SMT solving.")
+        case e: Throwable =>
+          e.printStackTrace()
+          errorExit("Unknown Exception during SMT solving.")
+      }
+    }
+
+    if (rawSMT != null) {
+      if (K2Z3.debug) {
+        println()
+        println("--- SMT Model ---")
+        println()
+        println(rawSMT)
+        println()
+        println("-----------------")
+        println()
+      }
+      try {
+        val res = runWithTimeout(timeoutValue) { K2Z3.solveSMT(null, rawSMT, false) }
+        if (res.isEmpty) log("Timeout")
+
+      } catch {
+        case TypeCheckException => errorExit("Type Checking exception.")
+        case K2SMTException     => errorExit("K2SMT Exception during SMT solving.")
+        case K2Z3Exception      => errorExit("Z3 Exception during SMT solving.")
+        case e: Throwable =>
+          e.printStackTrace()
+          errorExit("Unknown Exception during SMT solving.")
+      }
+    }
+
+    options.get('latex) match {
+      case Some(_) => if (model != null) K2Latex.convert(filename, model)
+      case _       => ()
+    }
+
+    options.get('scala) match {
+      case Some(_) =>
+        if (model != null && fullFileName != null) {
+          val file = new FileWriter(fullFileName + ".scala", false)
+          val scalaProgram = model.toScala
+          file.append(scalaProgram)
+          file.close()
+          if (K2Z3.debug) {
+            println()
+            println("--- Scala Program ---")
+            println()
+            println(scalaProgram)
+            println()
+            println("-----------------")
+            println()
+          }
+        }
+      case _ => ()
+    }
+
     options.get('dot) match {
       case Some(_) => if (model != null) printClassDOT(filename, model)
       case _       => ()
@@ -154,63 +302,181 @@ object Frontend {
       case _ => ()
     }
 
+    options.get('query) match {
+      case Some(_) => doElastic(model)
+      case _       => ()
+    }
+
+  }
+
+  def getImportFileLocationFromClassPath(fileName: String): String = {
+    for (d <- classpath) {
+      val path = Paths.get(d, fileName)
+      if (Files.exists(path)) return path.toString
+    }
+    return null
+  }
+
+  def processImports(model: Model, processed: Set[String]): (List[Model], Set[String]) = {
+    var models = List[Model]()
+    var newProcessed = processed
+    for (i <- model.imports) {
+      val iFile = getImportFileLocationFromClassPath((i.name.toPath + ".k").toString)
+      if (iFile == null) {
+        errorExit(s"Import ${i.name} could not be found!")
+      }
+      if (!newProcessed.contains(iFile)) {
+        log(s"Processing import $iFile")
+        val iModel = getModelFromFile(iFile)
+        newProcessed += iFile
+        val (importImports, iProcessed) = processImports(iModel, newProcessed)
+        newProcessed = newProcessed ++ iProcessed
+        new TypeChecker(iModel).smtCheck
+        models = iModel :: (models ++ importImports)
+      } else {
+        log(s"Skipping $iFile (already processed).")
+      }
+    }
+    return (models, newProcessed)
+  }
+
+  def doElastic(model: Model) {
+    log("Setting up query engine...")
+    Logger.getRootLogger.setLevel(Level.OFF)
+    val workDir = "c:\\users\\rahulku\\downloads\\elastictmp5"
+    ASTOptions.useJson1 = true
+    val indexName = "kexamples"
+    val kmodelsType = "kmodel"
+
+    // Initialize embedded client with specified directory 
+    val settings = ImmutableSettings.settingsBuilder()
+      .put("http.enabled", false)
+      .put("path.data", workDir)
+      .build()
+    val client = ElasticClient.local(settings)
+
+    // remove main index if it exists 
+    def removeIndex: Boolean = {
+      try {
+        client.execute {
+          deleteIndex(indexName)
+        }.await
+        true
+      } catch {
+        case _: Exception => false
+      }
+    }
+    removeIndex
+
+    // create main index 
+    val numShards = 1
+    val numReplicas = 0
+    client.execute { create index indexName }.await
+    //    client.execute { create index indexName mappings ("constraints" parent (kmodelsType)) shards numShards replicas numReplicas }.await
+
+    // Report health status 
+    val healthResponse = client.admin.cluster().prepareHealth().setWaitForGreenStatus().execute().actionGet()
+    val healthStatus = healthResponse.getStatus()
+
+    log(s"Indexing model.")
+
+    //client.execute { index into indexName / kmodelsType doc StringDocumentSource(model.toJson.toString) }.await
+    //client.execute { index into indexName / kmodelsType doc ModelSource(model) }.await
+    for (decl <- model.decls) {
+      client.execute { index into indexName / kmodelsType doc StringDocumentSource(decl.toJson.toString) }.await
+      if (decl.isInstanceOf[EntityDecl] && false) {
+        val entity = decl.asInstanceOf[EntityDecl]
+        for (m <- entity.members) {
+          if (m.isInstanceOf[ConstraintDecl])
+            client.execute { index into indexName / "constraints" doc StringDocumentSource(m.toJson.toString) }.await
+        }
+      }
+    }
+    Thread.sleep(3000)
+
+    while (true) {
+      print("[main] Query>")
+      val queryString = readLine.trim
+      if (queryString == "k_exit") break
+      val resp = client.execute { search in indexName / kmodelsType query queryString }.await
+
+      for (hit <- resp.getHits().getHits) {
+        var tokener: JSONTokener = new JSONTokener(hit.getSourceAsString)
+        var jsonObject: JSONObject = new JSONObject(tokener)
+        val decl = visitJsonObject(jsonObject)
+        println("Search Results: " + decl)
+      }
+
+    }
+
+    client.close()
   }
 
   def getFileTree(f: File): Stream[File] =
     f #:: (if (f.isDirectory) f.listFiles().toStream.flatMap(getFileTree)
     else Stream.empty)
 
-  def doTest(file: File): JSONObject = {
+  def doTest(file: File, debug: Boolean): JSONObject = {
     log(s"Running test ${file.getName}")
     TypeChecker.reset
     UtilSMT.reset
-    K2Z3.debug = false
-    K2Z3.silent = true
-    ASTOptions.debug = false
-    ASTOptions.silent = true
-    TypeChecker.silent = true
-    TypeChecker.debug = false
-
-    val model = getModelFromFile(file.toString)
-
-    if (model != null) new TypeChecker(model).smtCheck
-
-    val (json1, json2) =
-      if (model != null) {
-        ASTOptions.useJson1 = true
-        val json1 = model.toJson
-        ASTOptions.useJson1 = false
-        val json2 = model.toJson
-        (json1, json2)
-      } else (null, null)
-    val smt =
-      if (model != null) model.toSMT
-      else null
-    val smtModel =
-      if (smt != null) {
-        import scala.actors.Futures._
-        def runWithTimeout[T](timeoutMs: Long)(f: => T): Option[T] = {
-          awaitAll(timeoutMs, future(f)).head.asInstanceOf[Option[T]]
-        }
-        val res = runWithTimeout(10000) { K2Z3.solveSMT(model, smt, false) }
-        if (res.isEmpty) null
-        else K2Z3.z3Model.toString
-      } else null
+    K2Z3.debug = debug
+    K2Z3.silent = !debug
+    ASTOptions.debug = debug
+    ASTOptions.silent = !debug
+    TypeChecker.silent = !debug
+    TypeChecker.debug = debug
 
     val currentTestJsonObject = new JSONObject()
 
-    currentTestJsonObject.put("name", file.getName)
-    currentTestJsonObject.put("model", model.toString)
-    currentTestJsonObject.put("json1", json1)
-    currentTestJsonObject.put("json2", json2)
-    currentTestJsonObject.put("smt", smt)
-    currentTestJsonObject.put("smtModel", smtModel)
+    try {
+      val model = getModelFromFile(file.toString)
 
+      if (model != null) new TypeChecker(model).smtCheck
+
+      val (json1, json2) =
+        if (model != null) {
+          ASTOptions.useJson1 = true
+          val json1 = model.toJson
+          ASTOptions.useJson1 = false
+          val json2 = model.toJson
+          (json1, json2)
+        } else (null, null)
+      val smt =
+        if (model != null) model.toSMT
+        else null
+      val smtModel =
+        if (smt != null) {
+          val res = runWithTimeout(timeoutValue) { K2Z3.solveSMT(model, smt, debug) }
+          if (res.isEmpty) null
+          else if (K2Z3.z3Model != null) K2Z3.z3Model.toString
+        } else null
+      currentTestJsonObject.put("name", file.getName)
+      currentTestJsonObject.put("model", model.toString)
+      currentTestJsonObject.put("json1", json1)
+      currentTestJsonObject.put("json2", json2)
+      currentTestJsonObject.put("smt", smt)
+      currentTestJsonObject.put("smtModel", smtModel)
+      currentTestJsonObject.put("typeChecks", true)
+    } catch {
+      case TypeCheckException =>
+        currentTestJsonObject.put("name", file.getName)
+        currentTestJsonObject.put("model", "")
+        currentTestJsonObject.put("json1", "")
+        currentTestJsonObject.put("json2", "")
+        currentTestJsonObject.put("smt", "")
+        currentTestJsonObject.put("smtModel", "")
+        currentTestJsonObject.put("typeChecks", false)
+    }
+  }
+
+  def runWithTimeout[T](timeoutMs: Long)(f: => T): Option[T] = {
+    awaitAll(timeoutMs, future(f)).head.asInstanceOf[Option[T]]
   }
 
   def doTests(saveBaseline: Boolean) {
 
-    var resultRows: List[List[String]] = List(List("Name", "ModelEqual", "JSON1Equal", "JSON2Equal", "SMTEqual", "SMTModelEqual"))
+    var resultRows: List[List[String]] = List(List("Name", "TypeChecksEq (TypeChecks)", "ModelEqual", "JSON1Equal", "JSON2Equal", "SMTEqual", "SMTModelEqual"))
     val testsDir = new File(new File(new File(".").getAbsolutePath, "src"), "tests")
     var kFiles = getFileTree(testsDir).filter(_.getName.endsWith(".k"))
     val baselineFile = new File(testsDir, "baseline.json")
@@ -230,7 +496,7 @@ object Frontend {
     kFiles.foreach { file =>
       try {
         testsRun = testsRun + 1
-        val currentTestJsonObject = doTest(file)
+        val currentTestJsonObject = doTest(file, false)
 
         currentResultsObject.put(file.getName, currentTestJsonObject)
 
@@ -239,24 +505,25 @@ object Frontend {
           resultRows = result._2 :: resultRows
           if (result._1) testsMatched = testsMatched + 1
         } else {
-          resultRows = List(file.getName + "*", "New", "test", "case", "", "") :: resultRows
+          resultRows = List(file.getName + "*", "New", "test", "case", "", "", "") :: resultRows
         }
 
       } catch {
-        case TypeCheckException => resultRows = List(file.getName + "*", "Does", "not", "type", "check", "") :: resultRows
-        case K2SMTException     => resultRows = List(file.getName + "*", "K2SMT", "error", "", "", "") :: resultRows
-        case K2Z3Exception      => resultRows = List(file.getName + "*", "K2Z3", "error", "", "", "") :: resultRows
-        case _: Throwable       => resultRows = List(file.getName + "*", "-", "-", "-", "-", "-") :: resultRows
+        case K2SMTException => resultRows = List(file.getName + "*", "K2SMT", "error", "", "", "", "") :: resultRows
+        case K2Z3Exception  => resultRows = List(file.getName + "*", "K2Z3", "error", "", "", "", "") :: resultRows
+        case e: Throwable =>
+          log("Exception: " + e.toString)
+          resultRows = List(file.getName + "*", "-", "-", "-", "-", "-", "-") :: resultRows
       }
     }
     if (saveBaseline) {
       val fw = new FileWriter(baselineFile)
       fw.write(currentResultsObject.toString)
       fw.close
-      println("Baseline saved.")
+      log("Baseline saved.")
     }
     println
-    println("Results:")
+    log("Results:")
     println
     println(Tabulator.format(resultRows.reverse))
     println
@@ -264,7 +531,7 @@ object Frontend {
   }
 
   def compareSingleResultDetail(bo: JSONObject, co: JSONObject, testDir: File) {
-    var resultRows: List[List[String]] = List(List("Name", "ModelEqual", "JSON1Equal", "JSON2Equal", "SMTEqual", "SMTModelEqual"))
+    var resultRows: List[List[String]] = List(List("Name", "TypeChecksEq (TypeChecks)", "ModelEqual", "JSON1Equal", "JSON2Equal", "SMTEqual", "SMTModelEqual"))
     log()
     println(Tabulator.format((compareResult(bo, co)._2 :: resultRows).reverse))
     log()
@@ -281,38 +548,43 @@ object Frontend {
     fw.write(bo.getString("smtModel"))
     fw.close
     log(s"Baseline SMT model stored in ${testDir.getAbsolutePath}/baseline.smt.model")
-    fw = new FileWriter(new File(testDir, "current.smt.model"))
-    fw.write(co.getString("smtModel"))
-    fw.close
-    log(s"Current SMT model stored in ${testDir.getAbsolutePath}/current.smt.model")
+    if (co.has("smtModel")) {
+      fw = new FileWriter(new File(testDir, "current.smt.model"))
+      fw.write(co.get("smtModel").toString)
+      fw.close
+      log(s"Current SMT model stored in ${testDir.getAbsolutePath}/current.smt.model")
+    }
 
   }
 
   def compareSingleResult(key: String, bo: JSONObject, co: JSONObject): String = {
-    if (bo.has(key) && co.has(key)) {
-
+    if (bo.has(key) && co.has(key) && co.get(key).toString != "") {
       if (bo.get(key).isInstanceOf[JSONObject] && co.get(key).isInstanceOf[JSONObject])
         bo.getJSONObject(key).similar(co.getJSONObject(key)).toString
       else bo.get(key).toString.equals(co.get(key).toString).toString
     } else if (bo.has(key) && !co.has(key))
       "false"
     else if (co.has(key) && !bo.has(key))
-      "Missing in baseline"
+      "???"
     else "-"
   }
 
   def compareResult(bo: JSONObject, co: JSONObject): (Boolean, List[String]) = {
+    val typeChecksEq = compareSingleResult("typeChecks", bo, co)
     val modelEq = compareSingleResult("model", bo, co)
     val json1Eq = compareSingleResult("json1", bo, co)
     val json2Eq = compareSingleResult("json2", bo, co)
     val smtEq = compareSingleResult("smt", bo, co)
     val smtModelEq = compareSingleResult("smtModel", bo, co)
-    if (modelEq != "true" || json1Eq != "true" ||
+    val typeCheckString =
+      if (typeChecksEq == "true") s"$typeChecksEq (${co.get("typeChecks")})"
+      else s"$typeChecksEq"
+    if (typeChecksEq != "true" || modelEq != "true" || json1Eq != "true" ||
       json2Eq != "true" || smtEq != "true" || smtModelEq != "true")
-      (false, List(bo.getString("name") + "*", s"$modelEq", s"$json1Eq",
+      (false, List(bo.getString("name") + "*", s"$typeCheckString", s"$modelEq", s"$json1Eq",
         s"$json2Eq", s"$smtEq", s"$smtModelEq"))
     else
-      (true, List(bo.getString("name"), s"$modelEq", s"$json1Eq",
+      (true, List(bo.getString("name"), s"$typeCheckString", s"$modelEq", s"$json1Eq",
         s"$json2Eq", s"$smtEq", s"$smtModelEq"))
   }
 
@@ -323,87 +595,102 @@ object Frontend {
     val elementsArray = jsonObject.get("elements").asInstanceOf[JSONArray]
     var packageName: Option[PackageDecl] = None
     var imports: List[ImportDecl] = List()
-    var annotations: List[AnnotationDecl] = List()
+    var annotations: Set[AnnotationDecl] = Set()
     var mdecls: List[TopDecl] = List[TopDecl]()
     var id2Decl: Map[String, TopDecl] = Map()
 
     // first build the classes 
     for (i <- Range(0, elementsArray.length())) {
-      val obj = elementsArray.get(i).asInstanceOf[JSONObject]
-      if (obj.keySet.contains("specialization")) {
-        if (obj.getString("name").length == 0) {
-          println("Warning: found unnamed element in JSON: " + obj.getString("sysmlid"))
-        } else {
-          val specializationObject = obj.getJSONObject("specialization")
-          specializationObject.getString("type") match {
-            case "Element" =>
-              val entity = EntityDecl(Nil, ClassToken, None, obj.getString("name"), Nil, Nil, Nil)
-              mdecls = entity :: mdecls
-              id2Decl += (obj.getString("sysmlid") -> entity)
-            case _ => ()
+      try {
+        val obj = elementsArray.get(i).asInstanceOf[JSONObject]
+        if (obj.keySet.contains("specialization")) {
+          if (obj.getString("name").length == 0) {
+            //println("Warning: found unnamed element in JSON: " + obj.getString("sysmlid"))
+          } else {
+            val specializationObject = obj.getJSONObject("specialization")
+            specializationObject.getString("type") match {
+              case "Element" =>
+                val entity = EntityDecl(Nil, ClassToken, None, obj.getString("name").replace(" ", "_"), Nil, Nil, Nil)
+                mdecls = entity :: mdecls
+                id2Decl += (obj.getString("sysmlid") -> entity)
+              case _ => ()
+            }
           }
         }
+      } catch {
+        case _: Throwable => ()
       }
+
     }
 
     // now we can process properties and constraints
-
     for (i <- Range(0, elementsArray.length())) {
       val obj = elementsArray.get(i).asInstanceOf[JSONObject]
-      if (obj.keySet.contains("specialization")) {
-        val specializationObject = obj.getJSONObject("specialization")
-        if (obj.getString("name").length == 0 &&
-          specializationObject.getString("type") != "Generalization") {
-          println("Warning: found unnamed element in JSON: " + obj.getString("sysmlid"))
-        } else {
-          specializationObject.getString("type") match {
-            case "Property" =>
-              val owningDecl = id2Decl(obj.getString("owner")).asInstanceOf[EntityDecl]
-              val propertyType =
-                if (specializationObject.get("propertyType") == JSONObject.NULL) IntType
-                else {
-                  val typeDecl = id2Decl(specializationObject.getString("propertyType")).asInstanceOf[EntityDecl]
-                  IdentType(QualifiedName(List(typeDecl.ident)), List())
+      try {
+        if (obj.keySet.contains("specialization")) {
+          val specializationObject = obj.getJSONObject("specialization")
+          if (obj.getString("name").length == 0 &&
+            specializationObject.getString("type") != "Generalization") {
+            //println("Warning: found unnamed element in JSON: " + obj.getString("sysmlid"))
+          } else {
+            specializationObject.getString("type") match {
+              case "Property" =>
+                val owningDecl = id2Decl(obj.getString("owner")).asInstanceOf[EntityDecl]
+                val propertyType =
+                  if (specializationObject.get("propertyType") == JSONObject.NULL) IntType
+                  else {
+                    val typeDecl = id2Decl(specializationObject.getString("propertyType")).asInstanceOf[EntityDecl]
+                    IdentType(QualifiedName(List(typeDecl.ident)), List())
+                  }
+                val property = PropertyDecl(Nil, obj.getString("name").replace(" ", "_"), propertyType, None, None, None)
+                val newDecl = EntityDecl(owningDecl.annotations, owningDecl.entityToken,
+                  owningDecl.keyword, owningDecl.ident,
+                  owningDecl.typeParams, owningDecl.extending,
+                  property :: owningDecl.members)
+                mdecls = mdecls.diff(List(owningDecl))
+                mdecls = newDecl :: mdecls
+
+                id2Decl += (obj.getString("owner") -> newDecl)
+
+              case "Package" => packageName =
+                Some(PackageDecl(QualifiedName(obj.getString("qualifiedName").replace("-", "_").replace(" ", "_").split("/").toList.filterNot { _.isEmpty })))
+              case "Constraint" =>
+                if (specializationObject.getJSONObject("specification").has("expressionBody")) {
+                  val constraintExpressionBody = specializationObject.getJSONObject("specification").getJSONArray("expressionBody")
+
+                  val constraintExpression = if (constraintExpressionBody.length() > 0) { constraintExpressionBody.get(0).asInstanceOf[String] } else BooleanLiteral(true).toString
+                  val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(constraintExpression)
+                  var m: Model = ksv.visit(tree).asInstanceOf[Model]
+                  var exp: Exp = m.decls(0).asInstanceOf[ExpressionDecl].exp
+                  val owningDecl = id2Decl(obj.getString("owner")).asInstanceOf[EntityDecl]
+                  val constraint = ConstraintDecl(Some(obj.getString("name").replace(" ", "_")), exp)
+                  val newDecl = EntityDecl(owningDecl.annotations, owningDecl.entityToken,
+                    owningDecl.keyword, owningDecl.ident,
+                    owningDecl.typeParams, owningDecl.extending,
+                    constraint :: owningDecl.members)
+                  mdecls = mdecls.diff(List(owningDecl))
+                  mdecls = newDecl :: mdecls
+                  id2Decl += (obj.getString("owner") -> newDecl)
+                } else {
+                  log("Constraint is missing expressionBody in specification..." + specializationObject)
                 }
-              val property = PropertyDecl(Nil, obj.getString("name"), propertyType, None, None, None)
-              val newDecl = EntityDecl(owningDecl.annotations, owningDecl.entityToken,
-                owningDecl.keyword, owningDecl.ident,
-                owningDecl.typeParams, owningDecl.extending,
-                property :: owningDecl.members)
-              mdecls = mdecls.diff(List(owningDecl))
-              mdecls = newDecl :: mdecls
+              case "Generalization" =>
+                val owningDecl = id2Decl(specializationObject.getString("source")).asInstanceOf[EntityDecl]
+                val targetDecl = id2Decl(specializationObject.getString("target")).asInstanceOf[EntityDecl]
+                val newDecl = EntityDecl(owningDecl.annotations, owningDecl.entityToken,
+                  owningDecl.keyword, owningDecl.ident,
+                  owningDecl.typeParams, IdentType(QualifiedName(List(targetDecl.ident)), List()) :: owningDecl.extending, owningDecl.members)
+                mdecls = mdecls.diff(List(owningDecl))
+                mdecls = newDecl :: mdecls
+                id2Decl += (obj.getString("owner") -> newDecl)
 
-              id2Decl += (obj.getString("owner") -> newDecl)
-
-            case "Package" => packageName =
-              Some(PackageDecl(QualifiedName(obj.getString("qualifiedName").replace("-", "_").split("/").toList.filterNot { _.isEmpty })))
-            case "Constraint" =>
-              val constraintExpression = specializationObject.getJSONObject("specification").getJSONArray("expressionBody").get(0).asInstanceOf[String]
-              val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(constraintExpression)
-              var m: Model = ksv.visit(tree).asInstanceOf[Model]
-              var exp: Exp = m.decls(0).asInstanceOf[ExpressionDecl].exp
-              val owningDecl = id2Decl(obj.getString("owner")).asInstanceOf[EntityDecl]
-              val constraint = ConstraintDecl(Some(obj.getString("name")), exp)
-              val newDecl = EntityDecl(owningDecl.annotations, owningDecl.entityToken,
-                owningDecl.keyword, owningDecl.ident,
-                owningDecl.typeParams, owningDecl.extending,
-                constraint :: owningDecl.members)
-              mdecls = mdecls.diff(List(owningDecl))
-              mdecls = newDecl :: mdecls
-              id2Decl += (obj.getString("owner") -> newDecl)
-            case "Generalization" =>
-              val owningDecl = id2Decl(specializationObject.getString("source")).asInstanceOf[EntityDecl]
-              val targetDecl = id2Decl(specializationObject.getString("target")).asInstanceOf[EntityDecl]
-              val newDecl = EntityDecl(owningDecl.annotations, owningDecl.entityToken,
-                owningDecl.keyword, owningDecl.ident,
-                owningDecl.typeParams, IdentType(QualifiedName(List(targetDecl.ident)), List()) :: owningDecl.extending, owningDecl.members)
-              mdecls = mdecls.diff(List(owningDecl))
-              mdecls = newDecl :: mdecls
-              id2Decl += (obj.getString("owner") -> newDecl)
-
-            case _ => ()
+              case _ => ()
+            }
           }
         }
+      } catch {
+        //case e if e.isInstanceOf[java.util.NoSuchElementException] => log("Skipping element..." + obj)
+        case _: Throwable => log("Skipping element..." + obj)
       }
     }
 
@@ -523,14 +810,14 @@ object Frontend {
       case "TupleExp" =>
         TupleExp(visitJsonArray(obj.get("exps"), visitJsonObject).asInstanceOf[List[Exp]])
       case "CollectionEnumExp" =>
-        CollectionEnumExp(getCollectionKind(obj.getString("kind")),
+        CollectionEnumExp(Misc.getCollectionKind(obj.getString("kind")),
           visitJsonArray(obj.get("exps"), visitJsonObject).asInstanceOf[List[Exp]])
       case "CollectionRangeExp" =>
-        CollectionRangeExp(getCollectionKind(obj.getString("kind")),
+        CollectionRangeExp(Misc.getCollectionKind(obj.getString("kind")),
           visitJsonObject(obj.get("exp1")).asInstanceOf[Exp],
           visitJsonObject(obj.get("exp2")).asInstanceOf[Exp])
       case "CollectionComprExp" =>
-        var kind = getCollectionKind(obj.getString("kind"))
+        var kind = Misc.getCollectionKind(obj.getString("kind"))
         var exp1 = visitJsonObject(obj.get("exp1")).asInstanceOf[Exp]
         var bindings = visitJsonArray(obj.get("bindings"), visitJsonObject).asInstanceOf[List[RngBinding]]
         var exp2 = visitJsonObject(obj.get("exp2")).asInstanceOf[Exp]
@@ -575,7 +862,7 @@ object Frontend {
         IntegerLiteral(obj.getInt("i"))
       case "LiteralFloatingPoint" =>
         //RealLiteral(java.lang.Float.parseFloat(obj.get("f").toString)) // was: asInstanceOf[String]
-        val bd = new java.math.BigDecimal(obj.get("f").toString).setScale(8, java.math.BigDecimal.ROUND_UNNECESSARY)
+        val bd = new java.math.BigDecimal(obj.get("f").toString).setScale(8, java.math.BigDecimal.ROUND_DOWN)
         RealLiteral(bd)
       case "LiteralCharacter" =>
         CharacterLiteral(obj.get("c").asInstanceOf[Char])
@@ -590,7 +877,7 @@ object Frontend {
         var packageName: Option[PackageDecl] =
           if (obj.keySet().contains("packageName")) Some(visitJsonObject(obj.get("packageName"))).asInstanceOf[Option[PackageDecl]]
           else None
-        var annotations = visitJsonArray(obj.get("annotations"), visitJsonObject).asInstanceOf[List[AnnotationDecl]]
+        var annotations = visitJsonArray(obj.get("annotations"), visitJsonObject).asInstanceOf[Set[AnnotationDecl]]
         var imports = visitJsonArray(obj.get("imports"), visitJsonObject).asInstanceOf[List[ImportDecl]]
         var decls = visitJsonArray(obj.get("decls"), visitJsonObject).asInstanceOf[List[TopDecl]]
         Model(packageName, imports, annotations, decls)
@@ -766,14 +1053,6 @@ object Frontend {
     }
   }
 
-  def getCollectionKind(o: String): CollectionKind = {
-    o match {
-      case "Set" => SetKind
-      case "Seq" => SeqKind
-      case "Bag" => BagKind
-    }
-  }
-
   def getRngBinding(o: Any): AnyRef = {
     val obj = o.asInstanceOf[JSONObject].getJSONArray("operand")
     val patternList: MList[Pattern] = MList()
@@ -789,7 +1068,7 @@ object Frontend {
   def visitJsonObject2(o: Any): AnyRef = {
     visitJsonObject2(o, false)
   }
-  
+
   def visitJsonObject2(o: Any, pullOperandType: Boolean): AnyRef = {
     val obj = o.asInstanceOf[JSONObject]
     var spec = obj.optJSONObject("specialization")
@@ -813,19 +1092,10 @@ object Frontend {
         }
       }
     theType match {
-//      case "ElementValue" =>
-//        visitJsonObject2(o, true)
       case "Expression" =>
         visitJsonObject2(o, true)
 //        val operand: JSONArray = obj.get("operand").asInstanceOf[JSONArray]
-//        var kind = operand.get(0).asInstanceOf[JSONObject].get("type").asInstanceOf[String]
-//        var opIsElementValue = kind match { 
-//          case "ElementValue" => true
-//          case _ => false
-//        }
-//        else {
-//        kind = if (opIsElementValue) operand.getJSONObject(0).getString("element")
-//               else kind
+//        val kind = operand.get(0).asInstanceOf[JSONObject].get("type").asInstanceOf[String]
 //        kind match {
           case "BlockExp" =>
             val memberDecls: MList[MemberDecl] = MList()
@@ -874,7 +1144,7 @@ object Frontend {
             val exp = visitJsonObject2(operand.getJSONObject(i+2)).asInstanceOf[Exp]
             QuantifiedExp(quantifier, bindings, exp)
           case "CollectionComprExp" =>
-            var kind = getCollectionKind(operand.getString(i))
+            var kind = Misc.getCollectionKind(operand.getString(i))
             var exp1 = visitJsonObject2(operand.get(i+1)).asInstanceOf[Exp]
             var exp2 = visitJsonObject2(operand.get(i+2)).asInstanceOf[Exp]
             val bindings: MList[RngBinding] = MList()
@@ -905,7 +1175,7 @@ object Frontend {
             IntegerLiteral(jo.getInt("integer"))
           case "RealLiteral" | "LiteralReal" => // was FloatingPointLiteral
             //RealLiteral(java.lang.Float.parseFloat(operand.get(1).toString)) // was: operand.getString(1)
-            val bd = new java.math.BigDecimal(obj.get("double").toString).setScale(8, java.math.BigDecimal.ROUND_UNNECESSARY)
+            val bd = new java.math.BigDecimal(obj.get("double").toString).setScale(8, java.math.BigDecimal.ROUND_DOWN)
             //println(bd.formatted("%f"))
             RealLiteral(bd)
           case "CharacterLiteral" | "LiteralCharacter" =>
@@ -1090,24 +1360,7 @@ object Frontend {
             ExpCollection(visitJsonObject2(operand.get(i)).asInstanceOf[Exp])
           case "IdentPattern" =>
             IdentPattern(operand.get(i).asInstanceOf[String])
-//          case key @ _ =>
-//            if (opIsElementValue) {
-//              // Assume that this is a reference to some Operation, either a FunctionAppl or Constructor
-//              val exp1 = visitJsonObject2(key).asInstanceOf[Exp]
-//              val args =
-//                if (operand.length > 1) {
-//                  val argsList: MList[Argument] = MList()
-//                  for (i <- Range(1, operand.length())) {
-//                    argsList += visitJsonObject2(operand.get(i)).asInstanceOf[Argument]
-//                  }
-//                  argsList.toList
-//                } else Nil
-//              FunApplExp(exp1, args)
-//            } else {
-//              println("Unknown keys encountered in JSON string! (3) : " + key)
-//              System.exit(-1).asInstanceOf[Nothing]
-//            }
-//        }
+
       case "IdentExp" | "ElementValue" =>
         IdentExp(obj.get("element").asInstanceOf[String])
       // Non-Expr, similar to regular JSON
@@ -1115,7 +1368,7 @@ object Frontend {
         var packageName: Option[PackageDecl] =
           if (obj.keySet().contains("packageName")) Some(visitJsonObject2(obj.getJSONObject("packageName"))).asInstanceOf[Option[PackageDecl]]
           else None
-        var annotations = visitJsonArray(obj.get("annotations"), visitJsonObject2).asInstanceOf[List[AnnotationDecl]]
+        var annotations = visitJsonArray(obj.get("annotations"), visitJsonObject2).asInstanceOf[Set[AnnotationDecl]]
         var imports = visitJsonArray(obj.get("imports"), visitJsonObject2).asInstanceOf[List[ImportDecl]]
         var decls = visitJsonArray(obj.get("decls"), visitJsonObject2).asInstanceOf[List[TopDecl]]
         Model(packageName, imports, annotations, decls)
@@ -1265,12 +1518,25 @@ object Frontend {
   }
 
   def getModelFromFile(f: String): Model = {
-    var path: Path = Paths.get(f)
+    val path: Path = Paths.get(f)
+    if (!Files.exists(path)) {
+      errorExit(s"Given path does not exist: $f")
+    }
     var bytes: Array[Byte] = Files.readAllBytes(path)
     var fileContents: String = new String(bytes, "UTF-8")
     val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(fileContents)
-    var m: Model = ksv.visit(tree).asInstanceOf[Model]
-    m
+    ksv.visit(tree).asInstanceOf[Model]
+  }
+
+  /**
+   * Read an SMT formula directly from a file.
+   * Useful for making SMT experiments without rise4fun.com
+   */
+  def getRawSMTFromFile(f: String): String = {
+    var path: Path = Paths.get(f)
+    var bytes: Array[Byte] = Files.readAllBytes(path)
+    var fileContents: String = new String(bytes, "UTF-8")
+    fileContents
   }
 
   def getModelFromString(f: String): Model = {

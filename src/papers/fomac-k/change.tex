@@ -1,0 +1,283 @@
+\section{Change}
+\label{sec:change}
+
+\subsection{Behavior}
+
+\Klang{} has to a large extent at JPL sofar mostly been used for specifying static 
+structure, similar to what can be represented by UML/SysML class diagrams, with 
+requirements typically constraining integer and real variables that represent 
+properties of physical nature, such as for example weights and distances.
+The shapes model in Figure \ref{fig:shapes} is an example of a model of structure, namely the shape of triangles.
+\Klang{} can, however, also be used for specifying behavior, using the same
+concepts used for specifying structure, namely classes, properties, functions and
+requirements on these. The idea is in other words to use mathematical logic to 
+represent behaviors. This is an illustration of the pursued objective during 
+the design of \Klang{} to keep the language as small as possible, relying as much 
+as possible on the language of mathematics for expressing problems and solutions. 
+This approach of course has algorithmic consequences when it comes to analyzing 
+models. Our intention is to stay in mathematics as far as the tooling (existing 
+theorem provers) allows us. In the following subsections we illustrate how one can 
+encode two different behavior concepts in \Klang{}, namely state machines and event 
+scheduling.
+
+\subsubsection{State Machines}
+
+State machines are commonly used to specify the behavior of software as well as 
+hardware systems. They are frequently used at JPL for specifying the behavior of
+embedded flight software software modules controlling, for example, planetary 
+rovers. A state machine is defined by a collection of states,
+a collection of events, and a labeled transition relation (labels are events) 
+between states. This can of course be modeled in numerous ways. Here we shall 
+assume deterministic state machines, and model the transition relation as a 
+function. 
+The \Klang{} model in Figure \ref{fig:statemachine} represents an encoding of a 
+state machine modeling a rocket engine, which can be in one of the states:  
+\name{off}, \name{ready} or \name{firing}. Events include \name{turn\_on}, 
+\name{fire}, and \name{turn\_off}. The types of states and events (\name{State} and 
+\name{Event}) are modeled as body-less classes. The class \name{RocketEngine}
+models our state machine. It defines the three states as well as the 
+three events as properties of the appropriate types. A requirement expresses that 
+the states are all different (a similar requirement should in principle also be 
+provided for events).
+
+The function \name{move} represents the transition relation, and 
+is declared to take two arguments: a state and event, and to return a state. 
+It has no body, meaning that it yet to be defined. The subsequent four  
+requirements define the 
+\name{move} function. For example the first requirement states that
+in the \name{off} state, on encountering a \name{turn\_on} event, the engine moves 
+to the \name{ready} state. 
+
+The last requirement demanding the engine to move from the \name{ready} state to 
+the \name{off} state on a \name{fire} event was added a Monday morning by a tired
+modeler, and in our context represents a change to the model.
+This requirement, however, is inconsistent with a previous requirement 
+that demands the resulting state to be \name{firing}.
+Since \name{move} is a function (the transition relation is deterministic), and 
+cannot return two
+different values for the same argument, this is detected by the solver. 
+Without this last requirement, the solver will declare the model satisfiable, and 
+will synthesize the state machine function based on the provided requirements.
+Note, however, that not all transitions are modeled, hence the synthesized state
+machine may not be the desired one.
+
+\begin{figure}
+\centering
+\begin{tabular}{c}
+\hline \\
+\lstinputlisting{examples/statemachine.k} \\ \\
+\hline
+\end{tabular}
+\caption{State machine}
+\label{fig:statemachine}
+\end{figure}
+
+\subsubsection{Event Scheduling}
+
+Event scheduling is a very common problem faced in a plethora of
+fields and domains. The typical scenario usually involves specifying
+multiple different allowed orderings of events and determining whether
+the specified ordering is satisfiable or not, and if satisfiable,
+possibly generating a timeline for the specified events.
+Figure~\ref{fig:scheduling} shows one such example encoded using
+\Klang{}.
+
+\begin{figure}
+\centering
+\begin{tabular}{c}
+\hline \\
+\lstinputlisting{examples/scheduling.k} \\ \\
+\hline
+\end{tabular}
+\caption{Scheduling}
+\label{fig:scheduling}
+\end{figure}
+
+The foundation of the scheduling problem is specified by the
+\name{Event} class, which represents a single event that has a start
+and end time (both of these specified using the \code{Int} type). The
+requirements on this class specify that the duration of any event has
+to be non-zero (\code{req} \name{nonZeroDuration}) and the start time
+of all events is greater than or equal to zero (\code{req}
+\name{afterBigBang}). Further, the three functions in the \name{Event}
+class encode Allen logic operators \cite{allen-logic-84} 
+using simple mathematical
+expressions on the start and end times of two events in
+question. The functions specify whether an event occurs
+\name{before} another event $e$, \name{meets} the other event, or
+\name{contains} the other event. We do not include the full set of
+Allen logic operators for sake of brevity. 
+
+Using this foundation, it is now
+trivial to specify schedules and events. This is exactly what the
+\name{Schedule} class does. Five events are created as instances of
+the \name{Event} class. The actual schedule is specified as a
+requirement, which expresses the ordering of the events. In this
+particular example, the schedule specifies that the \name{sciWindow}
+(science window) must occur before the \name{commWindow} (communication
+window) and at least one science
+activity must have taken place. By translating the scheduling
+specification to SMT2 and applying the \zthree{} theorem prover, it can now 
+be checked if the provided ordering on the events is satisfiable or not by checking
+if the \name{Schedule} class is satisfiable. A satisfying assignment
+to the class also provides us with a concrete time line of the events.
+It can be common for schedules and events to change as the project
+evolves and reaches maturity. Using such a mechanism for encoding the
+schedule of events provides great power and flexibility. Dealing with
+the changing schedule is easily done by either modifying existing
+constraints in the \name{Schedule} class, or by adding new events and
+constraints. Each change in the schedule is also verified using a
+theorem prover, which adds greater confidence in the change.
+
+
+\subsection{Refinement}
+
+Change can be considered as refinement. In the formal methods literature
+refinement usually refers to the situation where one model/program, the 
+specification, and typically abstract of nature, is replaced by a lower 
+level model/program, the implementation. Along with the refinement normally
+goes a proof, that the implementation refines the specification.
+The literature offers many solutions to how specifications, implementations and 
+refinements are expressed as well as proved correct, see for example 
+\cite{vdm,raise92,george-raise-2008}. We shall not here enumerate all of these, but bring forward two examples, one illustrating function refinement, and one illustrating data refinement.
+
+\subsubsection{Function Refinement}
+
+Function refinement consists of making the body of a function more concrete,
+while the signature (name as well as  argument and result types) of the 
+function stays unchanged. More generally, data 
+structures accessed by the function stay unchanged. One popular approach to this
+is design-by-contract, where a function is first specified using pre/post 
+conditions, and then later implemented with a function body. This form of 
+refinement is advocated for example in specification languages such as 
+\vdm{} \cite{vdm} and \raiselang{} \cite{raise92,george-raise-2008}, as well as in programming languages such as \eiffel{} \cite{eiffel} and \java{} in the form of the \jml{} comment language \cite{jml}. 
+
+\Klang{} supports design-by-contract using pre/post conditions. The example in
+Figure \ref{fig:prepost} illustrates this with two class definitions. The left-most
+class \name{Util\_Spec} represents the specification of a mathematics utility 
+module containing two functions, \name{min} for computing the minimum of of
+two values, and \name{abs} for returning the absolute value of an integer. Both 
+functions are specified with a post condition stating what is expected to be true
+about the resulting value, denoted by \name{\$result}. As an example, the post
+condition for the \name{min} function states that the result is equal to one of
+the arguments, and it is smallest such.
+
+The class \name{Util}
+to the right extends class \name{Util\_Spec} and refines the functions with
+proper function bodies. The semantics of \Klang{} is such that the refined function 
+bodies will have to satisfy the post conditions. The \Klang{} solver proves this
+automatically in this case. The fact that the implementation class extends 
+(inherits from) the specification class reflects that this form of refinement is a 
+form of theory refinement, where the theory denoted by the implementation must imply 
+that of the specification: the implementation signature contains that of the 
+specification, and the requirements logically imply those of the specification:
+
+\[
+Imlementation \Rightarrow Specification
+\]
+
+\begin{figure}
+  \centering
+  \begin{tabular}[c]{c|c}
+    \hline \\
+    Specification & Implementation \\
+    \hline\hline \\ \\
+    \begin{subfigure}[c]{0.5\textwidth}
+     \lstinputlisting[lastline=13]{examples/prepost.k}
+      \label{fig:prepost1}
+    \end{subfigure}
+    &
+    \begin{subfigure}[c]{0.5\textwidth}
+      \lstinputlisting[firstline=15,xleftmargin=3.0ex]{examples/prepost.k}
+      \label{fig:prepost2}
+    \end{subfigure}
+    \\ \\
+    \hline
+  \end{tabular}    
+  \caption{Mathematical function refinement}
+  \label{fig:prepost}
+\end{figure}
+
+\subsubsection{Data Refinement}
+
+Data refinement consists of changing the data structures used, which will
+cause functions to change as well. Data refinement has for example been
+advocated in the \vdm{} method \cite{vdm}, which is the approach we shall
+illustrate here using \Klang. The approach consists of defining a specification 
+and an implementation as follows. The specification consists of a type
+$\Sigma_a$ of abstract states, as well as abstract operations $opn_a : \Sigma_a 
+\rightarrow \Sigma_a$ on this state. The implementation consists of a type
+$\Sigma_c$ of concrete states, as well as concrete operations $opn_c : \Sigma_c 
+\rightarrow \Sigma_c$ on this state. To perform a proof of correctness of the 
+refinement, an abstraction function $abs : \Sigma_c \rightarrow \Sigma_a$ from 
+the type of concrete implementation states to the type of abstract specification 
+states must be provided, and the following property must (amongst others) 
+be proved for each operation $opn$, where $opn_a$ is the abstract version and $opn_c$ is the concrete version, and $pre_a : \Sigma_a \rightarrow \mathbb{B}$
+is the pre-condition of the abstraction operation $opn_a$:
+
+\begin{equation} \label{eq:refinement}
+\forall \sigma : \Sigma_c \cdot 
+  pre_a(abs(\sigma)) \Rightarrow opn_a(abs(\sigma)) = abs(opn_c(\sigma))
+\end{equation}
+
+\noindent
+Each concrete operation must in other words be proved to update the concrete state
+in a manner corresponding to the desired operation on the abstract state.
+We illustrate this approach with a rather simple \Klang{} model of a light switch,
+which can be turned on and off.  The specification is shown on the left of
+Figure \ref{fig:lightswitch}. A state is defined abstractly as an object of 
+a class \name{State}. The two states \name{off} and \name{on} are defined as 
+distinct states of that type. Two functions are defined, one for toggling
+the state (\name{toggle}), and one for testing whether the light switch is on
+(\name{isOn}). The \name{toggle} function is only declared by its signature, no 
+function body is provided. The behavior is instead provided  as a couple of
+requirements.
+
+\begin{figure}
+  \centering
+  \begin{tabular}[c]{c|c}
+    \hline \\
+    Specification & Implementation \\
+    \hline\hline \\ \\
+    \begin{subfigure}[c]{0.5\textwidth}
+     \lstinputlisting[lastline=17]{examples/lightswitch.k}
+      \label{fig:lightswitch1}
+    \end{subfigure}
+    &
+    \begin{subfigure}[c]{0.5\textwidth}
+      \lstinputlisting[firstline=19,lastline=27,xleftmargin=5.0ex]{examples/lightswitch.k}
+      \label{fig:lightswicth2}
+    \end{subfigure}
+    \\ \\
+    \hline
+  \end{tabular}    
+  \caption{Lightswitch refinement}
+  \label{fig:lightswitch}
+\end{figure}
+
+The implementation is shown on the right of Figure \ref{fig:lightswitch}.
+Here we have decided to model the state as an integer, being 1 when the light 
+switch is on and 0 when it is off. Note that in this case the implementation
+does not extend (inherit from) the specification as was the case in the 
+mathematical function refinement in Figure \ref{fig:prepost}. Instead, the
+proof corresponding to equation (\ref{eq:refinement}) above is provided
+in the separate class \name{RefinementProof} in Figure \ref{fig:lightswitch-proof}.
+To express the refinement property to be proved, an instance \name{spec} of the
+specification and an instance \name{impl} are created such that we can refer to their respective operations (functions). Then the abstraction function \name{abs} is defined from the concrete state of integers to the abstract state \name{State}
+of the specification. Finally, the requirement is the \Klang{} formulation of 
+equation (\ref{eq:refinement}) above, ignoring the pre-condition part since all
+pre-conditions in this example are true. The \Klang{} solver proves the
+implementation correct automatically. An incorrect modification of the implementation, such as for example to change the body of \name{isOn} in 
+the implementation to $cs = 0$ will dually be caught by the solver.
+
+
+\begin{figure}
+\centering
+\begin{tabular}{c}
+\hline \\
+\lstinputlisting[firstline=29]{examples/lightswitch.k} \\ \\
+\hline
+\end{tabular}
+\caption{Lightswitch refinement proof}
+\label{fig:lightswitch-proof}
+\end{figure}

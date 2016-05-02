@@ -21,4 +21,3 @@ class Employee extends Person {
   req this =  officemate.officemate
   req avoid(boss)
 }
-
