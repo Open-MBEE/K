@@ -21,7 +21,7 @@ trait TopDecl
     var annotations: List[Annotation],
     entityToken: EntityToken,
     keyword: Option[String],
-    ident: String,x
+    ident: String,
     typeParams: List[TypeParam],
     extending: List[Type],
     members: List[MemberDecl]

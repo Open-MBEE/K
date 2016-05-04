@@ -9,7 +9,9 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="src/antlr-4.4-complete.jar"/>
 	<classpathentry kind="lib" path="lib"/>
-	<classpathentry kind="lib" path="lib/elastic4s_2.11-1.5.2-SNAPSHOT.jar"/>
+<!-- 	<classpathentry kind="lib" path="/Users/bclement/git/KLang/export/lib/scalalib/scala-actors-2.11.0.jar"/>
+ -->
+ 	<classpathentry kind="lib" path="lib/elastic4s_2.11-1.5.2-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="lib/elasticsearch-1.5.0/elasticsearch-1.5.0.jar"/>
 	<classpathentry kind="lib" path="lib/elasticsearch-1.5.0/log4j-1.2.17.jar"/>
 	<classpathentry kind="lib" path="lib/elasticsearch-1.5.0/lucene-analyzers-common-4.10.4.jar"/>
@@ -60,5 +62,20 @@
 	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jsp/jetty-jsp-jdt-2.3.3.jar"/>
 	<classpathentry kind="lib" path="src/web/jettyService/jetty-distribution-9.2.12.v20150709/lib/jsp/org.eclipse.jdt.core-3.8.2.v20130121.jar"/>
 	<classpathentry kind="lib" path="lib/com.microsoft.z3.jar"/>
+	<!-- <classpathentry kind="lib" path="export/lib/scalalib"/> -->
+ 	<classpathentry kind="lib" path="export/lib/scalalib/akka-actor_2.11-2.3.10.jar"/>
+	<classpathentry kind="lib" path="export/lib/scalalib/config-1.2.1.jar"/>
+	<classpathentry kind="lib" path="export/lib/scalalib/jline-2.12.1.jar"/>
+	<classpathentry kind="lib" path="export/lib/scalalib/scala-actors-2.11.0.jar"/>
+	<classpathentry kind="lib" path="export/lib/scalalib/scala-actors-migration_2.11-1.1.0.jar"/>
+	<classpathentry kind="lib" path="export/lib/scalalib/scala-compiler.jar"/>
+	<classpathentry kind="lib" path="export/lib/scalalib/scala-continuations-library_2.11-1.0.2.jar"/>
+	<classpathentry kind="lib" path="export/lib/scalalib/scala-continuations-plugin_2.11.7-1.0.2.jar"/>
+	<classpathentry kind="lib" path="export/lib/scalalib/scala-library.jar"/>
+	<classpathentry kind="lib" path="export/lib/scalalib/scala-parser-combinators_2.11-1.0.4.jar"/>
+	<classpathentry kind="lib" path="export/lib/scalalib/scala-reflect.jar"/>
+	<classpathentry kind="lib" path="export/lib/scalalib/scala-swing_2.11-1.0.2.jar"/>
+	<classpathentry kind="lib" path="export/lib/scalalib/scala-xml_2.11-1.0.4.jar"/>
+	<classpathentry kind="lib" path="export/lib/scalalib/scalap-2.11.7.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
