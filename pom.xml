@@ -178,5 +178,10 @@
 			<type>so</type>
 			<systemPath>${project.basedir}/lib/libz3.so</systemPath>
 		</dependency>
+        <dependency>
+            <groupId>com.sksamuel.elastic4s</groupId>
+            <artifactId>elastic4s</artifactId>
+            <version>0.90.2.8</version>
+        </dependency>
 	</dependencies>
 </project>
