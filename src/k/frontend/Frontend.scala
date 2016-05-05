@@ -223,6 +223,7 @@ object Frontend {
         println("-----------------")
         println()
       }
+      println(UtilSMT.statistics)
       try {
         val res = runWithTimeout(timeoutValue) { K2Z3.solveSMT(combinedModel, smtModel, true) }
         if (res.isEmpty) log("Timeout")
