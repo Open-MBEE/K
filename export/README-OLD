@@ -1,0 +1,15 @@
+To create a new K drop, ensure that you have the latest k.jar file exported from the sources. This s\
+hould be placed in the lib folder.
+
+Invoke createKDrop script and provide an operating system (windows or osx) followed by the path to a\
+ directory where you want the drop created.
+
+A new directory "k-OSNAME-DATE" will be created where OSNAME is the name of the target operating sys\
+tem and DATE is today's date.
+
+This directory will contain everything to execute K on the target OS.
+
+Use 'all' script to create drops for all operarting systems in current folder
+
+Note: you need bash installed on Windows if you need to use this infrastructure on a windows machine\
+. Nothing special needed for OSX
