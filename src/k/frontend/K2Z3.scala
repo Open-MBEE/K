@@ -69,8 +69,8 @@ case class DataType(sort: Sort, constructor: FuncDecl, selectors: Map[String, Fu
 
 object K2Z3 {
 
-  var debug: Boolean = true
-  var debugRawModel: Boolean = true
+  var debug: Boolean = false
+  var debugRawModel: Boolean = false
   val printExtraEntries: Boolean = true
   var silent: Boolean = false
   var cfg: Map[String, String] = Map(
