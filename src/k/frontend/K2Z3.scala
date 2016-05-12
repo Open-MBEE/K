@@ -182,8 +182,8 @@ object K2Z3 {
           if (Misc.isCollection(x._1.ty)) {
             val setName = x._2.split("!").last.replace(")", "")
             val setValue = z3Model.getFuncDecls.find { x => x.getName.toString == setName }
-            //if (z3Model.getFuncInterp(setValue.get))
-            x._1.name + ":: " + getStringForSets(setValue.get, x._1.ty)
+            if (setValue.isEmpty) x._1.name + ":: [Empty Seq]"
+            else x._1.name + ":: " + getStringForSets(setValue.get, x._1.ty)
           } else if (!TypeChecker.isPrimitiveType(x._1.ty)) {
             toPrint = x._2 :: toPrint
             (x._1.name + ":: Ref " + x._2)
