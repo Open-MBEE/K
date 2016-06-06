@@ -21,8 +21,13 @@ import org.json.JSONObject
 import k.frontend.ModelParser.ModelContext
 import org.json.JSONTokener
 import scala.collection.mutable.{ ListBuffer => MList }
-import scala.actors.Futures._
+import scala.concurrent._
+//import scala.actors.Futures._
 import java.nio.file._
+import scala.concurrent.Await
+import scala.concurrent.duration._
+import scala.concurrent.Awaitable
+
 
 object Frontend {
 
@@ -61,7 +66,7 @@ object Frontend {
       case "-latex" :: tail    => parseArgs(map ++ Map('latex -> true), tail)
       case "-scala" :: tail    => parseArgs(map ++ Map('scala -> true), tail)
       case "-json" :: tail     => parseArgs(map ++ Map('printJson -> true), tail)
-      case "-tc" :: tail     => parseArgs(map ++ Map('tc -> true), tail)
+      case "-tc" :: tail       => parseArgs(map ++ Map('tc -> true), tail)
       case "-mmsJson" :: value :: tail =>
         parseArgs(map ++ Map('mmsJson -> value), tail)
       case "-expressionToJson" :: value :: tail =>
@@ -223,6 +228,7 @@ object Frontend {
         println("-----------------")
         println()
       }
+      println(UtilSMT.statistics)
       try {
         val res = runWithTimeout(timeoutValue) { K2Z3.solveSMT(combinedModel, smtModel, true) }
         if (res.isEmpty) log("Timeout")
@@ -471,7 +477,12 @@ object Frontend {
   }
 
   def runWithTimeout[T](timeoutMs: Long)(f: => T): Option[T] = {
-    awaitAll(timeoutMs, future(f)).head.asInstanceOf[Option[T]]
+    //awaitAll(timeoutMs, future(f)).head.asInstanceOf[Option[T]]
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+
+    val x = Await.result(future(f), Duration.create(timeoutMs, "ms"))
+    None    
   }
 
   def doTests(saveBaseline: Boolean) {

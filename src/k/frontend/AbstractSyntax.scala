@@ -31,6 +31,12 @@ object UtilAST {
     if (ASTOptions.debug) println(s"[-- debug --: $text]")
   }
 
+  def dotDepth(exp: Exp): Int = {
+    exp match {
+      case DotExp(exp1, _) => 1 + dotDepth(exp1)
+      case _               => 0
+    }
+  }
 }
 import UtilAST._
 import ClassHierarchy._
@@ -42,6 +48,7 @@ object UtilSMT {
   var constraintCounter = 0
   var constraintMessageMap: Map[String, String] = Map()
   var objectGraph: HeapLayout = null
+  var statistics: Statistics = null
   var variableCounter: Int = 0
   var heapInitializerConstants: List[(Int, String, String)] = Nil // index into heap, class name, constant
 
@@ -344,6 +351,165 @@ object UtilSMT {
   }
 }
 
+class Statistics {
+  // --- Top level: ---
+  var CLASSDEF: Int = 0
+  var EXTENSION: Int = 0
+  var PROPERTY: Int = 0
+  var FUNDECL: Int = 0
+  var FUNSPEC: Int = 0
+  var PRECONDITION: Int = 0
+  var POSTCONDITION: Int = 0
+  var CONSTRAINT: Int = 0
+  // --- Types: ---
+  var REFTYPE: Int = 0
+  var TUPLETYPE: Int = 0
+  var SETTYPE: Int = 0
+  var SEQTYPE: Int = 0
+  var FUNTYPE: Int = 0
+  var INTTYPE: Int = 0
+  var REALTYPE: Int = 0
+  var BOOLTYPE: Int = 0
+  var STRINGTYPE: Int = 0
+  var CHARTYPE: Int = 0
+  var UNITTYPE: Int = 0
+  var PARENTYPE: Int = 0
+  var SUBTYPE: Int = 0
+  // --- Expressions: ---
+  var PARENEXP: Int = 0
+  var DOTEXP: Int = 0
+  var DOTEXPLONG: Int = 0
+  var DOTEXPMAX: Int = 0
+  var FUNAPPL: Int = 0
+  var IFEXP: Int = 0
+  var BLOCK: Int = 0
+  var BINEXP: Int = 0
+  var UNARYEXP: Int = 0
+  var TUPLEEXP: Int = 0
+  var FORALLEXP: Int = 0
+  var EXISTSEXP: Int = 0
+  var QUANTINT: Int = 0
+  var QUANTREAL: Int = 0
+  var QUANTSET: Int = 0
+  var QUANTSEQ: Int = 0
+  var SETENUMEXP: Int = 0
+  var SETRANGEEXP: Int = 0
+  var SETCOMPREXP: Int = 0
+  var SEQENUMEXP: Int = 0
+  var SEQRANGEEXP: Int = 0
+  var SEQCOMPREXP: Int = 0
+  var LAMBDAEXP: Int = 0
+  var TYPECASTEXP: Int = 0
+  var TYPECHECKEXP: Int = 0
+  var MULOP: Int = 0
+  var DIVOP: Int = 0
+  var REMOP: Int = 0
+  var SETOP: Int = 0
+  var SETOPISIN: Int = 0
+  var SEQOP: Int = 0
+  var INTLIT: Int = 0
+  var REALLIT: Int = 0
+  var STRINGLIT: Int = 0
+  var BOOLLIT: Int = 0
+  var NULLLIT: Int = 0
+  var THISLIT: Int = 0
+
+  val INDENT: String = " " * 8
+  val TEXT_WIDTH: Int = 25
+  val TABLE_WIDTH: Int = 30
+  var result = ""
+
+  def data(str: String, count: Int) {
+    if (count != 0) {
+      val sep: String = " " * (TEXT_WIDTH - str.length)
+      result += INDENT + str + sep + ":" + " " + count + "\n"
+    }
+  }
+
+  def text(str: String) {
+    result += INDENT + str + "\n"
+  }
+
+  def headline(str: String) {
+    val initStr = s"--- $str: "
+    val remStr = "-" * (TABLE_WIDTH - initStr.length)
+    text(initStr + remStr)
+  }
+  
+  override def toString: String = {
+    val line: String = "-" * TABLE_WIDTH
+    val dline: String = "=" * TABLE_WIDTH
+    text("")
+    text(dline)
+    text("         STATISTICS:")
+    text(dline)
+    headline("declarations")
+    data("class definitions", CLASSDEF)
+    data("class extensions", EXTENSION)
+    data("properties", PROPERTY)
+    data("functions", FUNDECL)
+    data("function specs", FUNSPEC)
+    data("pre conditions", PRECONDITION)
+    data("post conditions", POSTCONDITION)
+    data("constraints", CONSTRAINT)
+    headline("types")
+    data("ref types", REFTYPE)
+    data("tuple types", TUPLETYPE)
+    data("set types", SETTYPE)
+    data("seq types", SEQTYPE)
+    data("function types", FUNTYPE)
+    data("int types", INTTYPE)
+    data("real types", REALTYPE)
+    data("bool types", BOOLTYPE)
+    data("string types", STRINGTYPE)
+    data("char types", CHARTYPE)
+    data("unit types", UNITTYPE)
+    data("parenthesized types", PARENTYPE)
+    data("subtypes", SUBTYPE)
+    headline("expressions")
+    data("parenthesized exp", PARENEXP)
+    data("dot exp", DOTEXP)
+    data("dot exp long", DOTEXPLONG)
+    data("dot exp max", DOTEXPMAX)
+    data("fun appl exp", FUNAPPL)
+    data("if exp", IFEXP)
+    data("block exp", BLOCK)
+    data("binary exp", BINEXP)
+    data("unary exp", UNARYEXP)
+    data("tuple exp", TUPLEEXP)
+    data("forall exp", FORALLEXP)
+    data("exists exp", EXISTSEXP)
+    data("quantifed int", QUANTINT)
+    data("quantifed real", QUANTREAL)
+    data("quantifed set", QUANTSET)
+    data("quantifed seq", QUANTSEQ)
+    data("set enumeration exp", SETENUMEXP)
+    data("set range exp", SETRANGEEXP)
+    data("set comprehension exp", SETCOMPREXP)
+    data("seq enumeration exp", SEQENUMEXP)
+    data("seq range exp", SEQRANGEEXP)
+    data("seq comprehension exp", SEQCOMPREXP)
+    data("lambda exp", LAMBDAEXP)
+    data("type cast exp", TYPECASTEXP)
+    data("type check exp", TYPECHECKEXP)
+    data("multiplication exp", MULOP)
+    data("division exp", DIVOP)
+    data("remainder exp", REMOP)
+    data("set infix exp", SETOP)
+    data("seq infix exp", SEQOP)
+    data("set membership exp", SETOPISIN)
+    data("int literal exp", INTLIT)
+    data("real literal exp", REALLIT)
+    data("string literal exp", STRINGLIT)
+    data("bool literal exp", BOOLLIT)
+    data("null literal exp", NULLLIT)
+    data("this literal exp", THISLIT)
+
+    text(line)
+    result
+  }
+}
+
 class InstantiationGraph(model: Model) {
   type ClassName = String
 
@@ -507,6 +673,8 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
   def toSMT: String = {
     val model: Model = UtilSMT.transformModel(this)
     UtilSMT.objectGraph = new HeapLayout(model)
+    UtilSMT.statistics = new Statistics()
+    decls foreach (_.statistics())
     val entityDecls = model.decls.asInstanceOf[List[EntityDecl]].filterNot {
       case ed => ed.annotations exists {
         case Annotation(name, _) => name.equals("ignore")
@@ -787,7 +955,7 @@ case class ImportDecl(name: QualifiedName, star: Boolean) {
 }
 
 trait TopDecl {
-  // def toSMT: String = ???
+  def statistics() {}
   def toScala: String = ???
   def toJson: JSONObject = {
     if (ASTOptions.useJson1) toJson1
@@ -798,13 +966,19 @@ trait TopDecl {
 }
 
 case class EntityDecl(
-  var annotations: List[Annotation],
-  entityToken: EntityToken,
-  keyword: Option[String],
-  ident: String,
-  typeParams: List[TypeParam],
-  extending: List[Type],
-  members: List[MemberDecl]) extends TopDecl {
+    var annotations: List[Annotation],
+    entityToken: EntityToken,
+    keyword: Option[String],
+    ident: String,
+    typeParams: List[TypeParam],
+    extending: List[Type],
+    members: List[MemberDecl]) extends TopDecl {
+
+  override def statistics() {
+    UtilSMT.statistics.CLASSDEF += 1
+    UtilSMT.statistics.EXTENSION += extending.length
+    members foreach (_.statistics())
+  }
 
   def toSMTDatatype: String = {
     val propertyDecls = getAllPropertyDecls
@@ -1178,6 +1352,17 @@ case class PropertyDecl(modifiers: List[PropertyModifier],
                         assignment: Option[Boolean],
                         expr: Option[Exp]) extends MemberDecl {
 
+  override def statistics() {
+    UtilSMT.statistics.PROPERTY += 1
+    ty.statistics()
+    expr match {
+      case None =>
+      case Some(e) =>
+        UtilSMT.statistics.CONSTRAINT += 1
+        e.statistics()
+    }
+  }
+
   def toSMT: String = s"($name ${ty.toSMT})"
 
   override def toScala = {
@@ -1267,6 +1452,14 @@ case object Target extends PropertyModifier {
 }
 
 case class FunSpec(pre: Boolean, exp: Exp) {
+  def statistics() {
+    if (pre)
+      UtilSMT.statistics.PRECONDITION += 1
+    else
+      UtilSMT.statistics.POSTCONDITION += 1
+    exp.statistics()
+  }
+
   override def toString =
     if (pre) s"pre $exp" else s"post $exp"
 
@@ -1280,6 +1473,10 @@ case class FunSpec(pre: Boolean, exp: Exp) {
 }
 
 case class Param(name: String, ty: Type) {
+  def statistics() {
+    ty.statistics()
+  }
+
   def toSMT: String = s"($name ${ty.toSMT})"
 
   def toSMTName: String = name
@@ -1304,6 +1501,18 @@ case class FunDecl(ident: String,
                    ty: Option[Type],
                    spec: List[FunSpec],
                    body: List[MemberDecl]) extends MemberDecl {
+
+  override def statistics() {
+    UtilSMT.statistics.FUNDECL += 1
+    params foreach (_.statistics())
+    ty match {
+      case None    =>
+      case Some(t) => t.statistics()
+    }
+    UtilSMT.statistics.FUNSPEC += spec.length
+    spec foreach (_.statistics())
+    body foreach (_.statistics())
+  }
 
   override def toSMT(className: String): String = {
     var result: String = ""
@@ -1486,6 +1695,11 @@ case class FunDecl(ident: String,
 }
 
 case class ConstraintDecl(name: Option[String], exp: Exp) extends MemberDecl {
+  override def statistics() {
+    UtilSMT.statistics.CONSTRAINT += 1
+    exp.statistics()
+  }
+
   override def toSMT(className: String): String =
     UtilSMT.error(this.toString)
 
@@ -1531,6 +1745,8 @@ case class ExpressionDecl(exp: Exp) extends MemberDecl {
 }
 
 trait Exp {
+  def statistics() {}
+
   def freeVariables: Set[String] = Set()
 
   def substitute(substitution: Map[String, Exp]): Exp =
@@ -1559,6 +1775,11 @@ trait Exp {
 }
 
 case class ParenExp(exp: Exp) extends Exp {
+  override def statistics() {
+    UtilSMT.statistics.PARENEXP += 1
+    exp.statistics()
+  }
+
   override def freeVariables: Set[String] = exp.freeVariables
 
   override def substitute(substitution: Map[String, Exp]): Exp =
@@ -1643,6 +1864,14 @@ case class IdentExp(ident: String) extends Exp {
 }
 
 case class DotExp(exp: Exp, ident: String) extends Exp {
+  override def statistics() {
+    val depth = dotDepth(this)
+    UtilSMT.statistics.DOTEXP += 1
+    UtilSMT.statistics.DOTEXPMAX = Math.max(UtilSMT.statistics.DOTEXPMAX, depth)
+    if (depth > 1)
+      UtilSMT.statistics.DOTEXPLONG += 1
+  }
+
   override def freeVariables: Set[String] = exp.freeVariables
 
   override def substitute(substitution: Map[String, Exp]): Exp = {
@@ -1690,6 +1919,12 @@ case class DotExp(exp: Exp, ident: String) extends Exp {
 // KH: first argument should be 'exp' really.
 
 case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
+  override def statistics() {
+    UtilSMT.statistics.FUNAPPL += 1
+    exp1.statistics()
+    args foreach (_.statistics())
+  }
+
   override def freeVariables: Set[String] = {
     val freeArgVariables = args.flatMap(_.freeVariables).toSet
     exp1.freeVariables union freeArgVariables
@@ -1775,6 +2010,16 @@ case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
 }
 
 case class IfExp(cond: Exp, trueBranch: Exp, falseBranch: Option[Exp]) extends Exp {
+  override def statistics() {
+    UtilSMT.statistics.IFEXP += 1
+    cond.statistics()
+    trueBranch.statistics()
+    falseBranch match {
+      case None    =>
+      case Some(e) => e.statistics()
+    }
+  }
+
   override def freeVariables: Set[String] =
     cond.freeVariables union
       trueBranch.freeVariables union
@@ -1934,6 +2179,11 @@ case class MatchCase(patterns: List[Pattern], exp: Exp) extends Exp {
 }
 
 case class BlockExp(body: List[MemberDecl]) extends Exp {
+  override def statistics() {
+    UtilSMT.statistics.BLOCK += 1
+    body foreach (_.statistics())
+  }
+
   override def toSMT(className: String, subTyping: Boolean): String =
     UtilSMT.memberList2SMT(body, className, subTyping)
 
@@ -2036,6 +2286,13 @@ case class ForExp(pattern: Pattern, exp: Exp, body: Exp) extends Exp {
 }
 
 case class BinExp(exp1: Exp, op: BinaryOp, exp2: Exp) extends Exp {
+  override def statistics() {
+    UtilSMT.statistics.BINEXP += 1
+    op.statistics()
+    exp1.statistics()
+    exp2.statistics()
+  }
+
   override def freeVariables: Set[String] =
     exp1.freeVariables union exp2.freeVariables
 
@@ -2065,7 +2322,13 @@ case class BinExp(exp1: Exp, op: BinaryOp, exp2: Exp) extends Exp {
             val indexFunSMT = s"_$exp2SMT"
             s"($indexFunSMT $exp1SMT)"
           case ISIN =>
-            s"(select $exp2SMT $exp1SMT)"
+            // @@@\
+            // s"(select $exp2SMT $exp1SMT)"
+            if (true)
+              s"(select $exp2SMT $exp1SMT)"
+            else
+              s"(seq.contains $exp2SMT (seq.unit $exp1SMT))"
+            // @@@/
           case NOTISIN =>
             s"(not (select $exp2SMT $exp1SMT))"
           case PSUBSET =>
@@ -2189,6 +2452,12 @@ case class BinExp(exp1: Exp, op: BinaryOp, exp2: Exp) extends Exp {
 }
 
 case class UnaryExp(op: UnaryOp, exp: Exp) extends Exp {
+  override def statistics() {
+    UtilSMT.statistics.UNARYEXP += 1
+    op.statistics()
+    exp.statistics()
+  }
+
   override def freeVariables: Set[String] =
     exp.freeVariables
 
@@ -2241,6 +2510,12 @@ case class UnaryExp(op: UnaryOp, exp: Exp) extends Exp {
 case class QuantifiedExp(quant: Quantifier,
                          bindings: List[RngBinding],
                          exp: Exp) extends Exp {
+
+  override def statistics() {
+    quant.statistics()
+    bindings foreach (_.statistics())
+    exp.statistics()
+  }
 
   override def freeVariables: Set[String] = {
     val boundNames = bindings.flatMap(_.boundNames)
@@ -2295,6 +2570,11 @@ case class QuantifiedExp(quant: Quantifier,
 }
 
 case class TupleExp(exps: List[Exp]) extends Exp {
+  override def statistics() {
+    UtilSMT.statistics.TUPLEEXP += 1
+    exps foreach (_.statistics())
+  }
+
   override def freeVariables: Set[String] =
     exps.flatMap(_.freeVariables).toSet
 
@@ -2354,6 +2634,16 @@ case object BagKind extends CollectionKind {
 }
 
 case class CollectionEnumExp(kind: CollectionKind, exps: List[Exp]) extends Exp {
+  override def statistics() {
+    kind match {
+      case SetKind =>
+        UtilSMT.statistics.SETENUMEXP += 1
+      case SeqKind =>
+        UtilSMT.statistics.SEQENUMEXP += 1
+    }
+    exps foreach (_.statistics())
+  }
+
   override def freeVariables: Set[String] =
     exps.flatMap(_.freeVariables).toSet
 
@@ -2407,6 +2697,17 @@ case class CollectionEnumExp(kind: CollectionKind, exps: List[Exp]) extends Exp 
 }
 
 case class CollectionRangeExp(kind: CollectionKind, exp1: Exp, exp2: Exp) extends Exp {
+  override def statistics() {
+    kind match {
+      case SetKind =>
+        UtilSMT.statistics.SETRANGEEXP += 1
+      case SeqKind =>
+        UtilSMT.statistics.SEQRANGEEXP += 1
+    }
+    exp1.statistics()
+    exp2.statistics()
+  }
+
   override def freeVariables: Set[String] =
     exp1.freeVariables union exp2.freeVariables
 
@@ -2470,6 +2771,18 @@ case class CollectionComprExp(kind: CollectionKind,
                               exp1: Exp,
                               bindings: List[RngBinding],
                               exp2: Exp) extends Exp {
+
+  override def statistics() {
+    kind match {
+      case SetKind =>
+        UtilSMT.statistics.SETCOMPREXP += 1
+      case SeqKind =>
+        UtilSMT.statistics.SEQCOMPREXP += 1
+    }
+    exp1.statistics()
+    exp2.statistics()
+    bindings foreach (_.statistics())
+  }
 
   override def freeVariables: Set[String] = {
     val boundNames = bindings.flatMap(_.boundNames).toSet
@@ -2545,6 +2858,11 @@ case class CollectionComprExp(kind: CollectionKind,
 }
 
 case class LambdaExp(pat: Pattern, exp: Exp) extends Exp {
+  override def statistics() {
+    UtilSMT.statistics.LAMBDAEXP += 1
+    exp.statistics()
+  }
+
   override def freeVariables: Set[String] =
     exp.freeVariables -- pat.boundNames
 
@@ -2594,6 +2912,15 @@ case class AssertExp(exp: Exp) extends Exp {
 }
 
 case class TypeCastCheckExp(cast: Boolean, exp: Exp, ty: Type) extends Exp {
+  override def statistics() {
+    if (cast)
+      UtilSMT.statistics.TYPECASTEXP += 1
+    else
+      UtilSMT.statistics.TYPECHECKEXP += 1
+    exp.statistics()
+    ty.statistics()
+  }
+
   override def freeVariables: Set[String] =
     exp.freeVariables // TODO type expressions can also contain expressions
 
@@ -2749,6 +3076,10 @@ case object StarExp extends Exp {
 trait Argument extends Exp
 
 case class PositionalArgument(exp: Exp) extends Argument {
+  override def statistics() {
+    exp.statistics()
+  }
+
   override def freeVariables: Set[String] =
     exp.freeVariables
 
@@ -2778,6 +3109,10 @@ case class PositionalArgument(exp: Exp) extends Argument {
 }
 
 case class NamedArgument(ident: String, exp: Exp) extends Argument {
+  override def statistics() {
+    exp.statistics()
+  }
+
   override def freeVariables: Set[String] =
     exp.freeVariables
 
@@ -2806,6 +3141,8 @@ case class NamedArgument(ident: String, exp: Exp) extends Argument {
 }
 
 trait BinaryOp {
+  def statistics() {}
+
   def toSMT: String = UtilSMT.error(this.toString)
   def toScala: String = ???
   def toJsonName: String
@@ -2910,6 +3247,10 @@ case object NEQ extends BinaryOp {
 }
 
 case object MUL extends BinaryOp {
+  override def statistics() {
+    UtilSMT.statistics.MULOP += 1
+  }
+
   override def toSMT = "*"
 
   override def toScala = "*"
@@ -2920,6 +3261,10 @@ case object MUL extends BinaryOp {
 }
 
 case object DIV extends BinaryOp {
+  override def statistics() {
+    UtilSMT.statistics.DIVOP += 1
+  }
+
   override def toSMT = "/"
 
   override def toScala = "/"
@@ -2930,6 +3275,10 @@ case object DIV extends BinaryOp {
 }
 
 case object REM extends BinaryOp {
+  override def statistics() {
+    UtilSMT.statistics.REMOP += 1
+  }
+
   override def toScala = "%"
 
   override def toString = "%"
@@ -2938,6 +3287,10 @@ case object REM extends BinaryOp {
 }
 
 case object SETINTER extends BinaryOp {
+  override def statistics() {
+    UtilSMT.statistics.SETOP += 1
+  }
+
   override def toSMT = "intersect"
 
   override def toString = "inter"
@@ -2946,12 +3299,20 @@ case object SETINTER extends BinaryOp {
 }
 
 case object SETDIFF extends BinaryOp {
+  override def statistics() {
+    UtilSMT.statistics.SETOP += 1
+  }
+
   override def toString = "\\"
 
   override def toJsonName = "SetDiff"
 }
 
 case object LISTCONCAT extends BinaryOp {
+  override def statistics() {
+    UtilSMT.statistics.SEQOP += 1
+  }
+
   override def toString = "^"
 
   override def toJsonName = "Concat"
@@ -2984,6 +3345,10 @@ case object SUB extends BinaryOp {
 }
 
 case object SETUNION extends BinaryOp {
+  override def statistics() {
+    UtilSMT.statistics.SETOP += 1
+  }
+
   override def toSMT = "union"
 
   override def toString = "union"
@@ -2992,6 +3357,9 @@ case object SETUNION extends BinaryOp {
 }
 
 case object ISIN extends BinaryOp {
+  override def statistics() {
+    UtilSMT.statistics.SETOPISIN += 1
+  }
 
   override def toString = "isin"
 
@@ -2999,12 +3367,20 @@ case object ISIN extends BinaryOp {
 }
 
 case object NOTISIN extends BinaryOp {
+  override def statistics() {
+    UtilSMT.statistics.SETOPISIN += 1
+  }
+
   override def toString = "!isin"
 
   override def toJsonName = "NotIn"
 }
 
 case object SUBSET extends BinaryOp {
+  override def statistics() {
+    UtilSMT.statistics.SETOP += 1
+  }
+
   override def toSMT = "subset"
 
   override def toString = "subset"
@@ -3013,6 +3389,10 @@ case object SUBSET extends BinaryOp {
 }
 
 case object PSUBSET extends BinaryOp {
+  override def statistics() {
+    UtilSMT.statistics.SETOP += 1
+  }
+
   override def toString = "psubset"
 
   override def toJsonName = "PSubset"
@@ -3027,6 +3407,8 @@ case object ASSIGN extends BinaryOp {
 }
 
 trait UnaryOp {
+  def statistics() {}
+
   def toSMT: String = UtilSMT.error(this.toString)
 
   def toScala: String = ???(s"'$this' is not translated to Scala")
@@ -3065,6 +3447,10 @@ trait Literal extends Exp {
 }
 
 case class IntegerLiteral(i: Int) extends Literal {
+  override def statistics() {
+    UtilSMT.statistics.INTLIT += 1
+  }
+  
   override def toSMT(className: String, subTyping: Boolean): String = {
     i.toString
   }
@@ -3090,6 +3476,10 @@ case class IntegerLiteral(i: Int) extends Literal {
 }
 
 case class RealLiteral(f: java.math.BigDecimal) extends Literal {
+  override def statistics() {
+    UtilSMT.statistics.REALLIT += 1
+  }
+  
   override def toSMT(className: String, subTyping: Boolean): String = {
     f.formatted("%.16f")
   }
@@ -3136,6 +3526,10 @@ case class CharacterLiteral(c: Char) extends Literal {
 }
 
 case class StringLiteral(s: String) extends Literal {
+  override def statistics() {
+    UtilSMT.statistics.STRINGLIT += 1
+  }
+  
   override def toString = s
 
   override def toJson1 = {
@@ -3155,6 +3549,10 @@ case class StringLiteral(s: String) extends Literal {
 }
 
 case class BooleanLiteral(b: Boolean) extends Literal {
+  override def statistics() {
+    UtilSMT.statistics.BOOLLIT += 1
+  }
+  
   override def toSMT(className: String, subTyping: Boolean): String = b.toString
 
   override def toString = b.toString
@@ -3176,6 +3574,10 @@ case class BooleanLiteral(b: Boolean) extends Literal {
 }
 
 case object NullLiteral extends Literal {
+  override def statistics() {
+    UtilSMT.statistics.NULLLIT += 1
+  }
+  
   override def toString = "null"
 
   override def toJson1 = {
@@ -3192,6 +3594,10 @@ case object NullLiteral extends Literal {
 }
 
 case object ThisLiteral extends Literal {
+  override def statistics() {
+    UtilSMT.statistics.THISLIT += 1
+  }
+  
   override def toSMT(className: String, subTyping: Boolean) = "this"
 
   override def toString = "this"
@@ -3210,6 +3616,8 @@ case object ThisLiteral extends Literal {
 }
 
 trait Quantifier {
+  def statistics() {}
+
   def toSMT: String
 
   def toJson: JSONObject = {
@@ -3222,6 +3630,10 @@ trait Quantifier {
 }
 
 case object Forall extends Quantifier {
+  override def statistics() {
+    UtilSMT.statistics.FORALLEXP += 1
+  }
+
   def toSMT = "forall"
 
   override def toString = "forall"
@@ -3243,6 +3655,10 @@ case object Forall extends Quantifier {
 }
 
 case object Exists extends Quantifier {
+  override def statistics() {
+    UtilSMT.statistics.EXISTSEXP += 1
+  }
+
   def toSMT = "exists"
 
   override def toString = "exists"
@@ -3264,6 +3680,7 @@ case object Exists extends Quantifier {
 }
 
 trait Type {
+  def statistics() {}
   def toSMT: String = UtilSMT.error(this.toString)
   def toScala: String = ???
   def toJson: JSONObject = {
@@ -3312,14 +3729,28 @@ case class ClassType(ident: QualifiedName) extends Type {
 }
 
 case class IdentType(ident: QualifiedName, args: List[Type]) extends Type {
+  override def statistics() {
+    (ident.names, args) match {
+      case (name :: Nil, ty :: Nil) if Misc.isCollection(name) =>
+        name match {
+          case "Set"  => UtilSMT.statistics.SETTYPE += 1
+          case "Bag"  =>
+          case "Seq"  => UtilSMT.statistics.SEQTYPE += 1
+          case "OSet" =>
+        }
+      case _ =>
+        UtilSMT.statistics.REFTYPE += 1
+    }
+  }
+
   override def toSMT: String = {
     (ident.names, args) match {
       case (name :: Nil, ty :: Nil) if Misc.isCollection(name) =>
         val tySMT = ty.toSMT
         val kindSMT = name match {
-          case "Set" => "Set"
-          case "Bag" => "Bag"
-          case "Seq" => "List"
+          case "Set"  => "Set"
+          case "Bag"  => "Bag"
+          case "Seq"  => "Seq"
           case "OSet" => "OSet"
         }
         s"($kindSMT $tySMT)"
@@ -3357,6 +3788,12 @@ case class IdentType(ident: QualifiedName, args: List[Type]) extends Type {
 
 case class CartesianType(types: List[Type]) extends Type {
   // Probably needs to be a Ref.
+
+  override def statistics() {
+    UtilSMT.statistics.TUPLETYPE += 1
+    types foreach (_.statistics())
+  }
+
   override def toSMT: String = {
     val typesSMT = types.map(_.toSMT).mkString(" ")
     val typeSMT = s"Tuple${types.length}"
@@ -3385,6 +3822,12 @@ case class CartesianType(types: List[Type]) extends Type {
 }
 
 case class FunctionType(from: Type, to: Type) extends Type {
+  override def statistics() {
+    UtilSMT.statistics.FUNTYPE += 1
+    from.statistics()
+    to.statistics()
+  }
+
   override def toString = s"$from -> $to"
 
   override def toJson1 = {
@@ -3406,6 +3849,10 @@ case class FunctionType(from: Type, to: Type) extends Type {
 }
 
 case class ParenType(ty: Type) extends Type {
+  override def statistics() {
+    UtilSMT.statistics.PARENTYPE += 1
+  }
+
   override def toSMT: String = ty.toSMT
 
   override def toScala: String = s"(${ty.toScala})"
@@ -3429,6 +3876,12 @@ case class ParenType(ty: Type) extends Type {
 }
 
 case class SubType(ident: String, ty: Type, exp: Exp) extends Type {
+  override def statistics() {
+    UtilSMT.statistics.SUBTYPE += 1
+    ty.statistics()
+    exp.statistics()
+  }
+
   override def toString = s"{| $ident : $ty . $exp |}"
 
   override def toJson1 = {
@@ -3455,6 +3908,10 @@ case class SubType(ident: String, ty: Type, exp: Exp) extends Type {
 trait PrimitiveType extends Type
 
 case object BoolType extends PrimitiveType {
+  override def statistics() {
+    UtilSMT.statistics.BOOLTYPE += 1
+  }
+
   override def toSMT: String = "Bool"
 
   override def toScala: String = "Boolean"
@@ -3475,6 +3932,10 @@ case object BoolType extends PrimitiveType {
 }
 
 case object CharType extends PrimitiveType {
+  override def statistics() {
+    UtilSMT.statistics.CHARTYPE += 1
+  }
+
   override def toString = "Char"
 
   override def toJson1 = {
@@ -3491,6 +3952,10 @@ case object CharType extends PrimitiveType {
 }
 
 case object IntType extends PrimitiveType {
+  override def statistics() {
+    UtilSMT.statistics.INTTYPE += 1
+  }
+
   override def toSMT: String = "Int"
 
   override def toScala: String = "Int"
@@ -3511,6 +3976,10 @@ case object IntType extends PrimitiveType {
 }
 
 case object RealType extends PrimitiveType {
+  override def statistics() {
+    UtilSMT.statistics.REALTYPE += 1
+  }
+
   override def toSMT: String = "Real"
 
   override def toScala: String = "Flot"
@@ -3531,6 +4000,10 @@ case object RealType extends PrimitiveType {
 }
 
 case object StringType extends PrimitiveType {
+  override def statistics() {
+    UtilSMT.statistics.REALTYPE += 1
+  }
+
   override def toScala: String = "String"
 
   override def toString = "String"
@@ -3549,6 +4022,10 @@ case object StringType extends PrimitiveType {
 }
 
 case object UnitType extends PrimitiveType {
+  override def statistics() {
+    UtilSMT.statistics.UNITTYPE += 1
+  }
+
   override def toString = "Unit"
 
   override def toJson1 = {
@@ -3678,6 +4155,10 @@ case object DontCarePattern extends Pattern {
 }
 
 case class RngBinding(patterns: List[Pattern], collection: Collection) {
+  def statistics() {
+    collection.statistics()
+  }
+
   def toSMT: String = {
     val patternIds = patterns.map(_.toSMT)
     val typeSMT = collection.toSMT
@@ -3733,6 +4214,8 @@ case class RngBinding(patterns: List[Pattern], collection: Collection) {
 }
 
 trait Collection {
+  def statistics() {}
+
   def toSMT: String = UtilSMT.error(this.toString)
 
   def toJson: JSONObject = {
@@ -3773,6 +4256,23 @@ case class ExpCollection(exp: Exp) extends Collection {
 }
 
 case class TypeCollection(ty: Type) extends Collection {
+  override def statistics() {
+    ty.statistics()
+    ty match {
+      case IntType =>
+        UtilSMT.statistics.QUANTINT += 1
+      case RealType =>
+        UtilSMT.statistics.QUANTREAL += 1
+      case IdentType(ident, _) =>
+        ident.names(0) match {
+          case "Set" => UtilSMT.statistics.QUANTSET += 1
+          case "Seq" => UtilSMT.statistics.QUANTSEQ += 1
+          case _     =>
+        }
+      case _ =>
+    }
+  }
+
   override def toSMT = ty.toSMT
 
   override def toString = ty.toString()

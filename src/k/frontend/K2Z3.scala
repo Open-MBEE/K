@@ -182,8 +182,8 @@ object K2Z3 {
           if (Misc.isCollection(x._1.ty)) {
             val setName = x._2.split("!").last.replace(")", "")
             val setValue = z3Model.getFuncDecls.find { x => x.getName.toString == setName }
-            //if (z3Model.getFuncInterp(setValue.get))
-            x._1.name + ":: " + getStringForSets(setValue.get, x._1.ty)
+            if (setValue.isEmpty) x._1.name + ":: [Empty Seq]"
+            else x._1.name + ":: " + getStringForSets(setValue.get, x._1.ty)
           } else if (!TypeChecker.isPrimitiveType(x._1.ty)) {
             toPrint = x._2 :: toPrint
             (x._1.name + ":: Ref " + x._2)
@@ -207,14 +207,14 @@ object K2Z3 {
     }
     (result._1 + name, result._2)
   }
-
+  
   def PrintModel(model: Model) {
 
     if (z3Model != null) {
 
       logDebug(z3Model.toString)
 
-      log("<<++")
+      // log("<<++")
 
       var rows: List[List[String]] = List(List("Variable", "Ref", "Value"))
       var extraRows: List[List[String]] = List(List("Variable", "Ref", "Value"))
@@ -231,12 +231,12 @@ object K2Z3 {
             }
             res + (x.getArgs.last.toString -> x.getValue.toString)
           }
-
+      
       val elseK = z3Model.getFuncInterp(heapDecl.get).getElse
       heapMap += ("else" -> elseK.toString)
 
       var visited = Set[String]()
-
+      
       // walk through heap and  print entries
       heapMap.foreach { kv =>
 
@@ -274,14 +274,14 @@ object K2Z3 {
           }
         }
       }
-
+            
       // walk through heap and  print EXTRA entries
       if (printExtraEntries) {
         heapMap.foreach { kv =>
 
           val key = kv._1
 
-          val value = kv._2.replace("- ", "-")
+          val value = kv._2.replace("- ", "-") 
           if (value != "null") {
             val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
             if (value.contains("mk-")) {
@@ -299,29 +299,35 @@ object K2Z3 {
           }
         }
       }
-
+            
       println()
-      println("\tTop level objects created:")
-      if (rows.length > 1) println(Tabulator.format(rows.reverse))
+      if (rows.length > 1) {
+        println("\tTop level objects created:")
+        println()
+        println(Tabulator.format(rows.reverse))
+      }
       else println("\tNo instance variables were declared at the top level.")
 
       println()
-      println("\tExtra objects created during analysis:")
-      if (extraRows.length > 1) println(Tabulator.format(extraRows.reverse))
+      if (extraRows.length > 1) {
+        println("\tExtra objects created during analysis:")
+        println()
+        println(Tabulator.format(extraRows.reverse))
+      }
       else println("\tNo extra objects.")
       println()
 
-      log("-->>")
+      // log("-->>")
     }
   }
-
+  
   def solveSMT(model: Model, smtModel: String, printModel: Boolean) {
     try {
       reset()
 
       val boolExp = ctx.parseSMTLIB2String(smtModel, null, null, null, null)
       z3Model = SolveExp(boolExp, smtModel)
-
+      
       if (debugRawModel) {
         println
         println("--- BEGIN RAW SMT MODEL: ---")
@@ -329,6 +335,7 @@ object K2Z3 {
         println("--- END RAW SMT MODEL ---")
         println
       }
+            
       if (printModel) PrintModel(model)
     } catch {
       case e: Throwable =>
