@@ -21,7 +21,6 @@ import org.json.JSONObject
 import k.frontend.ModelParser.ModelContext
 import org.json.JSONTokener
 import scala.collection.mutable.{ ListBuffer => MList }
-import scala.actors.Futures._
 //import scala.concurrent._
 //import Await._
 //import Future._
@@ -485,18 +484,13 @@ object Frontend {
   def runWithTimeout[T](timeoutMs: Long)(f: => T): Option[T] = {
     //awaitAll(timeoutMs, future(f)).head.asInstanceOf[Option[T]]
     import scala.concurrent.ExecutionContext.Implicits.global
-
-//import scala.concurrent._
-//import Await._
-//import Future._
- // <<<<<<< HEAD
- // import scala.concurrent.Await
- // import scala.concurrent.duration._
- // import scala.concurrent.Awaitable
- //
- // =======
-//import scala.concurrent.impl.Future
-//>>>>>>> refs/heads/masterIntoDevelop
+    import scala.concurrent._
+  //import Await._
+    //import scala.concurrent.Future
+    import scala.concurrent.Await
+    import scala.concurrent.duration._
+  //import scala.concurrent.Awaitable
+    import scala.concurrent.impl.Future
 
     val x = Await.result(future(f), Duration.create(timeoutMs, "ms"))
     None    
