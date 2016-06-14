@@ -1100,9 +1100,9 @@ object Frontend {
     // i is the index to the first argument
     val i = if (pullOperandType) 1 else 2
     val operand: JSONArray = if (!pullOperandType) null else obj.get("operand").asInstanceOf[JSONArray]
-    val theType = if (!pullOperandType) obj.getString("type") 
+    val theType = if (!pullOperandType) obj.optString("type") 
           else {
-            operand.getJSONObject(0).getString("element")
+            operand.getJSONObject(0).optString("element")
           }
     val opIsElementValue = 
       if (!pullOperandType) false 
