@@ -1,4 +1,3 @@
-
 \usepackage{multirow}
 %\usepackage[T1]{fontenc}
 %\usepackage[latin9]{inputenc}
@@ -30,16 +29,17 @@
 \usepackage{color}
 \usepackage{amssymb}
 \usepackage{framed}
+\usepackage{graphicx} 
+\usepackage{caption} 
+\captionsetup{compatibility=false}
+\usepackage{subcaption}
+\usepackage{fancyvrb}
+\usepackage{verbatimbox}
 
 \definecolor{light-gray}{gray}{0.95}
 
-% --- Scala: ---
-
-\lstdefinelanguage{scala}{
-  morekeywords=
-    {package,import,class,object,trait,extends,with,match,
-     new,if,else,while,for,yield,def,val,var,this,case,
-     type,implicit,private,protected,abstract,final}, 
+\lstdefinelanguage{K}{
+  morekeywords={package,import,class,extends,with,match,new,if,then,else,while,for,yield,val,var,this,case,type,implicit,private,protected,abstract,final, req, Int, Bool, fun, pre, post},
   otherkeywords={&,\{,\},_*},
   literate=
       {\#\#}{{$\oplus\;$}}2
@@ -56,32 +56,54 @@
   morecomment=[s]{/*}{*/},
   stringstyle=\ttfamily,
 }  
-
-% --- LogScope: ---
-
-\lstdefinelanguage{dautext}{
-  morekeywords=
-    {monitor,always,init,hot,ok,error,if,then,else}, 
-  otherkeywords={=>,<=,>,<,+,++,|,&&,[,],|->}, 
-  literate={->}{{$\rightarrow$}}2{!}{{$\neg$}}2,
-  sensitive=true, 
-  morecomment=[l]{//}, 
-  morecomment=[s]{/*}{*/},
-  stringstyle=\ttfamily,
-}  
-
 % --- Referring to code: ---
 
+\newcommand{\name}[1]{{\em #1}}
 \newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\issue}[2]{{\bf ** #1: #2}}
 
-\newcommand{\antlr}{{ANTLR}}
 \newcommand{\Klang}{{K}}
-%\newcommand{\CSPE}{$\mathit{CSP}_E$}
-\newcommand{\CSP}{{{CSP}}}
-\newcommand{\CSPE}{$\textrm{CSP}_E$}
-\newcommand{\daut}{{Daut}}
 \newcommand{\tracecontract}{{TraceContract}}
 \newcommand{\logfire}{{LogFire}}
+\newcommand{\vdm}{VDM}
+\newcommand{\vdmpp}{\vdm$^{++}$}
+\newcommand{\asml}{Asml}
+\newcommand{\raiselang}{Raise}
+\newcommand{\rsl}{RSL}
+\newcommand{\zlang}{Z}
+\newcommand{\alloy}{Alloy}
+\newcommand{\clear}{Clear}
+\newcommand{\eiffel}{Eiffel}
+\newcommand{\dafny}{Dafny}
+\newcommand{\whythree}{Why3}
+\newcommand{\whyml}{WhyML}
+\newcommand{\eml}{EML}
+\newcommand{\specsharp}{SpeC$^{\#}$}
+\newcommand{\java}{Java}
+\newcommand{\clang}{C}
+\newcommand{\scala}{Scala}
+\newcommand{\sml}{SML}
+\newcommand{\ml}{ML}
+\newcommand{\haskell}{Haskell}
+\newcommand{\fortress}{Fortress}
+\newcommand{\python}{Python}
+\newcommand{\ocaml}{Ocaml}
+\newcommand{\jml}{JML}
+\newcommand{\uml}{UML}
+\newcommand{\sysml}{SysML}
+\newcommand{\ltl}{LTL}
+\newcommand{\pvs}{PVS}
+\newcommand{\isabelle}{Isabelle}
+\newcommand{\coq}{Coq}
+\newcommand{\boogie}{Boogie}
+\newcommand{\zthree}{Z3}
+\newcommand{\ems}{EMS}
+\newcommand{\antlr}{ANTLR}
+\newcommand{\slam}{SLAM}
+\newcommand{\spin}{SPIN}
+\newcommand{\promela}{Promela}{
 
 \newcommand*{\scaleFactor}{0.75}
+
+% \lstset{language=K,numbers=left,numberstyle=\scriptsize,numbersep=-21pt}
+\lstset{language=K}

@@ -1,8 +1,6 @@
 package k.frontend
 
 import scala.collection.JavaConverters._
-import k.frontend.ModelBaseVisitor
-import k.frontend.ModelParser
 import java.lang.Float
 import java.lang.Boolean
 import java.math.RoundingMode
@@ -16,7 +14,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
       if (ctx.packageDeclaration() != null) Some(visit(ctx.packageDeclaration()).asInstanceOf[PackageDecl])
       else None
     var importDecls: List[ImportDecl] = ctx.importDeclaration().asScala.toList.map(visit(_).asInstanceOf[ImportDecl])
-    var annotationDecls: List[AnnotationDecl] = ctx.annotationDeclaration().asScala.toList.map(visit(_).asInstanceOf[AnnotationDecl])
+    var annotationDecls: Set[AnnotationDecl] = ctx.annotationDeclaration().asScala.toList.map(visit(_).asInstanceOf[AnnotationDecl]).toSet
     var topDecls: List[TopDecl] = ctx.topDeclaration().asScala.toList.map(visit(_).asInstanceOf[TopDecl])
     Model(packageDecl, importDecls, annotationDecls, topDecls)
   }
@@ -44,7 +42,8 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
       if (ctx.typeParameters() != null)
         visit(ctx.typeParameters()).asInstanceOf[List[TypeParam]]
       else Nil
-    var t: Option[Type] = visit(ctx.`type`()).asInstanceOf[Option[Type]]
+    var t: Option[Type] =
+      visit(ctx.`type`()).asInstanceOf[Option[Type]]
     TypeDecl(ident, typeParams, t)
   }
 
@@ -58,7 +57,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
 
   override def visitTypeBound(ctx: ModelParser.TypeBoundContext): AnyRef = {
     var typeContexts: List[ModelParser.TypeContext] = (ctx.`type`().asScala).toList
-    TypeBound(typeContexts.map(visit(_)).asInstanceOf[List[Type]])
+    Some(TypeBound(typeContexts.map(visit(_)).asInstanceOf[List[Type]]))
   }
 
   override def visitPrimType(ctx: ModelParser.PrimTypeContext): AnyRef = {
@@ -105,7 +104,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
     var i: String = visit(ctx.Identifier()).asInstanceOf[String]
     var t: Type = visit(ctx.`type`()).asInstanceOf[Type]
     var e: Exp = visit(ctx.expression()).asInstanceOf[Exp]
-    SubType(i, t, e)
+    Some(SubType(i, t, e))
   }
 
   override def visitTypeArguments(ctx: ModelParser.TypeArgumentsContext): AnyRef = {
@@ -203,8 +202,12 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
 
   override def visitSetEnumExp(ctx: ModelParser.SetEnumExpContext): AnyRef = {
     val ck: CollectionKind = visit(ctx.collectionKind()).asInstanceOf[CollectionKind]
-    val exps: List[Exp] = visit(ctx.expressionList()).asInstanceOf[List[Exp]]
-    CollectionEnumExp(ck, exps)
+    if (ctx.expressionList() == null)
+      CollectionEnumExp(ck, Nil)
+    else {
+      val exps: List[Exp] = visit(ctx.expressionList()).asInstanceOf[List[Exp]]
+      CollectionEnumExp(ck, exps)
+    }
   }
 
   override def visitExpressionList(ctx: ModelParser.ExpressionListContext): AnyRef = {
@@ -237,14 +240,16 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
     var e1: Exp = visit(ctx.expression(1)).asInstanceOf[Exp]
     var op: BinaryOp =
       ctx.getChild(1).getText() match {
-        case "*"     => MUL
-        case "/"     => DIV
-        case "%"     => REM
-        case "inter" => SETINTER
-        case "\\"    => SETDIFF
-        case "++"    => ADD
-        case "#"     => TUPLEINDEX
-        case "^"     => LISTCONCAT
+        case "*"       => MUL
+        case "/"       => DIV
+        case "%"       => REM
+        case "inter"   => SETINTER
+        case "\\"      => SETDIFF
+        case "subset"  => SUBSET
+        case "psubset" => PSUBSET
+        case "++"      => ADD
+        case "#"       => TUPLEINDEX
+        case "^"       => LISTCONCAT
       }
     BinExp(e0, op, e1)
   }
@@ -266,15 +271,16 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
     var e1: Exp = visit(ctx.expression(1)).asInstanceOf[Exp]
     var op: BinaryOp =
       ctx.getChild(1).getText() match {
-        case "<="     => LTE
-        case ">="     => GTE
-        case "<"      => LT
-        case ">"      => GT
-        case "="      => EQ
-        case "!="     => NEQ
-        case "isin"   => ISIN
-        case "!isin"  => NOTISIN
-        case "subset" => SUBSET
+        case "<="      => LTE
+        case ">="      => GTE
+        case "<"       => LT
+        case ">"       => GT
+        case "="       => EQ
+        case "!="      => NEQ
+        case "isin"    => ISIN
+        case "!isin"   => NOTISIN
+        case "subset"  => SUBSET
+        case "psubset" => PSUBSET
       }
     BinExp(e0, op, e1)
   }
@@ -503,11 +509,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   }
 
   override def visitCollectionKind(ctx: ModelParser.CollectionKindContext): AnyRef = {
-    ctx.children.get(0).getText match {
-      case "Seq" => SeqKind
-      case "Set" => SetKind
-      case "Bag" => BagKind
-    }
+    Misc.getCollectionKind(ctx.children.get(0).getText)
   }
 
   override def visitCollectionOrType(ctx: ModelParser.CollectionOrTypeContext): AnyRef = {
@@ -616,7 +618,10 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
 
   override def visitAnnotation(ctx: ModelParser.AnnotationContext): AnyRef = {
     val name: String = ctx.Identifier().getText()
-    val exp: Exp = visit(ctx.expression()).asInstanceOf[Exp]
+
+    val exp: Exp =
+      if (ctx.expression != null) visit(ctx.expression()).asInstanceOf[Exp]
+      else null
     Annotation(name, exp)
 
   }

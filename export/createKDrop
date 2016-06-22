@@ -1,0 +1,61 @@
+#!/bin/bash
+
+DATE=`date +%Y-%m-%d`
+
+if [ -z "$1" ] 
+then 
+    echo "Please provide a target OS: windows | osx"
+    exit -1
+fi
+
+listcontains() {
+  for word in $1; do
+    [[ $word = $2 ]] && return 0
+  done
+  return 1
+}
+oslist="windows osx"
+if listcontains "$oslist" $1; 
+then 
+    echo "Creating drop for $1..."; 
+else 
+    echo "Unknown OS specified. Supported choices: windows | osx"
+    exit -1
+fi
+
+
+if [ -z "$2" ] 
+then 
+    echo "Please provide a directory name where the drop is to be created."
+    exit -1
+fi
+
+KDIR="$2/k-$1-$DATE"
+
+if [ -d $KDIR ] 
+then
+    echo "Directory already exists..."
+  exit -1
+fi
+
+mkdir $KDIR
+
+cp -r lib $KDIR/lib
+
+if [ "$1" = "windows" ] 
+then
+    cp k.cmd $KDIR/
+    mv $KDIR/lib/com.microsoft.z3.windows.jar $KDIR/lib/com.microsoft.z3.jar
+    rm $KDIR/lib/com.microsoft.z3.osx.jar
+else
+    cp k $KDIR/
+    mv $KDIR/lib/com.microsoft.z3.osx.jar $KDIR/lib/com.microsoft.z3.jar
+    rm $KDIR/lib/com.microsoft.z3.windows.jar
+fi
+
+cp -r ../src/tests $KDIR/tests
+cp -r ../src/examples $KDIR/examples
+cp ../README.md $KDIR/
+
+echo "Done."
+echo "Check $KDIR"

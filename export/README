@@ -1,0 +1,35 @@
+
+To create a K drop:
+
+0. You need bash installed on Windows if you need to use this 
+   infrastructure on a windows machine. Nothing special needed for OSX.
+
+1. create a new k.jar file from the sources:
+   1.1 In Eclipse run the Java program CreateJar in k.frontend (Run as Java Application).
+   1.2 File->export->Java->Runnable JAR file.
+   1.3 Run it (gives a warning, not a problem).
+   1.4 Move the jar file to the export/lib folder of the K distribution.
+
+2. In export directory run:
+
+     ./createKDrop osx /path/To/Dir
+
+   or:
+
+     ./createKDrop windows /path/To/Dir
+
+   to store a drop in /path/To/Dir.
+
+   or:
+
+     ./all
+
+   to store windows and osx drop in the export folder.
+
+   New directories "k-OSNAME-DATE" will be created where OSNAME is the 
+   name of the target operating system and DATE is today's date.
+   These directories will contain everything to execute K on the target OS.
+
+3. zip up and ship these folders with https://lft.jpl.nasa.gov.
+
+

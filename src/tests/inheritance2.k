@@ -1,3 +1,12 @@
+
+==========
+Hiearchy:
+ A
+   B
+   C
+     D
+==========
+
 class A {
   a : Int = 1
 }
@@ -17,5 +26,4 @@ class C extends A {
 
 dobj : D
 
-sum : Int = dobj.a + dobj.c + dobj.d
-
+RESULT_8 : Int = dobj.a + dobj.c + dobj.d

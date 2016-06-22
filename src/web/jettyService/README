@@ -1,0 +1,12 @@
+Jetty service for online K access system.
+
+BUILD
+
+./build.sh
+
+RUN
+
+Place kserver.sh in /etc/init.d and then use 
+
+/etc/init.d start to start the service
+/etc/init.d stop to stop the service

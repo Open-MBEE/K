@@ -1,0 +1,108 @@
+\section{RELATED WORK}
+\label{sec:related-work}
+
+\Klang{} is a wide spectrum language with a textual notation, 
+containing concepts such
+as classes, inheritance, properties, functions, and
+expressions. Expressions in \Klang{} are very rich and provide a basis
+for expressing any higher order logic formula succinctly. The language
+also contains constructs such as lists, sets, loops etc. for
+performing general sequential programming, functional programming, and
+object oriented programming. The main goal is to automatically
+translate \sysml{} diagrams and models to \Klang{} and perform various
+types of analysis such as type checking, satisfiability checking, and
+potentially execution.
+
+The formal methods community has studied and investigated wide
+spectrum specification languages in
+detail.~\cite{vdm78,bjoerner-jones-82,jones90,jones-shaw-90} present
+the \vdm{} language, which provides a combination of procedural and
+functional programming along with sets, lists, maps, and higher order
+predicate logic in proper mathematical notation. A natural evolution
+of \vdm{} was to introduce object orientation, as shown in
+\vdmpp{}~\cite{vdmplusplus05}. The \raiselang{} specification
+language~\cite{raise92} is another wide spectrum language that takes
+inspiration from \vdm{}, \zlang{}~\cite{spivey-Z-1988} and algebraic
+specification languages. More recently, \asml{} presented
+in~\cite{asml05} presents a language where all operations operate on
+algebras. \alloy{}~\cite{jackson-alloy-12} is a language intended for
+describing structure and exploring the design of the structure through
+the specification of constraints. \alloy{} also provides seamless
+integration with a SAT solver. FORMULA~\cite{jackson2009specifying}
+also presents a language for logic programming where the model is then
+analyzed by SMT solvers. FORMULA focuses on requirements for
+incremental refinement purposes and design exploration.
+
+In contrast to specification languages, high level programming
+languages have also been developed over time. \sml{} (Standard ML)
+\cite{standard-ml-97}, \ocaml{} \cite{ocaml}, and \haskell{}
+\cite{jones2003haskell} belong to the same family of functional
+programming languages with some support for classes and object
+orientation. \python{} \cite{python} also provides a unique
+perspective on combining object oriented and functional
+programming. In our view, \scala{} \cite{scala} does so to the fullest
+extent. The close relationship between \scala{} and \vdm{} is
+discussed in \cite{havelund-scala-vdm-12}.  \fortress{}
+\cite{fortress} introduced built-in notation for sets, lists, and
+maps, very much resembling the notation in \vdm{}.
+
+Yet another class of recent languages has investigated introducing
+specification constructs in programming languages in the form of
+design-by-contract (pre/postconditions and class invariants). Examples
+of such languages include \eiffel{} \cite{meyer1988eiffel} and
+\specsharp{} \cite{barnett2011specification}.  \scala{} also attempts
+at providing such constructs, but through the use of library functions
+on functional programs \cite{odersky-rv10}. Finally, The \jml{}
+language \cite{leavens1998jml} allows to write design-by-contract
+specifications for \java{} as comments. These specifications and
+constructs are ignored by the standard \java{} compiler. Rather, they
+are processed with special tools; thus, in some cases making them less
+valuable to the language.
+
+With the great improvements being made to SAT and SMT
+solvers~\cite{smt-lib,de2008z3}, programming languages now are also
+built with verification as a primary goal. \dafny{}
+\cite{leino-lpar-2010} provides explicit support for specifications in
+the program that can be used to specify functional correctness
+constraints for programs. These constraints and specifications are
+verified using the \boogie{}~\cite{barnett2006boogie} verifier that
+uses \zthree{} as the underlying SMT solver. \dafny{} is an excellent
+language for performing verification, but lacks support for
+inheritance and class invariants, which are a necessity for the kind
+of models we deal with. Similarly, \specsharp{} also provides support
+for verifying the user provided specifications. \whythree{}
+\cite{filliatre-why3-2011} provides a rich language for specification
+and programming, called \whyml{}. \whythree{} relies on external
+theorem provers (automatic and interactive) to then verify the
+specification. Additionally, using \whyml{}, one can also generate
+\ocaml{} programs using a correct by construction automatic extraction
+procedure. In contrast to using automated provers, interactive theorem
+provers such as \pvs{} \cite{cade92-pvs,pvs-website}, \coq{}
+\cite{barras1997coq}, and \isabelle{} \cite{nipkow2002isabelle}, also
+provide languages to create specifications and provide constraints,
+which can then be discharged via a user guided process. Such tools
+allow for proving much more complex properties, but tend to be
+laborious and non-trivial to use.
+
+Past research in formal modeling has also resulted in various attempts
+at combining formal and semi-formal languages. Work
+in~\cite{lausdahl2009connecting} presents an approach to translate
+between UML and \vdmpp{}, and~\cite{kim2005mda} presents work on
+integrating a formal language such as Object-Z with UML in a single
+combined framework. To the best of our knowledge, these approaches
+have not focused on translating constraints and integrating with an
+SMT solver, and have been primarily focused on UML (not \sysml).
+
+\Klang{} is very close in spirit and ideology to many of the
+aforementioned languages, but differs in many respects as well. For
+example, due to the application environment of \Klang{} being targeted
+to \sysml{} models, proving class satisfiability and model finding are
+of prime importance, something for which \Klang{} is optimized. \Klang{}
+also provides support for specifying and proving specifications with
+multiple inheritance, something \sysml{} models depend on
+greatly. Integration with SMT solvers has proven to be useful not only
+for proving class satisfiability, but also for model finding
+(including scheduling) and {\em model exploration}. In model
+exploration, users manually explore the range of satisfiable solutions
+for the given model using iterative refinement techniques (changing
+constraints manually).
