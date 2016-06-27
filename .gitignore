@@ -19,3 +19,4 @@ src/tests/test.k
 *.pdf
 /tmp
 /.cache-main
+/target
