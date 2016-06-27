@@ -27,6 +27,7 @@
 				<scalaVersion>2.11.8</scalaVersion>
 				<!-- change to "2.11" once Scala 2.11.0 final is out -->
 				<scalaBinaryVersion>2.11</scalaBinaryVersion>
+                <scala.compat.version>${scalaBinaryVersion}</scala.compat.version>
 			</properties>
 			<dependencies>
 				<dependency>
@@ -54,6 +55,18 @@
 					<artifactId>scala-swing_${scalaBinaryVersion}</artifactId>
 					<version>1.0.1</version>
 				</dependency>
+                <dependency>
+                    <groupId>org.specs2</groupId>
+                    <artifactId>specs2-core_${scala.compat.version}</artifactId>
+                    <version>2.4.16</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.scalatest</groupId>
+                    <artifactId>scalatest_${scala.compat.version}</artifactId>
+                    <version>2.2.4</version>
+                    <scope>test</scope>
+                </dependency>
 			</dependencies>
 		</profile>
  		<profile>
@@ -61,6 +74,7 @@
 			<properties>
 				<scalaVersion>2.10.4</scalaVersion>
 				<scalaBinaryVersion>2.10</scalaBinaryVersion>
+                <scala.compat.version>${scalaBinaryVersion}</scala.compat.version>
 			</properties>
 			<dependencies>
 				<dependency>
@@ -73,12 +87,49 @@
 					<artifactId>scala-swing</artifactId>
 					<version>${scalaVersion}</version>
 				</dependency>
+                <dependency>
+                    <groupId>org.specs2</groupId>
+                    <artifactId>specs2-core_${scala.compat.version}</artifactId>
+                    <version>2.4.16</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.scalatest</groupId>
+                    <artifactId>scalatest_${scala.compat.version}</artifactId>
+                    <version>2.2.4</version>
+                    <scope>test</scope>
+                </dependency>
 			</dependencies>
 		</profile>
 	</profiles>
 	<build>
 		<sourceDirectory>src</sourceDirectory>
 		<plugins>
+  
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <!-- Alfresco Maven plugin corrupts libraries too - so make sure to 
+                            copy them over -->
+                        <id>copy-lib-resources</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <overwrite>true</overwrite>
+                            <outputDirectory>${project.build.directory}/${project.build.finalName}/lib</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/lib</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.1</version>
@@ -167,7 +218,9 @@
 			<artifactId>scala-library</artifactId>
 			<version>2.11.7</version>
 		</dependency>
- -->		<dependency>
+ -->
+ 
+ 		<dependency>
 			<groupId>com.microsoft.z3</groupId>
 			<artifactId>com.microsoft.z3</artifactId>
 			<version>1.0</version>
@@ -191,16 +244,106 @@
 			<type>so</type>
 			<systemPath>${project.basedir}/lib/libz3.so</systemPath>
 		</dependency>
+
           <!-- https://mvnrepository.com/artifact/com.sksamuel.elastic4s/elastic4s-core_2.11 -->
-        <dependency>
+<!--         <dependency>
             <groupId>com.sksamuel.elastic4s</groupId>
             <artifactId>elastic4s-core_2.11</artifactId>
             <version>1.5.17</version>
         </dependency>
+ -->
 <!--         <dependency>
             <groupId>com.sksamuel.elastic4s</groupId>
             <artifactId>elastic4s</artifactId>
             <version>0.90.2.8</version>
         </dependency>
- -->	</dependencies>
+ -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.4</version>
+        </dependency>
+
+<!--         <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-actors</artifactId>
+            <version>2.11.5</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-reflect</artifactId>
+            <version>2.11.5</version>
+        </dependency>
+ -->
+        <dependency>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>elasticsearch</artifactId>
+            <version>1.5.0</version>
+        </dependency>
+
+<!--         <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+        </dependency>
+ -->
+        <dependency>
+            <groupId>com.sksamuel.elastic4s</groupId>
+            <artifactId>elastic4s_2.11</artifactId>
+            <version>1.5.2</version>
+        </dependency>
+
+<!--         <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20151123</version>
+        </dependency>
+ -->
+<!--         <dependency>
+            <groupId>com.microsoft</groupId>
+            <artifactId>z3.jar</artifactId>
+            <version>1.0</version>
+        </dependency>
+ -->
+<!--         <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4</artifactId>
+            <version>4.5.1-1</version>
+        </dependency>
+ -->
+
+<!--         <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala.version}</version>
+        </dependency>
+ -->
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-server</artifactId>
+            <version>9.2.12.v20150709</version>
+        </dependency>
+
+        <!-- Test -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+<!--         <dependency>
+            <groupId>org.specs2</groupId>
+            <artifactId>specs2-core_${scala.compat.version}</artifactId>
+            <version>2.4.16</version>
+            <scope>test</scope>
+        </dependency> -->
+<!--         <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_${scala.compat.version}</artifactId>
+            <version>2.2.4</version>
+            <scope>test</scope>
+        </dependency>
+ --> 
+ 	</dependencies>
 </project>
