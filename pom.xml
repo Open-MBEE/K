@@ -276,12 +276,11 @@
             <version>20151123</version>
         </dependency>
  -->
-<!--         <dependency>
+<!--          <dependency>
             <groupId>com.microsoft</groupId>
             <artifactId>z3.jar</artifactId>
             <version>1.0</version>
-        </dependency>
- -->
+        </dependency> -->
 <!--         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr4</artifactId>
