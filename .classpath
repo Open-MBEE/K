@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
+	<classpathentry excluding="**/*.java" including="**/*.scala" kind="src" path="srcScala"/>
 	<classpathentry excluding="**/*.scala" kind="src" output="target/classes" path="src">
 		<attributes>
 			<attribute name="optional" value="true"/>
