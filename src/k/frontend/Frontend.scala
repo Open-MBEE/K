@@ -1,10 +1,10 @@
 package k.frontend
 
-import com.sksamuel.elastic4s.source._
-import org.elasticsearch.common.settings.ImmutableSettings
-import com.sksamuel.elastic4s._
-import com.sksamuel.elastic4s.ElasticClient
-import com.sksamuel.elastic4s.ElasticDsl._
+//import com.sksamuel.elastic4s.source._
+//import org.elasticsearch.common.settings.ImmutableSettings
+//import com.sksamuel.elastic4s._
+//import com.sksamuel.elastic4s.ElasticClient
+//import com.sksamuel.elastic4s.ElasticDsl._
 import org.apache.log4j.{ Level, Logger }
 import scala.util.control.Breaks._
 import org.antlr.runtime.tree.ParseTree
@@ -314,8 +314,17 @@ object Frontend {
     }
 
     options.get('query) match {
-      case Some(_) => doElastic(model)
-      case _       => ()
+      case Some(_) => {
+        /*  Removing elastic since it's not used and complicates the build.
+        try {
+          doElastic(model)
+        } catch {
+          case e: Throwable =>
+            e.printStackTrace()
+        }
+        */
+      }
+      case _ => ()
     }
 
   }
@@ -351,10 +360,16 @@ object Frontend {
     return (models, newProcessed)
   }
 
+  
+  /*  Removing elastic since it's not used and complicates the build.
   def doElastic(model: Model) {
+    import scalax.file.Path
+    
     log("Setting up query engine...")
     Logger.getRootLogger.setLevel(Level.OFF)
-    val workDir = "c:\\users\\rahulku\\downloads\\elastictmp5"
+    val workDir = "elasticTmp"
+    val path: Path = Path(workDir)
+    path.createDirectory(failIfExists=false)
     ASTOptions.useJson1 = true
     val indexName = "kexamples"
     val kmodelsType = "kmodel"
@@ -422,6 +437,7 @@ object Frontend {
 
     client.close()
   }
+*/
 
   def getFileTree(f: File): Stream[File] =
     f #:: (if (f.isDirectory) f.listFiles().toStream.flatMap(getFileTree)
