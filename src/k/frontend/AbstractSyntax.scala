@@ -1144,10 +1144,15 @@ case class DotExp(exp: Exp, ident: String) extends Exp {
 
     operand.put(new JSONObject().put("type", "ElementValue").put("element", "getProperty"))
     operand.put(exp.toJson)
-    operand.put(ident)
+    operand.put(new JSONObject().put("type", "LiteralString").put("string",ident))
+//    operand.put(new JSONObject().put("type", "ElementValue").put("element", "Dot"))
+//    operand.put(exp.toJson)
+//    operand.put(new JSONObject().put("type", "LiteralString").put("string",ident))
 
     expression.put("operand", operand)
     expression.put("type", "Expression")
+    
+    expression
   }
 }
 
@@ -2195,7 +2200,7 @@ case class StringLiteral(s: String) extends Literal {
 
   override def toJson2 = {
     val value = new JSONObject()
-    value.put("type", "LiteralString").put("string", toString)
+    value.put("type", "LiteralString").put("string", toString.replaceAll("\"", ""))
   }
 }
 
