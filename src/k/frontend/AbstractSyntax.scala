@@ -1406,7 +1406,7 @@ case class PropertyDecl(modifiers: List[PropertyModifier],
       if (assignment.nonEmpty) result += (if (assignment.get) " := " else " = ") + expr.get
       else {
         println("Non-empty expression for property declaration, but assignment type not specified.")
-        System.exit(-1).asInstanceOf[String]
+        //System.exit(-1).asInstanceOf[String]
       }
     }
     result

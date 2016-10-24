@@ -165,8 +165,8 @@ object Misc {
   }
 
   def errorExit(prefix: String, message: String): Nothing = {
-    log(prefix, message)
-    System.exit(-1).asInstanceOf[Nothing]
+    log(prefix, message).asInstanceOf[Nothing]
+    //System.exit(-1).asInstanceOf[Nothing]
   }
 
   def errorThrow(prefix: String, message: String, e: Exception) = {
@@ -174,7 +174,7 @@ object Misc {
     throw e
   }
 
-  def silentErrorExit(prefix: String, message: String): Nothing = System.exit(-1).asInstanceOf[Nothing]
+  def silentErrorExit(prefix: String, message: String): Nothing = null.asInstanceOf[Nothing] //System.exit(-1).asInstanceOf[Nothing]
 
   def silentErrorThrow(prefix: String, message: String, e: Exception) = throw e
 

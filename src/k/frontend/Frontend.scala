@@ -80,8 +80,8 @@ object Frontend {
         parseArgs(map ++ Map('json -> value), tail)
       case "-postnobody" :: tail => parseArgs(map ++ Map('postnobody -> true), tail)
       case option :: tail =>
-        println("Unknown option " + option)
-        System.exit(1).asInstanceOf[Nothing]
+        println("Unknown option " + option).asInstanceOf[Nothing]
+        //System.exit(1).asInstanceOf[Nothing]
     }
   }
 
@@ -1026,8 +1026,8 @@ object Frontend {
       case "UnitType"   => UnitType
       case "CharType"   => CharType
       case key @ _ =>
-        println("Unknown keys encountered in JSON string!: " + key)
-        System.exit(-1).asInstanceOf[Nothing]
+        println("Unknown keys encountered in JSON string!: " + key).asInstanceOf[Nothing]
+        //System.exit(-1).asInstanceOf[Nothing]
     }
   }
 
@@ -1377,8 +1377,8 @@ object Frontend {
                 case "Not"  => NOT
                 case "Prev" => PREV
                 case op @ _ =>
-                  println("unknown operator " + op)
-                  System.exit(-1).asInstanceOf[Nothing]
+                  println("unknown operator " + op).asInstanceOf[Nothing]
+                  //System.exit(-1).asInstanceOf[Nothing]
               }
             UnaryExp(operator, visitJsonObject2(operand.getJSONObject(i+1)).asInstanceOf[Exp])
           case "PositionalArgument" =>
@@ -1525,8 +1525,8 @@ object Frontend {
             } else Nil
           FunApplExp(exp1, args)
         } else {
-          println("Unknown keys encountered in JSON string! (2) : " + key)
-          System.exit(-1).asInstanceOf[Nothing]
+          println("Unknown keys encountered in JSON string! (2) : " + key).asInstanceOf[Nothing]
+          //System.exit(-1).asInstanceOf[Nothing]
         }
 //      case key @ _ =>
 //        println("Unknown keys encountered in JSON string! (2) : " + key)
