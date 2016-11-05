@@ -172,7 +172,7 @@ object Frontend {
 
     options.get('mmsJson) match {
       case Some(file: String) => {
-        model = parseMMSJson(file)
+        model = parseMMSJsonFromFile(file)
       }
       case _ => ()
     }
@@ -626,8 +626,12 @@ object Frontend {
         s"$json2Eq", s"$smtEq", s"$smtModelEq"))
   }
 
-  def parseMMSJson(file: String): Model = {
+  def parseMMSJsonFromFile(file: String): Model = {
     val json = scala.io.Source.fromFile(file).mkString
+    return parseMMSJsonFromString(json)
+  }
+  def parseMMSJsonFromString(jsonString: String): Model = {
+    val json = jsonString
     var tokener: JSONTokener = new JSONTokener(json)
     var jsonObject: JSONObject = new JSONObject(tokener)
     val elementsArray = jsonObject.get("elements").asInstanceOf[JSONArray]
@@ -1525,7 +1529,8 @@ object Frontend {
             } else Nil
           FunApplExp(exp1, args)
         } else {
-          println("Unknown keys encountered in JSON string! (2) : " + key).asInstanceOf[Nothing]
+          println("Unknown keys encountered in JSON string! (2) : " + key)//.asInstanceOf[Nothing]
+          Nil
           //System.exit(-1).asInstanceOf[Nothing]
         }
 //      case key @ _ =>
