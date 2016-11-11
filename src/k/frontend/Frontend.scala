@@ -634,11 +634,14 @@ object Frontend {
     val json = scala.io.Source.fromFile(file).mkString
     return parseMMSJsonFromString(json)
   }
-  def parseMMSJsonFromString(jsonString: String): Model = {
-    val json = "" + jsonString
+  def parseMMSJsonFromString(json: String): Model = {
+    //val json = "" + jsonString
+    //println("Frontend.parseMMSJsonFromString(" + json + ")")
     var tokener: JSONTokener = new JSONTokener(json)
     var jsonObject: JSONObject = new JSONObject(tokener)
+    //println("jsonObject = " + jsonObject)
     val elementsArray = jsonObject.get("elements").asInstanceOf[JSONArray]
+    //println("elementsArray = " + elementsArray)
     var packageName: Option[PackageDecl] = None
     var imports: List[ImportDecl] = List()
     var annotations: Set[AnnotationDecl] = Set()
@@ -650,18 +653,19 @@ object Frontend {
       try {
         val obj = elementsArray.get(i).asInstanceOf[JSONObject]
         if (obj.keySet.contains("specialization")) {
-          if (obj.getString("name").length == 0) {
-            //println("Warning: found unnamed element in JSON: " + obj.getString("sysmlid"))
-          } else {
+          val name = if (obj.optString("name") != null && obj.optString("name").length > 0) obj.optString("name") else obj.optString("sysmlid"); 
+//          if (obj.getString("name").length == 0) {
+//            //println("Warning: found unnamed element in JSON: " + obj.getString("sysmlid"))
+//          } else {
             val specializationObject = obj.getJSONObject("specialization")
-            specializationObject.getString("type") match {
-              case "Element" =>
-                val entity = EntityDecl(Nil, ClassToken, None, obj.getString("name").replace(" ", "_"), Nil, Nil, Nil)
+            //specializationObject.getString("type")  match {
+            //  case "Element" =>
+                val entity = EntityDecl(Nil, ClassToken, None, name.replace(" ", "_"), Nil, Nil, Nil)
                 mdecls = entity :: mdecls
                 id2Decl += (obj.getString("sysmlid") -> entity)
-              case _ => ()
-            }
-          }
+            //  case _ => ()
+            //}
+//          }
         }
       } catch {
         case _: Throwable => ()
@@ -1534,7 +1538,7 @@ object Frontend {
           FunApplExp(exp1, args)
         } else {
           println("Unknown keys encountered in JSON string! (2) : " + key)//.asInstanceOf[Nothing]
-          Nil
+          return null
           //System.exit(-1).asInstanceOf[Nothing]
         }
 //      case key @ _ =>
@@ -1550,7 +1554,8 @@ object Frontend {
     var element: JSONArray = jsonObject.get("elements").asInstanceOf[JSONArray]
     var specialization: JSONObject = element.get(0).asInstanceOf[JSONObject]
     var exp: Exp = visitJsonObject2(specialization.get("specialization").asInstanceOf[JSONObject]).asInstanceOf[Exp]
-    exp.toString();
+    if ( exp == null ) return null;
+    return exp.toString();
   }
 
   def getVisitor(contents: String): (KScalaVisitor, ModelContext) = {
