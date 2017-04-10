@@ -1,85 +1,56 @@
--- PROJECT-db152ecb-e3ab-4ff8-973e-b0a45cca09bf
+==============================================
+This example models shapes found in geometry. 
+It illustrates use of inheritance, functions, 
+and constraints. 
+==============================================
 
 package examples.Shapes
 
 class Shape {
-  fun sides : Int
+  sides : Int
   fun area : Real
 }
 
 class Angle {
-  a : Int
-  req a > 0 && a < 180
+  value : Int
+
+  fun eq(other: Angle) : Bool {
+    value = other.value
+  }
+
+  req value >= 0 && value <= 360
+}
+
+class TAngle extends Angle {
+  req value < 180
 }
 
 class Triangle extends Shape {
 
-  a : Angle
-  b : Angle
-  c : Angle
+  a : TAngle
+  b : TAngle
+  c : TAngle
+
   base : Int
   height : Int
-  tArea : Real
-    
-  req Angles: (a.a + b.a + c.a) = 180
   
-  ======================================================
-  req Equilateral: a.a = b.a && b.a = c.a
-  
-  ======================================================
-  
-
-  ======================================================
-  req Isosceles: (b = c) || (a = b) || (a = c)
-  ======================================================
-  
-  ======================================================
-  The following requirement makes the class unsatisfiable
-  if the triangle is Isosceles or Equilateral.  
-    
-  req ObtuseAngle: a.a >= 90
-  ======================================================
+  req sides = 3
 
   fun area : Real {
     base * height / 2  
   }
   
-  req ValidAreaFunction: area() > 10.0
-
-  req tArea = area()  
+  req Angles: a.value + b.value + c.value = 180
 }
 
-class Rectangle extends Shape {
-
-  a : Int
-  b : Int
-  c : Int
-  d : Int
-  ar : Int
-  
-  req lengths: a = c && b = d
-  
-  req lengthsGTZero: a > 0 && b > 0
-  
-  ===========================================================
-  The following two requirements make the class unsatisfiable
-  Commenting any one of them will make it satisfiable again
-
-  req assertRectangle: a != b
-  req assertSquare: c = d
-  ===========================================================
-  
-  fun areaRectangle : Int {
-    a * b 
-  }
-  
-  fun isSquare : Bool {
-    -- using lengths Req to our advantage
-    a = b 
-  }
-
-  -- ar = area()
+class  Equilateral extends Triangle {
+  req a.eq(b) && b.eq(c) 
 }
 
-
-t : Triangle
+class Obtuse extends Triangle {
+  req a.value > 90 || b.value > 90 || c.value > 90
+}
+ 
+-- The following class is unsatisfiable.
+-- class Wrong extends Equilateral, Obtuse
+  

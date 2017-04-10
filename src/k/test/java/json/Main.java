@@ -22,7 +22,7 @@ public class Main {
 		String json, exp;
 
 		String[] exps = {
-				"a.b.c.f", // 0
+				"a.b.c.f(x,3)", // 0
 				"x < y + z", // 1
 				"1 + c + d * (-1) = 42", // 2
 				"q isin {f(x) | x : S . p(x)}", // 3
@@ -45,11 +45,12 @@ public class Main {
 				"exists i : Int . i > 10", // 20
 				"exists i : Int . ((i * i < 0))", // 21
 				"forall x, y:Int . x * y = 0", // 22
-				"for x in set do stmt", // 23
+				"for x in set do stmt", // 23 -- does not work
 				"for (x,y) in set do stmt" // 24 -- does not work
 		};
 
-		exp = exps[23];
+		//exp = exps[23];
+		exp = exps[0];
 
 		System.out.println("the expression is:\n\n  " + exp + "\n");
 				

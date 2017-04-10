@@ -6,6 +6,8 @@ import com.microsoft.z3.{ Symbol => Z3Symbol }
 import collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.{ HashMap => MMap }
+import sys.process._
+import java.io._
 
 object Util {
   def ??? : Nothing = null.asInstanceOf[Nothing]
@@ -68,13 +70,21 @@ case class DataType(sort: Sort, constructor: FuncDecl, selectors: Map[String, Fu
 object K2Z3 {
 
   var debug: Boolean = false
-  var silent : Boolean = false
-  var cfg: Map[String, String] = Map("model" -> "true", "auto-config" -> "true")
+  var debugRawModel: Boolean = false
+  val printExtraEntries: Boolean = true
+  var silent: Boolean = false
+  var cfg: Map[String, String] = Map(
+    "model" -> "true",
+    "auto-config" -> "true",
+    "unsat_core" -> "true")
   var ctx: Context = new Context(cfg)
+  var solver: Solver = ctx.mkSolver()
   var idents: MMap[String, (Expr, com.microsoft.z3.StringSymbol)] = MMap()
   var z3Model: com.microsoft.z3.Model = null
   val tc: TypeChecker = new TypeChecker(null)
   var datatypes: DataTypes = null
+  var params = ctx.mkParams
+  params.add("unsat_core", true)
 
   def error(msg: String) = {
     if (silent) Misc.silentErrorThrow("K2Z3", msg, K2Z3Exception)
@@ -86,21 +96,57 @@ object K2Z3 {
 
   def reset() {
     z3Model = null
-    idents = new MMap()
+    idents = new MMap
     ctx = new Context(cfg)
+    params = ctx.mkParams
+    params.add("unsat_core", true)
+    solver = ctx.mkSolver
+    solver.setParameters(params)
   }
 
-  def printObjectValue(name: String, heap: Map[String, String], v: String, visited: Set[String]): (Set[String], List[List[String]]) = {
+  def getStringForSets(setValue: FuncDecl, ty: Type): String = {
+    "Set(" +
+      z3Model.getFuncInterp(setValue).getEntries.foldLeft(List[String]()) {
+        (res, x) =>
+          if (x.getValue.getBoolValue.toInt > 0) {
+            val arg = x.getArgs.mkString.toString
+            if (arg.contains("array")) {
+              val setName = arg.split(" ").last.split("!").last.replace(")", "")
+              val decl = z3Model.getFuncDecls.find { x => x.getName.toString == setName }
+              val result = getStringForSets(decl.get, Misc.getInnerTypeFromCollectionType(ty))
+              result :: res
+            } else {
+              if (TypeChecker.isPrimitiveType(Misc.getInnerTypeFromCollectionType(ty)))
+                x.getArgs.mkString :: res
+              else
+                x.getArgs.map { x => s"Ref $x" }.mkString :: res
+            }
+          } else res
+      }.mkString(",") +
+      ")"
+  }
+
+  def printObjectValue(name: String, heap: Map[String, String],
+                       v: String, visited: Set[String],
+                       refNum: String, force: Boolean): (Set[String], List[List[String]]) = {
 
     if (visited.contains(name)) return (visited, Nil)
 
     val value = v.trim.replace("- ", "-")
     if (value.indexOf("mk-") < 0) return (visited + name, Nil)
     val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
+
+    val classDecl = TypeChecker.classes(className)
+    val noInstancesForClass =
+      classDecl.annotations.foldLeft(false)((res, a) => if (a.name.equals("noInstances")) true else res)
+    if (noInstancesForClass && !force) return (visited, Nil)
+
     val objectValuesString = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
     val objectValuesOrig = objectValuesString.split(' ').map(_.trim).filterNot { _.isEmpty }.drop(1)
-
     var objectValues = List[String]()
+    var printList = List[String]()
+    var toPrint = List[String]()
+
     var i = 0
     while (i < objectValuesOrig.length) {
       var value = objectValuesOrig(i)
@@ -116,6 +162,11 @@ object K2Z3 {
         value += " " + objectValuesOrig(i)
         i = i + 1
         value += " " + objectValuesOrig(i)
+      } else if (objectValuesOrig(i).contains("(_")) {
+        i = i + 1
+        value += " " + objectValuesOrig(i)
+        i = i + 1
+        value += " " + objectValuesOrig(i)
       }
       objectValues = value :: objectValues
       i = i + 1
@@ -123,51 +174,51 @@ object K2Z3 {
     objectValues = objectValues.reverse
 
     if (className == "TopLevelDeclarations") return (visited, List(List(name, " - top level -")))
-    val entityDecl = TypeChecker.classes(className)
-    val properties = entityDecl.getAllPropertyDecls
-    var toPrint = List[String]()
-    val printList =
+
+    val properties = classDecl.getAllPropertyDecls
+    printList =
       (properties zip objectValues).map {
         x =>
-          if (!TypeChecker.isPrimitiveType(x._1.ty)) {
+          if (Misc.isCollection(x._1.ty)) {
+            val setName = x._2.split("!").last.replace(")", "")
+            val setValue = z3Model.getFuncDecls.find { x => x.getName.toString == setName }
+            if (setValue.isEmpty) x._1.name + ":: [Empty Seq]"
+            else x._1.name + ":: " + getStringForSets(setValue.get, x._1.ty)
+          } else if (!TypeChecker.isPrimitiveType(x._1.ty)) {
             toPrint = x._2 :: toPrint
             (x._1.name + ":: Ref " + x._2)
           } else {
             (x._1.name + "::" + x._2)
           }
       }.toList
-    var all = List(name, s"$className(" + printList.mkString(", ") + ")")
+
+    var all =
+      if (name.startsWith("Ref")) List("", name, s"$className(" + printList.mkString(", ") + ")")
+      else List(name, s"Ref $refNum", s"$className(" + printList.mkString(", ") + ")")
+
     var result = toPrint.foldLeft((visited, List(all))) { (res, x) =>
       if (heap.contains(x)) {
-        val downRes = printObjectValue("Ref " + x, heap, heap(x), res._1 + name)
+        val downRes = printObjectValue("Ref " + x, heap, heap(x), res._1 + name, x, true)
         ((downRes._1 + name) ++ res._1, downRes._2 ++ res._2)
       } else {
-        val downRes = printObjectValue("else " + x, heap, heap("else"), res._1 + name)
+        val downRes = printObjectValue("else " + x, heap, heap("else"), res._1 + name, x, true)
         ((downRes._1 + name) ++ res._1, downRes._2 ++ res._2)
       }
     }
     (result._1 + name, result._2)
   }
-
+  
   def PrintModel(model: Model) {
 
     if (z3Model != null) {
 
       logDebug(z3Model.toString)
 
-      log("<<++")
+      // log("<<++")
 
-      var rows: List[List[String]] = List(List("Variable", "Value"))
-      var extraRows: List[List[String]] = List(List("Variable", "Value"))
-
-      var heapDecl = z3Model.getFuncDecls.find {
-        x =>
-          val isHeap = !z3Model.getFuncInterp(x).getEntries.
-            find { e => e.getValue.toString.contains("lift-TopLevelDeclarations") }.isEmpty ||
-            z3Model.getFuncInterp(x).getElse.toString.contains("lift-TopLevelDeclarations")
-          logDebug(s"$x $isHeap")
-          isHeap
-      }
+      var rows: List[List[String]] = List(List("Variable", "Ref", "Value"))
+      var extraRows: List[List[String]] = List(List("Variable", "Ref", "Value"))
+      var heapDecl = z3Model.getDecls.find { _.getName.toString.equals("heap") }
 
       if (heapDecl.isEmpty) {
         error(s"FATAL INTERNAL ERROR! Could not find a heap declaration for printing the model.")
@@ -176,19 +227,23 @@ object K2Z3 {
       var heapMap =
         z3Model.getFuncInterp(heapDecl.get).getEntries.
           foldLeft(Map[String, String]()) { (res, x) =>
+            x.getValue.getArgs.foreach { x =>
+            }
             res + (x.getArgs.last.toString -> x.getValue.toString)
           }
-
+      
       val elseK = z3Model.getFuncInterp(heapDecl.get).getElse
       heapMap += ("else" -> elseK.toString)
 
       var visited = Set[String]()
-
+      
       // walk through heap and  print entries
       heapMap.foreach { kv =>
+
         val key = kv._1
+
         val value = kv._2.replace("- ", "-")
-        if (key != "else") {
+        if (value != "null") {
           val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
           if (value.contains("mk-")) {
             val objectValues = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
@@ -205,59 +260,86 @@ object K2Z3 {
                   }
                 var i = 1
                 topLevelVariables.reverse.foreach { k =>
-                  if (k._2) rows = (List(k._1, objectValues(i))) :: rows
-                  else {
-                    val res = printObjectValue(k._1, heapMap, heapMap.getOrElse(objectValues(i), heapMap("else")), visited)
+                  if (k._2) {
+                    rows = (List(k._1, "-", objectValues(i))) :: rows
+                  } else {
+                    val res = printObjectValue(k._1, heapMap, heapMap.getOrElse(objectValues(i), heapMap("else")), visited, objectValues(i), false)
                     rows = res._2 ++ rows
-                    visited = res._1 + ("Ref " + key)
+                    visited = res._1 + ("Ref " + objectValues(i))
                   }
                   i = i + 1
                 }
-              case _ => {
-                val res = printObjectValue("Ref " + key, heapMap, value, visited)
-                extraRows = res._2 ++ extraRows
-                visited = res._1
-              }
-
+              case _ => ()
             }
           }
         }
       }
+            
+      // walk through heap and  print EXTRA entries
+      if (printExtraEntries) {
+        heapMap.foreach { kv =>
 
+          val key = kv._1
+
+          val value = kv._2.replace("- ", "-") 
+          if (value != "null") {
+            val className = value.subSequence(1, value.indexOf(' ', 1)).toString.replace("lift-", "").trim
+            if (value.contains("mk-")) {
+              val objectValues = value.subSequence(value.indexOf("mk-"), value.length - 2).toString
+                .split(' ').map(_.trim).filterNot { _.isEmpty }
+              className == "TopLevelDeclarations" match {
+                case true => ()
+                case _ => {
+                  val res = printObjectValue("Ref " + key, heapMap, value, visited, key, false)
+                  extraRows = res._2 ++ extraRows
+                  visited = res._1 + ("Ref " + key)
+                }
+              }
+            }
+          }
+        }
+      }
+            
       println()
-      println("\tTop level objects created:")
-      if (rows.length > 1) println(Tabulator.format(rows.reverse))
+      if (rows.length > 1) {
+        println("\tTop level objects created:")
+        println()
+        println(Tabulator.format(rows.reverse))
+      }
       else println("\tNo instance variables were declared at the top level.")
 
       println()
-      println("\tExtra objects created during analysis:")
-      if (extraRows.length > 1) println(Tabulator.format(extraRows.reverse))
+      if (extraRows.length > 1) {
+        println("\tExtra objects created during analysis:")
+        println()
+        println(Tabulator.format(extraRows.reverse))
+      }
       else println("\tNo extra objects.")
       println()
 
-      log("-->>")
+      // log("-->>")
     }
   }
-
+  
   def solveSMT(model: Model, smtModel: String, printModel: Boolean) {
     try {
       reset()
+
       val boolExp = ctx.parseSMTLIB2String(smtModel, null, null, null, null)
-      z3Model = SolveExp(boolExp)
-      // using println here as an exception because we would 
-      // like to copy and use the raw SMT code in rise4fun etc. 
-      // using log would introduce an undesired prefix on each line.
-      if (debug) {
+      z3Model = SolveExp(boolExp, smtModel)
+      
+      if (debugRawModel) {
         println
         println("--- BEGIN RAW SMT MODEL: ---")
         println(z3Model)
         println("--- END RAW SMT MODEL ---")
         println
       }
+            
       if (printModel) PrintModel(model)
     } catch {
       case e: Throwable =>
-        if(debug) e.printStackTrace()
+        if (debug) e.printStackTrace()
         throw K2Z3Exception
     }
   }
@@ -265,24 +347,40 @@ object K2Z3 {
   def SolveExp(e: Exp): com.microsoft.z3.Model = {
     reset()
     val boolExpr = Expr2Z3(e).asInstanceOf[BoolExpr];
-    SolveExp(boolExpr)
+    SolveExp(boolExpr, "")
   }
 
-  def SolveExp(e: BoolExpr): com.microsoft.z3.Model = {
-    var solver: Solver = ctx.mkSolver()
+  def SolveExp(e: BoolExpr, smtModel: String): com.microsoft.z3.Model = {
 
     solver.add(e)
 
-    solver.setParameters(ctx.mkParams())
-
-    val status = solver.check()
+    val status = solver.check
 
     if (Status.SATISFIABLE == status) {
       z3Model = solver.getModel
     } else if (status == Status.UNSATISFIABLE) {
       log()
       log(s"The given model is NOT satisfiable. ")
+      val smt2 = ("(set-option :produce-unsat-cores true)\n") + (smtModel + "(check-sat) (get-unsat-core) (exit)")
+      val file = new File("t.smt2")
+      val tf = new PrintWriter(file)
+      tf.write(smt2)
+      tf.close
+      val res = (("z3 -smt2 t.smt2")).!!
+      val lines = res.split("\\r?\\n")
+      val assertionNames = lines(1).replace("(", "").replace(")", "").split("\\s")
+        .filter { !_.equals("xTOP") }
+        .map { UtilSMT.constraintMessageMap(_) }.toSet
+      log("UNSAT due to the following reasons: ")
+      println
+      for (
+        an <- assertionNames.filter { !_.equals("_k_ignore_") }
+      ) {
+        println(s"\t$an")
+      }
+      println
       log()
+      file.delete()
     } else {
       log()
       log("Model could not be solved successfully.")

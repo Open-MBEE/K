@@ -1,7 +1,4 @@
 
--- This example does not solve. Too hard a problem for Z3. 
--- This due to true structural recursion (linked list problem).
-
 class Person {
   father : Person
   child : Person

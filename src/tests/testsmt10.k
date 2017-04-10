@@ -21,8 +21,6 @@ class B extends A {
     g(x)
   }
 
-  r : Int = h(10)
-
-  req r = 25
+  RESULT_25 : Int = h(10)
 }
 

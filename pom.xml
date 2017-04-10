@@ -3,38 +3,17 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>gov.nasa.jpl.mbee.klang</groupId>
 	<artifactId>klang</artifactId>
-	<version>2.3.1</version>
+	<version>2.3.4-SNAPSHOT</version>
 	<name>klang</name>
 	<description>k library</description>
-	<distributionManagement>
-		<!-- use mvn -U deploy -DgeneratePom=true -Dpackaging=jar -->
-		<repository>
-			<id>artifactory</id>
-			<name>releases</name>
-			<url>http://europambee-build.jpl.nasa.gov:8082/artifactory/libs-release-local</url>
-		</repository>
-		<snapshotRepository>
-			<id>artifactory</id>
-			<name>snapshots</name>
-			<url>http://europambee-build.jpl.nasa.gov:8082/artifactory/libs-snapshot-local</url>
-		</snapshotRepository>
-	</distributionManagement>
-	<repositories>
-		<repository>
-			<id>artifactory-snapshot</id>
-			<name>snapshots</name>
-			<url>http://europambee-build.jpl.nasa.gov:8082/artifactory/libs-snapshot-local</url>
-			<snapshots>
-				<enabled>true</enabled>
-				<updatePolicy>interval:0</updatePolicy>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>artifactory</id>
-			<name>releases</name>
-			<url>http://europambee-build.jpl.nasa.gov:8082/artifactory/libs-release-local</url>
-		</repository>
-	</repositories>
+
+	<parent>
+		<groupId>gov.nasa.jpl</groupId>
+		<artifactId>repositories-parent-pom</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+		<relativePath>config/mvn/repositories-parent-pom.xml</relativePath>
+	</parent>
+
 
 	<!-- Maven profiles allow you to support both Scala 2.10 and Scala 2.11 
 		with the right dependencies for modules specified for each version separately -->
@@ -45,7 +24,7 @@
 				<activeByDefault>true</activeByDefault>
 			</activation>
 			<properties>
-				<scalaVersion>2.11.7</scalaVersion>
+				<scalaVersion>2.11.8</scalaVersion>
 				<!-- change to "2.11" once Scala 2.11.0 final is out -->
 				<scalaBinaryVersion>2.11</scalaBinaryVersion>
 			</properties>
@@ -161,6 +140,35 @@
 				</configuration>
 			</plugin>
 		</plugins>
+		<pluginManagement>
+		 <plugins>
+		  <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+		  <plugin>
+		   <groupId>org.eclipse.m2e</groupId>
+		   <artifactId>lifecycle-mapping</artifactId>
+		   <version>1.0.0</version>
+		   <configuration>
+		    <lifecycleMappingMetadata>
+		     <pluginExecutions>
+		      <pluginExecution>
+		       <pluginExecutionFilter>
+		        <groupId>net.alchim31.maven</groupId>
+		        <artifactId>scala-maven-plugin</artifactId>
+		        <versionRange>[3.1.6,)</versionRange>
+		        <goals>
+		         <goal>add-source</goal>
+		        </goals>
+		       </pluginExecutionFilter>
+		       <action>
+		        <ignore></ignore>
+		       </action>
+		      </pluginExecution>
+		     </pluginExecutions>
+		    </lifecycleMappingMetadata>
+		   </configuration>
+		  </plugin>
+		 </plugins>
+		</pluginManagement>
 	</build>
 	
 	<dependencies>
@@ -170,12 +178,21 @@
 			<version>4.5</version>
 		</dependency>
 
+        <!-- https://mvnrepository.com/artifact/log4j/log4j -->
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.16</version>
+        </dependency>
+
 <!-- 		<dependency>
 			<groupId>org.scala-lang</groupId>
 			<artifactId>scala-library</artifactId>
 			<version>2.11.7</version>
 		</dependency>
- -->		<dependency>
+ -->
+ 
+ 		<dependency>
 			<groupId>com.microsoft.z3</groupId>
 			<artifactId>com.microsoft.z3</artifactId>
 			<version>1.0</version>
@@ -183,6 +200,7 @@
 			<type>jar</type>
 			<systemPath>${project.basedir}/lib/com.microsoft.z3.jar</systemPath>
 		</dependency>
+
 		<dependency>
 			<groupId>com.microsoft.z3</groupId>
 			<artifactId>libz3java</artifactId>
@@ -191,6 +209,7 @@
 			<type>so</type>
 			<systemPath>${project.basedir}/lib/libz3java.so</systemPath>
 		</dependency>
+
 		<dependency>
 			<groupId>com.microsoft.z3</groupId>
 			<artifactId>libz3</artifactId>
@@ -199,5 +218,33 @@
 			<type>so</type>
 			<systemPath>${project.basedir}/lib/libz3.so</systemPath>
 		</dependency>
+
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.4</version>
+            <scope>provided</scope>
+        </dependency>
+
+	    <!-- <dependency>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>elasticsearch</artifactId>
+            <version>1.5.0</version>
+        </dependency> -->
+
+        <!-- https://mvnrepository.com/artifact/com.sksamuel.elastic4s/elastic4s-core_2.11 -->
+        <!-- <dependency>
+            <groupId>com.sksamuel.elastic4s</groupId>
+            <artifactId>elastic4s_2.11</artifactId>
+            <version>1.5.2</version>
+        </dependency> -->
+
+		<dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-server</artifactId>
+            <version>9.2.12.v20150709</version>
+            <scope>provided</scope>
+        </dependency>
+
 	</dependencies>
 </project>
