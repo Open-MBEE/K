@@ -11,15 +11,13 @@ class A {
 class B extends A
 class C extends B
 class D extends C
-class H extends D
+class E extends D
+class F extends E
+class G extends F
+class H extends G
 
+-- h : A
+-- req h is H
 
-objectA : A 
-
-req objectA is C
-
-req objectA.a + objectA.b + objectA.c + objectA.d + objectA.e + objectA.f = 90
-
---  h : H 
---  req h.a + h.b + h.c + h.d + h.e + h.f + h.g = 90
---  req h.a + h.b + h.c + h.d + h.e= 90
+h : H = H()
+req h.a + h.b + h.c + h.d + h.e + h.f + h.g = 90

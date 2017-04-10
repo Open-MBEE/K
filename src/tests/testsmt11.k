@@ -21,8 +21,6 @@ class B extends A {
     g(k1 + k2)
   }
 
-  r : Int = h(Tuple(10,20))
-
-  req r = 31
+  RESULT_31 : Int = h(Tuple(10,20))
 }
 

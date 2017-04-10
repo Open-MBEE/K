@@ -1,6 +1,4 @@
 
--- Test 7: --
-
 class A {
   a : Int = 1
   fun f(k:Int):Int { a + k }
@@ -31,8 +29,8 @@ class Master {
 
   fun main: Int {  d.iB.iA.f(1) + d.iB.g(2) + d.i(3) }
 
-  r : Int = main
+  RESULT : Int = main + main -- 42 (main = 21)
 
-  req r = 21
+  -- req r = 21
 }
 
