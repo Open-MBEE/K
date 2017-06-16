@@ -1636,11 +1636,23 @@ object Frontend {
     var exp: Exp = m.decls(0).asInstanceOf[ExpressionDecl].exp
     exp
   }
+  
+
 
   def exp2KExpList(expressionString: String): List[Exp] = {
     val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(expressionString)
     var m: Model = ksv.visit(tree).asInstanceOf[Model]
     m.decls.map(x => x.asInstanceOf[ExpressionDecl].exp)
+  }
+  
+  def getEntitiesFromString(expressionString: String): List[EntityDecl] = {
+    val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(expressionString)
+    var m: Model = ksv.visit(tree).asInstanceOf[Model]
+    m.decls.map(x => x.asInstanceOf[EntityDecl])
+  }
+  
+  def getEntitiesFromModel(m: Model): List[EntityDecl] = {
+    m.decls.map(x => x.asInstanceOf[EntityDecl])
   }
 
   def getDeclCount(m: Model, d: Class[_]): Int = {

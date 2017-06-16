@@ -456,10 +456,14 @@ class TypeChecker(model: Model) {
       }
     }
   }
+  
+  
+  def hi { typeCheck}
 
   private def typeCheck: Boolean = {
 
     if (model == null) return true
+
 
     // add the reserved annotations to our available annotations
     ReservedAnnotations.annotations.foreach { a => annotations += (a.name -> a) }
