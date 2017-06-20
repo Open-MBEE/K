@@ -1637,6 +1637,10 @@ object Frontend {
     exp
   }
   
+  def isExpression(m: Model): Boolean = {
+    m.decls(0).getClass == classOf[ExpressionDecl]
+  }
+  
 
 
   def exp2KExpList(expressionString: String): List[Exp] = {
@@ -1652,7 +1656,11 @@ object Frontend {
   }
   
   def getEntitiesFromModel(m: Model): List[EntityDecl] = {
-    m.decls.map(x => x.asInstanceOf[EntityDecl])
+    for (x <- m.decls if x.getClass == classOf[EntityDecl]) yield x.asInstanceOf[EntityDecl]
+  }
+  
+  def getTopLevelProperties(m: Model): List[PropertyDecl] = {
+    for (x <- m.decls if x.getClass == classOf[PropertyDecl]) yield x.asInstanceOf[PropertyDecl]
   }
 
   def getDeclCount(m: Model, d: Class[_]): Int = {
