@@ -1814,6 +1814,7 @@ trait Exp {
   }
   def toJson1: JSONObject
   def toJson2: JSONObject
+  def toJavaString: String = this.toString
 }
 
 case class ParenExp(exp: Exp) extends Exp {
@@ -1839,7 +1840,9 @@ case class ParenExp(exp: Exp) extends Exp {
   // TODO: Reached here for Scala translation, which is at experimental stage
 
   override def toString = s"($exp)"
-
+  
+  override def toJavaString = s"(${exp.toJavaString})"
+  
   override def toJson1 = {
     val expression = new JSONObject()
 
@@ -1883,7 +1886,7 @@ case class IdentExp(ident: String) extends Exp {
   override def toScala = ident
 
   override def toString = ident
-
+  
   override def toJson1 = {
     val expression = new JSONObject()
 
@@ -1930,6 +1933,8 @@ case class DotExp(exp: Exp, ident: String) extends Exp {
   }
 
   override def toString = s"$exp.$ident"
+  
+  override def toJavaString = s"${exp.toJavaString}.$ident"
 
   override def toJson1 = {
     val expression = new JSONObject()
@@ -2021,6 +2026,14 @@ case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
 
   override def toString = {
     var result = exp1.toString
+    if (args != null)
+      result += "(" + args.mkString(",") + ")"
+    result
+  }
+  
+  
+    override def toJavaString = {
+    var result = exp1.toJavaString
     if (args != null)
       result += "(" + args.mkString(",") + ")"
     result
@@ -2126,6 +2139,16 @@ case class IfExp(cond: Exp, trueBranch: Exp, falseBranch: Option[Exp]) extends E
       result += indent + falseBranch.get
       moveOut
     }
+    result
+  }
+  
+  override def toJavaString = {
+    var result = s"${cond.toJavaString} ? "
+    result += s"${trueBranch.toJavaString} : "
+    result += (falseBranch match {
+      case None => s"null"
+      case Some(fb) => s"${fb.toJavaString}"
+    })
     result
   }
 
@@ -2239,6 +2262,9 @@ case class BlockExp(body: List[MemberDecl]) extends Exp {
     result += indent + "}"
     result
   }
+  
+  
+  
 
   override def toJson1 = {
     val expression = new JSONObject()
@@ -2272,6 +2298,7 @@ case class WhileExp(cond: Exp, body: Exp) extends Exp {
     moveOut
     result
   }
+  
 
   override def toJson1 = {
     val whileexp = new JSONObject()
@@ -2304,6 +2331,7 @@ case class ForExp(pattern: Pattern, exp: Exp, body: Exp) extends Exp {
     moveOut
     result
   }
+  
 
   override def toJson1 = {
     val forexp = new JSONObject()
@@ -2471,6 +2499,8 @@ case class BinExp(exp1: Exp, op: BinaryOp, exp2: Exp) extends Exp {
   }
 
   override def toString = s"$exp1 $op $exp2"
+  
+  override def toJavaString = s"${exp1.toJavaString} ${op.toJavaString} ${exp2.toJavaString}"
 
   override def toJson1 = {
     val expression = new JSONObject()
@@ -2527,6 +2557,9 @@ case class UnaryExp(op: UnaryOp, exp: Exp) extends Exp {
       s"$exp$op"
     else
       s"$op$exp"
+      
+      
+  override def toJavaString = s"$op${exp.toJavaString}"
 
   override def toJson1 = {
     val expression = new JSONObject()
@@ -2580,6 +2613,8 @@ case class QuantifiedExp(quant: Quantifier,
   }
 
   override def toString = s"$quant ${bindings.mkString(",")} . $exp"
+  
+  override def toJavaString = s"$quant ${bindings.mkString(",")} . ${exp.toJavaString}"
 
   override def toJson1 = {
     val expression = new JSONObject()
@@ -2633,7 +2668,7 @@ case class TupleExp(exps: List[Exp]) extends Exp {
   }
 
   override def toString = "Tuple(" + exps.mkString(",") + ")"
-
+  
   override def toJson1 = {
     val tupleExp = new JSONObject()
     val expressions = new JSONArray()
@@ -3016,6 +3051,8 @@ case class ReturnExp(exp: Exp) extends Exp {
     exp.toSMT(className, subTyping)
 
   override def toString = s"return $exp"
+  
+  override def toJavaString = s"return ${exp.toJavaString}"
 
   override def toJson1 = {
     val returnexp = new JSONObject()
@@ -3174,6 +3211,7 @@ trait BinaryOp {
   def toSMT: String = UtilSMT.error(this.toString)
   def toScala: String = ???
   def toJsonName: String
+  def toJavaString = toString
 }
 
 case object LT extends BinaryOp {
@@ -3262,6 +3300,8 @@ case object EQ extends BinaryOp {
   override def toScala = "=="
 
   override def toString = "="
+  
+  override def toJavaString = "=="
 
   override def toJsonName = "EQ"
 }
