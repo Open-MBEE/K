@@ -1662,6 +1662,14 @@ object Frontend {
   def getTopLevelProperties(m: Model): List[PropertyDecl] = {
     for (x <- m.decls if x.getClass == classOf[PropertyDecl]) yield x.asInstanceOf[PropertyDecl]
   }
+  
+    def getTopLevelConstraints(m: Model): List[ConstraintDecl] = {
+    for (x <- m.decls if x.getClass == classOf[ConstraintDecl]) yield x.asInstanceOf[ConstraintDecl]
+  }
+  
+  def getTopLevelFunctions(m: Model): List[FunDecl] = {
+    for (x <- m.decls if x.getClass == classOf[FunDecl]) yield x.asInstanceOf[FunDecl]
+  }
 
   def getDeclCount(m: Model, d: Class[_]): Int = {
     m.decls.count(decl => (d == decl.getClass))
