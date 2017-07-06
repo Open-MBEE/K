@@ -1638,7 +1638,7 @@ object Frontend {
   }
   
   def isExpression(m: Model): Boolean = {
-    m.decls(0).getClass == classOf[ExpressionDecl]
+    getDeclCount(m, classOf[PropertyDecl]) == 0
   }
   
 
