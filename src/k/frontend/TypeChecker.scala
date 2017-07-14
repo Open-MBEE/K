@@ -311,7 +311,8 @@ class TypeChecker(model: Model) {
     ty match {
       case it @ IdentType(_, _) =>
         if (Misc.isCollection(it)) return it.args.forall { t => doesTypeExist(te, t) }
-        else return te.contains(it.toString)
+        else if te.contains(it.toString) return true
+        else return isExternallyDefined(it.toString)
       case ct @ CartesianType(_) =>
         return ct.types.forall { x => doesTypeExist(te, x) }
       case ft @ FunctionType(_, _) =>
