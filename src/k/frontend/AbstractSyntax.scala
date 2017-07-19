@@ -1962,6 +1962,46 @@ case class DotExp(exp: Exp, ident: String) extends Exp {
   }
 }
 
+case class IndexExp(exp1: Exp, args: List[Argument]) extends Exp {
+    override def toString = {
+    var result = exp1.toString
+    if (args != null)
+      result += "[" + args.mkString(",") + "]"
+    result
+  }
+  
+  
+  override def toJavaString = {
+    var result = exp1.toJavaString
+    if (args != null)
+      result += "[" + args.mkString(",") + "]"
+    result
+  }
+
+  override def toJson1 = {
+    val funappl = new JSONObject()
+    val theArgs = new JSONArray()
+    funappl.put("type", "FunApplExp")
+    funappl.put("exp1", exp1.toJson)
+    for (a <- args) theArgs.put(a.toJson)
+    funappl.put("args", theArgs)
+  }
+
+  override def toJson2 = {
+    val expression = new JSONObject()
+    val operand = new JSONArray()
+
+    expression.put("operand", operand)
+    expression.put("type", "Expression")
+
+    operand.put(exp1.toJson)
+    for (arg <- args) operand.put(arg.toJson)
+
+    expression
+  }
+
+}
+
 // KH: first argument should be 'exp' really.
 
 case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {

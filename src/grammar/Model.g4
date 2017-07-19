@@ -162,6 +162,7 @@ expression:
   | Identifier #IdentExp
   | expression '.' Identifier #DotExp
   | expression '(' argumentList? ')' #AppExp
+  | expression '[' argumentList? ']' #IndexExp
   | '!' expression #NotExp
   | '{' block  '}' #BlockExp
   | 'if' expression 'then' expression ('else' expression)? #IfExp
