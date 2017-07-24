@@ -991,6 +991,7 @@ case class EntityDecl(
     UtilSMT.statistics.EXTENSION += extending.length
     members foreach (_.statistics())
   }
+  
 
   def toSMTDatatype: String = {
     val propertyDecls = getAllPropertyDecls
@@ -1210,6 +1211,12 @@ case class EntityDecl(
       (for (superClass <- getSuperClasses(ident)) yield classes(superClass).getConstraintDecls).flatten
     constraintDeclsOfSuperClasses ++ getConstraintDecls
   }
+  
+    
+  def getExtendingNames: List[String] = {
+    (for (e <- extending if e.isInstanceOf[IdentType]) yield e.toString)
+  }
+  
 
   override def toString = {
     var result = ""
