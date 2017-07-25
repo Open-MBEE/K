@@ -1559,11 +1559,6 @@ object Frontend {
     var exp: Exp = m.decls(0).asInstanceOf[ExpressionDecl].exp
     exp
   }
-  
-  def isExpression(m: Model): Boolean = {
-    m.decls(0).getClass == classOf[ExpressionDecl]
-  }
-  
 
 
   def exp2KExpList(expressionString: String): List[Exp] = {
@@ -1584,6 +1579,18 @@ object Frontend {
   
   def getTopLevelProperties(m: Model): List[PropertyDecl] = {
     for (x <- m.decls if x.getClass == classOf[PropertyDecl]) yield x.asInstanceOf[PropertyDecl]
+  }
+  
+    def getTopLevelConstraints(m: Model): List[ConstraintDecl] = {
+    for (x <- m.decls if x.getClass == classOf[ConstraintDecl]) yield x.asInstanceOf[ConstraintDecl]
+  }
+  
+  def getTopLevelFunctions(m: Model): List[FunDecl] = {
+    for (x <- m.decls if x.getClass == classOf[FunDecl]) yield x.asInstanceOf[FunDecl]
+  }
+  
+  def getTopLevelExpressions(m: Model): List[ExpressionDecl] = {
+    for (x <- m.decls if x.getClass == classOf[ExpressionDecl]) yield x.asInstanceOf[ExpressionDecl]
   }
 
   def getDeclCount(m: Model, d: Class[_]): Int = {
