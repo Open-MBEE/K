@@ -64,6 +64,7 @@ blockDeclaration:
 
 memberDeclaration:
     typeDeclaration
+  | entityDeclaration
   | propertyDeclaration
   | functionDeclaration
   | constraint 

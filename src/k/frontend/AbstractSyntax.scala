@@ -978,13 +978,13 @@ trait TopDecl {
 }
 
 case class EntityDecl(
-    var annotations: List[Annotation],
+    _annotations: List[Annotation],
     entityToken: EntityToken,
     keyword: Option[String],
     ident: String,
     typeParams: List[TypeParam],
     extending: List[Type],
-    members: List[MemberDecl]) extends TopDecl {
+    members: List[MemberDecl]) extends MemberDecl(_annotations) {
 
   override def statistics() {
     UtilSMT.statistics.CLASSDEF += 1
@@ -1321,10 +1321,9 @@ case class TypeBound(types: List[Type]) {
 
 }
 
-trait MemberDecl extends TopDecl {
+abstract class MemberDecl(var annotations: List[Annotation] = Nil) extends TopDecl {
   def toSMT(className: String): String =
     UtilSMT.error(this.toString)
-  var annotations: List[Annotation] = null
 }
 
 case class TypeDecl(ident: String,

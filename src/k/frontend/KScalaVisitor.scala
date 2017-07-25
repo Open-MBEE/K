@@ -378,6 +378,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
 
   override def visitMemberDeclaration(ctx: ModelParser.MemberDeclarationContext): AnyRef = {
     if (ctx.typeDeclaration() != null) visit(ctx.typeDeclaration())
+    else if (ctx.entityDeclaration() != null) visit(ctx.entityDeclaration())
     else if (ctx.propertyDeclaration() != null) visit(ctx.propertyDeclaration())
     else if (ctx.functionDeclaration() != null) visit(ctx.functionDeclaration())
     else if (ctx.constraint() != null) visit(ctx.constraint())
