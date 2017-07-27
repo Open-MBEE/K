@@ -1212,6 +1212,15 @@ case class EntityDecl(
     constraintDeclsOfSuperClasses ++ getConstraintDecls
   }
   
+  def getEntityDecls: List[EntityDecl] = 
+    for (m <- members if m.isInstanceOf[EntityDecl]) yield m.asInstanceOf[EntityDecl]
+  
+  def getAllEntityDecls: List[EntityDecl] = {
+    val entityDeclsOfSuperClasses: List[EntityDecl] = 
+      (for (superClass <- getSuperClasses(ident)) yield classes(superClass).getEntityDecls).flatten
+    entityDeclsOfSuperClasses ++ getEntityDecls
+  }
+  
     
   def getExtendingNames: List[String] = {
     (for (e <- extending if e.isInstanceOf[IdentType]) yield e.toString)
