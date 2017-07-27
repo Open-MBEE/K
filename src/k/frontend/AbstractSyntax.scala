@@ -954,8 +954,9 @@ case class QualifiedName(names: List[String]) {
  }
 
 case class ImportDecl(name: QualifiedName, star: Boolean) {
+  def toStringNoImport = name + (if (star) ".*" else "")
   override def toString =
-    "import " + name + (if (star) ".*" else "")
+    "import " + toStringNoImport
 
   def toJson: JSONObject = {
     val importdecl = new JSONObject()
