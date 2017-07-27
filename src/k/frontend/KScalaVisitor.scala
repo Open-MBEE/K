@@ -6,6 +6,8 @@ import java.lang.Boolean
 import java.math.RoundingMode
 
 class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
+  
+  var declToPosition = Map[MemberDecl, Tuple2[Int, Int]]()
 
   var stack: List[AnyRef] = Nil
 
@@ -30,7 +32,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   }
 
   override def visitImportDeclaration(ctx: ModelParser.ImportDeclarationContext): AnyRef = {
-    var identifiers = ctx.qualifiedName().Identifier().asScala
+    var identifiers = ctx.qualifiedName().Identifier().asScala 
     var children = ctx.children.asScala
     var star: Boolean = children.last.toString() == "*"
     new ImportDecl(new QualifiedName(identifiers.map(_.toString()).toList), star)
@@ -121,7 +123,12 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
       if (ctx.Identifier() != null) Some(ctx.Identifier().getText())
       else None
     val exp: Exp = visit(ctx.expression()).asInstanceOf[Exp]
-    ConstraintDecl(ident, exp)
+    val c = ConstraintDecl(ident, exp)
+    val line = ctx.getStart().getLine()
+    val char = ctx.getStart().getCharPositionInLine()
+    declToPosition += (c -> (line, char))
+    c
+    
   }
 
   override def visitParenExp(ctx: ModelParser.ParenExpContext): AnyRef = {
@@ -423,7 +430,11 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
         visit(ctx.block()).asInstanceOf[List[MemberDecl]]
       else
         Nil
-    EntityDecl(null, entityToken, keyword, ident, typeParams, extending, members)
+    val e = EntityDecl(null, entityToken, keyword, ident, typeParams, extending, members)
+    val line = ctx.getStart().getLine()
+    val char = ctx.getStart().getCharPositionInLine()
+    declToPosition += (e -> (line, char))
+    e
   }
 
   override def visitParamList(ctx: ModelParser.ParamListContext): AnyRef = {
@@ -506,7 +517,11 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
         if (ctx.children.get(ctx.children.size() - 2).getText() == "=") Some(false.asInstanceOf[scala.Boolean])
         else Some(true.asInstanceOf[scala.Boolean])
       else None
-    PropertyDecl(modifiers, name, t, multiplicity, assignment, expr)
+    val p = PropertyDecl(modifiers, name, t, multiplicity, assignment, expr)
+    val line = ctx.getStart().getLine()
+    val char = ctx.getStart().getCharPositionInLine()
+    declToPosition += (p -> (line, char))
+    p
   }
 
   override def visitCollectionKind(ctx: ModelParser.CollectionKindContext): AnyRef = {

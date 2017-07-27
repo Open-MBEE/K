@@ -1513,6 +1513,13 @@ object Frontend {
     var fileContents: String = new String(bytes, "UTF-8")
     fileContents
   }
+  
+  
+  def getDeclDict(f: String) : Map[MemberDecl, Tuple2[Int, Int]] = {
+    val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(f)
+    var m: Model = ksv.visit(tree).asInstanceOf[Model]  
+    ksv.declToPosition
+  }
 
   def getModelFromString(f: String): Model = {
     val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(f)
