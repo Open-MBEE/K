@@ -488,7 +488,11 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
       if (ctx.block() != null)
         visit(ctx.block()).asInstanceOf[List[MemberDecl]]
       else Nil
-    FunDecl(ident, typeParams, paramList, t, spec, body)
+    val f = FunDecl(ident, typeParams, paramList, t, spec, body)
+    val line = ctx.getStart().getLine()
+    val char = ctx.getStart().getCharPositionInLine()
+    declToPosition += (f -> (line, char))
+    f
   }
 
   override def visitFunctionSpecification(ctx: ModelParser.FunctionSpecificationContext): AnyRef = {
