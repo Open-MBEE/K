@@ -11,7 +11,7 @@
 		<groupId>gov.nasa.jpl</groupId>
 		<artifactId>repositories-parent-pom</artifactId>
 		<version>1.0.0-SNAPSHOT</version>
-		<relativePath>config/mvn/repositories-parent-pom.xml</relativePath>
+		<relativePath>repositories-parent-pom.xml</relativePath>
 	</parent>
 
 

@@ -20,3 +20,4 @@ src/tests/test.k
 /tmp
 /.cache-main
 /target
+/.idea
