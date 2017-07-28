@@ -361,84 +361,7 @@ object Frontend {
   }
 
   
-  /*  Removing elastic since it's not used and complicates the build.
-  def doElastic(model: Model) {
-    import scalax.file.Path
-    
-    log("Setting up query engine...")
-    Logger.getRootLogger.setLevel(Level.OFF)
-    val workDir = "elasticTmp"
-    val path: Path = Path(workDir)
-    path.createDirectory(failIfExists=false)
-    ASTOptions.useJson1 = true
-    val indexName = "kexamples"
-    val kmodelsType = "kmodel"
-
-    // Initialize embedded client with specified directory 
-    val settings = ImmutableSettings.settingsBuilder()
-      .put("http.enabled", false)
-      .put("path.data", workDir)
-      .build()
-    val client = ElasticClient.local(settings)
-
-    // remove main index if it exists 
-    def removeIndex: Boolean = {
-      try {
-        client.execute {
-          deleteIndex(indexName)
-        }.await
-        true
-      } catch {
-        case _: Exception => false
-      }
-    }
-    removeIndex
-
-    // create main index 
-    val numShards = 1
-    val numReplicas = 0
-    client.execute { create index indexName }.await
-    //    client.execute { create index indexName mappings ("constraints" parent (kmodelsType)) shards numShards replicas numReplicas }.await
-
-    // Report health status 
-    val healthResponse = client.admin.cluster().prepareHealth().setWaitForGreenStatus().execute().actionGet()
-    val healthStatus = healthResponse.getStatus()
-
-    log(s"Indexing model.")
-
-    //client.execute { index into indexName / kmodelsType doc StringDocumentSource(model.toJson.toString) }.await
-    //client.execute { index into indexName / kmodelsType doc ModelSource(model) }.await
-    for (decl <- model.decls) {
-      client.execute { index into indexName / kmodelsType doc StringDocumentSource(decl.toJson.toString) }.await
-      if (decl.isInstanceOf[EntityDecl] && false) {
-        val entity = decl.asInstanceOf[EntityDecl]
-        for (m <- entity.members) {
-          if (m.isInstanceOf[ConstraintDecl])
-            client.execute { index into indexName / "constraints" doc StringDocumentSource(m.toJson.toString) }.await
-        }
-      }
-    }
-    Thread.sleep(3000)
-
-    while (true) {
-      print("[main] Query>")
-      val queryString = readLine.trim
-      if (queryString == "k_exit") break
-      val resp = client.execute { search in indexName / kmodelsType query queryString }.await
-
-      for (hit <- resp.getHits().getHits) {
-        var tokener: JSONTokener = new JSONTokener(hit.getSourceAsString)
-        var jsonObject: JSONObject = new JSONObject(tokener)
-        val decl = visitJsonObject(jsonObject)
-        println("Search Results: " + decl)
-      }
-
-    }
-
-    client.close()
-  }
-*/
-
+  
   def getFileTree(f: File): Stream[File] =
     f #:: (if (f.isDirectory) f.listFiles().toStream.flatMap(getFileTree)
     else Stream.empty)
@@ -1590,6 +1513,13 @@ object Frontend {
     var fileContents: String = new String(bytes, "UTF-8")
     fileContents
   }
+  
+  
+  def getDeclDict(f: String) : Map[MemberDecl, Tuple2[Int, Int]] = {
+    val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(f)
+    var m: Model = ksv.visit(tree).asInstanceOf[Model]  
+    ksv.declToPosition
+  }
 
   def getModelFromString(f: String): Model = {
     val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(f)
@@ -1637,10 +1567,37 @@ object Frontend {
     exp
   }
 
+
   def exp2KExpList(expressionString: String): List[Exp] = {
     val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(expressionString)
     var m: Model = ksv.visit(tree).asInstanceOf[Model]
     m.decls.map(x => x.asInstanceOf[ExpressionDecl].exp)
+  }
+  
+  def getEntitiesFromString(expressionString: String): List[EntityDecl] = {
+    val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(expressionString)
+    var m: Model = ksv.visit(tree).asInstanceOf[Model]
+    m.decls.map(x => x.asInstanceOf[EntityDecl])
+  }
+  
+  def getEntitiesFromModel(m: Model): List[EntityDecl] = {
+    for (x <- m.decls if x.getClass == classOf[EntityDecl]) yield x.asInstanceOf[EntityDecl]
+  }
+  
+  def getTopLevelProperties(m: Model): List[PropertyDecl] = {
+    for (x <- m.decls if x.getClass == classOf[PropertyDecl]) yield x.asInstanceOf[PropertyDecl]
+  }
+  
+    def getTopLevelConstraints(m: Model): List[ConstraintDecl] = {
+    for (x <- m.decls if x.getClass == classOf[ConstraintDecl]) yield x.asInstanceOf[ConstraintDecl]
+  }
+  
+  def getTopLevelFunctions(m: Model): List[FunDecl] = {
+    for (x <- m.decls if x.getClass == classOf[FunDecl]) yield x.asInstanceOf[FunDecl]
+  }
+  
+  def getTopLevelExpressions(m: Model): List[ExpressionDecl] = {
+    for (x <- m.decls if x.getClass == classOf[ExpressionDecl]) yield x.asInstanceOf[ExpressionDecl]
   }
 
   def getDeclCount(m: Model, d: Class[_]): Int = {

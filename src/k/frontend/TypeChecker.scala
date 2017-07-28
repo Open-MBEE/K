@@ -1,7 +1,9 @@
 package k.frontend
 
 import k.frontend._
-import java.util.{ IdentityHashMap => IMap }
+import java.util.{IdentityHashMap => IMap}
+
+import gov.nasa.jpl.mbee.util.ClassUtils
 
 object TypeCheckException extends Exception
 
@@ -307,11 +309,56 @@ object ClassHierarchy {
 
 class TypeChecker(model: Model) {
 
+  def jvmFunctionToFunctionDecl( cls: java.lang.Class[Object], name: String ) : FunDecl = {
+    val field : java.lang.reflect.Field = ClassUtils.getField(cls, name, true)
+    if (field == null) return null
+    val typeParams : List[TypeParam] = Nil
+    var params : List[Param] = Nil
+    val extending : List[Type] = Nil
+    val members : List[MemberDecl] = Nil
+    val functionSpecs : List[FunSpec] = Nil
+    val funDecl = FunDecl(name, typeParams, params, None, functionSpecs, members)
+    return funDecl
+  }
+
+  def jvmPackageToPackageDecl( name: String ) : PackageDecl = {
+    if (!ClassUtils.isPackageName(name)) return null
+    var names = List(name)
+    val pkgDecl = PackageDecl(QualifiedName(names))
+    return pkgDecl
+  }
+
+  def jvmClassToEntityDecl( name: String ) : EntityDecl = {
+    val cls = ClassUtils.classForName(name)
+    if (cls == null) return null
+    val typeParams : List[TypeParam] = Nil
+    val extending : List[Type] = Nil
+    val members : List[MemberDecl] = Nil
+    val entityDecl = EntityDecl(Nil, ClassToken, None, name, typeParams, extending, members)
+    return entityDecl
+  }
+
+  
+  private def isExternallyDefined( te: TypeEnv, name: String ) : Boolean = {
+    val entityDecl = jvmClassToEntityDecl( name )
+    if (entityDecl != Nil) {
+//      te.map(name) = entityDecl
+      return true
+    }
+    val packageDecl = jvmPackageToPackageDecl( name )
+    if (packageDecl != null) {
+//      te.map = te.map + ( name -> packageDecl)
+      return true
+    }
+    return false
+  }
+  
   private def doesTypeExist(te: TypeEnv, ty: Type): Boolean = {
     ty match {
       case it @ IdentType(_, _) =>
         if (Misc.isCollection(it)) return it.args.forall { t => doesTypeExist(te, t) }
-        else return te.contains(it.toString)
+        else if (te.contains(it.toString)) return true
+        else return isExternallyDefined(te, it.toString)
       case ct @ CartesianType(_) =>
         return ct.types.forall { x => doesTypeExist(te, x) }
       case ft @ FunctionType(_, _) =>
@@ -456,10 +503,14 @@ class TypeChecker(model: Model) {
       }
     }
   }
+  
+  
+  def hi { typeCheck}
 
   private def typeCheck: Boolean = {
 
     if (model == null) return true
+
 
     // add the reserved annotations to our available annotations
     ReservedAnnotations.annotations.foreach { a => annotations += (a.name -> a) }
