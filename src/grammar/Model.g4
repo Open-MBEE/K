@@ -162,6 +162,7 @@ expression:
   | literal #LiteralExp
   | Identifier #IdentExp
   | expression '.' Identifier #DotExp
+  | expression '.' 'class' #ClassExp 
   | expression '(' argumentList? ')' #AppExp
   | expression '[' argumentList? ']' #IndexExp
   | '!' expression #NotExp
@@ -204,7 +205,7 @@ argumentList:
   ;
 
 positionalArgumentList:
-    expression (',' expression)* 
+    expression ((',' | (']' '[')) expression)* 
     ;
 
 namedArgumentList:
