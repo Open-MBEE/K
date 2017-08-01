@@ -162,9 +162,9 @@ expression:
   | literal #LiteralExp
   | Identifier #IdentExp
   | expression '.' Identifier #DotExp
-  | expression '.' 'class' #ClassExp 
+  | type '.' 'class' #ClassExp 
   | expression '(' argumentList? ')' #AppExp
-  | expression '[' argumentList? ']' #IndexExp
+  | expression '[' positionalArgumentList ']' #IndexExp
   | '!' expression #NotExp
   | '{' block  '}' #BlockExp
   | 'if' expression 'then' expression ('else' expression)? #IfExp
