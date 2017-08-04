@@ -2018,6 +2018,15 @@ case class IndexExp(exp1: Exp, args: List[Argument]) extends Exp {
 
 }
 
+case class ClassExp(ty: Type) extends Exp {
+  override def toString = {
+    ty.toString + ".class"
+  }
+  
+  def toJson1 : org.json.JSONObject = ???
+  def toJson2 : org.json.JSONObject = ???
+}
+
 // KH: first argument should be 'exp' really.
 
 case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {

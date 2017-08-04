@@ -164,8 +164,9 @@ expression:
   | Identifier #IdentExp
   | primitiveType #IdentExp
   | expression '.' Identifier #DotExp
+  | type '.' 'class' #ClassExp 
   | expression '(' argumentList? ')' #AppExp
-  | expression '[' argumentList ']' #IndexExp
+  | expression '[' positionalArgumentList ']' #IndexExp
   | '!' expression #NotExp
   | '{' block  '}' #BlockExp
   | 'if' expression 'then' expression ('else' expression)? #IfExp
@@ -206,7 +207,7 @@ argumentList:
   ;
 
 positionalArgumentList:
-    expression (',' expression)* 
+    expression ((',' | (']' '[')) expression)* 
     ;
 
 namedArgumentList:

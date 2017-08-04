@@ -52,6 +52,13 @@ public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSetEnumExp(@NotNull ModelParser.SetEnumExpContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code IndexExp}
+	 * labeled alternative in {@link ModelParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIndexExp(@NotNull ModelParser.IndexExpContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code CartesianType}
 	 * labeled alternative in {@link ModelParser#type}.
 	 * @param ctx the parse tree
@@ -265,6 +272,13 @@ public interface ModelVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitParamList(@NotNull ModelParser.ParamListContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ClassExp}
+	 * labeled alternative in {@link ModelParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitClassExp(@NotNull ModelParser.ClassExpContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link ModelParser#typeBound}.
 	 * @param ctx the parse tree
