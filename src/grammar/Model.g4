@@ -124,6 +124,7 @@ expressionOrStar:
 type:
   primitiveType                   # PrimType
 | classIdentifier typeArguments?  # IdentType
+| classIdentifier ('[' ']')+      # ArrayType
 | type ('*' type)+                # CartesianType
 | type '->' type                  # FuncType
 | '(' type ')'					  # ParenType
@@ -136,7 +137,7 @@ primitiveType:
   | 'Int'       // Scala bigint (arbitrary precision)
   | 'Real'      // double
   | 'String'
-  | 'Unit'  
+  | 'Unit'
   ;
 
 classIdentifier:
@@ -161,9 +162,10 @@ expression:
   | 'Tuple' '(' expression (',' expression)+ ')' #TupleExp
   | literal #LiteralExp
   | Identifier #IdentExp
+  | primitiveType #IdentExp
   | expression '.' Identifier #DotExp
   | expression '(' argumentList? ')' #AppExp
-  | expression '[' argumentList? ']' #IndexExp
+  | expression '[' argumentList ']' #IndexExp
   | '!' expression #NotExp
   | '{' block  '}' #BlockExp
   | 'if' expression 'then' expression ('else' expression)? #IfExp
