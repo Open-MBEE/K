@@ -666,9 +666,14 @@ private[frontend] object ToStringSupport {
 }
 import ToStringSupport._
 
+trait HasChildren {
+  def children: List[AnyRef]
+}
 case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
                  annotations: Set[AnnotationDecl],
-                 decls: List[TopDecl]) {
+                 decls: List[TopDecl]) extends HasChildren {
+
+  def children: List[TopDecl] = decls
 
   def toSMT: String = {
     val model: Model = UtilSMT.transformModel(this)
@@ -885,8 +890,10 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
 
 }
 
-case class PackageDecl(name: QualifiedName) {
+case class PackageDecl(name: QualifiedName) {//extends MemberDecl {
   override def toString = s"package $name"
+
+  //def children: List[AnyRef] =
 
   def toJson: JSONObject = {
     val packagedecl = new JSONObject()
@@ -898,6 +905,8 @@ case class PackageDecl(name: QualifiedName) {
 
 case class AnnotationDecl(name: String, ty: Type) extends TopDecl {
   override def toString = s"annotation $name : $ty"
+
+  def children: List[AnyRef] = List()
 
   override def toJson1 = {
     val annotationDecl = new JSONObject()
@@ -967,7 +976,7 @@ case class ImportDecl(name: QualifiedName, star: Boolean) {
 
 }
 
-trait TopDecl {
+trait TopDecl extends HasChildren {
   def statistics() {}
   def toScala: String = ???
   def toJson: JSONObject = {
@@ -986,6 +995,8 @@ case class EntityDecl(
     typeParams: List[TypeParam],
     extending: List[Type],
     members: List[MemberDecl]) extends MemberDecl(_annotations) {
+
+  override def children: List[TopDecl] = members
 
   override def statistics() {
     UtilSMT.statistics.CLASSDEF += 1
@@ -1359,6 +1370,8 @@ case class TypeDecl(ident: String,
     result
   }
 
+  override def children: List[AnyRef] = List()
+
   override def toJson1 = {
     val typedecl = new JSONObject()
     val params = new JSONArray()
@@ -1373,12 +1386,23 @@ case class TypeDecl(ident: String,
   override def toJson2 = toJson1
 }
 
+object ListIt {
+  def m( x : Option[AnyRef] ) : List[AnyRef] = {
+    x match {
+    case None => List ()
+    case Some (e) => List (e)
+    }
+  }
+}
+
 case class PropertyDecl(modifiers: List[PropertyModifier],
                         name: String,
                         ty: Type,
                         multiplicity: Option[Multiplicity],
                         assignment: Option[Boolean],
                         expr: Option[Exp]) extends MemberDecl {
+
+  override def children: List[AnyRef] = List(ty) ::: ListIt.m(multiplicity) ::: ListIt.m(expr)
 
   override def statistics() {
     UtilSMT.statistics.PROPERTY += 1
@@ -1509,7 +1533,10 @@ case object Target extends PropertyModifier {
   override def toJson = toString
 }
 
-case class FunSpec(pre: Boolean, exp: Exp) {
+case class FunSpec(pre: Boolean, exp: Exp) extends HasChildren {
+
+  def children: List[AnyRef] = List(exp)
+
   def statistics() {
     if (pre)
       UtilSMT.statistics.PRECONDITION += 1
@@ -1559,6 +1586,8 @@ case class FunDecl(ident: String,
                    ty: Option[Type],
                    spec: List[FunSpec],
                    body: List[MemberDecl]) extends MemberDecl {
+
+  override def children: List[AnyRef] = body
 
   override def statistics() {
     UtilSMT.statistics.FUNDECL += 1
@@ -1753,6 +1782,8 @@ case class FunDecl(ident: String,
 }
 
 case class ConstraintDecl(name: Option[String], exp: Exp) extends MemberDecl {
+  override def children: List[AnyRef] = List(exp)
+
   override def statistics() {
     UtilSMT.statistics.CONSTRAINT += 1
     exp.statistics()
@@ -1788,6 +1819,8 @@ case class ConstraintDecl(name: Option[String], exp: Exp) extends MemberDecl {
 }
 
 case class ExpressionDecl(exp: Exp) extends MemberDecl {
+  override def children: List[AnyRef] = List(exp)
+
   override def toScala: String = exp.toScala
 
   override def toString = exp.toString
@@ -1802,7 +1835,7 @@ case class ExpressionDecl(exp: Exp) extends MemberDecl {
 
 }
 
-trait Exp {
+trait Exp extends HasChildren {
   def statistics() {}
 
   def freeVariables: Set[String] = Set()
@@ -1834,6 +1867,8 @@ trait Exp {
 }
 
 case class ParenExp(exp: Exp) extends Exp {
+  override def children: List[Exp] = List(exp)
+
   override def statistics() {
     UtilSMT.statistics.PARENEXP += 1
     exp.statistics()
@@ -1872,6 +1907,8 @@ case class ParenExp(exp: Exp) extends Exp {
 }
 
 case class IdentExp(ident: String) extends Exp {
+  override def children: List[Exp] = List()
+
   override def freeVariables: Set[String] = Set(ident)
 
   override def substitute(substitution: Map[String, Exp]): Exp =
@@ -1919,6 +1956,8 @@ case class IdentExp(ident: String) extends Exp {
 }
 
 case class DotExp(exp: Exp, ident: String) extends Exp {
+  override def children: List[Exp] = List(exp)
+
   override def statistics() {
     val depth = dotDepth(this)
     UtilSMT.statistics.DOTEXP += 1
@@ -1979,7 +2018,9 @@ case class DotExp(exp: Exp, ident: String) extends Exp {
 }
 
 case class IndexExp(exp1: Exp, args: List[Argument]) extends Exp {
-    override def toString = {
+  override def children: List[Exp] = exp1 :: args
+
+  override def toString = {
     var result = exp1.toString
     if (args != null)
       result += "[" + args.mkString(",") + "]"
@@ -2019,6 +2060,8 @@ case class IndexExp(exp1: Exp, args: List[Argument]) extends Exp {
 }
 
 case class ClassExp(ty: Type) extends Exp {
+  override def children: List[AnyRef] = List()
+
   override def toString = {
     ty.toString + ".class"
   }
@@ -2030,6 +2073,14 @@ case class ClassExp(ty: Type) extends Exp {
 // KH: first argument should be 'exp' really.
 
 case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
+  override def children: List[Exp] = exp1 :: (if (args == null)  List() else args)
+
+  def name: String =
+    exp1 match {
+      case IdentExp(ident) => ident
+      case DotExp(_, ident) => ident
+    }
+
   override def statistics() {
     UtilSMT.statistics.FUNAPPL += 1
     exp1.statistics()
@@ -2128,6 +2179,8 @@ case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
 }
 
 case class IfExp(cond: Exp, trueBranch: Exp, falseBranch: Option[Exp]) extends Exp {
+  override def children: List[AnyRef] = List(cond, trueBranch) ::: ListIt.m(falseBranch)
+
   override def statistics() {
     UtilSMT.statistics.IFEXP += 1
     cond.statistics()
@@ -2242,6 +2295,8 @@ case class IfExp(cond: Exp, trueBranch: Exp, falseBranch: Option[Exp]) extends E
 }
 
 case class MatchExp(exp: Exp, m: List[MatchCase]) extends Exp {
+  override def children: List[Exp] = exp :: m
+
   override def toString = {
     var result = s"match $exp with\n"
     moveIn
@@ -2281,6 +2336,8 @@ case class MatchExp(exp: Exp, m: List[MatchCase]) extends Exp {
 // KH: How did this become an expression?
 
 case class MatchCase(patterns: List[Pattern], exp: Exp) extends Exp {
+  override def children: List[AnyRef] = patterns.asInstanceOf[List[AnyRef]] ::: List[AnyRef](exp)
+
   override def toString =
     "case " + patterns.mkString("|") + " => " + exp
 
@@ -2309,6 +2366,8 @@ case class MatchCase(patterns: List[Pattern], exp: Exp) extends Exp {
 }
 
 case class BlockExp(body: List[MemberDecl]) extends Exp {
+  override def children: List[MemberDecl] = body
+
   override def statistics() {
     UtilSMT.statistics.BLOCK += 1
     body foreach (_.statistics())
@@ -2356,6 +2415,8 @@ case class BlockExp(body: List[MemberDecl]) extends Exp {
 }
 
 case class WhileExp(cond: Exp, body: Exp) extends Exp {
+  override def children: List[Exp] = List(cond, body)
+
   override def toString = {
     var result = s"while $cond do"
     moveIn
@@ -2389,6 +2450,8 @@ case class WhileExp(cond: Exp, body: Exp) extends Exp {
 }
 
 case class ForExp(pattern: Pattern, exp: Exp, body: Exp) extends Exp {
+  override def children: List[AnyRef] = List(pattern, exp, body)
+
   override def toString = {
     var result = s"for $pattern in $exp do"
     moveIn
@@ -2424,6 +2487,8 @@ case class ForExp(pattern: Pattern, exp: Exp, body: Exp) extends Exp {
 }
 
 case class BinExp(exp1: Exp, op: BinaryOp, exp2: Exp) extends Exp {
+  override def children: List[AnyRef] = List(exp1, op, exp2)
+
   override def statistics() {
     UtilSMT.statistics.BINEXP += 1
     op.statistics()
@@ -2591,6 +2656,8 @@ case class BinExp(exp1: Exp, op: BinaryOp, exp2: Exp) extends Exp {
 }
 
 case class UnaryExp(op: UnaryOp, exp: Exp) extends Exp {
+  override def children: List[AnyRef] = List(op, exp)
+
   override def statistics() {
     UtilSMT.statistics.UNARYEXP += 1
     op.statistics()
@@ -2651,6 +2718,7 @@ case class UnaryExp(op: UnaryOp, exp: Exp) extends Exp {
 case class QuantifiedExp(quant: Quantifier,
                          bindings: List[RngBinding],
                          exp: Exp) extends Exp {
+  override def children: List[AnyRef] = bindings.asInstanceOf[List[AnyRef]] :+ exp.asInstanceOf[AnyRef]
 
   override def statistics() {
     quant.statistics()
@@ -2713,6 +2781,8 @@ case class QuantifiedExp(quant: Quantifier,
 }
 
 case class TupleExp(exps: List[Exp]) extends Exp {
+  override def children: List[Exp] = exps
+
   override def statistics() {
     UtilSMT.statistics.TUPLEEXP += 1
     exps foreach (_.statistics())
@@ -2777,6 +2847,8 @@ case object BagKind extends CollectionKind {
 }
 
 case class CollectionEnumExp(kind: CollectionKind, exps: List[Exp]) extends Exp {
+  override def children: List[Exp] = exps
+
   override def statistics() {
     kind match {
       case SetKind =>
@@ -2839,6 +2911,8 @@ case class CollectionEnumExp(kind: CollectionKind, exps: List[Exp]) extends Exp 
 }
 
 case class CollectionRangeExp(kind: CollectionKind, exp1: Exp, exp2: Exp) extends Exp {
+  override def children: List[AnyRef] = List(exp1, exp2)
+
   override def statistics() {
     kind match {
       case SetKind =>
@@ -2912,6 +2986,7 @@ case class CollectionComprExp(kind: CollectionKind,
                               exp1: Exp,
                               bindings: List[RngBinding],
                               exp2: Exp) extends Exp {
+  override def children: List[AnyRef] = (exp1 :: bindings) :+ exp2
 
   override def statistics() {
     kind match {
@@ -2998,6 +3073,8 @@ case class CollectionComprExp(kind: CollectionKind,
 }
 
 case class LambdaExp(pat: Pattern, exp: Exp) extends Exp {
+  override def children: List[AnyRef] = List(pat, exp)
+
   override def statistics() {
     UtilSMT.statistics.LAMBDAEXP += 1
     exp.statistics()
@@ -3030,6 +3107,8 @@ case class LambdaExp(pat: Pattern, exp: Exp) extends Exp {
 }
 
 case class AssertExp(exp: Exp) extends Exp {
+  override def children = List(exp)
+
   override def freeVariables: Set[String] =
     exp.freeVariables
 
@@ -3052,6 +3131,8 @@ case class AssertExp(exp: Exp) extends Exp {
 }
 
 case class TypeCastCheckExp(cast: Boolean, exp: Exp, ty: Type) extends Exp {
+  override def children: List[AnyRef] = List(exp, ty)
+
   override def statistics() {
     if (cast)
       UtilSMT.statistics.TYPECASTEXP += 1
@@ -3109,6 +3190,8 @@ case class TypeCastCheckExp(cast: Boolean, exp: Exp, ty: Type) extends Exp {
 }
 
 case class ReturnExp(exp: Exp) extends Exp {
+  override def children: List[AnyRef] = List(exp)
+
   override def freeVariables: Set[String] =
     exp.freeVariables
 
@@ -3139,6 +3222,8 @@ case class ReturnExp(exp: Exp) extends Exp {
 }
 
 case object BreakExp extends Exp {
+  override def children: List[AnyRef] = List()
+
   override def toString = "break"
 
   override def toJson1 =
@@ -3157,6 +3242,8 @@ case object BreakExp extends Exp {
 }
 
 case object ContinueExp extends Exp {
+  override def children: List[AnyRef] = List()
+
   override def toString = "continue"
 
   override def toJson1 =
@@ -3174,6 +3261,8 @@ case object ContinueExp extends Exp {
 }
 
 case object ResultExp extends Exp {
+  override def children: List[AnyRef] = List()
+
   override def toString = "$result"
 
   override def toSMT(className: String, subTyping: Boolean): String =
@@ -3196,6 +3285,8 @@ case object ResultExp extends Exp {
 }
 
 case object StarExp extends Exp {
+  override def children: List[AnyRef] = List()
+
   override def toString = "*"
 
   override def toJson1 = {
@@ -3218,6 +3309,8 @@ case object StarExp extends Exp {
 trait Argument extends Exp
 
 case class PositionalArgument(exp: Exp) extends Argument {
+  override def children: List[Exp] = List(exp)
+
   override def statistics() {
     exp.statistics()
   }
@@ -3245,6 +3338,8 @@ case class PositionalArgument(exp: Exp) extends Argument {
 }
 
 case class NamedArgument(ident: String, exp: Exp) extends Argument {
+  override def children: List[Exp] = List(exp)
+
   override def statistics() {
     exp.statistics()
   }
@@ -3575,11 +3670,15 @@ case object PREV extends UnaryOp {
 }
 
 trait Literal extends Exp {
+  override def children = List()
+
   override def substitute(substitution: Map[String, Exp]): Exp =
     this
 }
 
 case class IntegerLiteral(i: Int) extends Literal {
+  override def children = List()
+
   override def statistics() {
     UtilSMT.statistics.INTLIT += 1
   }
@@ -3605,6 +3704,8 @@ case class IntegerLiteral(i: Int) extends Literal {
 }
 
 case class RealLiteral(f: java.math.BigDecimal) extends Literal {
+  override def children = List()
+
   override def statistics() {
     UtilSMT.statistics.REALLIT += 1
   }
@@ -3630,6 +3731,8 @@ case class RealLiteral(f: java.math.BigDecimal) extends Literal {
 }
 
 case class CharacterLiteral(c: Char) extends Literal {
+  override def children = List()
+
   override def toString = c.toString
 
   override def toScala = c.toString // are the quotes printed as well?
@@ -3648,6 +3751,8 @@ case class CharacterLiteral(c: Char) extends Literal {
 }
 
 case class StringLiteral(s: String) extends Literal {
+  override def children = List()
+
   override def statistics() {
     UtilSMT.statistics.STRINGLIT += 1
   }
@@ -3667,6 +3772,8 @@ case class StringLiteral(s: String) extends Literal {
 }
 
 case class BooleanLiteral(b: Boolean) extends Literal {
+  override def children = List()
+
   override def statistics() {
     UtilSMT.statistics.BOOLLIT += 1
   }
@@ -3688,6 +3795,8 @@ case class BooleanLiteral(b: Boolean) extends Literal {
 }
 
 case object NullLiteral extends Literal {
+  override def children = List()
+
   override def statistics() {
     UtilSMT.statistics.NULLLIT += 1
   }
@@ -3705,6 +3814,8 @@ case object NullLiteral extends Literal {
 }
 
 case object ThisLiteral extends Literal {
+  override def children = List()
+
   override def statistics() {
     UtilSMT.statistics.THISLIT += 1
   }
@@ -3782,7 +3893,9 @@ case object Exists extends Quantifier {
   }
 }
 
-trait Type {
+trait Type extends HasChildren {
+  def children: List[AnyRef] = List()
+
   def statistics() {}
   def toSMT: String = UtilSMT.error(this.toString)
   def toScala: String = ???
@@ -3799,11 +3912,13 @@ trait Type {
 }
 
 case class CollectType(ty: List[Type]) extends PrimitiveType {
+
   override def toJson1 = null
   override def toJson2 = null
 }
 
 case class SumType(ty: List[Type]) extends PrimitiveType {
+  override def children: List[AnyRef] = ty
   override def toJson1 = null
   override def toJson2 = null
 }
@@ -3826,6 +3941,7 @@ case class ClassType(ident: QualifiedName) extends Type {
 }
 
 case class IdentType(ident: QualifiedName, args: List[Type]) extends Type {
+  override def children: List[AnyRef] = args
   override def statistics() {
     (ident.names, args) match {
       case (name :: Nil, ty :: Nil) if Misc.isCollection(name) =>
@@ -3877,6 +3993,8 @@ case class IdentType(ident: QualifiedName, args: List[Type]) extends Type {
 case class CartesianType(types: List[Type]) extends Type {
   // Probably needs to be a Ref.
 
+  override def children: List[AnyRef] = types
+
   override def statistics() {
     UtilSMT.statistics.TUPLETYPE += 1
     types foreach (_.statistics())
@@ -3907,6 +4025,8 @@ case class CartesianType(types: List[Type]) extends Type {
 }
 
 case class FunctionType(from: Type, to: Type) extends Type {
+  override def children: List[AnyRef] = List(from, to)
+
   override def statistics() {
     UtilSMT.statistics.FUNTYPE += 1
     from.statistics()
@@ -3930,6 +4050,8 @@ case class FunctionType(from: Type, to: Type) extends Type {
 }
 
 case class ParenType(ty: Type) extends Type {
+  override def children: List[AnyRef] = List(ty)
+
   override def statistics() {
     UtilSMT.statistics.PARENTYPE += 1
   }
@@ -3954,6 +4076,8 @@ case class ParenType(ty: Type) extends Type {
 }
 
 case class SubType(ident: String, ty: Type, exp: Exp) extends Type {
+  override def children: List[AnyRef] = List(ty, exp)
+
   override def statistics() {
     UtilSMT.statistics.SUBTYPE += 1
     ty.statistics()
@@ -4081,7 +4205,8 @@ case object UnitType extends PrimitiveType {
   }
 }
 
-trait Pattern {
+trait Pattern extends HasChildren {
+  def children: List[AnyRef] = List()
   def boundNames: Set[String] = Set()
   def toSMT: String = UtilSMT.error(this.toString)
   def toJson: JSONObject = {
@@ -4124,6 +4249,8 @@ case class IdentPattern(ident: String) extends Pattern {
 }
 
 case class ProductPattern(patterns: List[Pattern]) extends Pattern {
+  override def children = patterns
+
   override def boundNames = patterns.map(_.boundNames).toSet.flatten
 
   override def toString = "(" + patterns.mkString(",") + ")"
@@ -4151,6 +4278,8 @@ case class ProductPattern(patterns: List[Pattern]) extends Pattern {
 }
 
 case class TypedPattern(pattern: Pattern, ty: Type) extends Pattern {
+  override def children: List[AnyRef] = List(pattern, ty)
+
   override def boundNames = pattern.boundNames
 
   override def toString = s"$pattern : $ty"
@@ -4178,7 +4307,9 @@ case object DontCarePattern extends Pattern {
   }
 }
 
-case class RngBinding(patterns: List[Pattern], collection: Collection) {
+case class RngBinding(patterns: List[Pattern], collection: Collection) extends HasChildren {
+  override def children = patterns :+ collection
+
   def statistics() {
     collection.statistics()
   }
@@ -4238,7 +4369,9 @@ case class RngBinding(patterns: List[Pattern], collection: Collection) {
   }
 }
 
-trait Collection {
+trait Collection extends HasChildren {
+  def children: List[AnyRef] = List()
+
   def statistics() {}
 
   def toSMT: String = UtilSMT.error(this.toString)
@@ -4253,6 +4386,8 @@ trait Collection {
 }
 
 case class ExpCollection(exp: Exp) extends Collection {
+  override def children: List[AnyRef] = List(exp)
+
   override def toSMT: String = {
     exp match {
       case IdentExp(id) if getEntityDecl(id) != null => // user-defined class
@@ -4282,6 +4417,8 @@ case class ExpCollection(exp: Exp) extends Collection {
 }
 
 case class TypeCollection(ty: Type) extends Collection {
+  override def children: List[AnyRef] = List(ty)
+
   override def statistics() {
     ty.statistics()
     ty match {
@@ -4320,7 +4457,9 @@ case class TypeCollection(ty: Type) extends Collection {
   }
 }
 
-case class Multiplicity(exp1: Exp, exp2: Option[Exp]) {
+case class Multiplicity(exp1: Exp, exp2: Option[Exp]) extends HasChildren {
+   def children = List(exp1) ::: ListIt.m(exp2)
+
   override def toString =
     if (exp2.nonEmpty)
       s"[$exp1..${exp2.get}]"
