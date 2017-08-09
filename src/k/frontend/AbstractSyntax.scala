@@ -3899,6 +3899,7 @@ trait Type extends HasChildren {
   def statistics() {}
   def toSMT: String = UtilSMT.error(this.toString)
   def toScala: String = ???
+  def toJavaString: String = toString
   def toJson: JSONObject = {
     if (ASTOptions.useJson1 == true) toJson1
     else toJson2
@@ -3970,6 +3971,23 @@ case class IdentType(ident: QualifiedName, args: List[Type]) extends Type {
       case _ =>
         "Ref"
     }
+  }
+  
+  override def toJavaString: String = {
+    val buf = new StringBuilder
+    buf ++= (
+    ident.toString match {
+      case "Seq" => "ArrayList<"
+      case _ => toString
+    })
+    if (!buf.toString.equals("ArrayList<")) {
+      buf.toString
+    } else {
+       buf ++= args.map(x => x.toJavaString).mkString(",")
+    buf ++= ">"
+    buf.toString
+    }
+   
   }
 
   override def toScala: String = ident.toScala
@@ -4113,6 +4131,8 @@ case object BoolType extends PrimitiveType {
   override def toScala: String = "Boolean"
 
   override def toString = "Bool"
+  
+  override def toJavaString = "Boolean"
 
   override def toJson1 = {
     new JSONObject().put("type", "BoolType")
@@ -4149,6 +4169,8 @@ case object IntType extends PrimitiveType {
   override def toScala: String = "Int"
 
   override def toString = "Int"
+  
+  override def toJavaString = "Integer"
 
   override def toJson1 = {
     new JSONObject().put("type", "IntType")
@@ -4169,6 +4191,8 @@ case object RealType extends PrimitiveType {
   override def toScala: String = "Flot"
 
   override def toString = "Real"
+  
+  override def toJavaString = "Double"
 
   override def toJson1 = {
     new JSONObject().put("type", "RealType")
