@@ -2030,8 +2030,7 @@ case class IndexExp(exp1: Exp, args: List[Argument]) extends Exp {
   
   override def toJavaString = {
     var result = exp1.toJavaString
-    if (args != null)
-      result += "[" + args.mkString(",") + "]"
+    args.foreach(result += ".get(" + _.toJavaString + ")")
     result
   }
 
@@ -2824,6 +2823,7 @@ case class TupleExp(exps: List[Exp]) extends Exp {
 
 trait CollectionKind {
   def toJson: String
+  def toJavaString: String = toString
 }
 
 case object SetKind extends CollectionKind {
@@ -2839,6 +2839,8 @@ case object OSetKind extends CollectionKind {
 case object SeqKind extends CollectionKind {
   override def toString = "Seq"
   override def toJson = toString
+  override def toJavaString = "ArrayList"
+  
 }
 
 case object BagKind extends CollectionKind {
