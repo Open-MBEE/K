@@ -109,7 +109,7 @@ object Frontend {
           print("[main] Please enter the test case to run:")
           val testCase = readLine.trim
           val fileName = testCase.asInstanceOf[String]
-          val testsDir = new File(new File(new File(".").getAbsolutePath, "src"), "tests")
+          val testsDir = new File(new File(new File("."), "src"), "tests")
           val file = new File(testsDir, fileName)
           val result = doTest(file, true)
           val baselineFile = new File(testsDir, "baseline.json")
