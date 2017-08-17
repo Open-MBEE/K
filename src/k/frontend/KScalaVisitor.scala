@@ -5,30 +5,52 @@ import java.lang.Float
 import java.lang.Boolean
 import java.math.RoundingMode
 
+import scala.collection.mutable.ListBuffer
+//import scala.collection.mutable.Set
+
 class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   
   var declToPosition = Map[MemberDecl, Tuple2[Int, Int]]()
 
   var stack: List[AnyRef] = Nil
 
-  override def visitModel(ctx: ModelParser.ModelContext): AnyRef = {
-    var packageDecl: Option[PackageDecl] =
-      if (ctx.packageDeclaration() != null) Some(visit(ctx.packageDeclaration()).asInstanceOf[PackageDecl])
-      else None
-    var importDecls: List[ImportDecl] = ctx.importDeclaration().asScala.toList.map(visit(_).asInstanceOf[ImportDecl])
-    var annotationDecls: Set[AnnotationDecl] = ctx.annotationDeclaration().asScala.toList.map(visit(_).asInstanceOf[AnnotationDecl]).toSet
-    var topDecls: List[TopDecl] = ctx.topDeclaration().asScala.toList.map(visit(_).asInstanceOf[TopDecl])
-    Model(packageDecl, importDecls, annotationDecls, topDecls)
+  override def visitModel(ctx: ModelParser.ModelContext): Model = {
+    visitModelThings(ctx.modelThings())
   }
+
+  override def visitModelThings(ctx: ModelParser.ModelThingsContext): Model = {
+    var packageDecls: ListBuffer[PackageDecl] = new ListBuffer[PackageDecl]() //= ctx.packageDeclaration().asScala.toList.map(visit(_).asInstanceOf[PackageDecl])
+    var importDecls: ListBuffer[ImportDecl] = new ListBuffer[ImportDecl]()
+    var annotationDecls: Set[AnnotationDecl] = new ListBuffer[AnnotationDecl]().toList.toSet
+    var topDecls: ListBuffer[TopDecl] = new ListBuffer[TopDecl]()
+    val things: List[AnyRef] = ctx.modelThing().asScala.toList.map(visit(_).asInstanceOf[AnyRef])
+    for (thing <- things) {
+      if (thing.isInstanceOf[PackageDecl]) {
+        packageDecls += thing.asInstanceOf[PackageDecl]
+      } else if (thing.isInstanceOf[ImportDecl]) {
+        importDecls += thing.asInstanceOf[ImportDecl]
+      } else if (thing.isInstanceOf[AnnotationDecl]) {
+        annotationDecls += thing.asInstanceOf[AnnotationDecl]
+      } else if (thing.isInstanceOf[TopDecl]) {
+        topDecls += thing.asInstanceOf[TopDecl]
+      }
+    }
+    var packageName: Option[String] = null
+    Model(packageName, packageDecls.toList, importDecls.toList, annotationDecls, topDecls.toList)
+  }
+
+  override def visitModelThing(ctx: ModelParser.ModelThingContext): AnyRef = super.visitModelThing(ctx)
 
   override def visitQualifiedName(ctx: ModelParser.QualifiedNameContext): AnyRef = {
     var identifiers = ctx.Identifier().asScala
     QualifiedName(identifiers.map(_.toString()).toList)
   }
 
-  override def visitPackageDeclaration(ctx: ModelParser.PackageDeclarationContext): AnyRef = {
+  override def visitPackageDeclaration(ctx: ModelParser.PackageDeclarationContext): PackageDecl = {
     var qn: QualifiedName = visit(ctx.qualifiedName()).asInstanceOf[QualifiedName]
-    PackageDecl(qn)
+    var m: Model = visitModelThings(ctx.modelThings())
+    var model: Model = Model(qn.toString.asInstanceOf[Option[String]], m.packages, m.imports, m.annotations, m.decls)
+    PackageDecl(qn, model)
   }
 
   override def visitImportDeclaration(ctx: ModelParser.ImportDeclarationContext): AnyRef = {

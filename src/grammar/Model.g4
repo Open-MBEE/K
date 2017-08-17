@@ -1,15 +1,25 @@
 grammar Model;
 
 model:
-  packageDeclaration?
-  importDeclaration* 
-  annotationDeclaration*
-  topDeclaration* 
+  modelThings
   EOF
 ;
 
+modelThings:
+  modelThing*
+;
+
+modelThing:
+  packageDeclaration
+|  importDeclaration
+|  annotationDeclaration
+|  topDeclaration
+;
+
+
 packageDeclaration:
-  'package' qualifiedName 
+  'package' qualifiedName modelThings
+| 'package' qualifiedName '{' modelThings '}'
 ;
 
 importDeclaration:

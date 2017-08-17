@@ -2,8 +2,10 @@ package k.frontend
 
 import org.json.JSONObject
 import java.text._
+
 import org.json.JSONArray
-import scala.collection.mutable.Stack
+
+import scala.collection.mutable.{ListBuffer, Stack}
 import java.io.File
 
 // NOTE: toJson is the correct way of doing JSON
@@ -337,7 +339,7 @@ object UtilSMT {
   }
 
   def transformModel(model: Model): Model = {
-    val Model(packageName, imports, annotations, decls) = model
+    val Model(packageName: Option[String], packages, imports, annotations, decls) = model
     var memberDecls: List[MemberDecl] =
       for (decl <- decls if decl.isInstanceOf[MemberDecl]) yield decl.asInstanceOf[MemberDecl]
     val mainClass = EntityDecl(Nil, ClassToken, None, UtilSMT.Names.mainClass, Nil, Nil, memberDecls)
@@ -345,7 +347,16 @@ object UtilSMT {
       for (decl <- decls if decl.isInstanceOf[EntityDecl]) yield decl.asInstanceOf[EntityDecl]
     val entityDeclsSorted = UtilSMT.sortEntityDecls(entityDecls)
     val entityDeclsWithMain = mainClass :: entityDeclsSorted
-    val newModel = Model(packageName, imports, annotations, entityDeclsWithMain)
+
+    var newPackages = ListBuffer[PackageDecl]()
+    for ( pd <- packages ) {
+      var m: Model = transformModel(pd.model)
+      var newPackage = PackageDecl(pd.name, m)
+      newPackages += newPackage
+    }
+
+    val newModel = Model(packageName, newPackages.toList, imports, annotations, entityDeclsWithMain)
+
     // println(s"---\n$model\n---\n$newModel\n---")
     newModel
   }
@@ -353,6 +364,7 @@ object UtilSMT {
 
 class Statistics {
   // --- Top level: ---
+  var PACKAGE: Int = 0
   var CLASSDEF: Int = 0
   var EXTENSION: Int = 0
   var PROPERTY: Int = 0
@@ -444,6 +456,7 @@ class Statistics {
     text("         STATISTICS:")
     text(dline)
     headline("declarations")
+    data("packages", PACKAGE)
     data("class definitions", CLASSDEF)
     data("class extensions", EXTENSION)
     data("properties", PROPERTY)
@@ -545,12 +558,20 @@ class InstantiationGraph(model: Model) {
     }
   }
 
-  // --- Populate state: ---
-
-  for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
-    val created = ed.getCreatedObjects
-    addInstances(ed.ident, created)
+  def addModelInstances(model: Model): Unit = {
+    for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
+      val created = ed.getCreatedObjects
+      addInstances(ed.ident, created)
+    }
+    for (pd <- model.packages.asInstanceOf[List[PackageDecl]]) {
+      var m = pd.model
+      addModelInstances(m)
+    }
   }
+
+  // --- Populate state: ---
+  addModelInstances(model)
+
 }
 
 class HeapLayout(model: Model) {
@@ -608,26 +629,47 @@ class HeapLayout(model: Model) {
   // --- Populate state: ---
 
   // update instancesByAnnotation:
-  for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
-    for (Annotation("instances", IntegerLiteral(size)) <- ed.annotations) {
-      instancesByAnnotation += (ed.ident -> size)
+  updateInstancesByAnnotation(model)
+  def updateInstancesByAnnotation(model: Model) {
+    for (ed <- model.decls.asInstanceOf[List[EntityDecl]]) {
+      for (Annotation("instances", IntegerLiteral(size)) <- ed.annotations) {
+        instancesByAnnotation += (ed.ident -> size)
+      }
+    }
+    for (pd <- model.packages.asInstanceOf[List[PackageDecl]]) {
+      var m = pd.model
+      updateInstancesByAnnotation(m)
     }
   }
 
   // update instancesByComputation:
-  if (K2Z3.debug) println("\n--- dfs instance search:\n")
-  for (className <- graph.getClassesToChase(2))
-    dfs(className)
+  updateInstancesByAnnotation(model)
+  def updateInstancesByComputation(model: Model) {
+    if (K2Z3.debug) println("\n--- dfs instance search:\n")
+    for (className <- graph.getClassesToChase(2))
+      dfs(className)
+    for (pd <- model.packages.asInstanceOf[List[PackageDecl]]) {
+      var m = pd.model
+      updateInstancesByComputation(m)
+    }
+  }
 
   // update heapEntries:
-  heapEntries += ("TopLevelDeclarations" -> (0, 0))
-  var nextFreeHeapCell: Int = 1
-  for (className <- graph.getAllClasses if !className.equals("TopLevelDeclarations")) {
-    val nrOfInstances = getNrOfInstances(className)
-    val newNextFreeHeapCell = nextFreeHeapCell + nrOfInstances
-    val range = (nextFreeHeapCell, newNextFreeHeapCell - 1)
-    nextFreeHeapCell = newNextFreeHeapCell
-    heapEntries += (className -> range)
+  updateHeapEntries(model)
+  def updateHeapEntries(model: Model) {
+    heapEntries += ("TopLevelDeclarations" -> (0, 0))
+    var nextFreeHeapCell: Int = 1
+    for (className <- graph.getAllClasses if !className.equals("TopLevelDeclarations")) {
+      val nrOfInstances = getNrOfInstances(className)
+      val newNextFreeHeapCell = nextFreeHeapCell + nrOfInstances
+      val range = (nextFreeHeapCell, newNextFreeHeapCell - 1)
+      nextFreeHeapCell = newNextFreeHeapCell
+      heapEntries += (className -> range)
+    }
+    for (pd <- model.packages.asInstanceOf[List[PackageDecl]]) {
+      var m = pd.model
+      updateHeapEntries(m)
+    }
   }
 
   if (K2Z3.debug) println(this)
@@ -669,22 +711,38 @@ import ToStringSupport._
 trait HasChildren {
   def children: List[AnyRef]
 }
-case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
+case class Model(packageName: Option[String], packages: List[PackageDecl], imports: List[ImportDecl],
                  annotations: Set[AnnotationDecl],
                  decls: List[TopDecl]) extends HasChildren {
 
-  def children: List[TopDecl] = decls
+  def children: List[AnyRef] = decls ::: packages
 
-  def toSMT: String = {
-    val model: Model = UtilSMT.transformModel(this)
-    UtilSMT.objectGraph = new HeapLayout(model)
-    UtilSMT.statistics = new Statistics()
+  def statistics(): Unit = {
     decls foreach (_.statistics())
+    packages foreach(_.statistics())
+  }
+
+  def allEntityDecls(model: Model): List[EntityDecl] = {
+    var allDecls = new ListBuffer[EntityDecl]()
     val entityDecls = model.decls.asInstanceOf[List[EntityDecl]].filterNot {
       case ed => ed.annotations exists {
         case Annotation(name, _) => name.equals("ignore")
       }
     }
+    allDecls.appendAll(entityDecls)
+    for ( pd <- packages ) {
+      val pdecls = allEntityDecls(pd.model)
+      allDecls.appendAll(pdecls)
+    }
+    allDecls.toList
+  }
+
+  def toSMT: String = {
+    val model: Model = UtilSMT.transformModel(this)
+    UtilSMT.objectGraph = new HeapLayout(model)
+    UtilSMT.statistics = new Statistics()
+    statistics()
+    val entityDecls = allEntityDecls(model)
 
     var result1: String = "" // text before omitted constructor parameter constants
     var result2: String = "" // text after omitted constructor parameter constants
@@ -835,11 +893,11 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
   }
 
   override def toString = {
-    var result =
-      packageName match {
-        case Some(p) => p + "\n"
-        case None    => ""
-      }
+    var result = ""
+//      packageName match {
+//        case Some(p) => p + "\n"
+//        case None    => ""
+//      }
     if (!imports.isEmpty) {
       result += "\n"
       for (imp <- imports) {
@@ -861,6 +919,13 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
       }
     }
 
+    if (!packages.isEmpty) {
+      result += "\n"
+      for (p <- packages) {
+        result += p + "\n\n"
+      }
+    }
+
     result
   }
 
@@ -869,12 +934,13 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
     val theImports = new JSONArray()
     val theDecls = new JSONArray()
     val theAnnotations = new JSONArray()
+    val thePackages = new JSONArray()
 
     model.put("type", "Model")
     packageName match {
       case None =>
       case Some(pckdecl) =>
-        model.put("packageName", pckdecl.toJson)
+        model.put("packageName", pckdecl)
     }
 
     for (imp <- imports) theImports.put(imp.toJson)
@@ -886,12 +952,21 @@ case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
     for (decl <- decls) theDecls.put(decl.toJson)
     model.put("decls", theDecls)
 
+    for (p <- packages) thePackages.put(p.toJson)
+    model.put("packages", thePackages)
   }
 
 }
 
-case class PackageDecl(name: QualifiedName) {//extends MemberDecl {
-  override def toString = s"package $name"
+case class PackageDecl(name: QualifiedName, model: Model) extends HasChildren {//extends MemberDecl {
+  override def toString = s"package $name" + (if (model==null) "" else  " {\n" + model + "\n}")
+
+  def children: List[Model] = List[Model](model)
+
+  def statistics() {
+    UtilSMT.statistics.PACKAGE += 1
+    model.statistics()
+  }
 
   //def children: List[AnyRef] =
 
@@ -899,6 +974,18 @@ case class PackageDecl(name: QualifiedName) {//extends MemberDecl {
     val packagedecl = new JSONObject()
     packagedecl.put("type", "PackageDecl")
     packagedecl.put("name", name.toJson)
+    packagedecl.put("model", model.toJson)
+  }
+
+  def toJson2: JSONObject = {
+    val packagedecl = new JSONObject()
+    packagedecl.put("type", "Package")
+    packagedecl.put("name", name.toJson)
+    // TODO -- need to pull ids out of annotations
+    // TODO -- maybe add an id to all of the decl classes (TopDecl, PackageDecl, ??)
+    //packagedecl.put("id", )
+    // TODO -- need to add owner to all of the decl classes
+    //packagedecl.put("owner", )
   }
 
 }
