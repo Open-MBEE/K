@@ -722,6 +722,22 @@ case class Model(packageName: Option[String], packages: List[PackageDecl], impor
     packages foreach(_.statistics())
   }
 
+  def allDecls(model: Model): List[TopDecl] = {
+    var all = new ListBuffer[TopDecl]()
+    val theDecls = model.decls //.filterNot {
+      //case ed => !ed.isInstanceOf[MemberDecl] ||
+      //  (ed.asInstanceOf[MemberDecl].annotations exists {
+      //  case Annotation(name, _) => name.equals("ignore")
+      //})
+    //}
+    all.appendAll(theDecls)
+    for ( pd <- packages ) {
+      val pdecls = allDecls(pd.model)
+      all.appendAll(pdecls)
+    }
+    all.toList
+  }
+
   def allEntityDecls(model: Model): List[EntityDecl] = {
     var allDecls = new ListBuffer[EntityDecl]()
     val entityDecls = model.decls.asInstanceOf[List[EntityDecl]].filterNot {
