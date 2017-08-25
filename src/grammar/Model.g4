@@ -18,8 +18,8 @@ modelThing:
 
 
 packageDeclaration:
-  'package' qualifiedName modelThings
-| 'package' qualifiedName '{' modelThings '}'
+  'package' qualifiedName '{' modelThings '}'
+| 'package' qualifiedName modelThings
 ;
 
 importDeclaration:
@@ -178,7 +178,7 @@ expression:
   | expression '(' argumentList? ')' #AppExp
   | expression '[' positionalArgumentList ']' #IndexExp
   | '!' expression #NotExp
-  | '{' block  '}' #BlockExp
+  | '{' block  '}' {$ctx.parent instanceof ModelParser.ModelContext}? #BlockExp
   | 'if' expression 'then' expression ('else' expression)? #IfExp
   | 'match' expression 'with' match+  #MatchExp
   | 'while' expression 'do' expression  #WhileExp

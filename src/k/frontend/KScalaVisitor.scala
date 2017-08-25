@@ -49,7 +49,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   override def visitPackageDeclaration(ctx: ModelParser.PackageDeclarationContext): PackageDecl = {
     var qn: QualifiedName = visit(ctx.qualifiedName()).asInstanceOf[QualifiedName]
     var m: Model = visitModelThings(ctx.modelThings())
-    var model: Model = Model(qn.toString.asInstanceOf[Option[String]], m.packages, m.imports, m.annotations, m.decls)
+    var model: Model = Model(Option(qn.toString), m.packages, m.imports, m.annotations, m.decls)
     PackageDecl(qn, model)
   }
 
