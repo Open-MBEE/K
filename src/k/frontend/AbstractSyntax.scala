@@ -1380,7 +1380,9 @@ case class TypeDecl(ident: String,
     typedecl.put("type", "TypeDecl")
     typedecl.put("params", params)
     if (ty.nonEmpty) typedecl.put("ty", ty.get.toJson)
-    else typedecl
+    val theAnnotations = new JSONArray()
+    for (annotation <- annotations) theAnnotations.put(annotation.toJson)
+    typedecl.put("annotations", theAnnotations)
   }
 
   override def toJson2 = toJson1
@@ -1455,11 +1457,14 @@ case class PropertyDecl(modifiers: List[PropertyModifier],
   override def toJson1 = {
     val propertydecl = new JSONObject()
     val theModifiers = new JSONArray()
+    val theAnnotations = new JSONArray()
     propertydecl.put("type", "PropertyDecl")
 
     for (modifier <- modifiers) theModifiers.put(modifier.toJson)
+    for (annotation <- annotations) theAnnotations.put(annotation.toJson)
 
     propertydecl.put("modifiers", theModifiers)
+    propertydecl.put("annotations", theAnnotations)
     propertydecl.put("name", name)
     propertydecl.put("ty", ty.toJson)
     multiplicity match { case Some(m) => propertydecl.put("multiplicity", m.toJson) case None => }
@@ -1765,6 +1770,7 @@ case class FunDecl(ident: String,
     val theParams = new JSONArray()
     val theSpec = new JSONArray()
     val theBody = new JSONArray()
+    val theAnnotations = new JSONArray()
     fundecl.put("type", "FunDecl")
     fundecl.put("ident", ident)
     for (tp <- typeParams) theTypeParams.put(tp.toJson)
@@ -1776,6 +1782,8 @@ case class FunDecl(ident: String,
     fundecl.put("spec", theSpec)
     for (member <- body) theBody.put(member.toJson)
     fundecl.put("body", theBody)
+    for (annotation <- annotations) theAnnotations.put(annotation.toJson)
+    fundecl.put("annotations", theAnnotations)
   }
 
   override def toJson2 = toJson1
@@ -1806,6 +1814,7 @@ case class ConstraintDecl(name: Option[String], exp: Exp) extends MemberDecl {
 
   override def toJson1 = {
     val constraintdecl = new JSONObject
+    val theAnnotations = new JSONArray()
     constraintdecl.put("type", "ConstraintDecl")
     name match {
       case None =>
@@ -1813,6 +1822,8 @@ case class ConstraintDecl(name: Option[String], exp: Exp) extends MemberDecl {
         constraintdecl.put("name", ident)
     }
     constraintdecl.put("exp", exp.toJson)
+    for (annotation <- annotations) theAnnotations.put(annotation.toJson)
+    constraintdecl.put("annotations", theAnnotations)
   }
 
   override def toJson2 = toJson1
@@ -1827,8 +1838,11 @@ case class ExpressionDecl(exp: Exp) extends MemberDecl {
 
   override def toJson1 = {
     val expressiondecl = new JSONObject()
+    val theAnnotations = new JSONArray()
     expressiondecl.put("type", "ExpressionDecl")
     expressiondecl.put("exp", exp.toJson)
+    for (annotation <- annotations) theAnnotations.put(annotation.toJson)
+    expressiondecl.put("annotations", theAnnotations)
   }
 
   override def toJson2 = toJson1
@@ -2905,7 +2919,7 @@ case class CollectionEnumExp(kind: CollectionKind, exps: List[Exp]) extends Exp 
   override def toJson2 = {
     val expression = new JSONObject()
     val operand = new JSONArray()
-    operand.put(new JSONObject().put("type", "ElementValue").put("element", kind))
+    operand.put(new JSONObject().put("type", "ElementValue").put("element", kind.toJson))
     for (exp <- exps) operand.put(exp.toJson)
     expression.put("type", "Expression")
     expression.put("operand", operand)
