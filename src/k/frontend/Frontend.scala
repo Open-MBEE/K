@@ -1684,8 +1684,13 @@ object Frontend {
     val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(expressionString)
     var m: Model = ksv.visit(tree).asInstanceOf[Model]
 
-    var exp: Exp = m.decls(0).asInstanceOf[ExpressionDecl].exp
-    exp
+    if (m == null || m.decls == null || m.decls.length == 0) {
+      val mm = StringLiteral("")//Model(None,List(), List(), Set(), List())
+      mm
+    } else {
+      var exp: Exp = m.decls(0).asInstanceOf[ExpressionDecl].exp
+      exp
+    }
   }
 
 
@@ -1702,27 +1707,51 @@ object Frontend {
   }
   
   def getEntitiesFromModel(m: Model): List[EntityDecl] = {
-    for (x <- m.decls if x.getClass == classOf[EntityDecl]) yield x.asInstanceOf[EntityDecl]
+    if (m == null || m.decls == null || m.decls.length == 0) {
+      List[EntityDecl]()
+    } else {
+      for (x <- m.decls if x.getClass == classOf[EntityDecl]) yield x.asInstanceOf[EntityDecl]
+    }
   }
   
   def getTopLevelProperties(m: Model): List[PropertyDecl] = {
-    for (x <- m.decls if x.getClass == classOf[PropertyDecl]) yield x.asInstanceOf[PropertyDecl]
+    if (m == null || m.decls == null || m.decls.length == 0) {
+      List[PropertyDecl]()
+    } else {
+      for (x <- m.decls if x.getClass == classOf[PropertyDecl]) yield x.asInstanceOf[PropertyDecl]
+    }
   }
   
-    def getTopLevelConstraints(m: Model): List[ConstraintDecl] = {
-    for (x <- m.decls if x.getClass == classOf[ConstraintDecl]) yield x.asInstanceOf[ConstraintDecl]
+  def getTopLevelConstraints(m: Model): List[ConstraintDecl] = {
+    if (m == null || m.decls == null || m.decls.length == 0) {
+      List[ConstraintDecl]()
+    } else {
+      for (x <- m.decls if x.getClass == classOf[ConstraintDecl]) yield x.asInstanceOf[ConstraintDecl]
+    }
   }
   
   def getTopLevelFunctions(m: Model): List[FunDecl] = {
-    for (x <- m.decls if x.getClass == classOf[FunDecl]) yield x.asInstanceOf[FunDecl]
+    if (m == null || m.decls == null || m.decls.length == 0) {
+      List[FunDecl]()
+    } else {
+      for (x <- m.decls if x.getClass == classOf[FunDecl]) yield x.asInstanceOf[FunDecl]
+    }
   }
   
   def getTopLevelExpressions(m: Model): List[ExpressionDecl] = {
-    for (x <- m.decls if x.getClass == classOf[ExpressionDecl]) yield x.asInstanceOf[ExpressionDecl]
+    if (m == null || m.decls == null || m.decls.length == 0) {
+      List[ExpressionDecl]()
+    } else {
+      for (x <- m.decls if x.getClass == classOf[ExpressionDecl]) yield x.asInstanceOf[ExpressionDecl]
+    }
   }
 
   def getDeclCount(m: Model, d: Class[_]): Int = {
-    m.decls.count(decl => (d == decl.getClass))
+    if (m == null || m.decls == null || m.decls.length == 0) {
+      0
+    } else {
+      m.decls.count(decl => (d == decl.getClass))
+    }
   }
 
   def printStats(m: Model) {
