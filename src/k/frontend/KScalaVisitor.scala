@@ -181,7 +181,30 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
     var argumentList = visit(ctx.positionalArgumentList()).asInstanceOf[List[Argument]]
     IndexExp(e, argumentList)
   }
-  
+
+  override def visitConstructorAppExp1(ctx: ModelParser.ConstructorAppExp1Context): AnyRef = {
+    var cls = visit(ctx.classIdentifier())
+    var argumentList =
+      if (ctx.argumentList() != null)
+        visit(ctx.argumentList()).asInstanceOf[List[Argument]]
+      else
+        Nil
+
+    var ty = Type(cls, argumentList)
+
+    CtorApplExp(ty, argumentList)
+  }
+
+  override def visitConstructorAppExp2(ctx: ModelParser.ConstructorAppExp2Context): AnyRef = {
+    var ty = visit(ctx.`type`())
+    var argumentList =
+      if (ctx.argumentList() != null)
+        visit(ctx.argumentList()).asInstanceOf[List[Argument]]
+      else
+        Nil
+
+    CtorApplExp(ty, argumentList)
+  }
 
   override def visitAppExp(ctx: ModelParser.AppExpContext): AnyRef = {
     var e0: Exp = visit(ctx.expression()).asInstanceOf[Exp]

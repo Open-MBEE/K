@@ -175,7 +175,9 @@ expression:
   | primitiveType #IdentExp
   | expression '.' Identifier #DotExp
   | type '.' 'class' #ClassExp 
+  | classIdentifier typeArguments '(' argumentList? ')' #ConstructorAppExp1
   | expression '(' argumentList? ')' #AppExp
+  | type '(' argumentList? ')' #ConstructorAppExp2
   | expression '[' positionalArgumentList ']' #IndexExp
   | '!' expression #NotExp
   | '{' block  '}' {$ctx.parent instanceof ModelParser.ModelContext}? #BlockExp

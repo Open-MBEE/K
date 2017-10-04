@@ -2174,7 +2174,15 @@ case class ClassExp(ty: Type) extends Exp {
 
 // KH: first argument should be 'exp' really.
 
-case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
+
+case class FunApplExp(exp: Exp, arguments: List[Argument]) extends CallApplExp {
+  override def exp1 = exp
+  override def args = arguments
+}
+trait CallApplExp extends Exp {
+  def exp1: Exp
+  def args: List[Argument]
+
   override def children: List[Exp] = exp1 :: (if (args == null)  List() else args)
 
   def name: String =
@@ -2278,6 +2286,11 @@ case class FunApplExp(exp1: Exp, args: List[Argument]) extends Exp {
 
     expression
   }
+}
+
+case class CtorApplExp(ty: Type, arguments: List[Argument]) extends CallApplExp {
+  override def exp1 = { new IdentExp(ident: ty.toString) }
+  override def args = arguments
 }
 
 case class IfExp(cond: Exp, trueBranch: Exp, falseBranch: Option[Exp]) extends Exp {
