@@ -1041,6 +1041,7 @@ case class QualifiedName(names: List[String]) {
   }
 
   override def toString = names.mkString(".")
+  def toJavaString = toString
 
   def toPath = names.mkString(File.separator)
 
@@ -2258,10 +2259,11 @@ trait CallApplExp extends Exp {
   }
   
   
-    override def toJavaString = {
-    var result = exp1.toJavaString
+  override def toJavaString = {
+    var result = if (isConstructor(exp1)) "new " else ""
+    result += exp1.toJavaString
     if (args != null)
-      result += "(" + args.mkString(",") + ")"
+      result += "(" + args.map(_.toJavaString).mkString(",") + ")"
     result
   }
 
@@ -2289,8 +2291,14 @@ trait CallApplExp extends Exp {
 }
 
 case class CtorApplExp(ty: Type, arguments: List[Argument]) extends CallApplExp {
-  override def exp1 = { new IdentExp(ident: ty.toString) }
+  override def exp1 = { new IdentExp(ty.toString) }
   override def args = arguments
+  override def toJavaString: String = {
+    var result = "new " + ty.toJavaString
+    if (args != null)
+      result += "(" + args.map(_.toJavaString).mkString(",") + ")"
+    result
+  }
 }
 
 case class IfExp(cond: Exp, trueBranch: Exp, falseBranch: Option[Exp]) extends Exp {
@@ -4017,6 +4025,7 @@ trait Type extends HasChildren {
   def statistics() {}
   def toSMT: String = UtilSMT.error(this.toString)
   def toScala: String = ???
+  def toString: String
   def toJavaString: String = toString
   def toJson: JSONObject = {
     if (ASTOptions.useJson1 == true) toJson1
@@ -4095,15 +4104,16 @@ case class IdentType(ident: QualifiedName, args: List[Type]) extends Type {
     val buf = new StringBuilder
     buf ++= (
     ident.toString match {
-      case "Seq" => "ArrayList<"
-      case _ => toString
+      case "Seq" => "ArrayList"
+      case _ => ident.toJavaString
     })
-    if (!buf.toString.equals("ArrayList<")) {
+    if (args.isEmpty) {
       buf.toString
     } else {
+       buf ++= "<"
        buf ++= args.map(x => x.toJavaString).mkString(",")
-    buf ++= ">"
-    buf.toString
+       buf ++= ">"
+       buf.toString
     }
    
   }

@@ -2886,65 +2886,81 @@ public class ModelParser extends Parser {
 			switch ( getInterpreter().adaptivePredict(_input,49,_ctx) ) {
 			case 1:
 				{
-				_localctx = new ParenExpContext(_localctx);
+				_localctx = new ConstructorAppExp1Context(_localctx);
 				_ctx = _localctx;
 				_prevctx = _localctx;
 
 				setState(380);
-				match(T__9);
+				classIdentifier();
 				setState(381);
-				expression(0);
+				typeArguments();
 				setState(382);
+				match(T__9);
+				setState(384);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
+				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__1) | (1L << T__9) | (1L << T__33) | (1L << T__35) | (1L << T__36) | (1L << T__37) | (1L << T__38) | (1L << T__39) | (1L << T__40) | (1L << T__41) | (1L << T__42) | (1L << T__43) | (1L << T__44) | (1L << T__45) | (1L << T__46) | (1L << T__47) | (1L << T__48) | (1L << T__51) | (1L << T__53) | (1L << T__55))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (T__68 - 69)) | (1L << (T__83 - 69)) | (1L << (T__85 - 69)) | (1L << (T__86 - 69)) | (1L << (T__87 - 69)) | (1L << (T__88 - 69)) | (1L << (T__89 - 69)) | (1L << (T__90 - 69)) | (1L << (T__93 - 69)) | (1L << (IntegerLiteral - 69)) | (1L << (RealLiteral - 69)) | (1L << (BooleanLiteral - 69)) | (1L << (NullLiteral - 69)) | (1L << (ThisLiteral - 69)) | (1L << (CharacterLiteral - 69)) | (1L << (StringLiteral - 69)) | (1L << (Identifier - 69)))) != 0)) {
+					{
+					setState(383);
+					argumentList();
+					}
+				}
+
+				setState(386);
 				match(T__10);
 				}
 				break;
 			case 2:
 				{
-				_localctx = new TupleExpContext(_localctx);
+				_localctx = new ParenExpContext(_localctx);
 				_ctx = _localctx;
 				_prevctx = _localctx;
-				setState(384);
-				match(T__46);
-				setState(385);
+				setState(388);
 				match(T__9);
-				setState(386);
+				setState(389);
 				expression(0);
-				setState(389); 
-				_errHandler.sync(this);
-				_la = _input.LA(1);
-				do {
-					{
-					{
-					setState(387);
-					match(T__14);
-					setState(388);
-					expression(0);
-					}
-					}
-					setState(391); 
-					_errHandler.sync(this);
-					_la = _input.LA(1);
-				} while ( _la==T__14 );
-				setState(393);
+				setState(390);
 				match(T__10);
 				}
 				break;
 			case 3:
 				{
-				_localctx = new LiteralExpContext(_localctx);
+				_localctx = new TupleExpContext(_localctx);
 				_ctx = _localctx;
 				_prevctx = _localctx;
-				setState(395);
-				literal();
+				setState(392);
+				match(T__46);
+				setState(393);
+				match(T__9);
+				setState(394);
+				expression(0);
+				setState(397); 
+				_errHandler.sync(this);
+				_la = _input.LA(1);
+				do {
+					{
+					{
+					setState(395);
+					match(T__14);
+					setState(396);
+					expression(0);
+					}
+					}
+					setState(399); 
+					_errHandler.sync(this);
+					_la = _input.LA(1);
+				} while ( _la==T__14 );
+				setState(401);
+				match(T__10);
 				}
 				break;
 			case 4:
 				{
-				_localctx = new IdentExpContext(_localctx);
+				_localctx = new LiteralExpContext(_localctx);
 				_ctx = _localctx;
 				_prevctx = _localctx;
-				setState(396);
-				match(Identifier);
+				setState(403);
+				literal();
 				}
 				break;
 			case 5:
@@ -2952,46 +2968,30 @@ public class ModelParser extends Parser {
 				_localctx = new IdentExpContext(_localctx);
 				_ctx = _localctx;
 				_prevctx = _localctx;
-				setState(397);
-				primitiveType();
+				setState(404);
+				match(Identifier);
 				}
 				break;
 			case 6:
 				{
-				_localctx = new ClassExpContext(_localctx);
+				_localctx = new IdentExpContext(_localctx);
 				_ctx = _localctx;
 				_prevctx = _localctx;
-				setState(398);
-				type(0);
-				setState(399);
-				match(T__4);
-				setState(400);
-				match(T__11);
+				setState(405);
+				primitiveType();
 				}
 				break;
 			case 7:
 				{
-				_localctx = new ConstructorAppExp1Context(_localctx);
+				_localctx = new ClassExpContext(_localctx);
 				_ctx = _localctx;
 				_prevctx = _localctx;
-				setState(402);
-				classIdentifier();
-				setState(403);
-				typeArguments();
-				setState(404);
-				match(T__9);
 				setState(406);
-				_errHandler.sync(this);
-				_la = _input.LA(1);
-				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__1) | (1L << T__9) | (1L << T__33) | (1L << T__35) | (1L << T__36) | (1L << T__37) | (1L << T__38) | (1L << T__39) | (1L << T__40) | (1L << T__41) | (1L << T__42) | (1L << T__43) | (1L << T__44) | (1L << T__45) | (1L << T__46) | (1L << T__47) | (1L << T__48) | (1L << T__51) | (1L << T__53) | (1L << T__55))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (T__68 - 69)) | (1L << (T__83 - 69)) | (1L << (T__85 - 69)) | (1L << (T__86 - 69)) | (1L << (T__87 - 69)) | (1L << (T__88 - 69)) | (1L << (T__89 - 69)) | (1L << (T__90 - 69)) | (1L << (T__93 - 69)) | (1L << (IntegerLiteral - 69)) | (1L << (RealLiteral - 69)) | (1L << (BooleanLiteral - 69)) | (1L << (NullLiteral - 69)) | (1L << (ThisLiteral - 69)) | (1L << (CharacterLiteral - 69)) | (1L << (StringLiteral - 69)) | (1L << (Identifier - 69)))) != 0)) {
-					{
-					setState(405);
-					argumentList();
-					}
-				}
-
+				type(0);
+				setState(407);
+				match(T__4);
 				setState(408);
-				match(T__10);
+				match(T__11);
 				}
 				break;
 			case 8:
@@ -3462,7 +3462,7 @@ public class ModelParser extends Parser {
 						_localctx = new DotExpContext(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(529);
-						if (!(precpred(_ctx, 34))) throw new FailedPredicateException(this, "precpred(_ctx, 34)");
+						if (!(precpred(_ctx, 33))) throw new FailedPredicateException(this, "precpred(_ctx, 33)");
 						setState(530);
 						match(T__4);
 						setState(531);
@@ -4511,7 +4511,7 @@ public class ModelParser extends Parser {
 		case 9:
 			return precpred(_ctx, 11);
 		case 10:
-			return precpred(_ctx, 34);
+			return precpred(_ctx, 33);
 		case 11:
 			return precpred(_ctx, 31);
 		case 12:
@@ -4562,8 +4562,8 @@ public class ModelParser extends Parser {
 		"\n\34\3\34\3\34\3\34\3\34\3\34\3\34\6\34\u0161\n\34\r\34\16\34\u0162\7"+
 		"\34\u0165\n\34\f\34\16\34\u0168\13\34\3\35\3\35\3\36\3\36\3\36\5\36\u016f"+
 		"\n\36\3\37\3\37\3 \3 \3 \3 \7 \u0177\n \f \16 \u017a\13 \3 \3 \3!\3!\3"+
-		"!\3!\3!\3!\3!\3!\3!\3!\6!\u0188\n!\r!\16!\u0189\3!\3!\3!\3!\3!\3!\3!\3"+
-		"!\3!\3!\3!\3!\3!\5!\u0199\n!\3!\3!\3!\3!\3!\5!\u01a0\n!\3!\3!\3!\3!\3"+
+		"!\3!\3!\5!\u0183\n!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\6!\u0190\n!\r!\16"+
+		"!\u0191\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\5!\u01a0\n!\3!\3!\3!\3!\3"+
 		"!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\5!\u01b1\n!\3!\3!\3!\3!\6!\u01b7\n!\r"+
 		"!\16!\u01b8\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\5!\u01ca\n!\3"+
 		"!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3"+
@@ -4680,23 +4680,23 @@ public class ModelParser extends Parser {
 		"\u0173\7\20\2\2\u0173\u0178\5\66\34\2\u0174\u0175\7\21\2\2\u0175\u0177"+
 		"\5\66\34\2\u0176\u0174\3\2\2\2\u0177\u017a\3\2\2\2\u0178\u0176\3\2\2\2"+
 		"\u0178\u0179\3\2\2\2\u0179\u017b\3\2\2\2\u017a\u0178\3\2\2\2\u017b\u017c"+
-		"\7\22\2\2\u017c?\3\2\2\2\u017d\u017e\b!\1\2\u017e\u017f\7\f\2\2\u017f"+
-		"\u0180\5@!\2\u0180\u0181\7\r\2\2\u0181\u01fd\3\2\2\2\u0182\u0183\7\61"+
-		"\2\2\u0183\u0184\7\f\2\2\u0184\u0187\5@!\2\u0185\u0186\7\21\2\2\u0186"+
-		"\u0188\5@!\2\u0187\u0185\3\2\2\2\u0188\u0189\3\2\2\2\u0189\u0187\3\2\2"+
-		"\2\u0189\u018a\3\2\2\2\u018a\u018b\3\2\2\2\u018b\u018c\7\r\2\2\u018c\u01fd"+
-		"\3\2\2\2\u018d\u01fd\5\\/\2\u018e\u01fd\7j\2\2\u018f\u01fd\58\35\2\u0190"+
-		"\u0191\5\66\34\2\u0191\u0192\7\7\2\2\u0192\u0193\7\16\2\2\u0193\u01fd"+
-		"\3\2\2\2\u0194\u0195\5:\36\2\u0195\u0196\5> \2\u0196\u0198\7\f\2\2\u0197"+
-		"\u0199\5D#\2\u0198\u0197\3\2\2\2\u0198\u0199\3\2\2\2\u0199\u019a\3\2\2"+
-		"\2\u019a\u019b\7\r\2\2\u019b\u01fd\3\2\2\2\u019c\u019d\5\66\34\2\u019d"+
-		"\u019f\7\f\2\2\u019e\u01a0\5D#\2\u019f\u019e\3\2\2\2\u019f\u01a0\3\2\2"+
-		"\2\u01a0\u01a1\3\2\2\2\u01a1\u01a2\7\r\2\2\u01a2\u01fd\3\2\2\2\u01a3\u01a4"+
-		"\7\62\2\2\u01a4\u01fd\5@!\36\u01a5\u01a6\7\4\2\2\u01a6\u01a7\5\34\17\2"+
-		"\u01a7\u01a8\7\5\2\2\u01a8\u01a9\6!\4\3\u01a9\u01fd\3\2\2\2\u01aa\u01ab"+
-		"\7\63\2\2\u01ab\u01ac\5@!\2\u01ac\u01ad\7\64\2\2\u01ad\u01b0\5@!\2\u01ae"+
-		"\u01af\7\65\2\2\u01af\u01b1\5@!\2\u01b0\u01ae\3\2\2\2\u01b0\u01b1\3\2"+
-		"\2\2\u01b1\u01fd\3\2\2\2\u01b2\u01b3\7\66\2\2\u01b3\u01b4\5@!\2\u01b4"+
+		"\7\22\2\2\u017c?\3\2\2\2\u017d\u017e\b!\1\2\u017e\u017f\5:\36\2\u017f"+
+		"\u0180\5> \2\u0180\u0182\7\f\2\2\u0181\u0183\5D#\2\u0182\u0181\3\2\2\2"+
+		"\u0182\u0183\3\2\2\2\u0183\u0184\3\2\2\2\u0184\u0185\7\r\2\2\u0185\u01fd"+
+		"\3\2\2\2\u0186\u0187\7\f\2\2\u0187\u0188\5@!\2\u0188\u0189\7\r\2\2\u0189"+
+		"\u01fd\3\2\2\2\u018a\u018b\7\61\2\2\u018b\u018c\7\f\2\2\u018c\u018f\5"+
+		"@!\2\u018d\u018e\7\21\2\2\u018e\u0190\5@!\2\u018f\u018d\3\2\2\2\u0190"+
+		"\u0191\3\2\2\2\u0191\u018f\3\2\2\2\u0191\u0192\3\2\2\2\u0192\u0193\3\2"+
+		"\2\2\u0193\u0194\7\r\2\2\u0194\u01fd\3\2\2\2\u0195\u01fd\5\\/\2\u0196"+
+		"\u01fd\7j\2\2\u0197\u01fd\58\35\2\u0198\u0199\5\66\34\2\u0199\u019a\7"+
+		"\7\2\2\u019a\u019b\7\16\2\2\u019b\u01fd\3\2\2\2\u019c\u019d\5\66\34\2"+
+		"\u019d\u019f\7\f\2\2\u019e\u01a0\5D#\2\u019f\u019e\3\2\2\2\u019f\u01a0"+
+		"\3\2\2\2\u01a0\u01a1\3\2\2\2\u01a1\u01a2\7\r\2\2\u01a2\u01fd\3\2\2\2\u01a3"+
+		"\u01a4\7\62\2\2\u01a4\u01fd\5@!\36\u01a5\u01a6\7\4\2\2\u01a6\u01a7\5\34"+
+		"\17\2\u01a7\u01a8\7\5\2\2\u01a8\u01a9\6!\4\3\u01a9\u01fd\3\2\2\2\u01aa"+
+		"\u01ab\7\63\2\2\u01ab\u01ac\5@!\2\u01ac\u01ad\7\64\2\2\u01ad\u01b0\5@"+
+		"!\2\u01ae\u01af\7\65\2\2\u01af\u01b1\5@!\2\u01b0\u01ae\3\2\2\2\u01b0\u01b1"+
+		"\3\2\2\2\u01b1\u01fd\3\2\2\2\u01b2\u01b3\7\66\2\2\u01b3\u01b4\5@!\2\u01b4"+
 		"\u01b6\7\67\2\2\u01b5\u01b7\5B\"\2\u01b6\u01b5\3\2\2\2\u01b7\u01b8\3\2"+
 		"\2\2\u01b8\u01b6\3\2\2\2\u01b8\u01b9\3\2\2\2\u01b9\u01fd\3\2\2\2\u01ba"+
 		"\u01bb\78\2\2\u01bb\u01bc\5@!\2\u01bc\u01bd\79\2\2\u01bd\u01be\5@!\32"+
@@ -4717,9 +4717,9 @@ public class ModelParser extends Parser {
 		"\3\2\2\2\u01f1\u01f2\5T+\2\u01f2\u01f3\7#\2\2\u01f3\u01f4\5@!\7\u01f4"+
 		"\u01fd\3\2\2\2\u01f5\u01fd\7Z\2\2\u01f6\u01fd\7[\2\2\u01f7\u01f9\7\\\2"+
 		"\2\u01f8\u01fa\5@!\2\u01f9\u01f8\3\2\2\2\u01f9\u01fa\3\2\2\2\u01fa\u01fd"+
-		"\3\2\2\2\u01fb\u01fd\7]\2\2\u01fc\u017d\3\2\2\2\u01fc\u0182\3\2\2\2\u01fc"+
-		"\u018d\3\2\2\2\u01fc\u018e\3\2\2\2\u01fc\u018f\3\2\2\2\u01fc\u0190\3\2"+
-		"\2\2\u01fc\u0194\3\2\2\2\u01fc\u019c\3\2\2\2\u01fc\u01a3\3\2\2\2\u01fc"+
+		"\3\2\2\2\u01fb\u01fd\7]\2\2\u01fc\u017d\3\2\2\2\u01fc\u0186\3\2\2\2\u01fc"+
+		"\u018a\3\2\2\2\u01fc\u0195\3\2\2\2\u01fc\u0196\3\2\2\2\u01fc\u0197\3\2"+
+		"\2\2\u01fc\u0198\3\2\2\2\u01fc\u019c\3\2\2\2\u01fc\u01a3\3\2\2\2\u01fc"+
 		"\u01a5\3\2\2\2\u01fc\u01aa\3\2\2\2\u01fc\u01b2\3\2\2\2\u01fc\u01ba\3\2"+
 		"\2\2\u01fc\u01bf\3\2\2\2\u01fc\u01c6\3\2\2\2\u01fc\u01cd\3\2\2\2\u01fc"+
 		"\u01d4\3\2\2\2\u01fc\u01dd\3\2\2\2\u01fc\u01e2\3\2\2\2\u01fc\u01e4\3\2"+
@@ -4731,7 +4731,7 @@ public class ModelParser extends Parser {
 		"\u0208\f\20\2\2\u0208\u0209\7R\2\2\u0209\u0228\5@!\21\u020a\u020b\f\17"+
 		"\2\2\u020b\u020c\7S\2\2\u020c\u0228\5@!\20\u020d\u020e\f\16\2\2\u020e"+
 		"\u020f\t\n\2\2\u020f\u0228\5@!\17\u0210\u0211\f\r\2\2\u0211\u0212\7\27"+
-		"\2\2\u0212\u0228\5@!\16\u0213\u0214\f$\2\2\u0214\u0215\7\7\2\2\u0215\u0228"+
+		"\2\2\u0212\u0228\5@!\16\u0213\u0214\f#\2\2\u0214\u0215\7\7\2\2\u0215\u0228"+
 		"\7j\2\2\u0216\u0217\f!\2\2\u0217\u0219\7\f\2\2\u0218\u021a\5D#\2\u0219"+
 		"\u0218\3\2\2\2\u0219\u021a\3\2\2\2\u021a\u021b\3\2\2\2\u021b\u0228\7\r"+
 		"\2\2\u021c\u021d\f\37\2\2\u021d\u021e\7\20\2\2\u021e\u021f\5F$\2\u021f"+
@@ -4780,7 +4780,7 @@ public class ModelParser extends Parser {
 		"\t\13\2\2\u029d]\3\2\2\2Edkw}\u008a\u008f\u0096\u009a\u009e\u00a2\u00a5"+
 		"\u00ab\u00b3\u00bb\u00c2\u00cb\u00d1\u00d7\u00e2\u00e7\u00eb\u00f0\u00f7"+
 		"\u00fb\u0102\u0108\u010c\u0111\u0118\u011f\u012a\u012f\u0137\u013d\u0143"+
-		"\u014a\u0158\u0162\u0164\u0166\u016e\u0178\u0189\u0198\u019f\u01b0\u01b8"+
+		"\u014a\u0158\u0162\u0164\u0166\u016e\u0178\u0182\u0191\u019f\u01b0\u01b8"+
 		"\u01c9\u01f9\u01fc\u0219\u0227\u0229\u0232\u023a\u0240\u0245\u024d\u0256"+
 		"\u025d\u0269\u0276\u027a\u0281\u0289\u0291\u0299";
 	public static final ATN _ATN =

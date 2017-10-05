@@ -162,7 +162,12 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   }
 
   override def visitIdentExp(ctx: ModelParser.IdentExpContext): AnyRef = {
-    IdentExp(ctx.Identifier().getText())
+    var text : String =
+      if (ctx.Identifier() != null)
+        ctx.Identifier().getText()
+      else
+        ctx.getText()
+    IdentExp(text)
   }
 
   override def visitDotExp(ctx: ModelParser.DotExpContext): AnyRef = {
@@ -183,20 +188,24 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   }
 
   override def visitConstructorAppExp1(ctx: ModelParser.ConstructorAppExp1Context): AnyRef = {
-    var cls = visit(ctx.classIdentifier())
+    var qn: QualifiedName = visit(ctx.classIdentifier()).asInstanceOf[QualifiedName]
+    var typeArguments: List[Type] =
+      if (ctx.typeArguments() != null) visit(ctx.typeArguments()).asInstanceOf[List[Type]]
+      else Nil
+    IdentType(qn, typeArguments)
     var argumentList =
       if (ctx.argumentList() != null)
         visit(ctx.argumentList()).asInstanceOf[List[Argument]]
       else
         Nil
 
-    var ty = Type(cls, argumentList)
+    var ty : Type = IdentType(qn, typeArguments)
 
     CtorApplExp(ty, argumentList)
   }
 
   override def visitConstructorAppExp2(ctx: ModelParser.ConstructorAppExp2Context): AnyRef = {
-    var ty = visit(ctx.`type`())
+    var ty = visit(ctx.`type`()).asInstanceOf[Type]
     var argumentList =
       if (ctx.argumentList() != null)
         visit(ctx.argumentList()).asInstanceOf[List[Argument]]

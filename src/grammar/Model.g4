@@ -168,14 +168,14 @@ typeArguments:
   ;
 
 expression: 
-    '(' expression ')' #ParenExp
+    classIdentifier typeArguments '(' argumentList? ')' #ConstructorAppExp1
+  | '(' expression ')' #ParenExp
   | 'Tuple' '(' expression (',' expression)+ ')' #TupleExp
   | literal #LiteralExp
   | Identifier #IdentExp
   | primitiveType #IdentExp
   | expression '.' Identifier #DotExp
   | type '.' 'class' #ClassExp 
-  | classIdentifier typeArguments '(' argumentList? ')' #ConstructorAppExp1
   | expression '(' argumentList? ')' #AppExp
   | type '(' argumentList? ')' #ConstructorAppExp2
   | expression '[' positionalArgumentList ']' #IndexExp
