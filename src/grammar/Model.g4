@@ -1,15 +1,25 @@
 grammar Model;
 
 model:
-  packageDeclaration?
-  importDeclaration* 
-  annotationDeclaration*
-  topDeclaration* 
+  modelThings
   EOF
 ;
 
+modelThings:
+  modelThing*
+;
+
+modelThing:
+  packageDeclaration
+|  importDeclaration
+|  annotationDeclaration
+|  topDeclaration
+;
+
+
 packageDeclaration:
-  'package' qualifiedName 
+  'package' qualifiedName '{' modelThings '}'
+| 'package' qualifiedName modelThings
 ;
 
 importDeclaration:
@@ -158,7 +168,8 @@ typeArguments:
   ;
 
 expression: 
-    '(' expression ')' #ParenExp
+    classIdentifier typeArguments '(' argumentList? ')' #ConstructorAppExp1
+  | '(' expression ')' #ParenExp
   | 'Tuple' '(' expression (',' expression)+ ')' #TupleExp
   | literal #LiteralExp
   | Identifier #IdentExp
@@ -166,9 +177,10 @@ expression:
   | expression '.' Identifier #DotExp
   | type '.' 'class' #ClassExp 
   | expression '(' argumentList? ')' #AppExp
+  | type '(' argumentList? ')' #ConstructorAppExp2
   | expression '[' positionalArgumentList ']' #IndexExp
   | '!' expression #NotExp
-  | '{' block  '}' #BlockExp
+  | '{' block  '}' {$ctx.parent instanceof ModelParser.ModelContext}? #BlockExp
   | 'if' expression 'then' expression ('else' expression)? #IfExp
   | 'match' expression 'with' match+  #MatchExp
   | 'while' expression 'do' expression  #WhileExp

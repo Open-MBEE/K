@@ -1,6 +1,5 @@
-// Generated from Model.g4 by ANTLR 4.4
+// Generated from Model.g4 by ANTLR 4.7
 package k.frontend;
-import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
 /**
@@ -18,621 +17,656 @@ public class ModelBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements 
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitLiteralPattern(@NotNull ModelParser.LiteralPatternContext ctx) { return visitChildren(ctx); }
+	@Override public T visitModel(ModelParser.ModelContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitDontCarePattern(@NotNull ModelParser.DontCarePatternContext ctx) { return visitChildren(ctx); }
+	@Override public T visitModelThings(ModelParser.ModelThingsContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitMemberDeclaration(@NotNull ModelParser.MemberDeclarationContext ctx) { return visitChildren(ctx); }
+	@Override public T visitModelThing(ModelParser.ModelThingContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitMultiplicity(@NotNull ModelParser.MultiplicityContext ctx) { return visitChildren(ctx); }
+	@Override public T visitPackageDeclaration(ModelParser.PackageDeclarationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitNotExp(@NotNull ModelParser.NotExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitImportDeclaration(ModelParser.ImportDeclarationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitSetEnumExp(@NotNull ModelParser.SetEnumExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitAnnotationDeclaration(ModelParser.AnnotationDeclarationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitIndexExp(@NotNull ModelParser.IndexExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitAnnotation(ModelParser.AnnotationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitCartesianType(@NotNull ModelParser.CartesianTypeContext ctx) { return visitChildren(ctx); }
+	@Override public T visitTopDeclaration(ModelParser.TopDeclarationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitPrevExp(@NotNull ModelParser.PrevExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitEntityDeclaration(ModelParser.EntityDeclarationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitParenType(@NotNull ModelParser.ParenTypeContext ctx) { return visitChildren(ctx); }
+	@Override public T visitTypeParameters(ModelParser.TypeParametersContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitTupleExp(@NotNull ModelParser.TupleExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitTypeParameter(ModelParser.TypeParameterContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitWhileExp(@NotNull ModelParser.WhileExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitTypeBound(ModelParser.TypeBoundContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitPositionalArgumentList(@NotNull ModelParser.PositionalArgumentListContext ctx) { return visitChildren(ctx); }
+	@Override public T visitExtending(ModelParser.ExtendingContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitIfExp(@NotNull ModelParser.IfExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitBlock(ModelParser.BlockContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitOrExp(@NotNull ModelParser.OrExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitBlockDeclaration(ModelParser.BlockDeclarationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitAppExp(@NotNull ModelParser.AppExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitMemberDeclaration(ModelParser.MemberDeclarationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitTypeCheckExp(@NotNull ModelParser.TypeCheckExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitTypeDeclaration(ModelParser.TypeDeclarationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitReturnExp(@NotNull ModelParser.ReturnExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitPropertyDeclaration(ModelParser.PropertyDeclarationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitPrimType(@NotNull ModelParser.PrimTypeContext ctx) { return visitChildren(ctx); }
+	@Override public T visitPropertyModifier(ModelParser.PropertyModifierContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitIFFExp(@NotNull ModelParser.IFFExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitFunctionDeclaration(ModelParser.FunctionDeclarationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitModel(@NotNull ModelParser.ModelContext ctx) { return visitChildren(ctx); }
+	@Override public T visitParamList(ModelParser.ParamListContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitBlock(@NotNull ModelParser.BlockContext ctx) { return visitChildren(ctx); }
+	@Override public T visitParam(ModelParser.ParamContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitAssertExp(@NotNull ModelParser.AssertExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitFunctionSpecification(ModelParser.FunctionSpecificationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitRngBinding(@NotNull ModelParser.RngBindingContext ctx) { return visitChildren(ctx); }
+	@Override public T visitConstraint(ModelParser.ConstraintContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitSubType(@NotNull ModelParser.SubTypeContext ctx) { return visitChildren(ctx); }
+	@Override public T visitMultiplicity(ModelParser.MultiplicityContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitIdentifierList(@NotNull ModelParser.IdentifierListContext ctx) { return visitChildren(ctx); }
+	@Override public T visitExpressionOrStar(ModelParser.ExpressionOrStarContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitIdentType(@NotNull ModelParser.IdentTypeContext ctx) { return visitChildren(ctx); }
+	@Override public T visitArrayType(ModelParser.ArrayTypeContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitFuncType(@NotNull ModelParser.FuncTypeContext ctx) { return visitChildren(ctx); }
+	@Override public T visitSubType(ModelParser.SubTypeContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitLambdaExp(@NotNull ModelParser.LambdaExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitIdentType(ModelParser.IdentTypeContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitQualifiedName(@NotNull ModelParser.QualifiedNameContext ctx) { return visitChildren(ctx); }
+	@Override public T visitFuncType(ModelParser.FuncTypeContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitBinOp1Exp(@NotNull ModelParser.BinOp1ExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitCartesianType(ModelParser.CartesianTypeContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitForallExp(@NotNull ModelParser.ForallExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitPrimType(ModelParser.PrimTypeContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitPatternList(@NotNull ModelParser.PatternListContext ctx) { return visitChildren(ctx); }
+	@Override public T visitParenType(ModelParser.ParenTypeContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitExpressionList(@NotNull ModelParser.ExpressionListContext ctx) { return visitChildren(ctx); }
+	@Override public T visitPrimitiveType(ModelParser.PrimitiveTypeContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitContinueExp(@NotNull ModelParser.ContinueExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitClassIdentifier(ModelParser.ClassIdentifierContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitMatchExp(@NotNull ModelParser.MatchExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitCollectionKind(ModelParser.CollectionKindContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitClassIdentifier(@NotNull ModelParser.ClassIdentifierContext ctx) { return visitChildren(ctx); }
+	@Override public T visitTypeArguments(ModelParser.TypeArgumentsContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitParenExp(@NotNull ModelParser.ParenExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitLiteralExp(ModelParser.LiteralExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitParamList(@NotNull ModelParser.ParamListContext ctx) { return visitChildren(ctx); }
+	@Override public T visitNotExp(ModelParser.NotExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitClassExp(@NotNull ModelParser.ClassExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitAndExp(ModelParser.AndExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitTypeBound(@NotNull ModelParser.TypeBoundContext ctx) { return visitChildren(ctx); }
+	@Override public T visitExistsExp(ModelParser.ExistsExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitPropertyDeclaration(@NotNull ModelParser.PropertyDeclarationContext ctx) { return visitChildren(ctx); }
+	@Override public T visitSetEnumExp(ModelParser.SetEnumExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitTypeArguments(@NotNull ModelParser.TypeArgumentsContext ctx) { return visitChildren(ctx); }
+	@Override public T visitIndexExp(ModelParser.IndexExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitLiteralExp(@NotNull ModelParser.LiteralExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitBreakExp(ModelParser.BreakExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitNamedArgumentList(@NotNull ModelParser.NamedArgumentListContext ctx) { return visitChildren(ctx); }
+	@Override public T visitPrevExp(ModelParser.PrevExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitTypeParameter(@NotNull ModelParser.TypeParameterContext ctx) { return visitChildren(ctx); }
+	@Override public T visitBlockExp(ModelParser.BlockExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitAndExp(@NotNull ModelParser.AndExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitBinOp2Exp(ModelParser.BinOp2ExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitExistsExp(@NotNull ModelParser.ExistsExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitTupleExp(ModelParser.TupleExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitFunctionSpecification(@NotNull ModelParser.FunctionSpecificationContext ctx) { return visitChildren(ctx); }
+	@Override public T visitWhileExp(ModelParser.WhileExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitBreakExp(@NotNull ModelParser.BreakExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitSetRngExp(ModelParser.SetRngExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitTypeDeclaration(@NotNull ModelParser.TypeDeclarationContext ctx) { return visitChildren(ctx); }
+	@Override public T visitIfExp(ModelParser.IfExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitTypeParameters(@NotNull ModelParser.TypeParametersContext ctx) { return visitChildren(ctx); }
+	@Override public T visitNegExp(ModelParser.NegExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitBlockExp(@NotNull ModelParser.BlockExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitOrExp(ModelParser.OrExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitBinOp2Exp(@NotNull ModelParser.BinOp2ExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitAppExp(ModelParser.AppExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitLiteral(@NotNull ModelParser.LiteralContext ctx) { return visitChildren(ctx); }
+	@Override public T visitTypeCheckExp(ModelParser.TypeCheckExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitSetRngExp(@NotNull ModelParser.SetRngExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitReturnExp(ModelParser.ReturnExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitBlockDeclaration(@NotNull ModelParser.BlockDeclarationContext ctx) { return visitChildren(ctx); }
+	@Override public T visitIFFExp(ModelParser.IFFExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitPosArgList(@NotNull ModelParser.PosArgListContext ctx) { return visitChildren(ctx); }
+	@Override public T visitConstructorAppExp2(ModelParser.ConstructorAppExp2Context ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitNegExp(@NotNull ModelParser.NegExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitSetCompExp(ModelParser.SetCompExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitParam(@NotNull ModelParser.ParamContext ctx) { return visitChildren(ctx); }
+	@Override public T visitConstructorAppExp1(ModelParser.ConstructorAppExp1Context ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitCollectionKind(@NotNull ModelParser.CollectionKindContext ctx) { return visitChildren(ctx); }
+	@Override public T visitResultExp(ModelParser.ResultExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitIdentPattern(@NotNull ModelParser.IdentPatternContext ctx) { return visitChildren(ctx); }
+	@Override public T visitAssertExp(ModelParser.AssertExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitSetCompExp(@NotNull ModelParser.SetCompExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitLambdaExp(ModelParser.LambdaExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitImportDeclaration(@NotNull ModelParser.ImportDeclarationContext ctx) { return visitChildren(ctx); }
+	@Override public T visitBinOp1Exp(ModelParser.BinOp1ExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitPrimitiveType(@NotNull ModelParser.PrimitiveTypeContext ctx) { return visitChildren(ctx); }
+	@Override public T visitForallExp(ModelParser.ForallExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitResultExp(@NotNull ModelParser.ResultExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitBinOp3Exp(ModelParser.BinOp3ExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitNamedArgument(@NotNull ModelParser.NamedArgumentContext ctx) { return visitChildren(ctx); }
+	@Override public T visitIdentExp(ModelParser.IdentExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitAnnotation(@NotNull ModelParser.AnnotationContext ctx) { return visitChildren(ctx); }
+	@Override public T visitDotExp(ModelParser.DotExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitMatch(@NotNull ModelParser.MatchContext ctx) { return visitChildren(ctx); }
+	@Override public T visitForExp(ModelParser.ForExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitCollectionOrType(@NotNull ModelParser.CollectionOrTypeContext ctx) { return visitChildren(ctx); }
+	@Override public T visitAssignExp(ModelParser.AssignExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitBinOp3Exp(@NotNull ModelParser.BinOp3ExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitContinueExp(ModelParser.ContinueExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitTopDeclaration(@NotNull ModelParser.TopDeclarationContext ctx) { return visitChildren(ctx); }
+	@Override public T visitMatchExp(ModelParser.MatchExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitCartesianPattern(@NotNull ModelParser.CartesianPatternContext ctx) { return visitChildren(ctx); }
+	@Override public T visitParenExp(ModelParser.ParenExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitTypedPattern(@NotNull ModelParser.TypedPatternContext ctx) { return visitChildren(ctx); }
+	@Override public T visitClassExp(ModelParser.ClassExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitIdentExp(@NotNull ModelParser.IdentExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitTypeCastExp(ModelParser.TypeCastExpContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitDotExp(@NotNull ModelParser.DotExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitMatch(ModelParser.MatchContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitForExp(@NotNull ModelParser.ForExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitPosArgList(ModelParser.PosArgListContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitAssignExp(@NotNull ModelParser.AssignExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitNamedArgList(ModelParser.NamedArgListContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitPackageDeclaration(@NotNull ModelParser.PackageDeclarationContext ctx) { return visitChildren(ctx); }
+	@Override public T visitPositionalArgumentList(ModelParser.PositionalArgumentListContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitNamedArgList(@NotNull ModelParser.NamedArgListContext ctx) { return visitChildren(ctx); }
+	@Override public T visitNamedArgumentList(ModelParser.NamedArgumentListContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitAnnotationDeclaration(@NotNull ModelParser.AnnotationDeclarationContext ctx) { return visitChildren(ctx); }
+	@Override public T visitNamedArgument(ModelParser.NamedArgumentContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitPropertyModifier(@NotNull ModelParser.PropertyModifierContext ctx) { return visitChildren(ctx); }
+	@Override public T visitCollectionOrType(ModelParser.CollectionOrTypeContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitRngBindingList(@NotNull ModelParser.RngBindingListContext ctx) { return visitChildren(ctx); }
+	@Override public T visitRngBindingList(ModelParser.RngBindingListContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitConstraint(@NotNull ModelParser.ConstraintContext ctx) { return visitChildren(ctx); }
+	@Override public T visitRngBinding(ModelParser.RngBindingContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitEntityDeclaration(@NotNull ModelParser.EntityDeclarationContext ctx) { return visitChildren(ctx); }
+	@Override public T visitPatternList(ModelParser.PatternListContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitExpressionOrStar(@NotNull ModelParser.ExpressionOrStarContext ctx) { return visitChildren(ctx); }
+	@Override public T visitLiteralPattern(ModelParser.LiteralPatternContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitFunctionDeclaration(@NotNull ModelParser.FunctionDeclarationContext ctx) { return visitChildren(ctx); }
+	@Override public T visitDontCarePattern(ModelParser.DontCarePatternContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitExtending(@NotNull ModelParser.ExtendingContext ctx) { return visitChildren(ctx); }
+	@Override public T visitIdentPattern(ModelParser.IdentPatternContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitTypeCastExp(@NotNull ModelParser.TypeCastExpContext ctx) { return visitChildren(ctx); }
+	@Override public T visitCartesianPattern(ModelParser.CartesianPatternContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitTypedPattern(ModelParser.TypedPatternContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitIdentifierList(ModelParser.IdentifierListContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitExpressionList(ModelParser.ExpressionListContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitQualifiedName(ModelParser.QualifiedNameContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitLiteral(ModelParser.LiteralContext ctx) { return visitChildren(ctx); }
 }

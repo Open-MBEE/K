@@ -6,7 +6,7 @@
 
 2. Build when developing grammar
    - Run ./onlyGrammar.sh
-   - javac *.java to compile files placed in current folder
+   - javac -cp antlr-4.7-complete.jar *.java to compile files placed in current folder
    - copy an example from examples folder
    - to produce GUI tree: grun Model model <example_file> -gui
 

@@ -324,7 +324,7 @@ class TypeChecker(model: Model) {
   def jvmPackageToPackageDecl( name: String ) : PackageDecl = {
     if (!ClassUtils.isPackageName(name)) return null
     var names = List(name)
-    val pkgDecl = PackageDecl(QualifiedName(names))
+    val pkgDecl = PackageDecl(QualifiedName(names), null)
     return pkgDecl
   }
 
@@ -341,7 +341,7 @@ class TypeChecker(model: Model) {
   
   private def isExternallyDefined( te: TypeEnv, name: String ) : Boolean = {
     val entityDecl = jvmClassToEntityDecl( name )
-    if (entityDecl != Nil) {
+    if (entityDecl != Nil && entityDecl != null) {
 //      te.map(name) = entityDecl
       return true
     }
@@ -765,6 +765,17 @@ class TypeChecker(model: Model) {
         case _ => ()
       }
     }
+
+    // Recurse into packages
+    val pkgs = model.packages
+    for (p <- pkgs) {
+      var m = p.model
+      if ( m != null ) {
+        var t = new TypeChecker(m)
+        t.typeCheck
+      }
+    }
+
     true
   }
 

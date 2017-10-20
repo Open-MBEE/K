@@ -5,30 +5,52 @@ import java.lang.Float
 import java.lang.Boolean
 import java.math.RoundingMode
 
+import scala.collection.mutable.ListBuffer
+//import scala.collection.mutable.Set
+
 class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   
   var declToPosition = Map[MemberDecl, Tuple2[Int, Int]]()
 
   var stack: List[AnyRef] = Nil
 
-  override def visitModel(ctx: ModelParser.ModelContext): AnyRef = {
-    var packageDecl: Option[PackageDecl] =
-      if (ctx.packageDeclaration() != null) Some(visit(ctx.packageDeclaration()).asInstanceOf[PackageDecl])
-      else None
-    var importDecls: List[ImportDecl] = ctx.importDeclaration().asScala.toList.map(visit(_).asInstanceOf[ImportDecl])
-    var annotationDecls: Set[AnnotationDecl] = ctx.annotationDeclaration().asScala.toList.map(visit(_).asInstanceOf[AnnotationDecl]).toSet
-    var topDecls: List[TopDecl] = ctx.topDeclaration().asScala.toList.map(visit(_).asInstanceOf[TopDecl])
-    Model(packageDecl, importDecls, annotationDecls, topDecls)
+  override def visitModel(ctx: ModelParser.ModelContext): Model = {
+    visitModelThings(ctx.modelThings())
   }
+
+  override def visitModelThings(ctx: ModelParser.ModelThingsContext): Model = {
+    var packageDecls: ListBuffer[PackageDecl] = new ListBuffer[PackageDecl]() //= ctx.packageDeclaration().asScala.toList.map(visit(_).asInstanceOf[PackageDecl])
+    var importDecls: ListBuffer[ImportDecl] = new ListBuffer[ImportDecl]()
+    var annotationDecls: Set[AnnotationDecl] = new ListBuffer[AnnotationDecl]().toList.toSet
+    var topDecls: ListBuffer[TopDecl] = new ListBuffer[TopDecl]()
+    val things: List[AnyRef] = ctx.modelThing().asScala.toList.map(visit(_).asInstanceOf[AnyRef])
+    for (thing <- things) {
+      if (thing.isInstanceOf[PackageDecl]) {
+        packageDecls += thing.asInstanceOf[PackageDecl]
+      } else if (thing.isInstanceOf[ImportDecl]) {
+        importDecls += thing.asInstanceOf[ImportDecl]
+      } else if (thing.isInstanceOf[AnnotationDecl]) {
+        annotationDecls += thing.asInstanceOf[AnnotationDecl]
+      } else if (thing.isInstanceOf[TopDecl]) {
+        topDecls += thing.asInstanceOf[TopDecl]
+      }
+    }
+    var packageName: Option[String] = null
+    Model(packageName, packageDecls.toList, importDecls.toList, annotationDecls, topDecls.toList)
+  }
+
+  override def visitModelThing(ctx: ModelParser.ModelThingContext): AnyRef = super.visitModelThing(ctx)
 
   override def visitQualifiedName(ctx: ModelParser.QualifiedNameContext): AnyRef = {
     var identifiers = ctx.Identifier().asScala
     QualifiedName(identifiers.map(_.toString()).toList)
   }
 
-  override def visitPackageDeclaration(ctx: ModelParser.PackageDeclarationContext): AnyRef = {
+  override def visitPackageDeclaration(ctx: ModelParser.PackageDeclarationContext): PackageDecl = {
     var qn: QualifiedName = visit(ctx.qualifiedName()).asInstanceOf[QualifiedName]
-    PackageDecl(qn)
+    var m: Model = visitModelThings(ctx.modelThings())
+    var model: Model = Model(Option(qn.toString), m.packages, m.imports, m.annotations, m.decls)
+    PackageDecl(qn, model)
   }
 
   override def visitImportDeclaration(ctx: ModelParser.ImportDeclarationContext): AnyRef = {
@@ -140,7 +162,12 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
   }
 
   override def visitIdentExp(ctx: ModelParser.IdentExpContext): AnyRef = {
-    IdentExp(ctx.Identifier().getText())
+    var text : String =
+      if (ctx.Identifier() != null)
+        ctx.Identifier().getText()
+      else
+        ctx.getText()
+    IdentExp(text)
   }
 
   override def visitDotExp(ctx: ModelParser.DotExpContext): AnyRef = {
@@ -159,7 +186,34 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
     var argumentList = visit(ctx.positionalArgumentList()).asInstanceOf[List[Argument]]
     IndexExp(e, argumentList)
   }
-  
+
+  override def visitConstructorAppExp1(ctx: ModelParser.ConstructorAppExp1Context): AnyRef = {
+    var qn: QualifiedName = visit(ctx.classIdentifier()).asInstanceOf[QualifiedName]
+    var typeArguments: List[Type] =
+      if (ctx.typeArguments() != null) visit(ctx.typeArguments()).asInstanceOf[List[Type]]
+      else Nil
+    IdentType(qn, typeArguments)
+    var argumentList =
+      if (ctx.argumentList() != null)
+        visit(ctx.argumentList()).asInstanceOf[List[Argument]]
+      else
+        Nil
+
+    var ty : Type = IdentType(qn, typeArguments)
+
+    CtorApplExp(ty, argumentList)
+  }
+
+  override def visitConstructorAppExp2(ctx: ModelParser.ConstructorAppExp2Context): AnyRef = {
+    var ty = visit(ctx.`type`()).asInstanceOf[Type]
+    var argumentList =
+      if (ctx.argumentList() != null)
+        visit(ctx.argumentList()).asInstanceOf[List[Argument]]
+      else
+        Nil
+
+    CtorApplExp(ty, argumentList)
+  }
 
   override def visitAppExp(ctx: ModelParser.AppExpContext): AnyRef = {
     var e0: Exp = visit(ctx.expression()).asInstanceOf[Exp]

@@ -5,7 +5,8 @@ package k.frontend
 //import com.sksamuel.elastic4s._
 //import com.sksamuel.elastic4s.ElasticClient
 //import com.sksamuel.elastic4s.ElasticDsl._
-import org.apache.log4j.{ Level, Logger }
+import org.apache.log4j.{Level, Logger}
+
 import scala.util.control.Breaks._
 import org.antlr.runtime.tree.ParseTree
 import k.frontend
@@ -14,13 +15,15 @@ import java.nio
 import java.nio.file.Paths
 import java.nio.file.Files
 import java.nio.file.Path
+
 import org.antlr.v4.runtime.ANTLRInputStream
 import org.antlr.v4.runtime.CommonTokenStream
 import org.json.JSONArray
 import org.json.JSONObject
 import k.frontend.ModelParser.ModelContext
 import org.json.JSONTokener
-import scala.collection.mutable.{ ListBuffer => MList }
+
+import scala.collection.mutable.{ListBuffer => MList}
 //import scala.concurrent._
 //import Await._
 //import Future._
@@ -43,10 +46,12 @@ object Frontend {
   type OptionMap = Map[Symbol, Any]
 
   def log(msg: String = "") = Misc.log("main", msg)
+
   def errorExit(msg: String = "") = Misc.errorExit("main", msg)
 
   def parseArgs(map: OptionMap, list: List[String]): OptionMap = {
     def isSwitch(s: String) = (s(0) == '-')
+
     list match {
       case Nil => map
       case "-f" :: value :: tail =>
@@ -61,17 +66,17 @@ object Frontend {
       case "-classpath" :: value :: tail =>
         classpath = value.replace("\"", "").split(File.pathSeparator).toSet
         parseArgs(map, tail)
-      case "-tests" :: tail    => parseArgs(map ++ Map('tests -> true), tail)
+      case "-tests" :: tail => parseArgs(map ++ Map('tests -> true), tail)
       case "-baseline" :: tail => parseArgs(map ++ Map('baseline -> true), tail)
-      case "-test" :: tail     => parseArgs(map ++ Map('test -> true), tail)
-      case "-v" :: tail        => parseArgs(map ++ Map('verbose -> true), tail)
-      case "-query" :: tail    => parseArgs(map ++ Map('query -> true), tail)
-      case "-stats" :: tail    => parseArgs(map ++ Map('stats -> true), tail)
-      case "-dot" :: tail      => parseArgs(map ++ Map('dot -> true), tail)
-      case "-latex" :: tail    => parseArgs(map ++ Map('latex -> true), tail)
-      case "-scala" :: tail    => parseArgs(map ++ Map('scala -> true), tail)
-      case "-json" :: tail     => parseArgs(map ++ Map('printJson -> true), tail)
-      case "-tc" :: tail       => parseArgs(map ++ Map('tc -> true), tail)
+      case "-test" :: tail => parseArgs(map ++ Map('test -> true), tail)
+      case "-v" :: tail => parseArgs(map ++ Map('verbose -> true), tail)
+      case "-query" :: tail => parseArgs(map ++ Map('query -> true), tail)
+      case "-stats" :: tail => parseArgs(map ++ Map('stats -> true), tail)
+      case "-dot" :: tail => parseArgs(map ++ Map('dot -> true), tail)
+      case "-latex" :: tail => parseArgs(map ++ Map('latex -> true), tail)
+      case "-scala" :: tail => parseArgs(map ++ Map('scala -> true), tail)
+      case "-json" :: tail => parseArgs(map ++ Map('printJson -> true), tail)
+      case "-tc" :: tail => parseArgs(map ++ Map('tc -> true), tail)
       case "-mmsJson" :: value :: tail =>
         parseArgs(map ++ Map('mmsJson -> value), tail)
       case "-expressionToJson" :: value :: tail =>
@@ -81,8 +86,60 @@ object Frontend {
       case "-postnobody" :: tail => parseArgs(map ++ Map('postnobody -> true), tail)
       case option :: tail =>
         println("Unknown option " + option).asInstanceOf[Nothing]
-        //System.exit(1).asInstanceOf[Nothing]
+      //System.exit(1).asInstanceOf[Nothing]
     }
+  }
+
+  def getImportModels(model: Model, fullFileName: String): List[Model] = {
+    var importModels = List[Model]()
+
+    if (model != null) {
+      try {
+        var s: Set[String] = Set()
+        if (fullFileName != null) {
+          s = Set(fullFileName)
+        }
+        importModels = processImports(model, s)._1
+        val tc: TypeChecker = new TypeChecker(model)
+        tc.smtCheck
+        log("Type checking completed. No errors found.")
+      } catch {
+        case TypeCheckException => Misc.errorExit("Main", "Given K did not type check.")
+        case e: Throwable =>
+          e.printStackTrace()
+          Misc.errorExit("Main", "Exception encountered during type checking.")
+      }
+    }
+    importModels
+  }
+
+  def combinePackages(packages: List[PackageDecl]): List[PackageDecl] = {
+    packages.map(p => combinePackage(p))
+  }
+
+  def combinePackage(pkg: PackageDecl): PackageDecl = {
+    var m: Model = combineModel(pkg.model)
+    var p = new PackageDecl(pkg.name, m)
+    p
+  }
+
+  def combineModel(model: Model): Model = {
+    combineModel(model, null)
+  }
+
+  def combineModel(model: Model, fullFileName: String): Model = {
+    var importModels = getImportModels(model, fullFileName)
+
+    var allDecls = importModels.flatMap { x => x.decls }
+    var allAnnotations = importModels.flatMap { x => x.annotations }
+    var allPackages = importModels.flatMap { x => x.packages }
+    var allImports = importModels.flatMap { x => x.imports }
+    val combinedModel = Model(model.packageName,
+      combinePackages(model.packages ++ allPackages),
+      (model.imports ++ allImports).toSet.toList,
+      model.annotations ++ allAnnotations,
+      model.decls ++ allDecls)
+    combinedModel
   }
 
   def scala_main(args: Array[String]) {
@@ -95,12 +152,12 @@ object Frontend {
 
     options.get('postnobody) match {
       case Some(true) => ASTOptions.checkPostNoBody = true
-      case _          =>
+      case _ =>
     }
 
     options.get('tests) match {
       case Some(true) => doTests(options.getOrElse('baseline, false).asInstanceOf[Boolean])
-      case _          => ()
+      case _ => ()
     }
 
     options.get('test) match {
@@ -127,8 +184,8 @@ object Frontend {
           else log(s"Baseline does not contain $fileName. Cannot compare.")
         } catch {
           case TypeCheckException => errorExit("Type Checking exception.")
-          case K2SMTException     => errorExit("K2SMT Exception during SMT solving.")
-          case K2Z3Exception      => errorExit("Z3 Exception during SMT solving.")
+          case K2SMTException => errorExit("K2SMT Exception during SMT solving.")
+          case K2Z3Exception => errorExit("Z3 Exception during SMT solving.")
         }
       case _ => ()
     }
@@ -150,7 +207,9 @@ object Frontend {
           if (!Paths.get(x).isAbsolute()) Paths.get(modelFileDirectory, x).toString
           else x
         }
-        classpath = classpath.map { _.trim }
+        classpath = classpath.map {
+          _.trim
+        }
 
         println("CLASSPATH set to: " + classpath.mkString(","))
 
@@ -177,22 +236,6 @@ object Frontend {
       case _ => ()
     }
 
-    var importModels = List[Model]()
-
-    if (model != null) {
-      try {
-        importModels = processImports(model, Set(fullFileName))._1
-        val tc: TypeChecker = new TypeChecker(model)
-        tc.smtCheck
-        log("Type checking completed. No errors found.")
-      } catch {
-        case TypeCheckException => Misc.errorExit("Main", "Given K did not type check.")
-        case e: Throwable =>
-          e.printStackTrace()
-          Misc.errorExit("Main", "Exception encountered during type checking.")
-      }
-    }
-
     options.get('printJson) match {
       case Some(_) =>
         if (model != null) {
@@ -216,13 +259,19 @@ object Frontend {
 
     if (model != null && !options.contains('tc)) {
 
-      //case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
-      //annotations: List[AnnotationDecl],
-      //decls: List[TopDecl]) {
-      val allDecls = importModels.flatMap { x => x.decls }
-      val combinedModel = Model(model.packageName, model.imports,
-        model.annotations ++ importModels.flatMap { x => x.annotations },
-        model.decls ++ allDecls)
+      //      //case class Model(packageName: Option[PackageDecl], imports: List[ImportDecl],
+      //      //annotations: List[AnnotationDecl],
+      //      //decls: List[TopDecl]) {
+      //      var allDecls = importModels.flatMap { x => x.decls }
+      //      var allAnnotations = importModels.flatMap { x => x.annotations }
+      //      var allPackages = importModels.flatMap { x => x.packages }
+      //      var allImports =  importModels.flatMap { x => x.imports }
+      //      val combinedModel = Model(model.packageName,
+      //        model.packages ++ allPackages,
+      //        (model.imports ++ allImports).toSet.toList,
+      //        model.annotations ++ allAnnotations,
+      //        model.decls ++ allDecls)
+      val combinedModel = combineModel(model, fullFileName)
       smtModel += combinedModel.toSMT
       if (K2Z3.debug) {
         println()
@@ -235,12 +284,14 @@ object Frontend {
       }
       println(UtilSMT.statistics)
       try {
-        val res = runWithTimeout(timeoutValue) { K2Z3.solveSMT(combinedModel, smtModel, true) }
+        val res = runWithTimeout(timeoutValue) {
+          K2Z3.solveSMT(combinedModel, smtModel, true)
+        }
         if (res.isEmpty) log("Timeout")
       } catch {
         case TypeCheckException => errorExit("Type Checking exception.")
-        case K2SMTException     => errorExit("K2SMT Exception during SMT solving.")
-        case K2Z3Exception      => errorExit("Z3 Exception during SMT solving.")
+        case K2SMTException => errorExit("K2SMT Exception during SMT solving.")
+        case K2Z3Exception => errorExit("Z3 Exception during SMT solving.")
         case e: Throwable =>
           e.printStackTrace()
           errorExit("Unknown Exception during SMT solving.")
@@ -258,13 +309,15 @@ object Frontend {
         println()
       }
       try {
-        val res = runWithTimeout(timeoutValue) { K2Z3.solveSMT(null, rawSMT, false) }
+        val res = runWithTimeout(timeoutValue) {
+          K2Z3.solveSMT(null, rawSMT, false)
+        }
         if (res.isEmpty) log("Timeout")
 
       } catch {
         case TypeCheckException => errorExit("Type Checking exception.")
-        case K2SMTException     => errorExit("K2SMT Exception during SMT solving.")
-        case K2Z3Exception      => errorExit("Z3 Exception during SMT solving.")
+        case K2SMTException => errorExit("K2SMT Exception during SMT solving.")
+        case K2Z3Exception => errorExit("Z3 Exception during SMT solving.")
         case e: Throwable =>
           e.printStackTrace()
           errorExit("Unknown Exception during SMT solving.")
@@ -273,7 +326,7 @@ object Frontend {
 
     options.get('latex) match {
       case Some(_) => if (model != null) K2Latex.convert(filename, model)
-      case _       => ()
+      case _ => ()
     }
 
     options.get('scala) match {
@@ -298,12 +351,12 @@ object Frontend {
 
     options.get('dot) match {
       case Some(_) => if (model != null) printClassDOT(filename, model)
-      case _       => ()
+      case _ => ()
     }
 
     options.get('stats) match {
       case Some(_) => printStats(model)
-      case _       => ()
+      case _ => ()
     }
 
     options.get('expression) match {
@@ -340,6 +393,9 @@ object Frontend {
   def processImports(model: Model, processed: Set[String]): (List[Model], Set[String]) = {
     var models = List[Model]()
     var newProcessed = processed
+    if (newProcessed == null) {
+      newProcessed = Set()
+    }
     for (i <- model.imports) {
       val iFile = getImportFileLocationFromClassPath((i.name.toPath + ".k").toString)
       if (iFile == null) {
@@ -360,8 +416,7 @@ object Frontend {
     return (models, newProcessed)
   }
 
-  
-  
+
   def getFileTree(f: File): Stream[File] =
     f #:: (if (f.isDirectory) f.listFiles().toStream.flatMap(getFileTree)
     else Stream.empty)
@@ -397,7 +452,9 @@ object Frontend {
         else null
       val smtModel =
         if (smt != null) {
-          val res = runWithTimeout(timeoutValue) { K2Z3.solveSMT(model, smt, debug) }
+          val res = runWithTimeout(timeoutValue) {
+            K2Z3.solveSMT(model, smt, debug)
+          }
           if (res.isEmpty) null
           else if (K2Z3.z3Model != null) K2Z3.z3Model.toString
         } else null
@@ -424,15 +481,15 @@ object Frontend {
     //awaitAll(timeoutMs, future(f)).head.asInstanceOf[Option[T]]
     import scala.concurrent.ExecutionContext.Implicits.global
     import scala.concurrent._
-  //import Await._
+    //import Await._
     //import scala.concurrent.Future
     import scala.concurrent.Await
     import scala.concurrent.duration._
-  //import scala.concurrent.Awaitable
+    //import scala.concurrent.Awaitable
     import scala.concurrent.impl.Future
 
     val x = Await.result(future(f), Duration.create(timeoutMs, "ms"))
-    None    
+    None
   }
 
   def doTests(saveBaseline: Boolean) {
@@ -471,7 +528,7 @@ object Frontend {
 
       } catch {
         case K2SMTException => resultRows = List(file.getName + "*", "K2SMT", "error", "", "", "", "") :: resultRows
-        case K2Z3Exception  => resultRows = List(file.getName + "*", "K2Z3", "error", "", "", "", "") :: resultRows
+        case K2Z3Exception => resultRows = List(file.getName + "*", "K2Z3", "error", "", "", "", "") :: resultRows
         case e: Throwable =>
           log("Exception: " + e.toString)
           resultRows = List(file.getName + "*", "-", "-", "-", "-", "-", "-") :: resultRows
@@ -518,10 +575,66 @@ object Frontend {
 
   }
 
+  /**
+    * Determine if two JSONObjects are similar.
+    * They must contain the same set of names which must be associated with
+    * similar values.
+    *
+    * @param other The other JSONObject
+    * @return true if they are equal
+    */
+  def similar(dis: JSONObject, other: Any): Boolean = try {
+    if (!other.isInstanceOf[JSONObject]) return false
+    val set = dis.keySet
+    if (!set.equals((other.asInstanceOf[JSONObject]).keySet)) return false
+    val iterator = set.iterator
+    while ( {
+      iterator.hasNext
+    }) {
+      val name = iterator.next.asInstanceOf[String]
+      val valueThis = dis.get(name)
+      val valueOther = other.asInstanceOf[JSONObject].get(name)
+      if (!similar(valueThis, valueOther) ) return false
+    }
+    true
+  } catch {
+    case exception: Throwable =>
+      false
+  }
+
+  def similar( valueThis: Any, valueOther: Any ): Boolean = try {
+    if ( valueThis == null ) {
+      if ( valueOther == null ) return true
+      return false
+    }
+    if ( valueOther == null ) return false
+    if (valueThis.isInstanceOf[JSONObject]) if (!similar(valueThis.asInstanceOf[JSONObject], valueOther)) return false
+    else if (valueThis.isInstanceOf[JSONArray]) if (!similar(valueThis.asInstanceOf[JSONArray], valueOther)) return false
+    else if (valueThis.isInstanceOf[AnyRef] && !(valueThis.asInstanceOf[AnyRef].equals(valueOther))) return false
+    else if (!(valueThis == valueOther)) return false
+    true
+  } catch {
+    case exception: Throwable =>
+    false
+  }
+
+  def similar(dis: JSONArray, other: Any): Boolean = try {
+    if (!other.isInstanceOf[JSONArray]) return false
+    val otherArr = other.asInstanceOf[JSONArray]
+    if ( dis.length() != otherArr.length() ) return false
+    for (i <- 0 until dis.length()) {
+      if ( !similar(dis.get(i), otherArr.get(i)) ) return false
+    }
+    return true
+  } catch {
+    case exception: Throwable =>
+      false
+  }
+
   def compareSingleResult(key: String, bo: JSONObject, co: JSONObject): String = {
     if (bo.has(key) && co.has(key) && co.get(key).toString != "") {
       if (bo.get(key).isInstanceOf[JSONObject] && co.get(key).isInstanceOf[JSONObject])
-        bo.getJSONObject(key).similar(co.getJSONObject(key)).toString
+        similar(bo.getJSONObject(key), co.getJSONObject(key)).toString
       else bo.get(key).toString.equals(co.get(key).toString).toString
     } else if (bo.has(key) && !co.has(key))
       "false"
@@ -566,6 +679,7 @@ object Frontend {
     val elementsArray = jsonObject.get("elements").asInstanceOf[JSONArray]
     //println("elementsArray = " + elementsArray)
     var packageName: Option[PackageDecl] = None
+    var packages: MList[PackageDecl] = MList[PackageDecl]()
     var imports: List[ImportDecl] = List()
     var annotations: Set[AnnotationDecl] = Set()
     var mdecls: List[TopDecl] = List[TopDecl]()
@@ -625,8 +739,11 @@ object Frontend {
 
                 id2Decl += (obj.getString("owner") -> newDecl)
 
-              case "Package" => packageName =
-                Some(PackageDecl(QualifiedName(obj.getString("qualifiedName").replace("-", "_").replace(" ", "_").split("/").toList.filterNot { _.isEmpty })))
+                // TODO -- This is broken -- need to wire model to package
+              case "Package" =>
+                var pkg =
+                PackageDecl(QualifiedName(obj.getString("qualifiedName").replace("-", "_").replace(" ", "_").split("/").toList.filterNot { _.isEmpty }), null)
+                packages += pkg
               case "Constraint" =>
                 if (specializationObject.getJSONObject("specification").has("expressionBody")) {
                   val constraintExpressionBody = specializationObject.getJSONObject("specification").getJSONArray("expressionBody")
@@ -667,7 +784,7 @@ object Frontend {
       }
     }
 
-    val model = Model(packageName, imports, annotations, mdecls)
+    val model = Model(null, packages.toList, imports, annotations, mdecls)
     println(model)
     model
   }
@@ -847,20 +964,22 @@ object Frontend {
         IdentExp(obj.get("element").asInstanceOf[String])
       // Top level:
       case "Model" =>
-        var packageName: Option[PackageDecl] =
-          if (obj.keySet().contains("packageName")) Some(visitJsonObject(obj.get("packageName"))).asInstanceOf[Option[PackageDecl]]
+        var packageName: Option[String] =
+          if (obj.keySet().contains("packageName")) Some(obj.get("packageName")).asInstanceOf[Option[String]]
           else None
+        var packages = visitJsonArray(obj.get("packages"), visitJsonObject).asInstanceOf[List[PackageDecl]]
         var annotations = visitJsonArray(obj.get("annotations"), visitJsonObject).asInstanceOf[Set[AnnotationDecl]]
         var imports = visitJsonArray(obj.get("imports"), visitJsonObject).asInstanceOf[List[ImportDecl]]
         var decls = visitJsonArray(obj.get("decls"), visitJsonObject).asInstanceOf[List[TopDecl]]
-        Model(packageName, imports, annotations, decls)
+        Model(packageName, packages, imports, annotations, decls)
       case "AnnotationDecl" =>
         AnnotationDecl(obj.getString("name"), visitJsonObject(obj.get("ty")).asInstanceOf[Type])
       case "Annotation" =>
         Annotation(obj.getString("name"), visitJsonObject(obj.get("exp")).asInstanceOf[Exp])
       case "PackageDecl" =>
         var name: QualifiedName = visitJsonObject(obj.get("name")).asInstanceOf[QualifiedName]
-        PackageDecl(name)
+        var model: Model = visitJsonObject(obj.get("model")).asInstanceOf[Model]
+        PackageDecl(name, model)
       case "ImportDecl" =>
         var name: QualifiedName = visitJsonObject(obj.get("name")).asInstanceOf[QualifiedName]
         var star: Boolean =
@@ -1338,20 +1457,22 @@ object Frontend {
         IdentExp(obj.get("element").asInstanceOf[String])
       // Non-Expr, similar to regular JSON
       case "Model" =>
-        var packageName: Option[PackageDecl] =
-          if (obj.keySet().contains("packageName")) Some(visitJsonObject2(obj.getJSONObject("packageName"))).asInstanceOf[Option[PackageDecl]]
+        var packageName: Option[String] =
+          if (obj.keySet().contains("packageName")) Some(obj.get("packageName")).asInstanceOf[Option[String]]
           else None
+        var packages = visitJsonArray(obj.get("packages"), visitJsonObject).asInstanceOf[List[PackageDecl]]
         var annotations = visitJsonArray(obj.get("annotations"), visitJsonObject2).asInstanceOf[Set[AnnotationDecl]]
         var imports = visitJsonArray(obj.get("imports"), visitJsonObject2).asInstanceOf[List[ImportDecl]]
         var decls = visitJsonArray(obj.get("decls"), visitJsonObject2).asInstanceOf[List[TopDecl]]
-        Model(packageName, imports, annotations, decls)
+        Model(packageName, packages, imports, annotations, decls)
       case "AnnotationDecl" =>
         AnnotationDecl(obj.getString("name"), visitJsonObject2(obj.get("ty")).asInstanceOf[Type])
       case "Annotation" =>
         Annotation(obj.getString("name"), visitJsonObject2(obj.get("exp")).asInstanceOf[Exp])
       case "PackageDecl" =>
         var name: QualifiedName = visitJsonObject2(obj.get("name")).asInstanceOf[QualifiedName]
-        PackageDecl(name)
+        var model: Model = visitJsonObject(obj.get("model")).asInstanceOf[Model]
+        PackageDecl(name, model)
       case "ImportDecl" =>
         var name: QualifiedName = visitJsonObject2(obj.get("name")).asInstanceOf[QualifiedName]
         var star: Boolean =
@@ -1563,8 +1684,13 @@ object Frontend {
     val (ksv: KScalaVisitor, tree: ModelContext) = getVisitor(expressionString)
     var m: Model = ksv.visit(tree).asInstanceOf[Model]
 
-    var exp: Exp = m.decls(0).asInstanceOf[ExpressionDecl].exp
-    exp
+    if (m == null || m.decls == null || m.decls.length == 0) {
+      val mm = StringLiteral("")//Model(None,List(), List(), Set(), List())
+      mm
+    } else {
+      var exp: Exp = m.decls(0).asInstanceOf[ExpressionDecl].exp
+      exp
+    }
   }
 
 
@@ -1581,27 +1707,51 @@ object Frontend {
   }
   
   def getEntitiesFromModel(m: Model): List[EntityDecl] = {
-    for (x <- m.decls if x.getClass == classOf[EntityDecl]) yield x.asInstanceOf[EntityDecl]
+    if (m == null || m.decls == null || m.decls.length == 0) {
+      List[EntityDecl]()
+    } else {
+      for (x <- m.decls if x.getClass == classOf[EntityDecl]) yield x.asInstanceOf[EntityDecl]
+    }
   }
   
   def getTopLevelProperties(m: Model): List[PropertyDecl] = {
-    for (x <- m.decls if x.getClass == classOf[PropertyDecl]) yield x.asInstanceOf[PropertyDecl]
+    if (m == null || m.decls == null || m.decls.length == 0) {
+      List[PropertyDecl]()
+    } else {
+      for (x <- m.decls if x.getClass == classOf[PropertyDecl]) yield x.asInstanceOf[PropertyDecl]
+    }
   }
   
-    def getTopLevelConstraints(m: Model): List[ConstraintDecl] = {
-    for (x <- m.decls if x.getClass == classOf[ConstraintDecl]) yield x.asInstanceOf[ConstraintDecl]
+  def getTopLevelConstraints(m: Model): List[ConstraintDecl] = {
+    if (m == null || m.decls == null || m.decls.length == 0) {
+      List[ConstraintDecl]()
+    } else {
+      for (x <- m.decls if x.getClass == classOf[ConstraintDecl]) yield x.asInstanceOf[ConstraintDecl]
+    }
   }
   
   def getTopLevelFunctions(m: Model): List[FunDecl] = {
-    for (x <- m.decls if x.getClass == classOf[FunDecl]) yield x.asInstanceOf[FunDecl]
+    if (m == null || m.decls == null || m.decls.length == 0) {
+      List[FunDecl]()
+    } else {
+      for (x <- m.decls if x.getClass == classOf[FunDecl]) yield x.asInstanceOf[FunDecl]
+    }
   }
   
   def getTopLevelExpressions(m: Model): List[ExpressionDecl] = {
-    for (x <- m.decls if x.getClass == classOf[ExpressionDecl]) yield x.asInstanceOf[ExpressionDecl]
+    if (m == null || m.decls == null || m.decls.length == 0) {
+      List[ExpressionDecl]()
+    } else {
+      for (x <- m.decls if x.getClass == classOf[ExpressionDecl]) yield x.asInstanceOf[ExpressionDecl]
+    }
   }
 
   def getDeclCount(m: Model, d: Class[_]): Int = {
-    m.decls.count(decl => (d == decl.getClass))
+    if (m == null || m.decls == null || m.decls.length == 0) {
+      0
+    } else {
+      m.decls.count(decl => (d == decl.getClass))
+    }
   }
 
   def printStats(m: Model) {

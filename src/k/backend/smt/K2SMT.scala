@@ -35,8 +35,8 @@ class K2SMT {
 
   def translate(model: Model): String = {
     model match {
-      case Model(packageName, imports, annotations, decls) =>
-        translate(decls)
+      case Model(packageName, packages, imports, annotations, decls) =>
+        translate(packages, decls)
     }
   }
 
@@ -51,7 +51,7 @@ class K2SMT {
   //
   //case class ImportDecl(name: QualifiedName, star: Boolean) 
 
-  def translate(decls: List[TopDecl]): String = {
+  def translate(packages: List[PackageDecl], decls: List[TopDecl]): String = {
     var result : String = ""
     //for (decl <- decls) result += translate(decl)
     result
