@@ -2,7 +2,12 @@ package bnf
 
 -- Model of BNF to be used for parsing
 
--- Exp is an expression that constrains the tokens in a string.
+==========
+Exp is an expression that constrains the tokens in a string.
+It is instantiated for an input string, which can be BNF or a language defined by BNF.
+This class constrains the expression text to be based on tokens potentially separated
+by whitespece.  Constraints on the tokens are made by subclasses of Exp.
+==========
 class Exp {
    var text: String  -- what it looks like in BNF
    var tokens: Seq[Exp]  -- the sequence of things in text that may be separated by whitespace
@@ -31,6 +36,11 @@ class Exp {
    req tokens.size() > 0 => text = add(textArray)  -- if add fails, try fold(textArray, Plus.class)
 }
 
+==========
+The BNF expression is a grammar based on antlr syntax.  It's elements are simply the
+grammar name and rules.  topRuleName must be specified in order to use the parse
+function.
+==========
 class BNF extends Exp {
    var name: String
    var rules: Seq[Rule]
@@ -55,6 +65,10 @@ class BNF extends Exp {
    tokens = Seq{S(text:: "grammar"), S(text:: name), S(text:: ";")}.addAll(rules)
 }
 
+==========
+A test instantiation of a BNF for a simple grammar, G, and a ParseTree for a simple
+string in G.
+==========
 class TestBnf {
    var bnf: BNF
    req bnf.string = "grammar G; r1: 'I am' r2; r2: ' parseable';"
@@ -62,9 +76,15 @@ class TestBnf {
    var tree: ParseTree = bnf.parse( "I am parseable" )
 }
 
+==========
+The ParseTree constrains an input string to a rule, both
+==========
 class ParseTree {
+   -- input variables
    var string: String
    var rule: Rule
+
+   -- computed variables
    var beginIndex: Int
    var endIndex: Int
    var children: Seq[ParseTree]
@@ -97,9 +117,12 @@ class Rule extends Exp {
 class RuleExp extends Exp {
     -- need a reference to all BNF rules
     var bnf: BNF
+    -- the rule matched to this expression
+    var rule: Rule
 
     var childRuleNames : Set[String] = Set{ x.text : Exp :- x isin tokens && x is Identifier }
     var childRules : Set[RuleExp] = Set{ x : RuleExp :- x.name isin childRuleNames }
+
 
     -- An expression induced by the interpretation of the BNF rule
     fun inducedExp( string: String ) : Exp
