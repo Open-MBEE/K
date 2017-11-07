@@ -29,6 +29,10 @@ class kclass extends kelement {
     var constraints : kconstraint [0,*]
     -- Allow classes to be defined inside classes
     var classes : kclass [0,*]
+
+    var members : Set[kelement] = Set{definedProperties, constructors, functions, constraints}.flatten()
+
+    ktext = "class" + ws
 }
 
 class kproperty extends kelement {

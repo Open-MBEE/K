@@ -123,7 +123,6 @@ class RuleExp extends Exp {
     var childRuleNames : Set[String] = Set{ x.text : Exp :- x isin tokens && x is Identifier }
     var childRules : Set[RuleExp] = Set{ x : RuleExp :- x.name isin childRuleNames }
 
-
     -- An expression induced by the interpretation of the BNF rule
     fun inducedExp( string: String ) : Exp
     -- var bnfExp: Exp
@@ -137,7 +136,8 @@ class S extends Exp {
 
 class Literal extends RuleExp {
    var string : String
-   text = "'" + string + "'"
+   req text = "'" + string + "'"
+   req rule = null
 
    -- An expression induced by the interpretation of the BNF rule
    fun inducedExp( s: String ) : Exp {
@@ -151,12 +151,13 @@ class Identifier extends RuleExp {
    req text.length() > 0 &&
    req Character.isJavaIdentifierStart(text.charAt(0)) &&
    req forall i : Int :- i isin Set{0 .. text.length()-1} => Character.isJavaIdentifierPart(text.charAt(i))
+   req rule = bnf.ruleForName(text)
 
    -- An expression induced by the interpretation of the BNF rule
    fun inducedExp( s: String ) : Exp {
         if text = "skip" || text = "fragment" then S(text:: "")
         -- else if text = "EOF"
-        else bnf.ruleForName(text).inducedExp(s)
+        else rule.inducedExp(s)
    }
    -- bnfExp = bnf.ruleForName(text).expression.bnfExp
 }
