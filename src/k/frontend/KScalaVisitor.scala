@@ -35,7 +35,7 @@ class KScalaVisitor extends ModelBaseVisitor[AnyRef] {
         topDecls += thing.asInstanceOf[TopDecl]
       }
     }
-    var packageName: Option[String] = null
+    var packageName: Option[String] = None
     Model(packageName, packageDecls.toList, importDecls.toList, annotationDecls, topDecls.toList)
   }
 
