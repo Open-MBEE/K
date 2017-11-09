@@ -1,2 +1,2 @@
-k.jar filter=lfs diff=lfs merge=lfs -text
 export/lib/k.jar filter=lfs diff=lfs merge=lfs -text
+k.jar filter=lfs diff=lfs merge=lfs -text
