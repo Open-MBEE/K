@@ -22,3 +22,4 @@ src/tests/test.k
 /target
 /.idea
 *.iml
+target/
